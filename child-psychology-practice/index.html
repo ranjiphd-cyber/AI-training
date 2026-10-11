@@ -1,0 +1,1158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Child Psychology Practice Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a study-desk masthead, then one working view at a time (Home · Set up · MCQ · Results · Descriptive).
+   Each module carries its own ink colour, like tabbed dividers in a revision binder.
+   Ground palette is the learner-supplied #F4F2EE / #F0E7D0 / #E8D6C1. */
+:root {
+  --bg: #F4F2EE;
+  --sand: #F0E7D0;
+  --tan: #E8D6C1;
+  --card: #FBFAF7;
+  --ink: #2B2621;
+  --muted: #5F554A;
+  --line: #D9CBB6;
+  --accent: #2F5E5A;
+  --accent-ink: #FBFAF7;
+  --good: #356A35;
+  --good-soft: #E0EBD8;
+  --bad: #9B3B2E;
+  --bad-soft: #F4DED6;
+  --focus: #1F4E8C;
+  --m1: #2F5E5A; --m1-soft: #DCE7E2;
+  --m2: #8A4A2E; --m2-soft: #F1DFD3;
+  --m3: #3B5277; --m3-soft: #DEE3EE;
+  --m4: #6A4462; --m4-soft: #ECDEE8;
+  --m5: #4D5B2A; --m5-soft: #E3E7D1;
+  --shadow: 0 1px 2px rgba(70, 52, 30, .06), 0 6px 18px rgba(70, 52, 30, .07);
+  --f-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  --r: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1C1915; --sand: #29241D; --tan: #3A3228; --card: #231F1A;
+    --ink: #F0E7D0; --muted: #C3B6A3; --line: #463D32;
+    --accent: #93C4BB; --accent-ink: #1C1915;
+    --good: #A5D29B; --good-soft: #2B3A28; --bad: #EFA696; --bad-soft: #452A24; --focus: #9CC2F5;
+    --m1: #93C4BB; --m1-soft: #24332F;
+    --m2: #E3A88A; --m2-soft: #3B2A21;
+    --m3: #A9BDE0; --m3-soft: #262D3B;
+    --m4: #D7AACB; --m4-soft: #352734;
+    --m5: #BFCB8E; --m5-soft: #2D3220;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1C1915; --sand: #29241D; --tan: #3A3228; --card: #231F1A;
+  --ink: #F0E7D0; --muted: #C3B6A3; --line: #463D32;
+  --accent: #93C4BB; --accent-ink: #1C1915;
+  --good: #A5D29B; --good-soft: #2B3A28; --bad: #EFA696; --bad-soft: #452A24; --focus: #9CC2F5;
+  --m1: #93C4BB; --m1-soft: #24332F;
+  --m2: #E3A88A; --m2-soft: #3B2A21;
+  --m3: #A9BDE0; --m3-soft: #262D3B;
+  --m4: #D7AACB; --m4-soft: #352734;
+  --m5: #BFCB8E; --m5-soft: #2D3220;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-inline: 20px; padding-block: 22px 64px; display: grid; gap: 22px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 500; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.5rem); letter-spacing: -.01em; }
+h2 { font-size: clamp(1.35rem, 2.6vw, 1.7rem); }
+h3 { font-size: 1.15rem; }
+p { margin: 0; }
+.eyebrow { font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+button, select, textarea, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Module theming: any element with data-m picks up its module ink */
+[data-m="m1"] { --mod: var(--m1); --mod-soft: var(--m1-soft); }
+[data-m="m2"] { --mod: var(--m2); --mod-soft: var(--m2-soft); }
+[data-m="m3"] { --mod: var(--m3); --mod-soft: var(--m3-soft); }
+[data-m="m4"] { --mod: var(--m4); --mod-soft: var(--m4-soft); }
+[data-m="m5"] { --mod: var(--m5); --mod-soft: var(--m5-soft); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 18px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--card); cursor: pointer; font-weight: 700; font-size: .95rem; text-decoration: none; transition: background .15s, border-color .15s, transform .1s; }
+.btn:hover { border-color: var(--muted); }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--mod, var(--accent)); border-color: var(--mod, var(--accent)); color: var(--accent-ink); }
+.btn-primary:hover { filter: brightness(1.08); border-color: var(--mod, var(--accent)); }
+.btn-quiet { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 12px; }
+.btn-quiet:hover { color: var(--ink); background: var(--sand); border-color: transparent; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+/* Masthead */
+.mast { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: end; padding-block: 8px 18px; border-bottom: 1.5px solid var(--line); }
+.mast-title { display: grid; gap: 6px; min-width: 0; }
+.mast-title .code { font-family: var(--f-mono); font-size: .82rem; color: var(--muted); }
+.mast-home { background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+.stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat { background: var(--sand); border: 1px solid var(--line); border-radius: var(--r); padding: 10px 14px; min-width: 112px; }
+.stat b { display: block; font-family: var(--f-mono); font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.stat span { font-size: .78rem; color: var(--muted); }
+@media (max-width: 720px) { .mast { grid-template-columns: 1fr; } .stat { flex: 1 1 100px; } }
+
+/* Resume banner */
+.resume { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; background: var(--tan); border-radius: var(--r); padding: 14px 18px; }
+
+/* Home: module cards */
+.intro { display: grid; gap: 6px; max-width: 70ch; }
+.modgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.modcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; min-width: 0; }
+.modcard-head { background: var(--mod-soft); padding: 16px 18px 14px; display: grid; gap: 4px; border-bottom: 3px solid var(--mod); }
+.modnum { font-family: var(--f-display); font-size: 2rem; line-height: 1; color: var(--mod); }
+.modcard-body { padding: 14px 18px; display: grid; gap: 12px; align-content: start; }
+.topics { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: .9rem; color: var(--muted); }
+.topics li { padding-left: 14px; position: relative; }
+.topics li::before { content: ""; position: absolute; left: 0; top: .62em; width: 6px; height: 6px; border-radius: 50%; background: var(--mod); }
+.modcard-foot { padding: 12px 18px 16px; display: grid; gap: 10px; border-top: 1px dashed var(--line); }
+.note { font-size: .82rem; color: var(--muted); background: var(--sand); padding: 8px 10px; border-radius: 8px; }
+.meter { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); }
+.meter-row { display: flex; justify-content: space-between; gap: 8px; }
+.bar { height: 8px; border-radius: 99px; background: var(--tan); overflow: hidden; }
+.bar > i { display: block; height: 100%; background: var(--mod, var(--accent)); border-radius: 99px; transition: width .3s; }
+
+/* Setup panel */
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 28px); display: grid; gap: 22px; }
+.panel-head { display: grid; gap: 6px; padding-bottom: 14px; border-bottom: 3px solid var(--mod); }
+fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 10px; min-width: 0; }
+legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; }
+.chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.chip span { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; min-height: 40px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--bg); font-size: .92rem; }
+.chip span small { font-family: var(--f-mono); color: var(--muted); font-size: .75rem; }
+.chip input:checked + span { background: var(--mod-soft); border-color: var(--mod); font-weight: 700; }
+.chip input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.mode { position: relative; }
+.mode input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.mode .mode-box { display: grid; gap: 4px; padding: 16px 18px; border-radius: var(--r); border: 1.5px solid var(--line); background: var(--bg); height: 100%; }
+.mode .mode-box strong { font-size: 1.05rem; }
+.mode input:checked + .mode-box { border-color: var(--mod); background: var(--mod-soft); box-shadow: inset 0 0 0 1px var(--mod); }
+.mode input:focus-visible + .mode-box { outline: 3px solid var(--focus); outline-offset: 2px; }
+.opts-row { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 700; font-size: .92rem; }
+select { min-height: 44px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); }
+.check { display: inline-flex; gap: 10px; align-items: center; cursor: pointer; font-size: .95rem; }
+.check input { width: 20px; height: 20px; accent-color: var(--mod, var(--accent)); }
+
+/* Quiz */
+.qtop { display: grid; gap: 12px; }
+.qtop-row { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 999px; background: var(--mod-soft); color: var(--ink); font-size: .85rem; font-weight: 700; border: 1px solid var(--mod); }
+.pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mod); }
+.counters { display: flex; gap: 18px; flex-wrap: wrap; font-size: .92rem; }
+.counters b { font-family: var(--f-mono); font-weight: 500; }
+.qlayout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .qlayout { grid-template-columns: 1fr; } }
+.qcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 30px); display: grid; gap: 18px; min-width: 0; border-top: 4px solid var(--mod); }
+.qtext { font-family: var(--f-display); font-size: clamp(1.2rem, 2.4vw, 1.45rem); line-height: 1.35; }
+.options { display: grid; gap: 10px; }
+.opt { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; text-align: left; width: 100%; padding: 12px 14px; min-height: 52px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); cursor: pointer; transition: border-color .15s, background .15s; }
+.opt:hover:not([disabled]) { border-color: var(--mod); }
+.opt .key { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-family: var(--f-mono); font-size: .85rem; border: 1.5px solid var(--line); background: var(--card); }
+.opt[aria-checked="true"] { border-color: var(--mod); background: var(--mod-soft); box-shadow: inset 0 0 0 1px var(--mod); }
+.opt[aria-checked="true"] .key { background: var(--mod); border-color: var(--mod); color: var(--accent-ink); }
+.opt[disabled] { cursor: default; }
+.opt.is-correct { border-color: var(--good); background: var(--good-soft); box-shadow: inset 0 0 0 1px var(--good); }
+.opt.is-correct .key { background: var(--good); border-color: var(--good); color: var(--accent-ink); }
+.opt.is-wrong { border-color: var(--bad); background: var(--bad-soft); box-shadow: inset 0 0 0 1px var(--bad); }
+.opt.is-wrong .key { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }
+.opt .tag { font-size: .78rem; font-weight: 700; white-space: nowrap; }
+.opt.is-correct .tag { color: var(--good); }
+.opt.is-wrong .tag { color: var(--bad); }
+.feedback { border-radius: 10px; padding: 16px 18px; display: grid; gap: 8px; }
+.feedback.good { background: var(--good-soft); border: 1.5px solid var(--good); }
+.feedback.bad { background: var(--bad-soft); border: 1.5px solid var(--bad); }
+.feedback .fb-title { display: flex; gap: 10px; align-items: center; font-weight: 700; font-size: 1.08rem; }
+.feedback .face { font-size: 1.6rem; line-height: 1; }
+.feedback.good .fb-title { color: var(--good); }
+.feedback.bad .fb-title { color: var(--bad); }
+.qnav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px dashed var(--line); }
+.hint { font-size: .8rem; color: var(--muted); }
+kbd { font-family: var(--f-mono); font-size: .75rem; padding: 1px 6px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--card); }
+.side { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 12px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+.navgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; }
+.navgrid button { height: 36px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); font-family: var(--f-mono); font-size: .8rem; cursor: pointer; padding: 0; }
+.navgrid button.ok { background: var(--good-soft); border-color: var(--good); color: var(--good); }
+.navgrid button.no { background: var(--bad-soft); border-color: var(--bad); color: var(--bad); }
+.navgrid button.cur { box-shadow: 0 0 0 2px var(--mod); border-color: var(--mod); font-weight: 700; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: .75rem; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; border: 1.5px solid var(--line); }
+.legend i.ok { background: var(--good-soft); border-color: var(--good); }
+.legend i.no { background: var(--bad-soft); border-color: var(--bad); }
+@media (max-width: 860px) { .side { position: static; } }
+
+/* Results */
+.res-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 28px; align-items: center; }
+@media (max-width: 640px) { .res-top { grid-template-columns: 1fr; justify-items: start; } }
+.ring { width: 150px; height: 150px; max-width: 100%; }
+.ring text { font-family: var(--f-mono); fill: var(--ink); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }
+.tile { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.tile b { display: block; font-family: var(--f-mono); font-size: 1.5rem; font-weight: 500; }
+.tile span { font-size: .8rem; color: var(--muted); }
+.tile.good b { color: var(--good); }
+.tile.bad b { color: var(--bad); }
+.breakdown { display: grid; gap: 10px; }
+.bd-row { display: grid; grid-template-columns: minmax(0, 1fr) 80px; gap: 6px 12px; align-items: center; font-size: .9rem; }
+.bd-row .bar { grid-column: 1 / -1; }
+.review-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.review-list li { background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--bad); border-radius: 8px; padding: 12px 14px; display: grid; gap: 4px; font-size: .92rem; }
+.review-list li b { color: var(--good); }
+
+/* Descriptive */
+.dlayout { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .dlayout { grid-template-columns: 1fr; } .dlayout .side { order: 2; } }
+.dlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.dlist button { width: 100%; text-align: left; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 8px; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); cursor: pointer; font-size: .88rem; line-height: 1.35; }
+.dlist button .n { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); padding-top: 1px; }
+.dlist button.cur { border-color: var(--mod); background: var(--mod-soft); }
+.dlist button.done .n { color: var(--good); font-weight: 700; }
+.marks { font-family: var(--f-mono); font-size: .8rem; padding: 3px 9px; border-radius: 999px; background: var(--tan); }
+textarea { width: 100%; min-height: 300px; resize: vertical; padding: 14px 16px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--bg); line-height: 1.6; font-size: 1rem; }
+textarea:focus { border-color: var(--mod); }
+.wc { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: .82rem; color: var(--muted); }
+.assess { display: grid; gap: 18px; padding-top: 18px; border-top: 2px solid var(--mod); }
+.kp { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.kp label { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); cursor: pointer; font-size: .93rem; }
+.kp input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--good); }
+.kp .found { display: inline-block; margin-left: 6px; font-size: .72rem; font-weight: 700; color: var(--good); background: var(--good-soft); padding: 1px 7px; border-radius: 99px; }
+.kp em { font-style: normal; font-weight: 700; }
+.rubric { display: grid; gap: 10px; }
+.rub-row { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr); gap: 8px 14px; align-items: center; padding: 10px 12px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; }
+@media (max-width: 640px) { .rub-row { grid-template-columns: 1fr; } }
+.rub-row .desc { font-size: .8rem; color: var(--muted); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label { position: relative; }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: inline-block; padding: 6px 11px; border-radius: 8px; border: 1.5px solid var(--line); font-size: .82rem; background: var(--card); }
+.seg input:checked + span { background: var(--mod); border-color: var(--mod); color: var(--accent-ink); font-weight: 700; }
+.seg input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+.callout { background: var(--sand); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.callout.good { background: var(--good-soft); border-color: var(--good); }
+.empty { padding: 18px; border: 1.5px dashed var(--line); border-radius: var(--r); color: var(--muted); }
+footer { font-size: .82rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; display: grid; gap: 4px; max-width: 80ch; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div class="mast-title">
+      <p class="eyebrow">Jain University · MSc Psychology · Semester III</p>
+      <button class="mast-home" type="button" data-act="home" aria-label="Go to dashboard home"><h1>Child Psychology Practice Lab</h1></button>
+      <p class="code">23MSPSY3CNOD01 · Child Psychology</p>
+    </div>
+    <div class="stats" id="stats" aria-label="Your overall progress"></div>
+  </header>
+  <main id="app" tabindex="-1"></main>
+  <footer>
+    <p>Modules I–IV follow the course syllabus topics. Module V questions use standard developmental psychology knowledge on the listed syllabus topics.</p>
+    <p>Your progress and draft answers are saved in this browser only.</p>
+  </footer>
+</div>
+<div class="sr-only" aria-live="polite" id="live"></div>
+<script>
+const MCQ = {}, DESC = {};
+// Module I — Introduction to Developmental Psychology
+// Row format: [subtopic, question, correct answer, [three distractors], explanation]
+MCQ.m1 = [
+["intro","Developmental psychology is best described as the scientific study of:","Systematic continuities and changes in individuals from conception to death",["Abnormal behaviour that appears only in childhood","Differences in behaviour between animal species","Changes in intelligence test scores during schooling"],"Developmental psychology studies how people change, and how they stay the same, across the whole lifespan, from conception to death."],
+["intro","Changes that come from the biological unfolding of a species-typical genetic plan are called:","Maturation",["Learning","Socialization","Habituation"],"Maturation is biologically programmed change, such as walking or puberty. Learning, by contrast, is change that comes from experience."],
+["intro","A relatively permanent change in thoughts, feelings or behaviour that results from experience is called:","Learning",["Maturation","Canalization","Imprinting"],"Learning is change produced by experience or practice. It is set against maturation, which is change produced by biology."],
+["intro","The nature–nurture issue asks about the relative contributions of:","Heredity and environment to development",["Conscious and unconscious motives","Childhood and adult experiences","Thinking and feeling"],"Nature refers to heredity and biology, and nurture refers to environment and experience. Most modern theorists see the two as interacting."],
+["intro","A theorist who describes development as a series of distinct stages, each qualitatively different from the one before, holds which view?","Discontinuity",["Continuity","Nativism","Passivity"],"Stage theories such as those of Freud, Erikson and Piaget treat development as discontinuous, with abrupt qualitative changes. Continuity theorists see gradual, quantitative change."],
+["intro","The holistic perspective in developmental psychology emphasises that:","Physical, cognitive, social and emotional development are interrelated",["Each domain of development should be studied in isolation","Development is complete by the end of adolescence","Only heredity determines the course of development"],"The holistic view treats the child as a whole person, in whom change in one domain (for example, motor skills) affects the others (for example, social interaction)."],
+["intro","A researcher tests 4-, 8- and 12-year-olds at the same time to compare their memory. This is a:","Cross-sectional design",["Longitudinal design","Sequential design","Microgenetic design"],"A cross-sectional design compares people of different ages at one point in time. It is quick, but it cannot show individual change and it can confuse age effects with cohort effects."],
+["intro","A major weakness of the cross-sectional design is that age differences may actually reflect:","Cohort effects",["Practice effects from repeated testing","Selective attrition over many years","Observer influence on participants"],"People of different ages grew up in different historical periods (cohorts), so differences between age groups may reflect generation rather than age."],
+["intro","Which problem is most typical of longitudinal designs?","Participant attrition and practice effects from repeated testing",["Inability to measure change within individuals","Cohort effects between different age groups","Lack of any information about stability of traits"],"Following the same people over years is costly. Participants drop out, and repeated testing can improve scores for reasons that have nothing to do with development."],
+["intro","A design that combines cross-sectional and longitudinal approaches by following several age groups over time is a:","Sequential design",["Case study","Correlational design","Cross-cultural design"],"Sequential designs follow different cohorts over time. This lets researchers separate true age changes from cohort effects."],
+["intro","A correlation of −.80 between hours of television and reading scores indicates:","A strong negative relationship, but not necessarily that television causes lower reading",["A weak relationship with no practical meaning","That television causes lower reading scores","That reading causes children to watch less television"],"The size (.80) shows a strong relationship and the sign shows its direction. Correlation alone cannot establish cause and effect."],
+["intro","The defining feature of a true experiment is that the researcher:","Manipulates an independent variable and randomly assigns participants to conditions",["Observes children in their natural settings without interfering","Studies a single child in great depth","Measures two variables and computes their relationship"],"Manipulation plus random assignment lets researchers draw cause-and-effect conclusions about the effect of the independent variable on the dependent variable."],
+["psycho","According to Freud, the part of the personality that is present at birth and operates on the pleasure principle is the:","Id",["Ego","Superego","Conscience"],"The id is the inborn, instinctual part of the personality. It seeks immediate gratification of biological needs."],
+["psycho","Freud's ego operates mainly on the:","Reality principle",["Pleasure principle","Morality principle","Principle of equilibration"],"The ego is the rational part of the personality. It finds realistic ways to satisfy the id's demands."],
+["psycho","Which sequence lists Freud's psychosexual stages in the correct order?","Oral, anal, phallic, latency, genital",["Oral, phallic, anal, genital, latency","Anal, oral, phallic, latency, genital","Oral, anal, latency, phallic, genital"],"Freud proposed five psychosexual stages: oral (0–1), anal (1–3), phallic (3–6), latency (6–11) and genital (12 onward)."],
+["psycho","Freud placed the Oedipus and Electra conflicts in which stage?","Phallic",["Oral","Anal","Latency"],"In the phallic stage (about 3–6 years), children resolve these conflicts by identifying with the same-sex parent, and the superego develops."],
+["psycho","In Freud's theory, fixation refers to:","Arrested development at a stage because needs were over- or under-gratified",["Moving forward to a later stage early","Forming a strong attachment to the mother","Storing information permanently in memory"],"Fixation means some psychic energy stays tied to an earlier stage, and this can show up later as adult personality traits."],
+["psycho","Compared with Freud, Erikson placed more emphasis on:","Social and cultural influences and development across the whole lifespan",["Sexual urges as the main driver of development","The id as the most important part of personality","Development ending in adolescence"],"Erikson's psychosocial theory sees the ego as active and adaptive. It describes eight stages that continue across the lifespan."],
+["psycho","Erikson's first psychosocial crisis, during infancy, is:","Trust versus mistrust",["Autonomy versus shame and doubt","Initiative versus guilt","Industry versus inferiority"],"Infants learn to trust others when caregivers are responsive and dependable."],
+["psycho","A 9-year-old who works hard to master school tasks and compares her skills with her classmates' is facing which Eriksonian crisis?","Industry versus inferiority",["Initiative versus guilt","Identity versus role confusion","Autonomy versus shame and doubt"],"In middle childhood (about 6–12 years), children must master academic and social skills. Failure can lead to feelings of inferiority."],
+["psycho","According to Erikson, the central task of adolescence is:","Identity versus role confusion",["Intimacy versus isolation","Industry versus inferiority","Generativity versus stagnation"],"Adolescents try to form a coherent sense of who they are and where they are heading in life."],
+["psycho","A frequent criticism of psychoanalytic theory is that:","Many of its concepts are difficult to test or falsify",["It ignores early childhood experiences","It focuses only on observable behaviour","It underestimates unconscious motives"],"Concepts such as the id or the Oedipus complex are hard to measure, so many claims cannot be tested scientifically."],
+["learning","John B. Watson argued that development is determined mainly by:","Learning experiences provided by the environment",["Innate stages that unfold automatically","Unconscious sexual conflicts","The child's own active construction of knowledge"],"Watson, the founder of behaviourism, believed that children's development depends on environmental conditioning."],
+["learning","In the ‘Little Albert’ study, the white rat that later produced fear became a(n):","Conditioned stimulus",["Unconditioned stimulus","Unconditioned response","Negative reinforcer"],"The rat was first neutral. After it was paired with a loud noise (the unconditioned stimulus), it came to elicit fear on its own, so it became a conditioned stimulus."],
+["learning","In Skinner's operant conditioning, a reinforcer is any consequence that:","Increases the likelihood that a behaviour will be repeated",["Decreases the likelihood of a behaviour","Is paired with a neutral stimulus before a response","Is presented before the behaviour occurs"],"Reinforcers, whether positive or negative, strengthen behaviour. Punishers weaken it."],
+["learning","A parent stops nagging as soon as the child tidies the room, and the child tidies more often afterwards. This illustrates:","Negative reinforcement",["Positive punishment","Extinction","Observational learning"],"Removing something unpleasant (the nagging) increases the behaviour (tidying). That is negative reinforcement, not punishment."],
+["learning","Bandura's Bobo doll studies demonstrated that children can learn aggression through:","Observational learning",["Classical conditioning of fear","Direct reinforcement only","Maturation of aggressive instincts"],"Children who watched a model hit the Bobo doll imitated the behaviour without being reinforced themselves."],
+["learning","In Bandura's social cognitive theory, reciprocal determinism means that:","The person, their behaviour and the environment all influence one another",["The environment alone shapes behaviour","Children determine their environments completely","Heredity and maturation determine behaviour"],"Bandura described a two-way (reciprocal) interplay. Children are shaped by their environments, and they also act on and change those environments."],
+["learning","A child's belief that she can succeed at a particular task is what Bandura called:","Self-efficacy",["Self-esteem","Identity achievement","Ego integrity"],"Self-efficacy is a belief about one's capability in a specific area. It affects how much effort and persistence a child shows."],
+["learning","A common criticism of learning theories is that they:","Pay too little attention to biological and cognitive contributions to development",["Cannot be tested scientifically","Focus too heavily on unconscious motives","Ignore the effects of the environment"],"Learning theories are testable and practical, but they are said to oversimplify development by underplaying maturation, biology and the child's own thinking."],
+["learning","A teacher gives a gold star every time a child reads a page aloud, and reading increases. This applies:","Positive reinforcement",["Negative reinforcement","Classical conditioning","Punishment"],"Adding a pleasant consequence after a behaviour, which then increases, is positive reinforcement."],
+["cognitive","Piaget viewed children as:","Active ‘constructivists’ who build their own understanding of the world",["Passive recipients of environmental influence","Driven mainly by unconscious urges","Miniature adults who think the same way as adults"],"Piaget believed that children learn by acting on the world and constructing increasingly complex mental structures (schemes)."],
+["cognitive","A toddler sees a cow for the first time and calls it ‘doggie’. In Piaget's terms, the child is:","Assimilating the cow into an existing scheme",["Accommodating a new scheme","Showing object permanence","Using private speech"],"Assimilation means interpreting new experiences in terms of existing schemes. Here the child uses the ‘four-legged animal = doggie’ scheme."],
+["cognitive","Changing an existing scheme to fit a new experience is called:","Accommodation",["Assimilation","Organization","Centration"],"Accommodation means modifying schemes in response to new information, for example forming a separate scheme for ‘cow’."],
+["cognitive","Which is the correct order of Piaget's cognitive stages?","Sensorimotor, preoperational, concrete operational, formal operational",["Preoperational, sensorimotor, formal operational, concrete operational","Sensorimotor, concrete operational, preoperational, formal operational","Preoperational, concrete operational, sensorimotor, formal operational"],"Piaget proposed four invariant stages: sensorimotor (0–2), preoperational (2–7), concrete operational (7–11) and formal operational (11+)."],
+["cognitive","Vygotsky's theory is described as sociocultural because it emphasises that:","Cognitive growth comes from social interaction within a cultural context",["Cognitive stages are the same in every culture","Language is unrelated to thought","Development is driven mainly by biological maturation"],"For Vygotsky, children acquire the tools of thought, such as language, through collaboration with more skilled members of their culture."],
+["cognitive","The zone of proximal development is the gap between:","What a child can do alone and what the child can do with guidance",["A child's mental age and chronological age","Short-term and long-term memory capacity","Preoperational and concrete operational thought"],"The ZPD covers tasks that are too hard to do alone but achievable with help from an adult or a more skilled peer."],
+["cognitive","Information-processing theorists compare the human mind to a:","Computer with limited capacity",["Blank slate","Steam engine","Biological clock"],"Information is taken in, stored, retrieved and processed. Development involves gains in capacity, speed and strategy use."],
+["cognitive","Unlike Piaget, information-processing theorists generally describe cognitive development as:","Gradual, continuous change rather than abrupt stages",["A series of four universal stages","Driven by psychosexual conflicts","Determined only by culture"],"Information-processing views explain cognitive growth through small, continuous improvements in processing rather than qualitative stage shifts."],
+["cognitive","A widely accepted criticism of Piaget's theory is that it:","Underestimated the cognitive abilities of infants and young children",["Overestimated the role of culture","Ignored children's active role in learning","Relied too heavily on laboratory experiments with animals"],"Later research using simpler tasks shows that infants and preschoolers often have abilities earlier than Piaget proposed."],
+["ethology","Ethology is the study of:","The bioevolutionary bases of behaviour and development",["Unconscious motives in personality","Reinforcement schedules in learning","Cultural tools of intellectual adaptation"],"Ethologists study behaviour in natural settings to understand its evolutionary, adaptive value."],
+["ethology","Konrad Lorenz showed that newly hatched goslings follow the first moving object they see. This is called:","Imprinting",["Habituation","Scaffolding","Classical conditioning"],"Imprinting is an innate form of learning in which young animals follow and become attached to a moving object during an early critical period."],
+["ethology","A limited period during which a child is especially susceptible to particular experiences, but in which change is still possible later, is called a:","Sensitive period",["Critical period","Latency period","Period of the zygote"],"Human development usually shows sensitive periods (optimal but not absolute windows) rather than strict critical periods."],
+["ethology","Bowlby applied ethological ideas to argue that infant crying and smiling:","Are innate signals that evolved to attract care from adults",["Are learned only through reinforcement","Show unconscious oral conflicts","Have no adaptive value"],"Bowlby saw these behaviours as built-in signals that promote closeness to a caregiver and therefore survival."],
+["ethology","A key criticism of ethological theory is that:","Its claims about evolutionary origins are difficult to test directly",["It ignores biological influences","It is based only on laboratory studies","It denies that behaviour has adaptive value"],"It is hard to prove that a behaviour evolved for a particular purpose. Ethology also says less about how learning and culture modify innate tendencies."],
+["kohlberg","Kohlberg assessed moral reasoning mainly by:","Presenting moral dilemmas such as the Heinz dilemma and analysing the reasons given",["Observing children cheat on tests","Measuring how often children share toys","Asking parents to rate their children's honesty"],"Kohlberg was interested in the structure of reasoning (why an action is right or wrong), not the choice itself."],
+["kohlberg","Kohlberg's three levels of moral reasoning are:","Preconventional, conventional and postconventional",["Heteronomous, autonomous and universal","Concrete, formal and postformal","Premoral, moral and amoral"],"Each level contains two stages, giving six stages in total."],
+["kohlberg","A child says, ‘Heinz shouldn't steal the drug because he'll be put in jail.’ This reasoning reflects:","Stage 1: punishment-and-obedience orientation",["Stage 3: good boy/good girl orientation","Stage 4: social-order-maintaining morality","Stage 5: social-contract orientation"],"At the preconventional level, stage 1 judges right and wrong by whether an act will be punished."],
+["kohlberg","At Kohlberg's conventional level, moral judgements are based mainly on:","Gaining approval and upholding laws and social rules",["Avoiding punishment and getting rewards","Self-chosen universal ethical principles","Pure self-interest"],"Stage 3 seeks approval from others. Stage 4 focuses on maintaining law and social order."],
+["kohlberg","Carol Gilligan criticised Kohlberg's theory for:","Underrating a morality of care that is often emphasised by women",["Overemphasising emotions in moral reasoning","Using only female participants","Ignoring the role of justice in morality"],"Gilligan argued that Kohlberg's justice-based scoring undervalues care-based reasoning. Later research found only small sex differences."]
+];
+
+// Module II — Biological Foundations of Development
+MCQ.m2 = [
+["heredity","A normal human zygote contains:","46 chromosomes arranged in 23 pairs",["23 single chromosomes","46 pairs of chromosomes","23 chromosomes from the mother only"],"Each parent contributes 23 chromosomes through the sperm or ovum, giving the zygote 46 chromosomes in 23 pairs."],
+["heredity","The cell division that produces sperm and ova, each with half the usual number of chromosomes, is:","Meiosis",["Mitosis","Fertilization","Crossing-over only"],"Meiosis produces gametes with 23 chromosomes. Mitosis duplicates body cells with the full 46."],
+["heredity","Monozygotic (identical) twins develop when:","A single fertilised zygote splits into two",["Two ova are fertilised by two sperm","One ovum is fertilised by two sperm","Two zygotes fuse into one"],"Because they come from one zygote, monozygotic twins share the same genotype. Dizygotic twins share about 50% of their genes, like ordinary siblings."],
+["heredity","A child's genetic sex is determined by:","Whether the father's sperm carries an X or a Y chromosome",["Whether the mother's ovum carries an X or a Y chromosome","The number of autosomes inherited","The mother's hormone levels during pregnancy"],"Ova always carry an X. A sperm carrying Y produces a male (XY), and one carrying X produces a female (XX)."],
+["heredity","Two parents are both carriers of the recessive gene for phenylketonuria (PKU). The chance that each of their children will have PKU is:","25%",["50%","75%","0%"],"Each carrier parent (Pp) passes on the recessive gene half the time, so the chance of a pp child is ½ × ½ = ¼."],
+["heredity","Down syndrome is most commonly caused by:","An extra 21st chromosome (trisomy 21)",["A missing X chromosome","An extra Y chromosome","A single recessive gene"],"Trisomy 21 is the most common chromosomal cause of intellectual disability. Its risk rises with maternal age."],
+["heredity","A female born with a single X chromosome (XO) has:","Turner syndrome",["Klinefelter syndrome","Fragile X syndrome","Down syndrome"],"Turner syndrome (45, X) involves short stature, underdeveloped ovaries and often spatial difficulties. Klinefelter syndrome (XXY) affects males."],
+["heredity","The difference between genotype and phenotype is that:","Genotype is the genes inherited; phenotype is the observable traits produced by genes and environment together",["Genotype is observable; phenotype is hidden","Genotype applies only to physical traits; phenotype only to behaviour","They mean the same thing"],"The phenotype, meaning observable characteristics, comes from the genotype interacting with the environment."],
+["heredity","A heritability coefficient estimates:","The proportion of variation in a trait within a population that is linked to genetic differences",["How much of one person's trait is caused by genes","Whether a trait can be changed by the environment","The number of genes involved in a trait"],"Heritability applies to differences among people in a population, not to individuals. A heritable trait can still be changed by the environment."],
+["heredity","A sociable child seeks out parties and friends, which further strengthens her sociability. Scarr and McCartney called this:","An active (niche-picking) gene–environment correlation",["A passive gene–environment correlation","An evocative gene–environment correlation","Canalization"],"In active correlations, children choose environments that fit their genetic predispositions. This becomes more common with age."],
+["prenatal","The correct order of the prenatal periods is:","Germinal (zygote), embryonic, fetal",["Embryonic, germinal, fetal","Fetal, embryonic, germinal","Germinal, fetal, embryonic"],"The germinal period lasts about 2 weeks, the embryonic period runs from week 3 to week 8, and the fetal period runs from week 9 to birth."],
+["prenatal","The prenatal period during which the organism is most vulnerable to teratogens is the:","Embryonic period (weeks 3–8)",["Germinal period","Third trimester","Period immediately before birth"],"Most major organs and structures form during the embryonic period, so it is the most critical time for structural defects."],
+["prenatal","A teratogen is:","Any external agent that can harm a developing embryo or fetus",["A gene that causes a disorder","A hormone that triggers labour","A reflex present at birth"],"Teratogens include drugs, diseases, chemicals and radiation. Their effects depend on timing, dose and genetic susceptibility."],
+["prenatal","Mothers who took thalidomide early in pregnancy often had babies with:","Malformed or missing limbs",["Fetal alcohol syndrome","Rh incompatibility","Excess growth"],"The thalidomide tragedy showed that a drug harmless to adults could cause severe structural defects when taken during critical periods."],
+["prenatal","Microcephaly, distinctive facial features and intellectual disability in a newborn are characteristic of:","Fetal alcohol syndrome",["Turner syndrome","Sickle-cell anaemia","Phenylketonuria"],"Heavy prenatal alcohol exposure causes FAS. There is no known safe level of drinking during pregnancy."],
+["prenatal","Rubella contracted during the first trimester is most likely to cause:","Blindness, deafness and heart defects",["Excessive birth weight","Early onset of puberty","Rh disease"],"Rubella (German measles) is especially damaging early in pregnancy, when the eyes, ears and heart are forming."],
+["prenatal","Adequate folic acid in early pregnancy helps prevent:","Neural tube defects such as spina bifida",["Down syndrome","Colour blindness","Turner syndrome"],"The neural tube becomes the brain and spinal cord. Folic acid lowers the risk of it failing to close properly."],
+["prenatal","The Apgar scale assesses a newborn's:","Heart rate, respiratory effort, muscle tone, colour and reflex irritability",["Intelligence and temperament","Sensory preferences and learning","Attachment security"],"Each sign is scored 0–2 at 1 and 5 minutes after birth. A score of 7 or above indicates good condition."],
+["prenatal","The longest stage of childbirth is usually:","The first stage, when the cervix dilates",["The second stage, delivery of the baby","The third stage, delivery of the placenta","The stage after the placenta is delivered"],"The first stage, with contractions that dilate the cervix, can last many hours, especially with a first baby."],
+["prenatal","A baby who weighs less than expected for the time spent in the uterus is described as:","Small-for-date",["Preterm","Post-term","Viable"],"Preterm babies are born early but may be a normal weight for their age. Small-for-date babies are underweight for their gestational age and often face more risk."],
+["infancy","A newborn turns toward a touch on the cheek and opens its mouth. This is the:","Rooting reflex",["Babinski reflex","Moro reflex","Stepping reflex"],"Rooting is a survival reflex that helps the infant find the nipple."],
+["infancy","When startled by a loud noise, a newborn throws its arms outward and then brings them in toward the body. This is the:","Moro reflex",["Palmar grasp reflex","Tonic neck reflex","Rooting reflex"],"The Moro (startle) reflex normally disappears within the first few months."],
+["infancy","Stroking the sole of a newborn's foot makes the toes fan out and curl. This is the:","Babinski reflex",["Swimming reflex","Sucking reflex","Moro reflex"],"The Babinski reflex is a primitive reflex. It usually fades by the end of the first year."],
+["infancy","The persistence of primitive reflexes well beyond the age when they normally disappear may indicate:","A possible neurological problem",["Advanced intelligence","Secure attachment","Normal individual variation that never needs checking"],"Doctors use reflexes to assess the nervous system. Reflexes that are absent, weak or persist too long can signal problems."],
+["infancy","In the habituation paradigm, an infant who looks again after a new stimulus replaces a familiar one is showing:","Dishabituation, meaning the infant can tell the stimuli apart",["Habituation to both stimuli","A reflex response only","Object permanence"],"A drop in attention to a repeated stimulus (habituation) followed by renewed attention to a new one (dishabituation) shows discrimination."],
+["infancy","Fantz's preference method showed that very young infants prefer to look at:","Patterned stimuli such as faces over plain stimuli",["Plain coloured discs over patterns","Dim lights over bright lights","Still objects over moving ones"],"Fantz found that newborns look longer at patterned and face-like displays, which suggests early perceptual preferences."],
+["infancy","The visual cliff studies of Gibson and Walk showed that:","Most crawling infants avoid the apparent drop, indicating depth perception",["Newborns cannot see colour","Infants prefer the deep side","Depth perception develops only after age 3"],"Most infants of crawling age refused to cross the ‘deep’ side. Crawling experience appears to strengthen fear of drop-offs."],
+["infancy","At birth, the least developed sense is:","Vision",["Hearing","Taste","Smell"],"Newborn vision is blurry (acuity of roughly 20/400 to 20/600) and improves rapidly over the first year. Hearing, taste and smell work quite well at birth."],
+["infancy","DeCasper's studies found that newborns prefer:","Their mother's voice, and stories heard in the womb",["Any female voice equally","Silence to speech","Male voices to female voices"],"This preference suggests that some auditory learning happens before birth."],
+["infancy","The ability to combine information from two or more senses, for example matching a voice to a face, is called:","Intermodal perception",["Habituation","Size constancy","Visual acuity"],"Infants show surprising early ability to coordinate sight, sound and touch."],
+["infancy","Perceiving an object as the same size even though its image on the retina changes with distance is called:","Size constancy",["Depth perception","Object permanence","Intermodal perception"],"Size constancy is present in a basic form early in infancy and improves over the first year."],
+["physical","Development that proceeds from the head downward to the feet follows the:","Cephalocaudal principle",["Proximodistal principle","Orthogenetic principle","Principle of equilibration"],"Infants control the head and upper body before the lower body. Proximodistal development proceeds from the centre outward."],
+["physical","A child controls trunk and arm movements before hand and finger movements. This illustrates the:","Proximodistal principle",["Cephalocaudal principle","Principle of plasticity","Secular trend"],"Proximodistal means ‘near to far’: development proceeds from the centre of the body outward."],
+["physical","Synapses that are rarely used are eliminated in a process known as:","Synaptic pruning",["Myelination","Synaptogenesis","Lateralization"],"The brain overproduces synapses and then prunes unused ones, following a ‘use it or lose it’ pattern."],
+["physical","Myelination improves brain functioning mainly by:","Speeding the transmission of neural impulses",["Increasing the number of neurons","Removing unused synapses","Linking the two hemispheres at birth"],"The fatty myelin sheath insulates axons. It continues developing into adolescence and early adulthood."],
+["physical","Brain plasticity means that:","The young brain is flexible and can partly recover from injury or reorganise with experience",["Brain structures are fixed at birth","The brain stops growing after infancy","The left hemisphere controls all functions"],"Plasticity is greatest early in life, which is why young children often recover more fully from brain injury."],
+["physical","Specialisation of functions in the two cerebral hemispheres is called:","Lateralization",["Myelination","Proliferation","Canalization"],"For most people, language is lateralised in the left hemisphere and many spatial functions in the right."],
+["physical","Esther Thelen's dynamical systems theory describes motor development as:","Active reorganisation of existing skills into more complex systems, shaped by goals, body and environment",["The automatic unfolding of a genetic timetable only","The result of reinforcement alone","A process unrelated to perception"],"Infants combine and refine motor abilities to reach goals. Maturation, experience and motivation all contribute."],
+["physical","Picking up a small object between the thumb and forefinger, usually by about 9–12 months, is the:","Pincer grasp",["Ulnar grasp","Palmar reflex","Moro reflex"],"The pincer grasp is a fine-motor milestone that replaces the earlier, clumsy ulnar grasp."],
+["physical","The pituitary gland is important for physical growth because it:","Releases growth hormone and triggers other glands",["Produces only insulin","Controls synaptic pruning","Determines eye colour"],"The pituitary, often called the ‘master gland’, regulates growth hormone and stimulates other endocrine glands."],
+["puberty","On average, girls begin their adolescent growth spurt:","About two years earlier than boys",["About two years later than boys","At the same time as boys","Only after menarche"],"Girls typically begin their growth spurt around age 10–11, and boys around 12–13."],
+["puberty","A girl's first menstrual period is called:","Menarche",["Spermarche","Menopause","Ovulation"],"Menarche is a late event in female puberty. Spermarche is the first ejaculation in boys."],
+["puberty","Research on the timing of puberty suggests that early-maturing girls are at greater risk of:","Poor body image, depression and involvement with older peers in risky behaviour",["Being less popular with all peers","Delayed cognitive development","Lower adult height in every case"],"Early maturation tends to be harder for girls. Early-maturing boys often gain social advantages, though they too can face risks."],
+["puberty","The trend over the past century for children to grow taller and reach puberty earlier is called the:","Secular trend",["Cohort effect","Flynn effect","Cephalocaudal trend"],"Improvements in nutrition and health care are believed to explain the secular trend in industrialised nations."],
+["puberty","Anorexia nervosa is characterised by:","Self-starvation driven by a fear of gaining weight and a distorted body image",["Binge eating followed by purging","Overeating because of hormone imbalance","A genetic disorder of protein metabolism"],"Anorexia most often begins in adolescence, especially among girls. It involves serious risks to health."],
+["puberty","The psychological impact of puberty depends heavily on:","How the adolescent and others interpret the changes, and on the timing relative to peers",["Hormones alone, regardless of context","The order of birth in the family","Whether the child was breast-fed"],"Cultural meaning, preparation, peer comparison and timing (early or late maturing) shape how adolescents experience puberty."],
+["influences","Marasmus is caused by:","Severe deficiency of all nutrients, usually in infancy",["Lack of protein only, after weaning","Too much fat in the diet","An extra chromosome"],"Marasmus involves overall starvation, causing wasting. Kwashiorkor is mainly a protein deficiency."],
+["influences","Kwashiorkor, a condition with a swollen belly and thinning hair, results mainly from:","A diet low in protein",["Overeating","Iron overdose","Vitamin C excess"],"Kwashiorkor typically appears after weaning, when children receive enough calories but too little protein."],
+["influences","Growth retardation in children who receive adequate nutrition but suffer emotional neglect is known as:","Nonorganic failure to thrive or deprivation dwarfism",["Catch-up growth","Secular trend","Canalization"],"Emotional deprivation can suppress growth hormone and appetite. Growth often resumes once the child is in a caring environment."],
+["influences","After a period of illness or poor nutrition, a child grows faster than normal to return toward the expected growth curve. This is:","Catch-up growth",["The secular trend","Synaptic pruning","Proximodistal growth"],"Physical growth is strongly canalised. If deprivation is not too long or severe, children tend to return to their genetic growth path."]
+];
+
+// Module III — Cognitive Development
+MCQ.m3 = [
+["intel","The first successful intelligence test, designed to identify children who needed special help at school, was developed by:","Alfred Binet and Théodore Simon",["Lewis Terman alone","David Wechsler","Charles Spearman"],"Binet and Simon's 1905 test introduced the idea of mental age. Terman later revised it into the Stanford–Binet."],
+["intel","A child with a mental age of 10 and a chronological age of 8 has a ratio IQ of:","125",["80","100","118"],"Ratio IQ = (MA ÷ CA) × 100 = (10 ÷ 8) × 100 = 125."],
+["intel","On modern intelligence tests, the deviation IQ is scaled so that:","The mean is 100 and the standard deviation is about 15",["The mean is 50 and the standard deviation is 10","Everyone scores 100 at every age","Scores range only from 0 to 100"],"About 68% of people score between 85 and 115, and about 95% between 70 and 130."],
+["intel","Spearman proposed that intelligence consists of:","A general mental ability (g) plus specific abilities (s)",["Seven completely separate primary abilities","Eight independent intelligences","Fluid and crystallised abilities only"],"Spearman noticed that scores on different tests are correlated, so he inferred a general factor underlying them."],
+["intel","Cattell and Horn distinguished between fluid intelligence and crystallised intelligence. Crystallised intelligence refers to:","Knowledge and skills gained from culture and experience, such as vocabulary",["The ability to solve novel problems quickly","Speed of neural transmission","Musical and bodily skills"],"Fluid intelligence is reasoning with novel material. Crystallised intelligence reflects accumulated knowledge."],
+["intel","Howard Gardner's theory of multiple intelligences proposes that:","People have several relatively independent intelligences, such as linguistic, spatial and interpersonal",["Intelligence is a single general ability","IQ tests measure all forms of intelligence","Intelligence is fixed at birth"],"Gardner described at least eight intelligences, some of which traditional IQ tests do not measure."],
+["intel","Sternberg's triarchic theory describes intelligence in terms of:","Analytic, creative and practical abilities",["Verbal, numerical and spatial factors","Id, ego and superego","Fluid, crystallised and emotional intelligence"],"Sternberg's ‘successful intelligence’ also stresses fitting into and shaping one's environment."],
+["intel","Infant tests such as the Bayley Scales are generally:","Poor predictors of later IQ, though useful for screening developmental problems",["Excellent predictors of adult IQ","Measures of crystallised intelligence","Identical to the Stanford–Binet"],"Infant tests emphasise sensorimotor skills. Infant habituation speed predicts childhood IQ somewhat better."],
+["intel","The Flynn effect refers to:","A rise in average IQ test scores across generations in many countries",["The decline of IQ with age","Higher IQ in first-born children","Differences between fluid and crystallised intelligence"],"Gains this rapid point to environmental causes such as better nutrition, schooling and test familiarity."],
+["intel","Creativity is most closely associated with:","Divergent thinking, meaning many novel ideas from one prompt",["Convergent thinking toward one correct answer","High scores on memory tests","Speed of reflex responses"],"IQ tests mostly assess convergent thinking. Creativity tests ask for many original responses."],
+["piaget","In Piaget's sensorimotor stage, a 3-month-old who repeatedly sucks her thumb because it is pleasurable is showing:","Primary circular reactions",["Secondary circular reactions","Tertiary circular reactions","Deferred imitation"],"Primary circular reactions (1–4 months) are repeated actions centred on the infant's own body."],
+["piaget","A 6-month-old repeatedly shakes a rattle to hear the sound. This is a:","Secondary circular reaction",["Primary circular reaction","Tertiary circular reaction","Reflex activity"],"Secondary circular reactions (4–8 months) repeat actions that produce interesting effects on external objects."],
+["piaget","A 15-month-old drops different toys from different heights to see what happens. This is a:","Tertiary circular reaction",["Secondary circular reaction","Primary circular reaction","Symbolic problem solving"],"Tertiary circular reactions (12–18 months) are active experiments that vary actions to discover new results."],
+["piaget","The understanding that objects continue to exist when they cannot be seen is called:","Object permanence",["Conservation","Egocentrism","Animism"],"Piaget believed that object permanence develops gradually through the sensorimotor stage and is complete at about 18–24 months."],
+["piaget","An 8–12-month-old searches for a toy where it was found before (A), even after watching it being hidden in a new place (B). This is the:","A-not-B error",["Conservation error","Imaginary audience","Overregularisation error"],"Piaget took this error as a sign that object permanence is still incomplete."],
+["piaget","A toddler imitates a tantrum she saw a playmate throw the day before. Piaget called this:","Deferred imitation",["Primary circular reaction","Centration","Reversibility"],"Deferred imitation shows that the child can store mental representations. Piaget placed it around 18–24 months, though later research finds it earlier."],
+["piaget","In the three-mountains task, a preschooler chooses a picture of her own view rather than the doll's view. This shows:","Egocentrism",["Animism","Conservation","Hypothetico-deductive reasoning"],"Piaget argued that preoperational children struggle to take another person's perspective."],
+["piaget","A 4-year-old says that the sun is following him because it wants to see where he is going. This is:","Animism",["Seriation","Transitivity","Object permanence"],"Animism means attributing life or intentions to inanimate objects. It is typical of preoperational thought."],
+["piaget","A preschooler thinks a tall, thin glass holds more juice than a short, wide one after the juice is poured. The child fails to conserve because of:","Centration and lack of reversibility",["Object permanence","Hypothetical reasoning","Deferred imitation"],"The child focuses on one dimension (height) and cannot mentally reverse the pouring."],
+["piaget","Arranging sticks in order from shortest to longest is called:","Seriation",["Conservation","Animism","Assimilation"],"Seriation is a concrete operational skill. It is related to transitive inference."],
+["piaget","A child masters conservation of number before conservation of weight. Piaget called this uneven development:","Horizontal décalage",["Vertical décalage","Equilibration","Scaffolding"],"Horizontal décalage means skills within the same stage appear at different ages across tasks."],
+["piaget","The ability to reason systematically about hypothetical possibilities, as in the pendulum problem, appears in the:","Formal operational stage",["Concrete operational stage","Preoperational stage","Sensorimotor stage"],"Formal operations bring hypothetico-deductive and abstract reasoning, usually from about age 11–12."],
+["piaget","An adolescent believes everyone at school will notice a small pimple. Elkind called this:","The imaginary audience",["The personal fable","Animism","Centration"],"The imaginary audience is a form of adolescent egocentrism: the belief that one is the focus of others' attention."],
+["piaget","Baillargeon's violation-of-expectation studies challenged Piaget by suggesting that:","Infants may understand object permanence earlier than Piaget claimed",["Object permanence does not develop until age 4","Infants cannot perceive depth","Conservation appears in infancy"],"Infants looked longer at ‘impossible’ events, which suggests that they expected hidden objects to continue existing."],
+["vygotsky","Adjusting the amount of help to match a child's current level of performance, and withdrawing it as competence grows, is called:","Scaffolding",["Assimilation","Habituation","Fast mapping"],"The term was introduced by Wood, Bruner and Ross. It applies Vygotsky's ZPD."],
+["vygotsky","Vygotsky viewed children's private speech (talking aloud to themselves) as:","A tool for guiding their own thinking and behaviour, which later becomes inner speech",["A sign of egocentrism that disappears without purpose","Evidence of language delay","Communication aimed only at others"],"Piaget called it egocentric speech. Vygotsky saw it as self-regulatory, and children use it more on difficult tasks."],
+["vygotsky","Children learn cultural skills by taking part in shared activities with more skilled partners. Rogoff called this:","Guided participation",["Discovery learning","Operant conditioning","Equilibration"],"Guided participation includes informal, everyday learning, such as helping to cook or weave alongside an adult."],
+["vygotsky","According to Vygotsky, higher mental functions such as voluntary attention and logical memory develop through:","Social interaction and the use of cultural tools such as language",["Biological maturation alone","Reinforcement of reflexes","Solitary exploration only"],"Elementary functions are biological. Higher functions are shaped by culture and social interaction."],
+["vygotsky","A classroom built on Vygotsky's ideas would most likely include:","Cooperative learning and teacher-guided tasks just beyond children's current independent level",["Strictly individual work with no peer help","Waiting until children are maturationally ready to learn","Rewards for repeating answers by rote"],"Vygotskian education emphasises collaboration, scaffolding and teaching within the ZPD."],
+["vygotsky","Dynamic assessment, inspired by Vygotsky, differs from traditional testing because it:","Measures how much a child improves with hints and guidance",["Gives the same test twice without help","Compares only mental age and chronological age","Relies on timed multiple-choice items"],"Dynamic assessment estimates the child's ZPD, meaning their potential with support."],
+["vygotsky","Reciprocal teaching, in which students and teacher take turns leading discussions about a text, is an application of:","Vygotsky's sociocultural theory",["Freud's psychosexual theory","Skinner's operant conditioning","Gesell's maturational theory"],"Students learn strategies such as questioning, summarising, clarifying and predicting with scaffolded support."],
+["vygotsky","Compared with Piaget, Vygotsky placed more emphasis on:","Culture, language and social interaction as sources of cognitive growth",["Universal, invariant stages","Independent discovery without adult help","Biological maturation as the main cause of change"],"Piaget's child is a lone scientist. Vygotsky's child is a social apprentice."],
+["vygotsky","A common criticism of Vygotsky's theory is that:","The zone of proximal development is vague and hard to measure precisely",["It ignores culture","It proposes rigid universal stages","It denies the role of language in thought"],"Critics also note that it underplays biological and individual factors."],
+["infoproc","In the multistore model, information is held briefly before it is processed further in the:","Sensory register",["Long-term store","Executive control","Semantic memory"],"Sensory memory holds raw input for a very short time. Attended information moves into working (short-term) memory."],
+["infoproc","Repeating a phone number over and over to remember it is the memory strategy called:","Rehearsal",["Organisation","Elaboration","Retrieval"],"Rehearsal appears in early school years. Organisation and elaboration usually develop later."],
+["infoproc","A child can be taught a memory strategy but does not use it spontaneously. This is called a:","Production deficiency",["Utilisation deficiency","Mediation deficiency","Retrieval failure"],"In a utilisation deficiency, the child uses the strategy but it does not yet improve recall."],
+["infoproc","Knowledge about one's own memory and how to improve it is called:","Metamemory",["Working memory","Semantic memory","Episodic buffer"],"Metamemory is part of metacognition, and it grows substantially during middle childhood."],
+["infoproc","Adults' general inability to recall events from their first two or three years of life is called:","Infantile amnesia",["Retrograde amnesia","Production deficiency","Proactive interference"],"Explanations include immature brain structures, limited language and the lack of a stable sense of self."],
+["infoproc","Siegler's overlapping waves model proposes that children:","Use several problem-solving strategies at once, gradually favouring the more effective ones",["Use only one strategy at each stage","Never change strategies","Learn strategies only through direct reinforcement"],"Strategy development is variable and adaptive rather than a series of clean stage shifts."],
+["infoproc","Preschoolers' eyewitness memory is especially vulnerable to:","Leading questions and suggestion from adults",["Too much rehearsal","Strong metamemory","Excessive organisation"],"Young children can give accurate reports, but repeated suggestive interviewing can distort what they recall."],
+["infoproc","General knowledge of the sequence of events in familiar situations, such as going to a restaurant, is called a:","Script",["Schema of conservation","Phoneme","Holophrase"],"Even preschoolers form scripts, and these help them organise and remember routine events."],
+["language","The rules governing how words are combined into sentences are called:","Syntax",["Phonology","Semantics","Pragmatics"],"Syntax is grammatical structure. Semantics is meaning, and pragmatics is the social use of language."],
+["language","Knowing how to adjust speech to the listener, for example speaking simply to a toddler, reflects:","Pragmatics",["Morphology","Phonology","Syntax"],"Pragmatics covers the social rules of language use, such as taking turns and being polite."],
+["language","Noam Chomsky proposed that children acquire language with the help of an innate:","Language acquisition device (LAD)",["Zone of proximal development","Primary circular reaction","Reinforcement schedule"],"Nativists argue that children are biologically prepared to detect universal grammar."],
+["language","Which sequence of early language milestones is correct?","Cooing, babbling, one-word holophrases, telegraphic speech",["Babbling, cooing, telegraphic speech, holophrases","Holophrases, cooing, babbling, telegraphic speech","Cooing, holophrases, babbling, telegraphic speech"],"Cooing starts at about 2 months, babbling at about 6 months, first words at about 12 months, and two-word telegraphic speech at about 18–24 months."],
+["language","A toddler says ‘Daddy go car.’ This is an example of:","Telegraphic speech",["A holophrase","Overregularisation","Babbling"],"Telegraphic speech keeps the content words and leaves out grammatical words such as ‘is’, ‘in’ or ‘the’."],
+["language","A child calls every four-legged animal ‘doggie’. This is:","Overextension",["Underextension","Overregularisation","Fast mapping"],"Overextension is using a word too broadly. Underextension is using it too narrowly, for example ‘doggie’ only for the family dog."],
+["language","A 4-year-old says ‘I goed to the park’ and ‘two foots’. This is:","Overregularisation of grammatical rules",["Telegraphic speech","Underextension","A pragmatic error"],"The child is applying the regular rules for the past tense (-ed) and plurals (-s) to irregular words. This shows rule learning, not simple imitation."],
+["language","Children's ability to learn a new word after only one or two exposures is called:","Fast mapping",["Babbling drift","Expansion","Habituation"],"Fast mapping helps explain the vocabulary spurt in the preschool years."],
+["language","The interactionist view of language development holds that:","Biological readiness and supportive social experience both contribute to language",["Language is learned only by reinforcement","Language unfolds entirely from an innate device without input","Children learn language only by imitating adults"],"Child-directed speech, expansions and recasts support an innate capacity for learning language."]
+];
+
+// Module IV — Social and Personality Development
+MCQ.m4 = [
+["emotion","Which of the following is a primary (basic) emotion present in the first months of life?","Interest",["Embarrassment","Guilt","Pride"],"Primary emotions such as interest, joy, distress, anger, surprise and fear appear early. Self-conscious emotions come later."],
+["emotion","Self-conscious emotions such as shame, guilt and pride emerge at around 18–24 months because they require:","Self-recognition and an awareness of standards for behaviour",["Object permanence only","Formal operational thought","The ability to walk"],"A child must first see herself as a separate person, and later understand rules, before she can feel embarrassed or proud."],
+["emotion","The social smile, directed at people, usually first appears at about:","6–10 weeks",["1 day","6 months","12 months"],"Early reflexive smiles occur during sleep. Smiles directed at people emerge around 6–10 weeks."],
+["emotion","An 8-month-old cries and clings to his mother when an unfamiliar adult approaches. This is:","Stranger anxiety",["Separation anxiety only","Social referencing","Reactive aggression"],"Stranger anxiety commonly appears at around 8–10 months, alongside the formation of specific attachments."],
+["emotion","A 12-month-old looks at her mother's face before deciding whether to approach a new toy. This is:","Social referencing",["Stranger anxiety","Imprinting","Deferred imitation"],"In social referencing, infants use a caregiver's emotional expressions to judge uncertain situations."],
+["emotion","A child smiles and says ‘thank you’ for a disappointing gift. She is following:","Emotional display rules",["Primary emotions","Emotional contagion","Empathic distress"],"Display rules are cultural norms about which emotions to show in which situations. Children learn to apply them gradually."],
+["emotion","The ability to manage and adjust one's emotional arousal to an appropriate level is called:","Emotion regulation",["Social referencing","Temperament","Imprinting"],"Emotion regulation starts with infant strategies such as looking away and later moves to cognitive strategies such as reinterpreting a situation."],
+["emotion","Parents who talk with children about feelings and help them understand and cope with emotions tend to have children who:","Show better emotional understanding and social competence",["Become more anxious","Show more aggressive behaviour","Develop slower language"],"Talking about emotions within the family supports emotional understanding and good peer relationships."],
+["emotion","Emotional competence includes:","Expressing emotions appropriately, understanding others' emotions, and regulating one's own",["Hiding all emotions at all times","Only recognising facial expressions","Avoiding emotional situations"],"These skills together predict positive peer relations and adjustment."],
+["temperament","Temperament is best defined as:","A person's characteristic, biologically based tendencies to respond emotionally and behaviourally to events",["Moral values learned from parents","Intelligence measured at birth","The quality of attachment to a caregiver"],"Temperament is the early-appearing foundation of later personality."],
+["temperament","In Thomas and Chess's study, about 40% of infants were even-tempered, regular in habits and adapted easily. They were classified as:","Easy children",["Difficult children","Slow-to-warm-up children","Inhibited children"],"About 10% were difficult and 15% slow-to-warm-up, and the remaining 35% did not fit any category."],
+["temperament","An infant who is inactive, somewhat moody and slow to adapt to new situations would be classified as:","Slow-to-warm-up",["Easy","Difficult","Securely attached"],"Slow-to-warm-up children adapt gradually when they are given time and patience."],
+["temperament","The idea that development is best when the child's temperament matches the demands of the environment is called:","Goodness-of-fit",["Reciprocal determinism","Equilibration","Canalization"],"For example, a difficult child with patient, consistent parents often becomes well adjusted."],
+["temperament","Jerome Kagan described children who are shy, cautious and wary of novelty as showing:","Behavioural inhibition",["Disorganised attachment","Learned helplessness","Hostile attribution bias"],"Inhibited children show greater physiological arousal to novelty. The trait is moderately stable."],
+["temperament","Mary Rothbart's model of temperament includes the dimension of effortful control, which refers to:","The ability to focus attention and inhibit impulses",["The intensity of positive emotion","The tendency to cry when frustrated","Sensitivity to pain"],"Effortful control is linked to self-regulation and later social competence."],
+["temperament","Twin studies indicate that temperament is:","Moderately heritable, and also influenced by the environment",["Entirely determined by genes","Entirely shaped by parenting","Unrelated to biology"],"Identical twins are more alike in temperament than fraternal twins, but shared and nonshared environments also matter."],
+["attachment","In Schaffer and Emerson's phases of attachment, infants first show protest at separation from one particular person at about:","7–9 months, the phase of specific attachment",["0–6 weeks, the asocial phase","6 weeks to 6 months, the phase of indiscriminate attachment","2 years, the phase of multiple attachments"],"After forming a first specific attachment, most infants go on to form multiple attachments."],
+["attachment","Harlow's studies of infant monkeys raised with wire and cloth surrogate mothers showed that:","Contact comfort matters more than feeding for attachment",["Feeding is the main basis of attachment","Monkeys prefer the wire mother that provides milk","Attachment is learned only through reinforcement"],"The monkeys clung to the soft cloth mother, especially when frightened, even when the wire mother fed them."],
+["attachment","Bowlby proposed that through early experiences with caregivers, children form mental representations of themselves and others. He called these:","Internal working models",["Schemes","Scripts","Display rules"],"Working models shape expectations about relationships in later life."],
+["attachment","In Ainsworth's Strange Situation, an infant who is upset when the mother leaves and is quickly comforted when she returns is classified as:","Securely attached",["Resistant","Avoidant","Disorganised"],"Securely attached infants use the mother as a secure base for exploration."],
+["attachment","An infant who shows little distress at separation and ignores or turns away from the mother at reunion is classified as:","Avoidant",["Secure","Resistant","Disorganised"],"Avoidant attachment has been linked with caregivers who are impatient, unresponsive or rejecting."],
+["attachment","An infant who stays close to the mother, is very distressed when she leaves, and both seeks and resists contact when she returns is classified as:","Resistant (ambivalent)",["Avoidant","Secure","Disorganised"],"Resistant attachment has been linked with inconsistent caregiving."],
+["attachment","Dazed, confused or contradictory behaviour at reunion in the Strange Situation is typical of:","Disorganised/disoriented attachment",["Secure attachment","Avoidant attachment","Resistant attachment"],"Main and Solomon identified this pattern. It is especially common among maltreated infants."],
+["attachment","Ainsworth's caregiving hypothesis proposes that secure attachment is fostered mainly by:","Sensitive, responsive caregiving",["Strict feeding schedules","Constant physical contact without responsiveness","The infant's genes alone"],"Parental sensitivity is a consistent predictor of security, although infant characteristics also contribute."],
+["attachment","Cross-cultural Strange Situation studies found higher rates of resistant attachment in Japan. One explanation is that:","Japanese infants rarely experience separations, so the procedure is unusually stressful for them",["Japanese parents are generally insensitive","Attachment cannot be measured outside the USA","Japanese infants have difficult temperaments"],"Cultural childrearing practices affect how infants respond to the Strange Situation, so classifications must be interpreted with care."],
+["attachment","Research on children adopted from deprived institutions suggests that:","Early, prolonged deprivation can have lasting effects, but sensitive later care brings substantial recovery",["Deprivation has no effects at all","Children cannot form any attachment after infancy","Effects disappear completely in every case"],"Children adopted early typically do best. Those deprived for longer often show persisting difficulties."],
+["self","In the rouge (mirror) test, toddlers who touch the mark on their own nose are showing:","Self-recognition",["Object permanence","Conservation","Theory of mind"],"Self-recognition typically emerges between 18 and 24 months."],
+["self","When asked to describe themselves, preschoolers typically mention:","Concrete characteristics such as appearance, possessions and activities",["Abstract values and beliefs","Psychological traits compared across situations","Integrated philosophies of life"],"Self-descriptions move from concrete to psychological in middle childhood and become abstract in adolescence."],
+["self","A child who understands that others can hold false beliefs, as in the Sally–Anne task, has developed a:","Theory of mind",["Gender schema","Secure base","Script"],"Most children pass false-belief tasks at around age 4."],
+["self","An adolescent has explored several career and value options and made firm commitments. In Marcia's terms, this is:","Identity achievement",["Identity foreclosure","Identity moratorium","Identity diffusion"],"Achievement involves both exploration and commitment. Foreclosure involves commitment without exploration."],
+["self","An adolescent who has committed to the career his parents chose, without exploring alternatives, is in:","Identity foreclosure",["Identity achievement","Identity moratorium","Identity diffusion"],"Foreclosed individuals adopt identities given by others without questioning them."],
+["self","A student who believes her abilities can grow with effort, and so persists after failure, has what Dweck calls:","An incremental (growth) theory of ability",["An entity theory of ability","Learned helplessness","Identity diffusion"],"Entity theorists see ability as fixed and are more prone to helplessness after failure."],
+["self","Selman's research on role-taking describes children's growing ability to:","Understand others' perspectives and coordinate them with their own",["Recognise themselves in a mirror","Conserve number and volume","Classify objects hierarchically"],"Role-taking moves from egocentric views to mutual and societal perspective-taking."],
+["self","In middle childhood, social comparison becomes important for self-esteem because children:","Begin to judge their abilities against those of their peers",["Lose interest in peers","Base self-worth only on parents' praise","Stop evaluating themselves"],"Children's self-evaluations become more realistic, and sometimes lower, as they compare themselves with classmates."],
+["gender","According to Kohlberg's cognitive-developmental theory of gender, which is the correct sequence?","Gender identity, gender stability, gender consistency",["Gender consistency, gender identity, gender stability","Gender stability, gender consistency, gender identity","Gender identity, gender consistency, gender stability"],"Children first label their gender, then understand that it is stable over time, and finally that it stays the same across situations."],
+["gender","Martin and Halverson's gender schema theory proposes that children:","Organise information into ‘for boys’ and ‘for girls’ categories and attend to what fits their own gender",["Learn gender roles only through reinforcement","Develop gender identity by resolving the Oedipus complex","Have no gender concepts until adolescence"],"Once children have a basic gender identity, they actively seek information that fits their own-sex schema."],
+["gender","Which sex difference is best supported by research?","Males on average are more physically aggressive than females",["Females have higher general intelligence","Males are more sociable","Females are more physically active from birth"],"Maccoby and Jacklin also noted verbal advantages for girls and visual–spatial advantages for boys. These are average differences with much overlap."],
+["gender","A person who shows high levels of both masculine and feminine traits is described by Bem as:","Androgynous",["Undifferentiated","Gender-typed","Gender-inconsistent"],"Androgyny has been associated with flexibility and, in some studies, higher self-esteem."],
+["gender","Social learning theory explains gender typing mainly through:","Differential reinforcement and observational learning",["Innate gender schemas","Resolution of psychosexual conflicts","Hormones alone"],"Children are rewarded for gender-appropriate behaviour and imitate same-sex models."],
+["gender","The strong preference of children in early and middle childhood to play with same-sex peers is called:","Gender segregation",["Androgyny","Gender consistency","Identity foreclosure"],"Gender segregation peaks in middle childhood and supports the development of different interaction styles."],
+["gender","Money and Ehrhardt's biosocial theory emphasises that gender development depends on:","Biological factors interacting with social labelling and how the child is treated",["Biology alone","Social learning alone","Unconscious identification only"],"Prenatal hormones and social labelling after birth both contribute to gender development."],
+["moral","A child pushes another child off a swing in order to get a turn. This is:","Instrumental aggression",["Hostile aggression","Relational aggression","Altruism"],"Instrumental aggression is a means to an end, here a toy or turn. Hostile aggression aims to hurt."],
+["moral","Dodge found that reactive-aggressive children tend to:","Overattribute hostile intent to others in ambiguous situations",["Accurately read others' intentions","Avoid all conflict","Have a strong theory of mind"],"This hostile attributional bias leads them to retaliate even when harm was accidental."],
+["moral","Spreading rumours or excluding a peer to damage their friendships is called:","Relational aggression",["Instrumental aggression","Physical aggression","Prosocial behaviour"],"Relational aggression is more common among girls than physical aggression is."],
+["moral","Patterson described families in which members try to control one another through negative and aggressive tactics. He called these:","Coercive home environments",["Authoritative homes","Androgynous homes","Inductive homes"],"Coercive cycles reinforce aggression in children and parents alike."],
+["moral","Helping or comforting someone without expecting a reward is called:","Altruism",["Instrumental aggression","Conformity","Social referencing"],"Altruism is a prosocial behaviour often motivated by empathy."],
+["moral","According to Piaget, a 6-year-old who believes rules are fixed and that bad deeds will always be punished is in the stage of:","Heteronomous morality",["Autonomous morality","Postconventional morality","Premoral period"],"Heteronomous children believe in immanent justice and judge acts by their consequences rather than intentions."],
+["moral","Explaining to a child how their behaviour has hurt someone else is the discipline technique Hoffman called:","Induction",["Power assertion","Love withdrawal","Time-out"],"Induction promotes empathy and moral internalisation better than power assertion or love withdrawal."],
+["moral","Turiel showed that even young children distinguish between:","Moral rules, which protect welfare and rights, and social-conventional rules, which are arbitrary customs",["Primary and secondary emotions","Assimilation and accommodation","Secure and insecure attachment"],"Children judge hitting as wrong even if no rule forbids it, but they see wearing pyjamas to school as wrong only because of convention."],
+["moral","Eisenberg found that young children's prosocial moral reasoning is often:","Hedonistic, focusing on personal consequences",["Based on universal ethical principles","Focused on social contracts","Based on empathy from the start"],"With age, children move toward needs-oriented, approval-oriented and then internalised, empathic reasoning."]
+];
+
+// Module V — The Context of Development (standard developmental psychology knowledge)
+MCQ.m5 = [
+["family","Viewing the family as a social system means recognising that:","Members influence one another both directly and indirectly, and the family changes over time",["Only parents influence children","Each relationship in the family is independent of the others","Families do not change once children are born"],"For example, a father's support for the mother can indirectly improve her parenting. That is an indirect effect within the system."],
+["family","Baumrind's authoritative parents are:","Warm and responsive, while setting clear limits and explaining their rules",["Strict and demanding, with little warmth","Warm but making few demands","Low in both warmth and demands"],"Authoritative parenting is consistently linked to the most positive outcomes, such as competence, self-control and achievement."],
+["family","Parents who demand obedience, use power-assertive discipline and rarely explain their rules show which style?","Authoritarian",["Authoritative","Permissive","Uninvolved"],"Authoritarian parenting is high in demands and low in responsiveness. It is linked to anxiety, low self-esteem or hostility in children."],
+["family","Parents who are accepting but make few demands and seldom control their children's behaviour show which style?","Permissive",["Authoritarian","Authoritative","Uninvolved"],"Children of permissive parents are often impulsive and less self-controlled, and they may do less well at school."],
+["family","Which parenting style is generally associated with the poorest outcomes for children?","Uninvolved (neglectful)",["Authoritative","Permissive","Authoritarian"],"Low warmth combined with low demands is linked to difficulties in attachment, school and behaviour, and to delinquency."],
+["family","Maccoby and Martin described parenting styles using two dimensions:","Acceptance/responsiveness and demandingness/control",["Strictness and income","Discipline and education level","Love and religion"],"Crossing these two dimensions produces the four parenting styles."],
+["family","Behavioural control (monitoring and limit-setting) differs from psychological control in that psychological control:","Manipulates the child's feelings, for example through guilt or love withdrawal",["Sets clear rules about behaviour","Involves warm encouragement","Promotes autonomy"],"Psychological control is linked to anxiety and depression. Reasonable behavioural control is linked to positive adjustment."],
+["family","The idea that children's characteristics also shape how parents treat them is known as:","Bidirectional (reciprocal) influence",["Unidirectional parental effect","The secular trend","Canalization"],"For example, a difficult, impulsive child may elicit more controlling parenting, which in turn affects the child."],
+["family","Compared with higher-SES parents, economically stressed lower-SES parents are, on average, more likely to:","Emphasise obedience and use power-assertive discipline",["Use more reasoning and explanations","Be uniformly more permissive","Show no differences in parenting"],"Economic stress can strain parents' well-being and parenting. Strong social support reduces these effects."],
+["family","The birth of a sibling often leads the first-born child to:","Show some distress or attention-seeking, which usually eases with parental support",["Become permanently less attached to parents","Show no reaction at all","Immediately become a full caregiver"],"Parents who keep the first-born involved and continue giving them attention help the child adjust."],
+["family","Research on children of divorce suggests that:","Most children show distress during an initial crisis period, and many adjust well within about two years",["All children suffer permanent harm","Divorce has no effects on children","Conflict between parents does not matter"],"Outcomes depend heavily on parental conflict, economic stress and the quality of parenting after the divorce."],
+["family","After divorce, children generally adjust better when:","Parents keep conflict low and maintain warm, consistent parenting",["Contact with the non-residential parent stops","Children take sides in disputes","Discipline becomes very lax"],"Ongoing conflict between parents is one of the strongest predictors of poor adjustment."],
+["family","A family formed by a parent, a step-parent and children from earlier relationships is called a:","Blended (reconstituted) family",["Extended family","Nuclear family","Single-parent family"],"Adjusting to a blended family takes time, and it is often harder for adolescents."],
+["family","Which statement about child maltreatment is supported by research?","Most abused children do not become abusive parents, though their risk is higher than average",["Every abused child will become an abuser","Abuse is caused only by parents' personalities","Social support plays no role in preventing abuse"],"Maltreatment arises from many interacting factors in the parent, child, family and community."],
+["family","An only child, compared with children who have siblings, is on average:","Similar in social competence and often slightly higher in achievement",["Usually spoilt and selfish","Much less intelligent","Unable to form friendships"],"Research does not support the negative stereotype of only children."],
+["media","Young children's ‘television literacy’ is limited because they tend to:","Attend to perceptually striking features rather than following the story and characters' motives",["Understand all programme content as adults do","Ignore fast action and loud music","Read the subtitles carefully"],"Understanding of plots, motives and the difference between fantasy and reality improves through middle childhood."],
+["media","Research on televised violence suggests that heavy exposure can:","Increase aggression and make children less sensitive to violence",["Reduce aggression through catharsis","Have no effect on behaviour","Increase prosocial behaviour"],"Longitudinal and experimental studies link violent media to aggressive thoughts and behaviour, especially among already aggressive children."],
+["media","The belief that the world is more dangerous than it really is, linked to heavy viewing of violent television, is known as:","The ‘mean world’ belief",["The secular trend","The imaginary audience","The personal fable"],"Heavy exposure to violent content can lead children to overestimate danger in everyday life."],
+["media","Educational programmes such as Sesame Street have been associated with:","Gains in early literacy, numeracy and school readiness",["Lower vocabulary scores","More aggressive play","Reduced attention span in every child"],"Well-designed educational television can support early academic skills, especially when adults watch with children."],
+["media","Prosocial programmes such as Mister Rogers' Neighborhood have been found to:","Increase helping, cooperation and sharing in young viewers",["Have no effect on behaviour","Increase hostile aggression","Reduce children's vocabulary"],"Effects are stronger when adults discuss the programme content with children."],
+["media","Children younger than about 7–8 years are especially vulnerable to television advertising because they:","Often do not understand the persuasive intent of commercials",["Never watch commercials","Understand advertising better than adults","Cannot remember products"],"Young children often treat advertisements as information rather than attempts to persuade."],
+["media","The idea that television viewing replaces other valuable activities, such as reading, play and sleep, is the:","Displacement hypothesis",["Catharsis hypothesis","Caregiving hypothesis","Mean world hypothesis"],"Heavy screen time may crowd out physical activity, social play and homework."],
+["media","Parents watching programmes with their children and discussing the content, known as co-viewing, tends to:","Increase learning and reduce negative effects",["Increase aggression","Reduce understanding","Have no influence"],"Adult commentary helps children interpret content critically."],
+["media","Computer-assisted instruction and educational software, when well designed, can:","Support academic skills and motivation",["Always harm academic progress","Replace all teacher instruction","Reduce reading ability in every case"],"The quality of the content and how it is used matter more than the technology itself."],
+["media","Playing fast-paced action video games has been linked to improvements in:","Visual–spatial skills and attention",["Verbal vocabulary","Moral reasoning","Handwriting"],"Some games enhance spatial abilities. Violent games, however, are associated with increased aggression."],
+["media","The ‘digital divide’ refers to:","Differences in access to and use of computers and the internet across social groups",["Differences between the left and right hemispheres","The gap between TV and computer use","Age differences in reading speed"],"Children from lower-income families historically had less access to technology at home."],
+["media","Harassing someone through digital media such as messaging apps or social media is called:","Cyberbullying",["Relational aggression offline","Displacement","Co-viewing"],"Cyberbullying is associated with anxiety, depression and lower self-esteem in victims."],
+["school","Rutter's studies of effective schools found that successful schools were characterised by:","An emphasis on academics, clear discipline and warm, task-focused teachers",["Large class sizes and strict ability grouping only","Expensive facilities and new buildings","Minimal expectations to avoid stress"],"School climate and teaching practices mattered more than material resources."],
+["school","Research such as Tennessee's Project STAR found that:","Smaller class sizes in early grades benefit achievement, especially for disadvantaged children",["Class size has no effect at any grade","Larger classes improve achievement","Small classes help only gifted students"],"Benefits were clearest when class size was reduced in kindergarten through grade 3."],
+["school","Grouping students by ability (tracking) tends to:","Benefit high-track students but can disadvantage those placed in low tracks",["Benefit all students equally","Harm only high-ability students","Have no effects"],"Low-track classes often have lower expectations and less challenging instruction."],
+["school","Rosenthal and Jacobson's ‘Pygmalion’ study showed that teachers' expectations can create:","A self-fulfilling prophecy",["Learned helplessness in every child","Higher IQ for all children","Gender segregation"],"Students labelled as ‘bloomers’ showed greater gains, apparently because teachers treated them differently."],
+["school","Eccles' stage–environment fit idea suggests that declines in motivation after moving to middle school arise because:","The school environment does not match young adolescents' growing need for autonomy and supportive relationships",["Adolescents become less intelligent","Puberty lowers IQ","Parents stop caring about schoolwork"],"Larger, more impersonal schools with stricter control may fit poorly with early adolescents' needs."],
+["school","Educating children with special needs in regular classrooms is known as:","Inclusion (mainstreaming)",["Tracking","Segregation","Retention"],"Inclusion works best with adequate support, teacher training and cooperative learning."],
+["school","Aronson's ‘jigsaw classroom’, in which each student contributes one piece of a shared task, was designed to:","Reduce prejudice and promote cooperation among diverse students",["Increase competition among students","Separate students by ability","Replace teachers with peer tutors"],"Interdependence encourages positive contact and respect among students."],
+["school","Long-term follow-ups of high-quality early intervention programmes, such as the Perry Preschool Project, found:","Benefits in school completion and social outcomes, even when early IQ gains faded",["No benefits of any kind","Permanent large IQ gains only","Negative effects on achievement"],"Children were less likely to be placed in special education and more likely to finish school."],
+["school","Students who aim to understand and master material, rather than to look smart compared with others, are said to have:","Mastery (learning) goals",["Performance goals","Extrinsic goals only","Avoidance goals"],"Mastery goals are linked to persistence and deeper learning."],
+["school","Cross-cultural studies by Stevenson and colleagues suggested that East Asian students' high mathematics achievement is partly related to:","A cultural belief that effort, more than fixed ability, leads to success",["Genetic superiority in mathematics","Shorter school years","Less homework"],"Parents and teachers held high expectations and stressed hard work."],
+["school","Parental involvement in a child's schooling is generally associated with:","Better academic performance and school engagement",["Lower motivation","No effect","Increased truancy"],"Involvement includes attending school events, helping with learning, and conveying high expectations."],
+["school","A smooth transition into formal schooling is best supported when:","Children have early literacy and numeracy experiences and school and family keep in close contact",["Children start school with no prior preparation","Parents avoid any contact with teachers","Children are held back a year regardless of readiness"],"School readiness reflects social, emotional and cognitive skills. Home–school links make the transition easier."],
+["peers","Peer interactions differ from parent–child interactions mainly because peers:","Are of roughly equal status, which encourages negotiation and cooperation",["Hold authority over one another","Are always older","Provide only negative influences"],"Equal-status relationships help children develop social skills and perspective-taking."],
+["peers","Two preschoolers play side by side with similar toys but do not interact. Parten called this:","Parallel play",["Cooperative play","Associative play","Onlooker behaviour"],"Parten's categories include unoccupied, solitary, onlooker, parallel, associative and cooperative play."],
+["peers","Children who receive many ‘like’ nominations and few ‘dislike’ nominations from peers are classified as:","Popular",["Rejected","Neglected","Controversial"],"Sociometric techniques classify children by peer nominations."],
+["peers","A child who is rarely nominated as either liked or disliked by peers is classified as:","Neglected",["Rejected","Popular","Controversial"],"Neglected children are generally at less risk than rejected children, and their status often changes over time."],
+["peers","Children who are rejected by peers are at greater risk of:","Loneliness, school problems and later adjustment difficulties",["Becoming more popular with age in all cases","Higher academic achievement","Stronger self-esteem"],"Researchers distinguish rejected-aggressive from rejected-withdrawn children. Both groups need support."],
+["peers","A small group of friends who interact often is called a clique, while a larger, reputation-based group, such as ‘jocks’ or ‘brains’, is called a:","Crowd",["Family system","Dyad","Peer tutoring group"],"Dunphy described how cliques and crowds help adolescents move toward mixed-sex relationships."],
+["peers","Conformity to peer pressure, especially toward antisocial behaviour, tends to peak in:","Early to mid-adolescence, around age 14–15",["Early childhood","Middle childhood around age 6","Adulthood"],"Berndt found that conformity to antisocial pressure rises in early adolescence and declines later."],
+["peers","Compared with younger children, adolescents' friendships emphasise:","Intimacy, loyalty and self-disclosure",["Only shared activities and toys","Physical proximity alone","Avoiding conflict at all costs"],"Friendships develop from shared play toward mutual understanding and emotional support."],
+["peers","Research comparing parent and peer influence suggests that adolescents tend to follow:","Peers on everyday matters such as style and music, and parents on long-term values and plans",["Peers on all decisions","Parents on all decisions","Neither parents nor peers"],"Parent and peer influences are often complementary rather than opposed."],
+["peers","Pretend (sociodramatic) play with peers is thought to:","Promote perspective-taking, language and self-regulation",["Delay cognitive development","Have no developmental value","Increase egocentrism"],"Taking on roles and negotiating scenarios builds social and cognitive skills."],
+["peers","Repeated, intentional aggression toward a weaker peer is called:","Bullying",["Instrumental play","Rough-and-tumble play","Associative play"],"Bullying involves an imbalance of power. Victims can suffer anxiety, depression and poorer school outcomes."]
+];
+
+// Descriptive bank. Row: [subtopic, marks, prompt, [key points; *starred terms* are checked against the answer]]
+DESC.m1 = [
+["intro",10,"Define developmental psychology and explain the major issues (nature–nurture, continuity–discontinuity, active–passive child) that shape theories of development.",["Defines development as systematic *continuities* and *changes* from conception to death","Distinguishes *maturation* (biological) from *learning* (experience)","Explains the *nature*–*nurture* debate and today's interactionist view","Explains *continuity* (quantitative) versus *discontinuity* (qualitative stages)","Discusses the *active* versus *passive* child, with theorists as examples","Mentions the *holistic* perspective linking physical, cognitive and social domains"]],
+["intro",10,"Compare cross-sectional, longitudinal and sequential research designs, giving the strengths and limitations of each.",["*Cross-sectional*: different ages tested at one time; quick, but subject to *cohort* effects","*Longitudinal*: same people over time; shows individual change","Longitudinal limits: *attrition*, practice effects, cost and time","*Sequential*: combines both and separates age from cohort effects","Mentions *microgenetic* design as studying change as it happens","Gives a suitable research example for each design"]],
+["intro",5,"Explain the difference between correlational and experimental methods in child development research. Why can only experiments establish cause and effect?",["*Correlational* method measures the relationship between variables (*correlation coefficient*, −1 to +1)","Correlation does not imply *causation* (third variables, direction)","*Experiment* manipulates an *independent variable* and measures a *dependent variable*","*Random assignment* and control of extraneous variables","Mentions *ethical* limits (informed consent, protection from harm)"]],
+["psycho",10,"Describe Erikson's psychosocial stages of childhood and adolescence and compare his theory with Freud's psychosexual theory.",["Lists *trust* vs mistrust, *autonomy* vs shame, *initiative* vs guilt, *industry* vs inferiority, *identity* vs role confusion","Explains each crisis with the role of social agents (parents, school, peers)","Freud: *id*, *ego*, *superego*; oral, anal, phallic, latency, genital stages","Erikson stresses *social* and *cultural* forces and a *lifespan* view","Erikson's ego is active and adaptive; Freud stresses sexual instincts","Evaluation: hard to *test*, but influential for practice"]],
+["learning",10,"Explain the contributions of Watson, Skinner and Bandura to our understanding of child development.",["*Watson*: behaviourism and classical conditioning (*Little Albert*)","*Skinner*: *operant conditioning*; *reinforcement* and *punishment* shape behaviour","*Bandura*: *observational learning* (Bobo doll) and modelling","Bandura's *reciprocal determinism* and *self-efficacy*","Strengths: testable, with practical applications (behaviour modification)","Limits: underplay *biological* and cognitive contributions"]],
+["cognitive",10,"Compare Piaget's and Vygotsky's views of cognitive development.",["Piaget: child as a *constructivist*; *schemes*, *assimilation*, *accommodation*","Piaget: four universal *stages*","Vygotsky: *sociocultural* theory; learning through *social interaction*","*Zone of proximal development* and *scaffolding*","Role of *language*: egocentric speech (Piaget) versus *private speech* (Vygotsky)","Educational implications: discovery learning versus guided, cooperative learning"]],
+["ethology",5,"What is ethology? Discuss its contributions to developmental psychology, including Bowlby's ideas.",["Studies the *bioevolutionary* bases and *adaptive* value of behaviour","Lorenz's *imprinting* and the *critical period*","Human *sensitive periods*","*Bowlby*: infant signals (crying, smiling) promote *attachment*","Criticism: evolutionary claims are hard to *test*"]],
+["kohlberg",10,"Explain Kohlberg's theory of moral development with examples and evaluate it.",["Uses *moral dilemmas* (*Heinz*) and studies the reasoning, not the choice","*Preconventional*: punishment-obedience; naive hedonism","*Conventional*: good boy/good girl; *social order*","*Postconventional*: social contract; universal ethical principles","Invariant sequence linked to cognitive and *role-taking* growth","Criticism: *Gilligan*'s ethic of *care*, cultural bias, weak link between reasoning and behaviour"]]
+];
+DESC.m2 = [
+["heredity",10,"Explain the principles of hereditary transmission and describe common chromosomal abnormalities.",["*Zygote* with 46 chromosomes; *meiosis* versus *mitosis*","*Monozygotic* versus *dizygotic* twins","Single gene-pair inheritance: *dominant*, *recessive*, *codominance*; sex-linked traits","*Polygenic* inheritance of complex traits","*Down syndrome*, *Turner*, *Klinefelter* syndromes","*Genotype* versus *phenotype*"]],
+["heredity",5,"How do heredity and environment interact in development? Discuss gene–environment correlations.",["*Heritability* estimates from *twin* and adoption studies","*Shared* versus *nonshared* environmental influences","*Passive*, *evocative* and *active* (niche-picking) correlations","*Canalization* and range of reaction","Example such as temperament or intelligence"]],
+["prenatal",10,"Describe the stages of prenatal development and discuss the effects of teratogens.",["*Germinal* period (0–2 weeks) and implantation","*Embryonic* period (3–8 weeks): organ formation; most vulnerable","*Fetal* period: growth and *age of viability*","Defines *teratogen*; effects depend on *timing* and dose","Examples: *thalidomide*, *alcohol* (FAS), *rubella*, smoking","Maternal factors: nutrition (*folic acid*), stress, age"]],
+["prenatal",5,"Explain the process of childbirth and the methods used to assess a newborn.",["Three *stages* of labour: dilation, delivery, afterbirth","*Apgar* scale: five signs scored 0–2 at 1 and 5 minutes","Risks: *anoxia*, *low birth weight*, preterm versus *small-for-date*","Interventions such as *kangaroo care*","Parent–infant bonding and *postpartum* adjustment"]],
+["infancy",10,"Discuss newborn reflexes and the development of sensation and perception in infancy.",["Survival reflexes: *rooting*, *sucking*, breathing","Primitive reflexes: *Moro*, *Babinski*, *grasping*, stepping","Reflexes as indicators of *neurological* health","Methods: *preference* method, *habituation*, evoked potentials","Vision: acuity, pattern and face perception, *visual cliff* (depth)","Hearing (*mother's voice*), taste, smell, *intermodal* perception"]],
+["physical",10,"Describe brain development in infancy and childhood and explain its implications for motor development.",["*Synaptogenesis* and *synaptic pruning* (‘use it or lose it’)","*Myelination* speeds transmission","*Lateralization* of the hemispheres","*Plasticity* and the role of experience","*Cephalocaudal* and *proximodistal* trends; motor milestones","*Dynamical systems* view of motor skills (Thelen)"]],
+["puberty",10,"Describe the physical changes of puberty and discuss their psychological impact, including the effects of early and late maturation.",["*Growth spurt*; girls about 2 years earlier","*Menarche* and *spermarche*; secondary sex characteristics","Hormonal basis (*pituitary*, gonadal hormones)","*Early-maturing* girls: body image and depression risk","Early-maturing boys: social advantages, some risks; late maturers","*Secular trend* and cultural meaning of puberty"]],
+["influences",5,"What are the major causes and environmental influences on physical growth and development?",["*Heredity* sets the growth potential","*Nutrition*: *marasmus*, *kwashiorkor*, obesity","*Illness* and *catch-up growth*","Emotional stress: *failure to thrive*, deprivation dwarfism","*Hormones* (growth hormone, thyroxine)"]]
+];
+DESC.m3 = [
+["intel",10,"Discuss the major theories of intelligence and the measurement of intelligence in children.",["*Binet*: *mental age*; IQ = MA/CA × 100; deviation IQ","*Spearman*'s g; Thurstone's primary abilities","*Cattell*–Horn: *fluid* and *crystallized* intelligence","*Gardner*'s multiple intelligences","*Sternberg*'s triarchic theory","Stability, *Flynn effect*, cultural bias in testing"]],
+["piaget",10,"Explain Piaget's stages of cognitive development with suitable examples.",["*Sensorimotor*: circular reactions, *object permanence*","*Preoperational*: symbolic thought, *egocentrism*, *animism*, *centration*","*Concrete operational*: *conservation*, *seriation*, reversibility","*Formal operational*: *hypothetico-deductive* reasoning; adolescent egocentrism","Processes: *assimilation*, *accommodation*, equilibration","Evaluation: *underestimated* young children; cultural variation"]],
+["piaget",5,"What is conservation? Explain why preoperational children fail conservation tasks.",["Defines *conservation*: quantity unchanged despite a change in appearance","Example: liquid, number or mass task","*Centration*: focus on one dimension","Lack of *reversibility*","Concrete operational children *decentre*; *horizontal décalage*"]],
+["vygotsky",10,"Explain Vygotsky's sociocultural theory, including the zone of proximal development, and discuss its educational applications.",["Cognitive growth through *social interaction* and *culture*","*Zone of proximal development* defined","*Scaffolding* and *guided participation*","*Private speech* and its role in self-regulation","Applications: *cooperative learning*, *reciprocal teaching*, *dynamic assessment*","Evaluation: vague concepts; contrast with Piaget"]],
+["infoproc",10,"Describe the information-processing approach to cognitive development, with reference to memory and strategies.",["Mind as a *computer*; limited capacity","*Multistore model*: sensory register, *working memory*, *long-term memory*","Growth in capacity, *speed* and *attention*","Strategies: *rehearsal*, *organization*, *elaboration*; production deficiency","*Metamemory* and metacognition","Siegler's *overlapping waves*; *scripts*; eyewitness memory"]],
+["language",10,"Trace the development of language from infancy to the early school years and evaluate theories of language acquisition.",["Components: *phonology*, *morphology*, *semantics*, *syntax*, *pragmatics*","Prelinguistic: *cooing*, *babbling*","*Holophrase*, vocabulary spurt, *fast mapping*, over/underextension","*Telegraphic speech* and *overregularization*","Theories: learning (*Skinner*), nativist (*Chomsky*, LAD), *interactionist*","Role of *child-directed speech*, expansions and recasts"]],
+["language",5,"Explain the interactionist view of language development and the role of the social environment.",["Biological *readiness* plus social *experience*","*Child-directed speech*","*Expansions* and *recasts*","Joint attention and turn-taking","Evidence from deprived children (*Genie*) or *sensitive period*"]],
+["intel",5,"Explain the relationship between Piaget's concept of schemes and children's cognitive processes.",["Defines *schemes* as organised patterns of thought or action","Behavioural, *symbolic* and *operational* schemes","*Organization* and *adaptation*","*Assimilation* and *accommodation*","*Equilibration* drives change"]]
+];
+DESC.m4 = [
+["emotion",10,"Trace the development of emotions in infancy and early childhood, including emotion regulation.",["*Primary* emotions in the first months","*Social smile*, *stranger anxiety*, separation anxiety","*Self-conscious* emotions after self-recognition","*Social referencing*","*Emotion regulation* and *display rules*","Role of parents in socialising emotions"]],
+["temperament",10,"What is temperament? Explain Thomas and Chess's classification and the concept of goodness-of-fit.",["Defines *temperament* as a biologically based response style","NYLS: *easy* (40%), *difficult* (10%), *slow-to-warm-up* (15%)","Kagan's *behavioural inhibition*; Rothbart's *effortful control*","*Heritability* and stability","*Goodness-of-fit* with parenting","Links to later personality and adjustment"]],
+["attachment",10,"Describe Ainsworth's Strange Situation and the types of attachment it identifies. What factors influence attachment security?",["Purpose and episodes of the *Strange Situation*","*Secure* attachment","*Resistant* (ambivalent) and *avoidant*","*Disorganized* attachment","*Caregiving hypothesis* (sensitivity) and infant *temperament*","*Cross-cultural* differences; *internal working models*"]],
+["attachment",5,"Discuss theories of attachment: psychoanalytic, learning, cognitive-developmental and ethological.",["Freud's *feeding* (oral) view","Learning: mother as a *secondary reinforcer*","*Harlow*: *contact comfort*","Cognitive: requires *object permanence*","*Bowlby*'s ethological theory and *secure base*"]],
+["self",10,"Explain the development of the self-concept, self-esteem and identity from infancy to adolescence.",["*Self-recognition* (*rouge test*)","Preschool *categorical* / concrete self","Middle childhood: *social comparison*, psychological traits","*Self-esteem* domains (Harter)","*Marcia*'s identity statuses: diffusion, foreclosure, moratorium, achievement","Social cognition: *theory of mind*, *role-taking* (Selman)"]],
+["gender",10,"Discuss sex differences and explain the theories of gender-role development.",["Actual differences (*Maccoby* & Jacklin): verbal, spatial, *aggression*","Gender stereotypes and *gender typing*","*Biosocial* theory (Money & Ehrhardt)","*Social learning*: reinforcement and modelling","Kohlberg's *cognitive-developmental*: identity, stability, consistency","*Gender schema* theory; *androgyny*"]],
+["moral",10,"Discuss the development of aggression and altruism in children, including the factors that influence each.",["*Hostile* versus *instrumental* aggression; *relational* aggression","*Hostile attributional bias* (Dodge)","*Coercive* home environments (Patterson)","*Altruism* and *empathy*","*Eisenberg*'s prosocial moral reasoning","Influences: modelling, *induction*, culture"]],
+["moral",5,"Compare Piaget's and Kohlberg's theories of moral development.",["Piaget: *premoral*, *heteronomous*, *autonomous* morality","*Immanent justice*; consequences versus *intentions*","Kohlberg: *preconventional*, *conventional*, *postconventional*","Both link morality to *cognitive* growth","Criticisms: Gilligan, cultural bias, *Turiel*'s domains"]]
+];
+DESC.m5 = [
+["family",10,"Explain Baumrind's parenting styles and their effects on child development.",["Dimensions: *acceptance*/responsiveness and *demandingness*/control","*Authoritative*: best outcomes","*Authoritarian* outcomes","*Permissive* outcomes","*Uninvolved* outcomes","Cultural and *bidirectional* considerations"]],
+["family",10,"Describe the family as a social system and discuss the effects of divorce and blended families on children.",["Family *system*: *direct* and *indirect* effects","Changes over the *family life cycle*","*Siblings* and their effects","*Divorce*: crisis phase and adjustment","Protective factors: low *conflict*, good parenting","*Blended* (reconstituted) families"]],
+["family",5,"What factors contribute to child maltreatment, and what are its consequences?",["Parent factors (*intergenerational* history, stress)","Child factors (*difficult* temperament, health)","Context: poverty, low *social support*","Consequences: *insecure* attachment, aggression, academic problems","*Prevention* and intervention"]],
+["media",10,"Discuss the effects of television on children's development.",["Children's *television literacy*","*Violence*: *aggression*, *desensitization*, *mean world* belief","*Educational* programming (Sesame Street)","*Prosocial* programming","*Advertising* and stereotypes","*Co-viewing* and parental mediation"]],
+["media",5,"How do computers and video games influence children's development?",["*Computer-assisted instruction* benefits","Video games and *spatial* skills","*Violent* games and aggression","*Digital divide*","Internet risks: *cyberbullying*"]],
+["school",10,"What makes a school effective? Discuss the role of school factors in children's development.",["*Rutter*: school climate, academic emphasis","*Class size* (Project STAR)","*Ability tracking* effects","*Teacher expectancy* (Pygmalion)","*Stage–environment fit* in school transitions","*Parental involvement*; cooperative learning (*jigsaw*)"]],
+["peers",10,"Describe the developmental significance of peer relations, including play, friendships and peer acceptance.",["Peers as *equal-status* agents","*Parten*'s play categories","*Sociometric* status: popular, *rejected*, *neglected*, controversial","*Friendships* across age: shared activities to *intimacy*","*Cliques* and *crowds*","*Peer pressure* and conformity"]],
+["peers",5,"Compare the influence of parents and peers during adolescence.",["*Complementary* influence","Peers: everyday choices (style, music)","Parents: long-term *values* and plans","*Conformity* peaks in early adolescence","*Authoritative* parenting buffers negative peer influence"]]
+];
+
+
+</script>
+<script>
+(() => {
+"use strict";
+
+const MODS = [
+  { id: "m1", num: "I", title: "Introduction to Developmental Psychology",
+    subs: { intro: "Introduction & research strategies", psycho: "Freud & Erikson", learning: "Watson, Skinner & Bandura", cognitive: "Piaget, Vygotsky & information processing", ethology: "Ethology", kohlberg: "Kohlberg" } },
+  { id: "m2", num: "II", title: "Biological Foundations of Development",
+    subs: { heredity: "Heredity", prenatal: "Prenatal development & birth", infancy: "Infancy: reflexes, sensation & perception", physical: "Physical, brain & motor development", puberty: "Puberty & its psychological impact", influences: "Causes & environmental influences" } },
+  { id: "m3", num: "III", title: "Cognitive Development",
+    subs: { intel: "Intelligence & cognitive schemes", piaget: "Piaget's theory & stages", vygotsky: "Vygotsky, ZPD & applications", infoproc: "Information processing", language: "Language & communication" } },
+  { id: "m4", num: "IV", title: "Social and Personality Development",
+    subs: { emotion: "Emotional development", temperament: "Temperament", attachment: "Attachment", self: "Self & social cognition", gender: "Sex differences & gender roles", moral: "Aggression, altruism & morality" } },
+  { id: "m5", num: "V", title: "The Context of Development",
+    subs: { family: "Family", media: "Television & computers", school: "School", peers: "Peers" },
+    note: "Built from standard developmental psychology knowledge on these syllabus topics." }
+];
+const MOD = Object.fromEntries(MODS.map(m => [m.id, m]));
+
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const rng = seed => () => { seed = (seed + 0x6D2B79F5) >>> 0; let t = seed; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const shuffle = (arr, rand = Math.random) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rand() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+const live = msg => { const l = $("#live"); l.textContent = ""; setTimeout(() => { l.textContent = msg; }, 30); };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("cpl:" + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem("cpl:" + k, JSON.stringify(v)); } catch (e) { /* storage unavailable: keep working in memory */ } },
+  del(k) { try { localStorage.removeItem("cpl:" + k); } catch (e) {} }
+};
+
+/* ---------- question banks: fixed, varied answer positions ---------- */
+const BANK = {};
+for (const m of MODS) {
+  BANK[m.id] = MCQ[m.id].map((r, i) => {
+    const [s, q, correct, wrong, e] = r;
+    const opts = shuffle([correct, ...wrong], rng(hash(m.id + q)));
+    return { id: `${m.id}-${i + 1}`, m: m.id, s, q, opts, ans: opts.indexOf(correct), e };
+  });
+}
+const DBANK = {};
+for (const m of MODS) {
+  DBANK[m.id] = DESC[m.id].map((r, i) => ({ id: `${m.id}-d${i + 1}`, m: m.id, s: r[0], marks: r[1], q: r[2], pts: r[3] }));
+}
+const TOTAL_MCQ = MODS.reduce((n, m) => n + BANK[m.id].length, 0);
+const TOTAL_DESC = MODS.reduce((n, m) => n + DBANK[m.id].length, 0);
+
+/* ---------- persistent progress ---------- */
+// mcq: { qid: true|false } latest result per question; best: { modId: pct }; desc: { qid: {text, checks, rub, done} }
+let prog = store.get("progress", { mcq: {}, best: {}, desc: {} });
+prog.mcq ||= {}; prog.best ||= {}; prog.desc ||= {};
+const saveProg = () => store.set("progress", prog);
+
+/* ---------- app state ---------- */
+let view = "home";
+let setup = { m: "m1", sub: "all", mode: "mcq", count: "all", shuffle: true };
+let quiz = null;   // { m, sub, items:[qid], answers:[{c, done}], idx, finished }
+let dsess = null;  // { m, sub, items:[qid], idx, checked:{} }
+const byId = {};
+for (const m of MODS) { BANK[m.id].forEach(q => byId[q.id] = q); DBANK[m.id].forEach(q => byId[q.id] = q); }
+
+const savedQuiz = store.get("quiz", null);
+if (savedQuiz && savedQuiz.items && savedQuiz.items.every(id => byId[id])) quiz = savedQuiz;
+const saveQuiz = () => quiz ? store.set("quiz", quiz) : store.del("quiz");
+
+const app = $("#app");
+function go(v, focus = true) {
+  view = v; render();
+  if (focus) { app.focus({ preventScroll: true }); window.scrollTo({ top: 0, behavior: "smooth" }); }
+}
+
+/* ---------- stats in masthead ---------- */
+function renderStats() {
+  const ids = Object.keys(prog.mcq);
+  const right = ids.filter(id => prog.mcq[id]).length;
+  const dDone = Object.values(prog.desc).filter(d => d.done).length;
+  $("#stats").innerHTML = `
+    <div class="stat"><b>${ids.length}<small class="muted">/${TOTAL_MCQ}</small></b><span>MCQs attempted</span></div>
+    <div class="stat"><b>${ids.length ? pct(right, ids.length) + "%" : "—"}</b><span>MCQ accuracy</span></div>
+    <div class="stat"><b>${dDone}<small class="muted">/${TOTAL_DESC}</small></b><span>Answers self-checked</span></div>`;
+}
+
+/* ---------- HOME ---------- */
+function modProgress(mid) {
+  const qs = BANK[mid];
+  const tried = qs.filter(q => q.id in prog.mcq).length;
+  const right = qs.filter(q => prog.mcq[q.id]).length;
+  const dDone = DBANK[mid].filter(d => prog.desc[d.id]?.done).length;
+  return { tried, right, dDone };
+}
+function renderHome() {
+  const resume = quiz && !quiz.finished ? (() => {
+    const done = quiz.answers.filter(a => a.done).length;
+    return `<div class="resume" data-m="${quiz.m}"><p><strong>Test in progress:</strong> Module ${MOD[quiz.m].num} · ${done} of ${quiz.items.length} answered.</p>
+      <div class="btn-row"><button class="btn btn-primary" data-act="resume">Resume test</button><button class="btn btn-quiet" data-act="discard">Discard</button></div></div>`;
+  })() : "";
+  app.innerHTML = `
+    ${resume}
+    <section class="intro" aria-labelledby="h-home">
+      <h2 id="h-home">Choose a module to practise</h2>
+      <p class="muted">Each module has 50 MCQs and a bank of exam-style descriptive questions. Pick a module, narrow it to one topic if you like, and choose MCQ or descriptive practice.</p>
+    </section>
+    <section class="modgrid" aria-label="Modules">
+      ${MODS.map(m => {
+        const p = modProgress(m.id); const best = prog.best[m.id];
+        return `<article class="modcard" data-m="${m.id}">
+          <div class="modcard-head"><span class="modnum" aria-hidden="true">${m.num}</span><p class="eyebrow">Module ${m.num}</p><h3>${esc(m.title)}</h3></div>
+          <div class="modcard-body">
+            <ul class="topics">${Object.values(m.subs).map(t => `<li>${esc(t)}</li>`).join("")}</ul>
+            ${m.note ? `<p class="note">${esc(m.note)}</p>` : ""}
+          </div>
+          <div class="modcard-foot">
+            <div class="meter"><div class="meter-row"><span>MCQs answered correctly</span><span class="mono">${p.right}/${BANK[m.id].length}</span></div>
+              <div class="bar" role="progressbar" aria-label="Module ${m.num} MCQs answered correctly" aria-valuemin="0" aria-valuemax="${BANK[m.id].length}" aria-valuenow="${p.right}"><i style="width:${pct(p.right, BANK[m.id].length)}%"></i></div></div>
+            <div class="meter-row meter"><span>Best test score: <b class="mono">${best != null ? best + "%" : "—"}</b></span><span>Descriptive: <b class="mono">${p.dDone}/${DBANK[m.id].length}</b></span></div>
+            <button class="btn btn-primary" data-act="pick" data-id="${m.id}">Practise Module ${m.num}</button>
+          </div>
+        </article>`;
+      }).join("")}
+    </section>
+    <div class="btn-row"><button class="btn btn-quiet" data-act="reset-all">Clear all saved progress</button><span id="reset-confirm"></span></div>`;
+}
+
+/* ---------- SETUP ---------- */
+function filtered(bank, sub) { return sub === "all" ? bank : bank.filter(q => q.s === sub); }
+function renderSetup() {
+  const m = MOD[setup.m];
+  const mcqN = filtered(BANK[m.id], setup.sub).length;
+  const dN = filtered(DBANK[m.id], setup.sub).length;
+  const counts = [10, 20, 30].filter(n => n < mcqN);
+  if (setup.count !== "all" && !counts.includes(+setup.count)) setup.count = "all";
+  app.innerHTML = `
+  <section class="panel" data-m="${m.id}" aria-labelledby="h-setup">
+    <div class="panel-head">
+      <p class="eyebrow">Module ${m.num} · Set up your practice</p>
+      <h2 id="h-setup">${esc(m.title)}</h2>
+      ${m.note ? `<p class="note">${esc(m.note)}</p>` : ""}
+    </div>
+    <fieldset>
+      <legend>1 · Topic</legend>
+      <div class="chips" role="radiogroup">
+        <label class="chip"><input type="radio" name="sub" value="all" ${setup.sub === "all" ? "checked" : ""}><span>All topics <small>${BANK[m.id].length}</small></span></label>
+        ${Object.entries(m.subs).map(([k, t]) => `<label class="chip"><input type="radio" name="sub" value="${k}" ${setup.sub === k ? "checked" : ""}><span>${esc(t)} <small>${BANK[m.id].filter(q => q.s === k).length}</small></span></label>`).join("")}
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>2 · Practice type</legend>
+      <div class="modes">
+        <label class="mode"><input type="radio" name="mode" value="mcq" ${setup.mode === "mcq" ? "checked" : ""}>
+          <span class="mode-box"><strong>MCQ practice</strong><span class="muted">${mcqN} questions, one at a time, with instant feedback and explanations.</span></span></label>
+        <label class="mode"><input type="radio" name="mode" value="desc" ${setup.mode === "desc" ? "checked" : ""} ${dN ? "" : "disabled"}>
+          <span class="mode-box"><strong>Descriptive practice</strong><span class="muted">${dN ? `${dN} exam-style question${dN > 1 ? "s" : ""}. Write your answer, then check it against a model outline and rubric.` : "No descriptive questions for this topic. Choose ‘All topics’ to see them."}</span></span></label>
+      </div>
+    </fieldset>
+    <fieldset ${setup.mode === "mcq" ? "" : "hidden"}>
+      <legend>3 · Test options</legend>
+      <div class="opts-row">
+        <div class="field"><label for="count">Number of questions</label>
+          <select id="count">${counts.map(n => `<option value="${n}" ${+setup.count === n ? "selected" : ""}>${n} questions</option>`).join("")}<option value="all" ${setup.count === "all" ? "selected" : ""}>All ${mcqN} questions</option></select></div>
+        <label class="check"><input type="checkbox" id="shuf" ${setup.shuffle ? "checked" : ""}> Shuffle question order</label>
+      </div>
+    </fieldset>
+    <div class="btn-row">
+      <button class="btn btn-primary" data-act="start">Start ${setup.mode === "mcq" ? "MCQ test" : "descriptive practice"}</button>
+      <button class="btn" data-act="home">Back to modules</button>
+    </div>
+  </section>`;
+}
+
+/* ---------- MCQ QUIZ ---------- */
+function startQuiz(ids, m, sub) {
+  quiz = { m, sub, items: ids, answers: ids.map(() => ({ c: null, done: false })), idx: 0, finished: false };
+  saveQuiz(); go("quiz");
+}
+function startFromSetup() {
+  if (setup.mode === "desc") return startDesc();
+  let pool = filtered(BANK[setup.m], setup.sub);
+  if (setup.shuffle) pool = shuffle(pool);
+  if (setup.count !== "all") pool = pool.slice(0, +setup.count);
+  startQuiz(pool.map(q => q.id), setup.m, setup.sub);
+}
+const PRAISE = ["Well done! That's right.", "Correct! Nicely reasoned.", "Spot on! You know this one.", "Yes! Great recall.", "Excellent, that's correct.", "Right answer! Keep going."];
+function quizTally() {
+  let right = 0, wrong = 0;
+  quiz.answers.forEach((a, i) => { if (a.done) (a.c === byId[quiz.items[i]].ans ? right++ : wrong++); });
+  return { right, wrong, done: right + wrong, total: quiz.items.length };
+}
+function renderQuiz() {
+  const m = MOD[quiz.m];
+  const q = byId[quiz.items[quiz.idx]];
+  const a = quiz.answers[quiz.idx];
+  const t = quizTally();
+  const n = quiz.items.length;
+  const isLast = quiz.idx === n - 1;
+  const subLabel = quiz.sub === "all" ? "All topics" : (quiz.sub === "retry" ? "Retrying missed questions" : m.subs[quiz.sub]);
+  const optHtml = q.opts.map((o, i) => {
+    let cls = "", tag = "";
+    if (a.done) {
+      if (i === q.ans) { cls = "is-correct"; tag = "Correct answer"; }
+      else if (i === a.c) { cls = "is-wrong"; tag = "Your answer"; }
+    }
+    return `<button type="button" class="opt ${cls}" role="radio" aria-checked="${a.c === i}" data-act="choose" data-i="${i}" ${a.done ? "disabled" : ""} tabindex="${(a.c === i || (a.c == null && i === 0)) ? 0 : -1}">
+      <span class="key" aria-hidden="true">${"ABCD"[i]}</span><span>${esc(o)}</span><span class="tag">${tag}</span></button>`;
+  }).join("");
+  let fb = "";
+  if (a.done) {
+    const ok = a.c === q.ans;
+    fb = ok
+      ? `<div class="feedback good" role="status"><p class="fb-title"><span class="face" aria-hidden="true">😊</span>${PRAISE[hash(q.id) % PRAISE.length]}</p><p>${esc(q.e)}</p></div>`
+      : `<div class="feedback bad" role="status"><p class="fb-title">Better luck next time</p><p><strong>Correct answer: ${"ABCD"[q.ans]}. ${esc(q.opts[q.ans])}</strong></p><p>${esc(q.e)}</p></div>`;
+  }
+  app.innerHTML = `
+  <section class="qtop" data-m="${m.id}" aria-label="Test progress">
+    <div class="qtop-row">
+      <span class="pill"><span class="dot" aria-hidden="true"></span>Module ${m.num} · ${esc(subLabel)}</span>
+      <div class="btn-row">
+        <button class="btn btn-quiet" data-act="restart">Restart test</button>
+        <button class="btn btn-quiet" data-act="change">Change module</button>
+      </div>
+    </div>
+    <div class="qtop-row">
+      <p class="counters"><span>Question <b>${quiz.idx + 1}</b> of <b>${n}</b></span><span>Score <b>${t.right}</b> / <b>${t.done}</b></span><span>Answered <b>${t.done}</b> / <b>${n}</b></span></p>
+    </div>
+    <div class="bar" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="${n}" aria-valuenow="${t.done}"><i style="width:${pct(t.done, n)}%"></i></div>
+  </section>
+  <div class="qlayout" data-m="${m.id}">
+    <article class="qcard" aria-labelledby="qtext">
+      <p class="eyebrow">${esc(m.subs[q.s])}</p>
+      <p class="qtext" id="qtext">${quiz.idx + 1}. ${esc(q.q)}</p>
+      <div class="options" role="radiogroup" aria-labelledby="qtext">${optHtml}</div>
+      ${fb}
+      <div class="qnav">
+        <button class="btn" data-act="prev" ${quiz.idx === 0 ? "disabled" : ""}>← Previous</button>
+        ${a.done
+          ? (isLast ? `<button class="btn btn-primary" data-act="finish">See results</button>` : `<button class="btn btn-primary" data-act="next" id="nextBtn">Next question →</button>`)
+          : `<button class="btn btn-primary" data-act="submit" id="submitBtn" ${a.c == null ? "disabled" : ""}>Submit answer</button>`}
+        ${!a.done && !isLast ? `<button class="btn btn-quiet" data-act="next">Skip for now</button>` : ""}
+      </div>
+      <p class="hint">Keyboard: <kbd>A</kbd>–<kbd>D</kbd> or <kbd>1</kbd>–<kbd>4</kbd> to choose · <kbd>Enter</kbd> to submit or go on · <kbd>←</kbd> <kbd>→</kbd> to move between questions</p>
+    </article>
+    <aside class="side" aria-label="Question navigator">
+      <h3>Questions</h3>
+      <div class="navgrid">${quiz.items.map((id, i) => {
+        const ans = quiz.answers[i]; const st = ans.done ? (ans.c === byId[id].ans ? "ok" : "no") : "";
+        const label = `Question ${i + 1}${ans.done ? (st === "ok" ? ", correct" : ", incorrect") : (ans.c != null ? ", chosen but not submitted" : ", not answered")}`;
+        return `<button type="button" class="${st} ${i === quiz.idx ? "cur" : ""}" data-act="jump" data-i="${i}" aria-label="${label}" ${i === quiz.idx ? 'aria-current="true"' : ""}>${i + 1}</button>`;
+      }).join("")}</div>
+      <p class="legend"><span><i class="ok"></i>Correct</span><span><i class="no"></i>Incorrect</span><span><i></i>Not answered</span></p>
+      <button class="btn" data-act="finish">Finish test</button>
+      <p id="finish-confirm" class="hint" aria-live="polite"></p>
+    </aside>
+  </div>`;
+}
+function choose(i) {
+  const a = quiz.answers[quiz.idx]; if (a.done) return;
+  a.c = i; saveQuiz(); render();
+  const btn = app.querySelector(`.opt[data-i="${i}"]`); btn && btn.focus();
+}
+function submit() {
+  const a = quiz.answers[quiz.idx]; if (a.done || a.c == null) return;
+  a.done = true;
+  const q = byId[quiz.items[quiz.idx]];
+  prog.mcq[q.id] = a.c === q.ans; saveProg(); saveQuiz(); render();
+  live(a.c === q.ans ? "Correct. Well done." : `Better luck next time. The correct answer is ${"ABCD"[q.ans]}: ${q.opts[q.ans]}`);
+  const nb = $("#nextBtn") || app.querySelector('[data-act="finish"]'); nb && nb.focus();
+}
+function move(d) {
+  const ni = quiz.idx + d; if (ni < 0 || ni >= quiz.items.length) return;
+  quiz.idx = ni; saveQuiz(); render();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  const sel = app.querySelector('.opt[tabindex="0"]'); sel && sel.focus({ preventScroll: true });
+}
+function finish(force) {
+  const t = quizTally();
+  if (!force && t.done < t.total) {
+    const el = $("#finish-confirm");
+    el.innerHTML = `${t.total - t.done} question${t.total - t.done > 1 ? "s are" : " is"} unanswered. <button class="btn btn-quiet" data-act="finish-force">Finish anyway</button>`;
+    el.querySelector("button").focus();
+    return;
+  }
+  quiz.finished = true;
+  const p = pct(t.right, t.total);
+  if (quiz.sub !== "retry") prog.best[quiz.m] = Math.max(p, prog.best[quiz.m] ?? 0);
+  saveProg(); saveQuiz(); go("results");
+}
+
+/* ---------- RESULTS ---------- */
+function message(p) {
+  if (p >= 85) return ["Outstanding work!", "You have a strong command of this module. A quick look at any missed items and you are exam-ready."];
+  if (p >= 70) return ["Great job!", "You know most of this module well. Review the explanations below to close the remaining gaps."];
+  if (p >= 50) return ["Good progress!", "You have a solid base. Revisit the topics with lower scores, then try those questions again."];
+  return ["Every attempt builds your memory.", "Read through the explanations below, retry the missed questions, and you will see your score climb. You've got this."];
+}
+function renderResults() {
+  const m = MOD[quiz.m]; const t = quizTally(); const p = pct(t.right, t.total);
+  const [head, body] = message(p);
+  const unanswered = t.total - t.done;
+  const bySub = {};
+  quiz.items.forEach((id, i) => { const q = byId[id]; const b = (bySub[q.s] ||= { r: 0, n: 0 }); b.n++; if (quiz.answers[i].done && quiz.answers[i].c === q.ans) b.r++; });
+  const missed = quiz.items.map((id, i) => ({ q: byId[id], a: quiz.answers[i], i })).filter(x => !x.a.done || x.a.c !== x.q.ans);
+  const C = 2 * Math.PI * 60;
+  app.innerHTML = `
+  <section class="panel" data-m="${m.id}" aria-labelledby="h-res">
+    <div class="panel-head"><p class="eyebrow">Module ${m.num} · Results</p><h2 id="h-res">${esc(m.title)}</h2></div>
+    <div class="res-top">
+      <svg class="ring" viewBox="0 0 150 150" role="img" aria-label="Score ${p} percent">
+        <circle cx="75" cy="75" r="60" fill="none" stroke="var(--tan)" stroke-width="14"></circle>
+        <circle cx="75" cy="75" r="60" fill="none" stroke="var(--mod)" stroke-width="14" stroke-linecap="round" stroke-dasharray="${(C * p / 100).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 75 75)"></circle>
+        <text x="75" y="82" text-anchor="middle" font-size="26">${p}%</text>
+      </svg>
+      <div style="display:grid;gap:14px;min-width:0">
+        <div><h3>${p >= 50 ? "😊 " : ""}${head}</h3><p class="muted">${body}</p></div>
+        <div class="tiles">
+          <div class="tile"><b>${t.right}/${t.total}</b><span>Score</span></div>
+          <div class="tile good"><b>${t.right}</b><span>Correct</span></div>
+          <div class="tile bad"><b>${t.wrong}</b><span>Incorrect</span></div>
+          <div class="tile"><b>${unanswered}</b><span>Unanswered</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="btn-row">
+      ${missed.length ? `<button class="btn btn-primary" data-act="retry">Retry ${missed.length} missed question${missed.length > 1 ? "s" : ""}</button>` : ""}
+      <button class="btn" data-act="review">Review my answers</button>
+      <button class="btn" data-act="again">New test, same module</button>
+      <button class="btn" data-act="desc-here">Descriptive practice</button>
+      <button class="btn btn-quiet" data-act="home">All modules</button>
+    </div>
+    <section aria-labelledby="h-bd" style="display:grid;gap:12px">
+      <h3 id="h-bd">Score by topic</h3>
+      <div class="breakdown">${Object.entries(bySub).map(([s, b]) => `
+        <div class="bd-row"><span>${esc(m.subs[s])}</span><span class="mono" style="text-align:right">${b.r}/${b.n}</span>
+        <div class="bar" role="progressbar" aria-label="${esc(m.subs[s])}" aria-valuemin="0" aria-valuemax="${b.n}" aria-valuenow="${b.r}"><i style="width:${pct(b.r, b.n)}%"></i></div></div>`).join("")}</div>
+    </section>
+    ${missed.length ? `<section aria-labelledby="h-miss" style="display:grid;gap:12px">
+      <h3 id="h-miss">Questions to revisit</h3>
+      <ul class="review-list">${missed.map(x => `<li><span><span class="mono muted">Q${x.i + 1}.</span> ${esc(x.q.q)}</span>
+        <span>${x.a.done ? `Your answer: ${esc(x.q.opts[x.a.c])}` : "Not answered"} · Correct: <b>${esc(x.q.opts[x.q.ans])}</b></span>
+        <span class="muted">${esc(x.q.e)}</span></li>`).join("")}</ul></section>`
+      : `<div class="callout good"><p><strong>😊 A perfect score.</strong> Every question in this test was answered correctly.</p></div>`}
+  </section>`;
+}
+
+/* ---------- DESCRIPTIVE ---------- */
+function startDesc(m = setup.m, sub = setup.sub) {
+  const items = filtered(DBANK[m], sub).map(d => d.id);
+  if (!items.length) return;
+  dsess = { m, sub, items, idx: 0 };
+  go("desc");
+}
+const stem = w => w.length > 6 ? w.slice(0, w.length - 3) : w;
+function termsIn(point) { return [...point.matchAll(/\*([^*]+)\*/g)].map(x => x[1]); }
+function termFound(text, term) {
+  const words = term.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, " ").split(/[\s-]+/).filter(w => w.length > 1);
+  return words.length > 0 && words.every(w => text.includes(stem(w)));
+}
+const fmtPoint = p => esc(p).replace(/\*([^*]+)\*/g, "<em>$1</em>");
+const RUBRIC = [
+  ["acc", "Accuracy", "Facts, terms and theorists are correct"],
+  ["cov", "Coverage", "The main points in the outline are included"],
+  ["cla", "Clarity & structure", "Introduction, organised body, short conclusion"],
+  ["ex", "Relevant examples", "Studies, scenarios or examples support the points"]
+];
+const LEVELS = ["Needs work", "Developing", "Good", "Excellent"];
+function renderDesc() {
+  const m = MOD[dsess.m];
+  const d = byId[dsess.items[dsess.idx]];
+  const rec = prog.desc[d.id] || { text: "", checks: null, rub: {}, done: false };
+  const checked = dsess.checkedId === d.id || rec.done;
+  const words = (rec.text.trim().match(/\S+/g) || []).length;
+  const target = d.marks >= 10 ? "about 350–500 words" : "about 150–250 words";
+  const lower = rec.text.toLowerCase();
+  const auto = d.pts.map(p => { const ts = termsIn(p); return ts.length > 0 && ts.some(t => termFound(lower, t)); });
+  const checks = rec.checks || auto;
+  const covered = checks.filter(Boolean).length;
+  const covPct = pct(covered, d.pts.length);
+  const rubVals = RUBRIC.map(([k]) => rec.rub[k]).filter(v => v != null);
+  const self = rubVals.length === RUBRIC.length ? Math.round(rubVals.reduce((a, b) => a + b, 0) / (RUBRIC.length * 3) * d.marks * 2) / 2 : null;
+  const missing = d.pts.filter((p, i) => !checks[i]);
+  let coach;
+  if (covPct >= 80) coach = ["Strong answer outline!", "You covered most of the key points. To lift it further, make sure each point is explained with an example or study, and finish with a brief evaluation."];
+  else if (covPct >= 50) coach = ["Good foundation.", "You have the core ideas. Add the points listed below as missing, and use the subtopic terms explicitly. Examiners look for them."];
+  else coach = ["A helpful first draft.", "Use the outline below as a plan. Try writing one short paragraph per key point, then compare again. Each attempt makes the structure easier to recall."];
+
+  app.innerHTML = `
+  <section class="qtop" data-m="${m.id}">
+    <div class="qtop-row">
+      <span class="pill"><span class="dot" aria-hidden="true"></span>Module ${m.num} · Descriptive practice</span>
+      <div class="btn-row"><button class="btn btn-quiet" data-act="mcq-here">MCQ practice</button><button class="btn btn-quiet" data-act="change">Change module</button></div>
+    </div>
+    <p class="counters"><span>Question <b>${dsess.idx + 1}</b> of <b>${dsess.items.length}</b></span><span>Self-checked <b>${dsess.items.filter(id => prog.desc[id]?.done).length}</b> / <b>${dsess.items.length}</b></span></p>
+  </section>
+  <div class="dlayout" data-m="${m.id}">
+    <aside class="side" aria-label="Descriptive questions">
+      <h3>Questions</h3>
+      <ol class="dlist">${dsess.items.map((id, i) => {
+        const x = byId[id]; const done = prog.desc[id]?.done;
+        return `<li><button type="button" class="${i === dsess.idx ? "cur" : ""} ${done ? "done" : ""}" data-act="djump" data-i="${i}" ${i === dsess.idx ? 'aria-current="true"' : ""}>
+          <span class="n">${done ? "✓" : i + 1}</span><span>${esc(m.subs[x.s])} <span class="muted">· ${x.marks} marks</span></span></button></li>`;
+      }).join("")}</ol>
+    </aside>
+    <article class="qcard" aria-labelledby="dq">
+      <div class="qtop-row"><p class="eyebrow">${esc(m.subs[d.s])}</p><span class="marks">${d.marks} marks</span></div>
+      <p class="qtext" id="dq">${esc(d.q)}</p>
+      <div class="field">
+        <label for="ans">Your answer <span class="muted" style="font-weight:400">(aim for ${target}; drafts save automatically)</span></label>
+        <textarea id="ans" spellcheck="true" placeholder="Start with a one-line definition, then develop each point with an example or study…">${esc(rec.text)}</textarea>
+        <div class="wc"><span id="wc">${words} word${words === 1 ? "" : "s"}</span><span id="saved"></span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" data-act="dcheck" ${words < 5 ? "disabled" : ""} id="checkBtn">${checked ? "Re-check my answer" : "Check my answer"}</button>
+        <button class="btn" data-act="dreveal" ${checked ? "hidden" : ""}>Show model outline only</button>
+      </div>
+      ${checked ? `
+      <section class="assess" aria-labelledby="h-assess">
+        <div class="callout ${covPct >= 80 ? "good" : ""}">
+          <p><strong>${covPct >= 80 ? "😊 " : ""}${coach[0]}</strong> ${coach[1]}</p>
+          <p class="hint">This is a self-assessment. The key-term check only looks for words in your answer; it cannot judge meaning. Adjust the ticks to match what you actually explained.</p>
+        </div>
+        <div style="display:grid;gap:10px">
+          <h3 id="h-assess">Model answer outline <span class="muted mono" style="font-size:.85rem">· ${covered}/${d.pts.length} covered</span></h3>
+          <ul class="kp">${d.pts.map((p, i) => `<li><label><input type="checkbox" data-act="kp" data-i="${i}" ${checks[i] ? "checked" : ""}><span>${fmtPoint(p)}${auto[i] ? '<span class="found">key term found</span>' : ""}</span></label></li>`).join("")}</ul>
+        </div>
+        <div class="rubric" role="group" aria-labelledby="h-rub">
+          <h3 id="h-rub">Rate your answer</h3>
+          ${RUBRIC.map(([k, name, desc]) => `<div class="rub-row"><div><strong id="rl-${k}">${name}</strong><p class="desc">${desc}</p></div>
+            <div class="seg" role="radiogroup" aria-labelledby="rl-${k}">${LEVELS.map((L, v) => `<label><input type="radio" name="rub-${k}" value="${v}" data-act="rub" data-k="${k}" ${rec.rub[k] === v ? "checked" : ""}><span>${L}</span></label>`).join("")}</div></div>`).join("")}
+          <p class="callout"><span>Estimated self-score: <b class="mono">${self != null ? `${self} / ${d.marks}` : "rate all four areas"}</b></span>
+          ${missing.length ? `<span class="muted">To strengthen: ${missing.map(p => p.replace(/\*/g, "")).join("; ")}.</span>` : ""}</p>
+        </div>
+      </section>` : (dsess.reveal === d.id ? `
+      <section class="assess" aria-labelledby="h-outline"><h3 id="h-outline">Model answer outline</h3>
+        <ul class="kp">${d.pts.map(p => `<li><label style="grid-template-columns:1fr;cursor:default"><span>${fmtPoint(p)}</span></label></li>`).join("")}</ul></section>` : "")}
+      <div class="qnav">
+        <button class="btn" data-act="dprev" ${dsess.idx === 0 ? "disabled" : ""}>← Previous</button>
+        <button class="btn btn-primary" data-act="dnext" ${dsess.idx === dsess.items.length - 1 ? "disabled" : ""}>Next question →</button>
+      </div>
+    </article>
+  </div>`;
+}
+function descRec() {
+  const id = dsess.items[dsess.idx];
+  return (prog.desc[id] ||= { text: "", checks: null, rub: {}, done: false });
+}
+
+/* ---------- render + events ---------- */
+function render() {
+  renderStats();
+  if (view === "quiz" && !quiz) view = "home";
+  if (view === "results" && !quiz) view = "home";
+  if (view === "desc" && !dsess) view = "home";
+  ({ home: renderHome, setup: renderSetup, quiz: renderQuiz, results: renderResults, desc: renderDesc })[view]();
+}
+
+app.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const act = b.dataset.act;
+  switch (act) {
+    case "pick": setup = { ...setup, m: b.dataset.id, sub: "all" }; go("setup"); break;
+    case "home": go("home"); break;
+    case "start": startFromSetup(); break;
+    case "resume": go("quiz"); break;
+    case "discard": quiz = null; saveQuiz(); render(); break;
+    case "choose": choose(+b.dataset.i); break;
+    case "submit": submit(); break;
+    case "next": move(1); break;
+    case "prev": move(-1); break;
+    case "jump": move(+b.dataset.i - quiz.idx); break;
+    case "finish": finish(false); break;
+    case "finish-force": finish(true); break;
+    case "restart": startQuiz(quiz.items, quiz.m, quiz.sub); break;
+    case "change": setup.m = (quiz && view === "quiz" ? quiz.m : dsess ? dsess.m : setup.m); go("home"); break;
+    case "review": quiz.idx = 0; go("quiz"); break;
+    case "retry": {
+      const ids = quiz.items.filter((id, i) => !quiz.answers[i].done || quiz.answers[i].c !== byId[id].ans);
+      startQuiz(ids, quiz.m, "retry"); break;
+    }
+    case "again": setup = { ...setup, m: quiz.m, mode: "mcq" }; go("setup"); break;
+    case "desc-here": startDesc(quiz.m, "all"); break;
+    case "mcq-here": setup = { ...setup, m: dsess.m, sub: dsess.sub, mode: "mcq" }; go("setup"); break;
+    case "dcheck": { const r = descRec(); r.checks = null; r.done = true; dsess.checkedId = byId[dsess.items[dsess.idx]].id; saveProg(); render(); $("#h-assess")?.scrollIntoView({ behavior: "smooth", block: "start" }); live("Answer checked. Model outline and rubric shown below."); break; }
+    case "dreveal": dsess.reveal = dsess.items[dsess.idx]; render(); break;
+    case "dprev": dsess.idx--; dsess.reveal = null; go("desc"); break;
+    case "dnext": dsess.idx++; dsess.reveal = null; go("desc"); break;
+    case "djump": dsess.idx = +b.dataset.i; dsess.reveal = null; go("desc"); break;
+    case "reset-all": {
+      const c = $("#reset-confirm");
+      c.innerHTML = `<span class="muted">This removes all scores and drafts.</span> <button class="btn btn-quiet" data-act="reset-yes">Yes, clear everything</button>`;
+      c.querySelector("button").focus(); break;
+    }
+    case "reset-yes": prog = { mcq: {}, best: {}, desc: {} }; quiz = null; saveProg(); saveQuiz(); render(); live("All progress cleared."); break;
+  }
+});
+app.addEventListener("change", e => {
+  const t = e.target;
+  if (t.name === "sub") { setup.sub = t.value; if (setup.mode === "desc" && !filtered(DBANK[setup.m], setup.sub).length) setup.mode = "mcq"; renderSetup(); app.querySelector(`input[name=sub][value="${t.value}"]`).focus(); }
+  else if (t.name === "mode") { setup.mode = t.value; renderSetup(); app.querySelector(`input[name=mode][value="${t.value}"]`).focus(); }
+  else if (t.id === "count") setup.count = t.value;
+  else if (t.id === "shuf") setup.shuffle = t.checked;
+  else if (t.dataset.act === "kp") {
+    const r = descRec(); const d = byId[dsess.items[dsess.idx]];
+    if (!r.checks) { const lower = r.text.toLowerCase(); r.checks = d.pts.map(p => termsIn(p).some(x => termFound(lower, x))); }
+    r.checks[+t.dataset.i] = t.checked; saveProg(); const y = window.scrollY; render(); window.scrollTo(0, y);
+    app.querySelector(`input[data-act="kp"][data-i="${t.dataset.i}"]`)?.focus({ preventScroll: true });
+  }
+  else if (t.dataset.act === "rub") {
+    descRec().rub[t.dataset.k] = +t.value; saveProg(); const y = window.scrollY; render(); window.scrollTo(0, y);
+    app.querySelector(`input[name="rub-${t.dataset.k}"][value="${t.value}"]`)?.focus({ preventScroll: true });
+  }
+});
+let saveTimer;
+app.addEventListener("input", e => {
+  if (e.target.id !== "ans") return;
+  const r = descRec(); r.text = e.target.value;
+  const w = (r.text.trim().match(/\S+/g) || []).length;
+  $("#wc").textContent = `${w} word${w === 1 ? "" : "s"}`;
+  const cb = $("#checkBtn"); if (cb) cb.disabled = w < 5;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { saveProg(); const s = $("#saved"); if (s) s.textContent = "Draft saved"; }, 500);
+});
+// Roving arrow keys inside the option radiogroup, plus quiz shortcuts
+document.addEventListener("keydown", e => {
+  if (view !== "quiz" || !quiz) return;
+  const tag = (e.target.tagName || "").toLowerCase();
+  if (tag === "textarea" || tag === "select" || (tag === "input" && e.target.type !== "radio")) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const a = quiz.answers[quiz.idx];
+  const k = e.key.toLowerCase();
+  const map = { "1": 0, "2": 1, "3": 2, "4": 3, a: 0, b: 1, c: 2, d: 3 };
+  if (k in map && !a.done) { e.preventDefault(); choose(map[k]); return; }
+  if (e.target.classList?.contains("opt") && (k === "arrowdown" || k === "arrowup")) {
+    e.preventDefault(); if (a.done) return;
+    const cur = +e.target.dataset.i; choose((cur + (k === "arrowdown" ? 1 : 3)) % 4); return;
+  }
+  if (k === "enter") {
+    if (e.target.tagName === "BUTTON" && !e.target.classList.contains("opt")) return; // let real buttons work
+    e.preventDefault();
+    if (e.target.classList?.contains("opt") && !a.done && a.c !== +e.target.dataset.i) { choose(+e.target.dataset.i); return; }
+    if (!a.done && a.c != null) submit();
+    else if (a.done) quiz.idx < quiz.items.length - 1 ? move(1) : finish(false);
+    return;
+  }
+  if (k === "arrowright") { e.preventDefault(); move(1); }
+  else if (k === "arrowleft") { e.preventDefault(); move(-1); }
+});
+$(".mast-home").addEventListener("click", () => go("home"));
+
+render();
+})();
+
+</script>
+</body>
+</html>
