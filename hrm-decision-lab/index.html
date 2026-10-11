@@ -1,0 +1,1259 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--PAGE-->
+<title>HRM Decision Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: masthead + labelled HRM-area selector, then one workspace per area with four tabs
+   (Dashboard · Interpret insights · AI stack lab · My results). Palette built on the
+   learner-supplied pastels #F4F2EE / #F0E7D0 / #E8D6C1 with deep teal + rust for contrast. */
+:root {
+  --bg: #F4F2EE;          /* supplied: page ground */
+  --sand: #F0E7D0;        /* supplied: highlighted panels */
+  --tan: #E8D6C1;         /* supplied: chips, borders, tile wash */
+  --card: #FBF9F5;
+  --ink: #2E2924;
+  --muted: #675B4E;
+  --line: #DCCDB8;
+  --accent: #35625D;      /* deep vintage teal */
+  --accent-ink: #FBF9F5;
+  --accent-soft: #DCE6E1;
+  --rust: #9A5536;
+  --good: #3F6E3B;
+  --good-soft: #E1EBD9;
+  --bad: #9E3F31;
+  --bad-soft: #F3DDD5;
+  --warn: #8A6418;
+  --warn-soft: #F2E5C4;
+  --chart-1: #35625D;
+  --chart-2: #B9845F;
+  --grid: #E3D7C6;
+  --shadow: 0 1px 2px rgba(60, 45, 30, .06), 0 4px 14px rgba(60, 45, 30, .06);
+  --f-display: "Young Serif", Georgia, "Times New Roman", serif;
+  --f-body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1D1A16; --sand: #2B261F; --tan: #3B3329; --card: #24201B;
+    --ink: #F0E7D0; --muted: #C2B4A0; --line: #463C30;
+    --accent: #8EC1B8; --accent-ink: #1D1A16; --accent-soft: #2C3D3A; --rust: #DE9F7E;
+    --good: #A3CE99; --good-soft: #2D3B2A; --bad: #EBA192; --bad-soft: #432A24;
+    --warn: #E2C27A; --warn-soft: #3E3420;
+    --chart-1: #8EC1B8; --chart-2: #D9A57F; --grid: #3A3229;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1D1A16; --sand: #2B261F; --tan: #3B3329; --card: #24201B;
+  --ink: #F0E7D0; --muted: #C2B4A0; --line: #463C30;
+  --accent: #8EC1B8; --accent-ink: #1D1A16; --accent-soft: #2C3D3A; --rust: #DE9F7E;
+  --good: #A3CE99; --good-soft: #2D3B2A; --bad: #EBA192; --bad-soft: #432A24;
+  --warn: #E2C27A; --warn-soft: #3E3420;
+  --chart-1: #8EC1B8; --chart-2: #D9A57F; --grid: #3A3229;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 14px rgba(0,0,0,.25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+}
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 56px; display: grid; gap: 22px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 400; text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(1.7rem, 3.4vw, 2.3rem); }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.08rem; }
+p { margin: 0; }
+.eyebrow { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+button, select, textarea, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* Masthead */
+.mast { display: grid; grid-template-columns: 1fr auto; gap: 18px; align-items: end; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+.mast p { max-width: 62ch; margin-top: 6px; color: var(--muted); }
+.scorebox { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat { background: var(--sand); border: 1px solid var(--line); border-radius: var(--r); padding: 8px 14px; min-width: 120px; }
+.stat b { display: block; font-family: var(--f-mono); font-size: 1.25rem; font-weight: 500; }
+.stat span { font-size: .75rem; color: var(--muted); }
+
+/* Area selector */
+.selector { display: grid; gap: 10px; }
+.areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+@media (min-width: 1000px) { .areas { grid-template-columns: repeat(7, minmax(0, 1fr)); } }
+.area-btn {
+  text-align: left; cursor: pointer; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px; display: grid; gap: 4px; transition: background .15s, border-color .15s;
+}
+.area-btn:hover { border-color: var(--accent); }
+.area-btn .code { font-family: var(--f-mono); font-size: .72rem; color: var(--rust); letter-spacing: .06em; }
+.area-btn strong { font-weight: 600; line-height: 1.25; }
+.area-btn[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.area-btn[aria-pressed="true"] .code { color: var(--accent-ink); opacity: .85; }
+
+/* Workspace */
+.workspace { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.ws-head { background: var(--sand); padding: 18px 22px 0; display: grid; gap: 6px; border-bottom: 1px solid var(--line); }
+.ws-head p { color: var(--muted); max-width: 70ch; }
+.tabs { display: flex; gap: 4px; margin-top: 12px; overflow-x: auto; }
+.tab {
+  border: 1px solid transparent; border-bottom: none; background: transparent; cursor: pointer;
+  padding: 9px 14px; border-radius: 9px 9px 0 0; font-weight: 600; color: var(--muted); white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { background: var(--card); color: var(--ink); border-color: var(--line); margin-bottom: -1px; }
+.panel { padding: 22px; display: grid; gap: 20px; }
+
+/* KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.kpi { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 2px; background: var(--bg); }
+.kpi .label { font-size: .78rem; color: var(--muted); }
+.kpi .val { font-family: var(--f-mono); font-size: 1.5rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.kpi .ctx { font-size: .78rem; display: flex; gap: 6px; align-items: center; }
+.pill { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .04em; padding: 2px 8px; border-radius: 99px; }
+.pill.good { background: var(--good-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.bad { background: var(--bad-soft); color: var(--bad); }
+
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.box { border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; min-width: 0; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: var(--f-body); font-size: 11px; }
+.chart .vlab { fill: var(--ink); font-family: var(--f-mono); font-size: 11px; }
+.legend { display: flex; gap: 14px; font-size: .78rem; color: var(--muted); flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.note { font-size: .75rem; color: var(--muted); }
+
+.insight { background: var(--sand); border-color: var(--tan); }
+.insight .model { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip { display: inline-block; background: var(--tan); color: var(--ink); border-radius: 99px; padding: 3px 10px; font-size: .76rem; font-weight: 600; }
+.chip.ghost { background: transparent; border: 1px solid var(--line); font-weight: 500; }
+.insight dl { margin: 0; display: grid; gap: 8px; }
+.insight dt { font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.insight dd { margin: 0; }
+.plain { border-left: 3px solid var(--accent); padding-left: 10px; font-size: .92rem; }
+
+/* Quiz */
+.q { border: 1px solid var(--line); border-radius: var(--r); padding: 16px; display: grid; gap: 10px; }
+.q .qn { font-family: var(--f-mono); font-size: .75rem; color: var(--rust); }
+.opts { display: grid; gap: 8px; }
+.opt {
+  text-align: left; cursor: pointer; background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 12px; display: grid; grid-template-columns: 26px 1fr; gap: 8px; align-items: start;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .k { font-family: var(--f-mono); font-weight: 500; color: var(--muted); }
+.opt.right { background: var(--good-soft); border-color: var(--good); }
+.opt.wrong { background: var(--bad-soft); border-color: var(--bad); }
+.fb { border-radius: 8px; padding: 12px 14px; display: grid; gap: 6px; font-size: .93rem; }
+.fb.good { background: var(--good-soft); }
+.fb.bad { background: var(--bad-soft); }
+.fb .head { font-weight: 700; }
+.fb.good .head { color: var(--good); }
+.fb.bad .head { color: var(--bad); }
+
+/* Lab */
+.levels { display: flex; gap: 8px; flex-wrap: wrap; }
+.lvl { cursor: pointer; border: 1px solid var(--line); background: var(--bg); border-radius: 99px; padding: 7px 14px; font-weight: 600; }
+.lvl[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.case { background: var(--sand); border: 1px solid var(--tan); border-radius: var(--r); padding: 16px; display: grid; gap: 8px; }
+.form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.field { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.field label { font-weight: 600; font-size: .88rem; }
+.field .hint { font-size: .76rem; color: var(--muted); }
+select, textarea, input[type="text"] {
+  width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px;
+}
+textarea { resize: vertical; min-height: 84px; }
+.or { align-self: center; justify-self: center; font-size: .72rem; letter-spacing: .1em; color: var(--muted); }
+.btn { cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 600; padding: 9px 16px; border-radius: 8px; }
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.needs { display: flex; flex-wrap: wrap; gap: 6px; }
+.need { cursor: pointer; border: 1px dashed var(--line); background: transparent; border-radius: 99px; padding: 4px 10px; font-size: .78rem; }
+.need[aria-pressed="true"] { background: var(--accent-soft); border: 1px solid var(--accent); color: var(--ink); font-weight: 600; }
+
+.result { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.result-top { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; padding: 16px; }
+.dial { width: 84px; height: 84px; }
+.dial text { font-family: var(--f-mono); fill: var(--ink); }
+.result-top .head { font-weight: 700; font-size: 1.05rem; }
+.result.good .result-top { background: var(--good-soft); }
+.result.bad .result-top { background: var(--bad-soft); }
+.result.good .head { color: var(--good); }
+.result.bad .head { color: var(--bad); }
+.result-body { padding: 16px; display: grid; gap: 12px; }
+.result-body ol { margin: 0; padding-left: 22px; display: grid; gap: 3px; font-size: .92rem; }
+.cov { display: flex; flex-wrap: wrap; gap: 6px; }
+.cov .chip.ok { background: var(--good-soft); color: var(--good); }
+.cov .chip.part { background: var(--warn-soft); color: var(--warn); }
+.cov .chip.no { background: var(--bad-soft); color: var(--bad); }
+.ai-review { border-top: 1px dashed var(--line); padding-top: 12px; display: grid; gap: 8px; }
+
+/* Results */
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); }
+table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { background: var(--sand); font-weight: 600; font-size: .78rem; letter-spacing: .04em; }
+td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+.empty { padding: 26px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--r); }
+.toast { font-size: .85rem; color: var(--good); min-height: 1.2em; }
+
+.foot { font-size: .8rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 6px; }
+
+@media (max-width: 860px) {
+  .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .form { grid-template-columns: minmax(0, 1fr); }
+  .mast { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .wrap { padding-inline: 16px; }
+  .panel { padding: 16px; }
+  .ws-head { padding: 16px 16px 0; }
+  .kpi .val { font-size: 1.25rem; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <div class="eyebrow">Applying AI decision models across functions · HRM practice</div>
+      <h1>HRM Decision Lab</h1>
+      <p>Pick an HR area, read its dashboard, interpret what the AI model is telling you, then choose the right business AI stack for real HR use cases. Every answer gets a score and feedback.</p>
+    </div>
+    <div class="scorebox" aria-live="polite">
+      <div class="stat"><b id="sQuiz">0 / 0</b><span>Insight questions correct</span></div>
+      <div class="stat"><b id="sLab">–</b><span>Average stack score /10</span></div>
+    </div>
+  </header>
+
+  <section class="selector" aria-labelledby="selTitle">
+    <div>
+      <div class="eyebrow">Step 1</div>
+      <h2 id="selTitle">Choose an HRM area</h2>
+    </div>
+    <div class="areas" id="areas" role="group" aria-label="HRM areas"></div>
+  </section>
+
+  <section class="workspace" id="workspace" aria-live="polite">
+    <div class="ws-head">
+      <div class="eyebrow" id="wsEyebrow">Step 2 · Work through the area</div>
+      <h2 id="wsTitle"></h2>
+      <p id="wsSub"></p>
+      <div class="tabs" role="tablist" id="tabs">
+        <button class="tab" role="tab" id="tab-dash" data-tab="dash">1 · Dashboard</button>
+        <button class="tab" role="tab" id="tab-quiz" data-tab="quiz">2 · Interpret insights</button>
+        <button class="tab" role="tab" id="tab-lab" data-tab="lab">3 · AI stack lab</button>
+        <button class="tab" role="tab" id="tab-res" data-tab="res">4 · My results</button>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </section>
+
+  <footer class="foot">
+    <p>All figures are illustrative sample data for practice, not real company numbers. Scores come from a built-in rule engine that compares the capabilities a use case needs with what each tool provides across five business AI stack categories.</p>
+    <p>Tool catalogue: Conversational GenAI · Automation &amp; workflow · Analytics &amp; BI · Predictive &amp; no-code ML · HR-specific AI platforms.</p>
+  </footer>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- Business AI stack: 5 categories, capabilities, tools ---------- */
+const CATS = {
+  genai: "Conversational GenAI assistants",
+  auto:  "Automation & workflow",
+  bi:    "Analytics & BI",
+  ml:    "Predictive & no-code ML",
+  hr:    "HR-specific AI platforms"
+};
+const CAPS = {
+  gen:    "Draft content (JDs, letters, quizzes)",
+  summ:   "Summarise & analyse text",
+  sent:   "Sentiment & theme analysis",
+  auto:   "Automate workflows & nudges",
+  viz:    "Dashboards & reporting",
+  pred:   "Predictive modelling",
+  fcst:   "Forecasting",
+  match:  "Skills matching & sourcing",
+  ats:    "HR system-of-record data",
+  survey: "Employee listening surveys",
+  learn:  "Learning recommendations",
+  pay:    "Pay benchmarking & equity",
+  assess: "Structured assessments",
+  perf:   "Goals, reviews & calibration"
+};
+// strength: 1 = core capability, 0.5 = partial / add-on
+const TOOLS = [
+  { id: "chatgpt", name: "ChatGPT", cat: "genai", caps: { gen: 1, summ: 1, sent: .5 }, alias: ["chatgpt", "chat gpt", "gpt", "openai"] },
+  { id: "claude", name: "Claude", cat: "genai", caps: { gen: 1, summ: 1, sent: .5 }, alias: ["claude", "anthropic"] },
+  { id: "copilot", name: "Microsoft 365 Copilot", cat: "genai", caps: { gen: 1, summ: 1, viz: .5 }, alias: ["copilot", "m365 copilot"] },
+  { id: "gemini", name: "Gemini", cat: "genai", caps: { gen: 1, summ: 1, sent: .5 }, alias: ["gemini", "bard"] },
+  { id: "powerautomate", name: "Power Automate", cat: "auto", caps: { auto: 1 }, alias: ["power automate", "powerautomate", "ms flow"] },
+  { id: "zapier", name: "Zapier", cat: "auto", caps: { auto: 1 }, alias: ["zapier"] },
+  { id: "uipath", name: "UiPath (RPA)", cat: "auto", caps: { auto: 1 }, alias: ["uipath", "rpa", "automation anywhere"] },
+  { id: "powerbi", name: "Power BI", cat: "bi", caps: { viz: 1, fcst: .5 }, alias: ["power bi", "powerbi"] },
+  { id: "tableau", name: "Tableau", cat: "bi", caps: { viz: 1, fcst: .5 }, alias: ["tableau"] },
+  { id: "excel", name: "Excel", cat: "bi", caps: { viz: .5, fcst: .5 }, alias: ["excel", "spreadsheet", "google sheets"] },
+  { id: "azureml", name: "Azure Machine Learning", cat: "ml", caps: { pred: 1, fcst: 1 }, alias: ["azure ml", "azure machine learning", "azureml", "automl"] },
+  { id: "vertex", name: "Google Vertex AI", cat: "ml", caps: { pred: 1, fcst: 1 }, alias: ["vertex"] },
+  { id: "datarobot", name: "DataRobot", cat: "ml", caps: { pred: 1, fcst: 1 }, alias: ["datarobot", "data robot"] },
+  { id: "python", name: "Python (scikit-learn)", cat: "ml", caps: { pred: 1, fcst: 1, viz: .5 }, alias: ["python", "scikit", "sklearn", "pandas"] },
+  { id: "workday", name: "Workday HCM", cat: "hr", caps: { ats: 1, match: .5, learn: .5, perf: .5 }, alias: ["workday"] },
+  { id: "successfactors", name: "SAP SuccessFactors", cat: "hr", caps: { ats: 1, perf: 1, learn: .5 }, alias: ["successfactors", "success factors", "sap"] },
+  { id: "linkedin", name: "LinkedIn Recruiter", cat: "hr", caps: { match: 1 }, alias: ["linkedin"] },
+  { id: "hirevue", name: "HireVue", cat: "hr", caps: { assess: 1, auto: .5 }, alias: ["hirevue", "hire vue"] },
+  { id: "eightfold", name: "Eightfold AI", cat: "hr", caps: { match: 1, pred: .5, learn: .5 }, alias: ["eightfold"] },
+  { id: "qualtrics", name: "Qualtrics EmployeeXM", cat: "hr", caps: { survey: 1, sent: 1, pred: .5 }, alias: ["qualtrics"] },
+  { id: "glint", name: "Viva Glint", cat: "hr", caps: { survey: 1, sent: 1 }, alias: ["glint", "viva"] },
+  { id: "cultureamp", name: "Culture Amp", cat: "hr", caps: { survey: 1, sent: 1, perf: .5 }, alias: ["culture amp", "cultureamp"] },
+  { id: "lattice", name: "Lattice", cat: "hr", caps: { perf: 1, survey: .5 }, alias: ["lattice"] },
+  { id: "degreed", name: "Degreed", cat: "hr", caps: { learn: 1 }, alias: ["degreed"] },
+  { id: "payscale", name: "Payscale", cat: "hr", caps: { pay: 1 }, alias: ["payscale", "pay scale"] }
+];
+const T = Object.fromEntries(TOOLS.map(t => [t.id, t]));
+const STACKS = [
+  ["chatgpt", "zapier"],
+  ["claude", "powerautomate"],
+  ["copilot", "powerbi"],
+  ["excel", "chatgpt"],
+  ["workday", "powerbi"],
+  ["workday", "azureml", "powerbi"],
+  ["workday", "azureml", "powerbi", "powerautomate"],
+  ["eightfold", "workday", "powerbi", "powerautomate"],
+  ["linkedin", "hirevue", "chatgpt"],
+  ["copilot", "powerautomate"],
+  ["claude", "cultureamp"],
+  ["glint", "copilot"],
+  ["qualtrics", "powerbi", "powerautomate"],
+  ["qualtrics", "azureml", "powerbi", "powerautomate"],
+  ["workday", "azureml", "powerbi", "copilot"],
+  ["workday", "degreed", "powerbi", "powerautomate"],
+  ["successfactors", "powerbi", "azureml"],
+  ["workday", "degreed", "powerbi"],
+  ["workday", "payscale", "azureml", "powerbi"],
+  ["tableau", "datarobot", "zapier"]
+];
+const stackName = ids => ids.map(i => T[i].name).join(" + ");
+
+/* ---------- HRM areas: dashboards, insights, questions, use cases ---------- */
+const AREAS = [
+{
+  id: "ta", code: "TA", name: "Talent acquisition",
+  sub: "Hiring funnel health for 40 open roles this quarter. The AI model scores candidate–job fit to help recruiters prioritise screening.",
+  kpis: [
+    { label: "Time to fill", val: "38 days", ctx: "Target 30", s: "warn", st: "Above target" },
+    { label: "Offer acceptance", val: "82%", ctx: "Last qtr 78%", s: "good", st: "Improving" },
+    { label: "Quality of hire", val: "3.9 / 5", ctx: "90-day manager rating", s: "good", st: "On track" },
+    { label: "Cost per hire", val: "₹68k", ctx: "Budget ₹60k", s: "bad", st: "Over budget" }
+  ],
+  chart: { type: "hbar", title: "Hiring funnel this quarter", unit: "candidates",
+    data: [["Applied", 1200], ["Screened", 420], ["Interviewed", 140], ["Offered", 38], ["Joined", 31]] },
+  insight: {
+    model: "Classification", tech: "Candidate–job fit scoring (gradient-boosted classifier)",
+    finding: "Of 420 screened profiles, 63 have a fit score ≥ 0.80. Referral and campus sources produce 2.1× more high-fit candidates than job boards. Precision on last quarter's hires: 0.78.",
+    action: "Move 20% of job-board spend to the referral programme and fast-track high-fit profiles to hiring managers within 48 hours.",
+    caution: "Run an adverse-impact check (four-fifths rule) by gender and age band before using the ranking. Keep a recruiter review on every rejection.",
+    plain: "A classification model sorts people into groups, here likely good fit or not. It gives each profile a probability, so recruiters can look at the strongest matches first. It ranks; it does not decide."
+  },
+  quiz: [
+    { q: "The fit model shows precision of 0.78. What does that mean?",
+      o: ["78% of candidates the model flagged as high-fit turned out to be good hires",
+          "The model finds 78% of all good candidates in the pool",
+          "78% of applicants are qualified for the role",
+          "The model is 78% free of bias"],
+      a: 0, why: "Precision answers: when the model says yes, how often is it right? Finding 78% of all good candidates would be recall, a different measure. Neither number says anything about bias.",
+      hint: "Think about what happens only to the profiles the model flagged." },
+    { q: "Selection rates from the AI shortlist: women 18%, men 30%. What should you do?",
+      o: ["Nothing; the model is data-driven so it is objective",
+          "Flag adverse impact: 18 ÷ 30 = 0.60, below the 0.80 threshold, so investigate the features before using it",
+          "Increase the shortlist size so more women get through",
+          "Remove the gender column; that fixes it"],
+      a: 1, why: "The four-fifths rule compares selection rates: 0.60 is well below 0.80, a red flag for adverse impact. Removing the gender column alone rarely helps because other features (career gaps, colleges) can act as proxies.",
+      hint: "Divide the lower selection rate by the higher one." },
+    { q: "Which decision should stay with a human recruiter or hiring manager?",
+      o: ["Scheduling interview slots", "Sending application-received emails",
+          "The final reject or offer decision", "De-duplicating applications"],
+      a: 2, why: "High-stakes decisions about a person's job need human judgement and accountability. Routine, low-risk tasks like scheduling and acknowledgements are good candidates for automation.",
+      hint: "Which choice changes someone's career outcome?" }
+  ],
+  cases: [
+    { level: 1, title: "Write inclusive job descriptions faster",
+      brief: "Recruiters spend about 2 hours per job description. You want first drafts in minutes, with gender-neutral wording and a clear skills list, sent automatically to the hiring manager for approval.",
+      caps: { gen: 3, summ: 1, auto: 1 }, tool: "claude", stack: ["chatgpt", "zapier"],
+      model: "Generative AI (large language model)",
+      why: "Drafting text is the core job of a conversational GenAI assistant. Add an automation tool only if you want drafts routed to hiring managers for approval." },
+    { level: 2, title: "Shortlist 1,200 applicants for 40 roles and track the funnel",
+      brief: "Volume hiring for sales and operations. Match applicants to roles by skills, keep everything in the HR system, alert recruiters automatically, and give leaders a live funnel dashboard.",
+      caps: { match: 3, ats: 2, auto: 1, viz: 2 }, tool: "eightfold", stack: ["eightfold", "workday", "powerbi", "powerautomate"],
+      model: "Classification + matching (skills inference)",
+      why: "A talent-intelligence platform does skills matching, the HRIS holds the system of record, BI shows the funnel, and automation sends recruiter alerts." }
+  ]
+},
+{
+  id: "wp", code: "WP", name: "Workforce planning",
+  sub: "Next year's headcount demand versus projected supply. The AI model forecasts demand from business drivers.",
+  kpis: [
+    { label: "Current headcount", val: "2,450", ctx: "As of Q4", s: "good", st: "Stable" },
+    { label: "Forecast demand (Q4 next yr)", val: "2,650", ctx: "±45 at 80% interval", s: "warn", st: "Growing" },
+    { label: "Projected gap", val: "250", ctx: "Demand − supply", s: "bad", st: "Action needed" },
+    { label: "Internal fill rate", val: "34%", ctx: "Target 45%", s: "warn", st: "Below target" }
+  ],
+  chart: { type: "line", title: "Headcount demand vs supply, next 4 quarters", unit: "employees",
+    labels: ["Q1", "Q2", "Q3", "Q4"],
+    series: [{ name: "Forecast demand", values: [2480, 2530, 2610, 2650] }, { name: "Projected supply", values: [2450, 2430, 2410, 2400] }] },
+  insight: {
+    model: "Forecasting", tech: "Time-series regression on business drivers",
+    finding: "Order volume explains most of the demand change (correlation 0.86). Supply falls by about 20 people per quarter from attrition and retirements. The gap reaches 250 by Q4.",
+    action: "Start hiring for data and supply-chain roles now (60+ day time to fill) and reskill 60 operations staff into planner roles.",
+    caution: "The forecast assumes current order growth continues. Re-run it every month and plan for a low and a high scenario.",
+    plain: "A forecasting model looks at how headcount moved with business activity in the past and projects it forward. The ± range shows how uncertain the number is: plan for a range, not a single figure."
+  },
+  quiz: [
+    { q: "Demand for Q4 is forecast at 2,650 ± 45 (80% interval). How should you read this?",
+      o: ["Demand will be exactly 2,650", "There is roughly an 80% chance actual demand lands between 2,605 and 2,695",
+          "The model is 80% accurate", "Demand will be at least 2,695"],
+      a: 1, why: "A prediction interval gives a range with a stated likelihood. It says nothing about overall model accuracy, and it is not a guarantee.",
+      hint: "Add and subtract the ± figure." },
+    { q: "Order volume correlates 0.86 with headcount need. What can you conclude?",
+      o: ["Orders definitely cause the headcount need", "Order volume is a strong predictor worth using in the forecast, but correlation alone does not prove cause",
+          "Correlation of 0.86 is weak and should be ignored", "Headcount causes orders to rise"],
+      a: 1, why: "0.86 is a strong relationship, useful for prediction. Causation needs business logic or experiments to confirm.",
+      hint: "Remember: correlation is not causation." },
+    { q: "The gap is in skills that take 60+ days to hire. What is the best first move?",
+      o: ["Wait until Q4 and hire then", "Combine early hiring with reskilling internal talent (build + buy)",
+          "Ask the model to reduce the forecast", "Freeze all hiring to save cost"],
+      a: 1, why: "Long lead times mean you act early. Mixing build (reskill) and buy (hire) reduces risk and cost.",
+      hint: "Look at the lead time." }
+  ],
+  cases: [
+    { level: 1, title: "Build a headcount vs plan dashboard",
+      brief: "The CHRO wants a monthly view of actual headcount against budgeted plan by department, pulled from the HR system.",
+      caps: { viz: 3, ats: 2 }, tool: "powerbi", stack: ["workday", "powerbi"],
+      model: "Descriptive analytics (no prediction needed)",
+      why: "This is reporting on facts. The HRIS supplies the data and a BI tool visualises it. No ML is needed yet." },
+    { level: 2, title: "Forecast skills demand four quarters ahead",
+      brief: "Leadership wants to know which skills will be short next year, based on sales pipeline and project plans, with a plain-English summary for the board.",
+      caps: { fcst: 3, ats: 2, viz: 2, gen: 1 }, tool: "azureml", stack: ["workday", "azureml", "powerbi", "copilot"],
+      model: "Forecasting (time-series regression)",
+      why: "An ML platform builds the forecast, the HRIS supplies supply-side data, BI presents it. A GenAI assistant can draft the board summary." }
+  ]
+},
+{
+  id: "ld", code: "L&D", name: "Learning & development",
+  sub: "Skill gaps against the capability framework and learning engagement. The AI model recommends personalised learning paths.",
+  kpis: [
+    { label: "Learning hrs / employee", val: "22", ctx: "Target 30 per year", s: "warn", st: "Below target" },
+    { label: "Course completion", val: "71%", ctx: "Last yr 64%", s: "good", st: "Improving" },
+    { label: "Skill gap index", val: "0.34", ctx: "0 = no gap, 1 = full gap", s: "warn", st: "Moderate" },
+    { label: "Post-training performance lift", val: "+8%", ctx: "Trained vs not trained", s: "good", st: "Positive" }
+  ],
+  chart: { type: "hbar", title: "Skill gap by capability (% of employees below required level)", unit: "%",
+    data: [["GenAI prompting", 55], ["Data literacy", 48], ["Coaching", 30], ["Stakeholder mgmt", 22], ["Advanced Excel", 15]] },
+  insight: {
+    model: "Recommendation", tech: "Collaborative filtering + skills inference",
+    finding: "Learners who completed Data Storytelling were 1.4× more likely to finish the next course. The engine has built personalised paths for 640 employees with a GenAI-prompting or data-literacy gap.",
+    action: "Launch the two highest-gap paths first and ask managers to approve 2 hours of learning time per week.",
+    caution: "New joiners have little history (cold start), so give them role-based defaults until data builds up.",
+    plain: "A recommendation engine works like an online store: people with similar roles and skills liked these courses, so you might too. It needs past behaviour to work well."
+  },
+  quiz: [
+    { q: "New joiners get poor course recommendations. What is the likely reason?",
+      o: ["The model is broken", "Cold start: the model has too little history about them",
+          "New joiners do not need learning", "The courses are too expensive"],
+      a: 1, why: "Recommendation engines learn from behaviour. With no history, they need sensible defaults such as role-based paths until data builds up.",
+      hint: "What data does the model have about someone on day one?" },
+    { q: "Which skill should you prioritise first?",
+      o: ["Advanced Excel, because it is easiest", "GenAI prompting: the largest gap and high business importance",
+          "Coaching, because managers asked", "All five equally"],
+      a: 1, why: "Prioritise where the gap is biggest and the skill matters most to strategy. GenAI prompting has the highest gap at 55%.",
+      hint: "Look at the longest bar in the chart." },
+    { q: "How do you show that learning actually changed business results?",
+      o: ["Count course completions", "Compare performance or behaviour change of trained vs untrained groups (Kirkpatrick levels 3–4)",
+          "Ask learners if they enjoyed the course", "Count training hours"],
+      a: 1, why: "Completions and satisfaction are levels 1–2. Impact means behaviour and results, ideally compared against a group that did not train.",
+      hint: "Think beyond activity measures." }
+  ],
+  cases: [
+    { level: 1, title: "Turn a policy document into a quiz and one-page summary",
+      brief: "You have a 25-page code-of-conduct policy. Create a one-page summary and a 10-question quiz, and send both to every new joiner automatically on day one.",
+      caps: { gen: 3, summ: 2, auto: 1 }, tool: "claude", stack: ["claude", "powerautomate"],
+      model: "Generative AI (large language model)",
+      why: "Summarising and generating questions are classic GenAI tasks. Always have the policy owner check the output for accuracy." },
+    { level: 2, title: "Personalised learning paths based on skill gaps",
+      brief: "Use skills data from the HR system to recommend learning paths per employee, nudge managers, and track gap closure on a dashboard.",
+      caps: { learn: 3, ats: 2, viz: 1, auto: 1 }, tool: "degreed", stack: ["workday", "degreed", "powerbi", "powerautomate"],
+      model: "Recommendation engine",
+      why: "A learning experience platform recommends content, the HRIS holds skills and roles, and BI tracks progress. Add automation for manager nudges." }
+  ]
+},
+{
+  id: "pm", code: "PM", name: "Performance management",
+  sub: "Mid-year review cycle health and rating patterns. The AI model checks review text and flags unusual rating patterns before calibration.",
+  kpis: [
+    { label: "Goals set on time", val: "88%", ctx: "Target 95%", s: "warn", st: "Close" },
+    { label: "Mid-year check-ins done", val: "64%", ctx: "Target 90%", s: "bad", st: "Behind" },
+    { label: "Managers flagged for review", val: "3", ctx: "Out of 120", s: "warn", st: "Review" },
+    { label: "Feedback comments analysed", val: "4,800", ctx: "This cycle", s: "good", st: "Complete" }
+  ],
+  chart: { type: "vbar", title: "Rating distribution (1 = low, 5 = high)", unit: "% of employees",
+    data: [["1", 4], ["2", 11], ["3", 52], ["4", 26], ["5", 7]] },
+  insight: {
+    model: "Anomaly detection + NLP", tech: "Z-score outlier check on ratings; theme extraction on comments",
+    finding: "Team C's manager rates 40% above the peer average (z = 2.3). 'Communication' is the top development theme, appearing in 31% of comments.",
+    action: "Bring the three flagged managers' ratings to calibration with evidence, and add a communication module to development plans.",
+    caution: "Feedback text can carry gender or language bias. Use AI to surface patterns, not to write ratings.",
+    plain: "Anomaly detection spots numbers that are far from normal. NLP (natural language processing) reads lots of comments and groups them into themes so you can see patterns fast."
+  },
+  quiz: [
+    { q: "A manager's ratings have z = 2.3 compared with peers. What does this tell you?",
+      o: ["The manager is definitely inflating ratings", "Their ratings are unusually far above average; review them in calibration with evidence",
+          "Their team performed 2.3× better", "Nothing; z-scores are not useful"],
+      a: 1, why: "A z-score shows how many standard deviations a value is from the mean. 2.3 is unusual, which is worth a conversation. It is not proof of wrongdoing; the team may truly be strong.",
+      hint: "Unusual is not the same as wrong." },
+    { q: "Should the AI write each employee's final performance rating?",
+      o: ["Yes, it is faster and consistent", "No; AI can summarise evidence and spot patterns, but the manager owns the rating",
+          "Yes, if employees agree", "Only for junior staff"],
+      a: 1, why: "Ratings affect pay and careers, so they need human judgement and accountability. AI supports with summaries, themes and bias flags.",
+      hint: "Who is accountable for the decision?" },
+    { q: "Comments mostly mention events from the last month of the cycle. What bias is this?",
+      o: ["Halo effect", "Recency bias", "Central tendency", "Confirmation bias"],
+      a: 1, why: "Recency bias means recent events outweigh the full period. Regular check-ins and AI summaries of the whole year's notes help counter it.",
+      hint: "Think about timing." }
+  ],
+  cases: [
+    { level: 1, title: "Summarise 360-degree feedback",
+      brief: "Each manager receives 12–15 open comments from peers and reports. Produce a summary of strengths and development areas with a sentiment view.",
+      caps: { summ: 3, sent: 2, gen: 1 }, tool: "claude", stack: ["claude", "cultureamp"],
+      model: "NLP: summarisation + sentiment",
+      why: "A GenAI assistant summarises and themes text well; a listening platform such as Culture Amp adds reliable sentiment scoring. Remove names before pasting comments into any assistant." },
+    { level: 2, title: "Detect rating inflation before calibration",
+      brief: "Across 120 managers, flag unusual rating patterns, show them on a calibration dashboard, and pull ratings from the performance system.",
+      caps: { perf: 2, pred: 2, viz: 3, ats: 1 }, tool: "powerbi", stack: ["successfactors", "powerbi", "azureml"],
+      model: "Anomaly detection",
+      why: "The performance system holds ratings, an ML tool flags outliers, and BI gives calibration panels a clear view." }
+  ]
+},
+{
+  id: "ee", code: "EE", name: "Employee engagement",
+  sub: "Results of the annual engagement survey and 1,140 open comments. The AI model finds which drivers matter most.",
+  kpis: [
+    { label: "eNPS", val: "+18", ctx: "Promoters 40%, detractors 22%", s: "good", st: "Positive" },
+    { label: "Survey participation", val: "76%", ctx: "Target 80%", s: "warn", st: "Close" },
+    { label: "Engagement index", val: "71 / 100", ctx: "Industry 68", s: "good", st: "Above benchmark" },
+    { label: "Negative comment share", val: "29%", ctx: "Last yr 24%", s: "bad", st: "Rising" }
+  ],
+  chart: { type: "hbar", title: "Engagement driver scores (favourable %)", unit: "%",
+    data: [["Purpose", 80], ["Manager support", 74], ["Recognition", 61], ["Growth", 58], ["Workload", 49]] },
+  insight: {
+    model: "Key-driver analysis + sentiment", tech: "Regression on driver scores; NLP sentiment on comments",
+    finding: "Workload has the strongest link to overall engagement (β = 0.41) and the lowest score (49%). Comments about workload are 68% negative, mostly from operations.",
+    action: "Make workload the company-wide priority: review staffing in operations and train managers on prioritisation.",
+    caution: "Do not report results for groups smaller than 5 people, to protect anonymity.",
+    plain: "Key-driver analysis tells you which survey topics move overall engagement the most. Fix things that matter a lot and score low first."
+  },
+  quiz: [
+    { q: "Promoters are 40% and detractors 22%. What is the eNPS?",
+      o: ["+62", "+18", "−18", "40"],
+      a: 1, why: "eNPS = % promoters − % detractors = 40 − 22 = +18. Passives are left out.",
+      hint: "Subtract, don't add." },
+    { q: "Which driver should be the top priority?",
+      o: ["Purpose: highest score", "Workload: highest impact and lowest score",
+          "Manager support: middle score", "Recognition: managers like it"],
+      a: 1, why: "Priority = high impact × low score. Workload has the biggest β and the worst score, so improving it moves engagement most.",
+      hint: "Combine impact and score." },
+    { q: "A director asks for comments from a 3-person team. What do you do?",
+      o: ["Share them; the director is senior", "Decline: groups under 5 risk identifying people; roll them into a larger group",
+          "Share them with names removed", "Ask the AI to rewrite the comments"],
+      a: 1, why: "Anonymity thresholds protect trust in the survey. With 3 people, removing names is not enough to prevent identification.",
+      hint: "Trust drives future participation." }
+  ],
+  cases: [
+    { level: 1, title: "Run a pulse survey and theme the comments",
+      brief: "Send a 10-question monthly pulse survey, get automatic themes and sentiment from open comments, and a short written summary for leaders.",
+      caps: { survey: 3, sent: 2, summ: 1 }, tool: "glint", stack: ["glint", "copilot"],
+      model: "NLP: sentiment + topic modelling",
+      why: "An employee-listening platform runs surveys and themes comments in one place; Copilot drafts the leadership summary." },
+    { level: 2, title: "Find engagement drivers and nudge managers",
+      brief: "Identify which drivers matter most by team, show results on a dashboard, and send each manager an action-planning nudge automatically.",
+      caps: { survey: 2, sent: 2, pred: 2, auto: 2, viz: 1 }, tool: "qualtrics", stack: ["qualtrics", "azureml", "powerbi", "powerautomate"],
+      model: "Key-driver regression + sentiment",
+      why: "Qualtrics runs the survey and sentiment, an ML tool runs the key-driver regression by team, BI shows team views, and automation sends manager nudges." }
+  ]
+},
+{
+  id: "rt", code: "RT", name: "Retention",
+  sub: "Attrition trends and flight-risk signals. The AI model predicts which employees are at higher risk of leaving in the next 6 months.",
+  kpis: [
+    { label: "Annual attrition", val: "16.8%", ctx: "Industry 14%", s: "bad", st: "High" },
+    { label: "Regretted attrition", val: "6.2%", ctx: "Target < 5%", s: "warn", st: "Above target" },
+    { label: "First-year attrition", val: "24%", ctx: "Last yr 21%", s: "bad", st: "Rising" },
+    { label: "High-risk, high performers", val: "118", ctx: "Risk score ≥ 0.7", s: "warn", st: "Act now" }
+  ],
+  chart: { type: "vbar", title: "Annual attrition by department", unit: "%",
+    data: [["Sales", 24], ["Tech", 19], ["Ops", 12], ["HR", 9], ["Finance", 8]] },
+  insight: {
+    model: "Classification", tech: "Attrition-risk model (gradient boosting, SHAP explanations)",
+    finding: "Top drivers: no promotion in 3+ years, commute over 60 minutes, and pay below market (compa-ratio < 0.90). Model AUC is 0.81 on last year's leavers.",
+    action: "Hold stay interviews with the 30 highest-risk top performers this month and review their career paths and pay positioning.",
+    caution: "Use risk scores to support people, never to penalise them. Limit access to HRBPs, and exclude protected attributes such as age.",
+    plain: "The model learns patterns from people who left before and gives each current employee a probability of leaving. SHAP values show which factors pushed each person's score up."
+  },
+  quiz: [
+    { q: "The model's AUC is 0.81. What does that mean?",
+      o: ["81% of employees will stay", "81% of the time it ranks a random leaver above a random stayer",
+          "The model is right 81% of the time on every person", "81% of leavers are in Sales"],
+      a: 1, why: "AUC measures how well the model separates two groups: 0.5 is a coin flip, 1.0 is perfect. 0.81 is good, but it still makes mistakes for individuals.",
+      hint: "AUC is about ranking, not accuracy per person." },
+    { q: "How should a manager use a team member's high flight-risk score?",
+      o: ["Remove them from promotion lists", "Have a supportive stay conversation about growth, workload and pay",
+          "Tell them the AI thinks they will leave", "Start hiring their replacement immediately"],
+      a: 1, why: "Risk scores should trigger supportive action. Penalising people is unfair and makes attrition more likely.",
+      hint: "The goal is to keep the person." },
+    { q: "A data scientist wants to add 'age' to improve accuracy. Your response?",
+      o: ["Add it; accuracy matters most", "Exclude it: it is a protected attribute and creates discrimination risk",
+          "Add it, but hide it from managers", "Replace it with date of birth"],
+      a: 1, why: "Protected attributes (and close proxies such as date of birth) should not drive employment decisions. Fairness and legality outweigh a small accuracy gain.",
+      hint: "Think about legal and ethical risk." }
+  ],
+  cases: [
+    { level: 1, title: "Monthly attrition report by department",
+      brief: "HR leadership wants a monthly report of exits, attrition rate and regretted exits by department, from the HR system.",
+      caps: { viz: 3, ats: 2 }, tool: "powerbi", stack: ["workday", "powerbi"],
+      model: "Descriptive analytics",
+      why: "Reporting on what happened needs HRIS data and a BI tool. Prediction comes later." },
+    { level: 2, title: "Predict flight risk and trigger stay interviews",
+      brief: "Predict which high performers may leave in 6 months, show risk on an HRBP dashboard, and automatically create a stay-interview task.",
+      caps: { pred: 3, ats: 2, auto: 2, viz: 1 }, tool: "azureml", stack: ["workday", "azureml", "powerbi", "powerautomate"],
+      model: "Classification (attrition risk)",
+      why: "An ML platform builds the risk model on HRIS data, BI shows it to HRBPs, and automation creates follow-up tasks." }
+  ]
+},
+{
+  id: "cp", code: "C&B", name: "Compensation",
+  sub: "Pay competitiveness and pay equity ahead of the annual merit cycle. The AI model tests for unexplained pay gaps.",
+  kpis: [
+    { label: "Average compa-ratio", val: "0.96", ctx: "1.00 = market midpoint", s: "warn", st: "Slightly below" },
+    { label: "Adjusted gender pay gap", val: "3.8%", ctx: "p = 0.03", s: "bad", st: "Significant" },
+    { label: "Merit budget", val: "8.0%", ctx: "Of base payroll", s: "good", st: "Approved" },
+    { label: "Below range minimum", val: "41", ctx: "Employees", s: "warn", st: "Review" }
+  ],
+  chart: { type: "vbar", title: "Compa-ratio by grade (1.00 = market midpoint)", unit: "ratio",
+    data: [["G1", 1.02], ["G2", 0.98], ["G3", 0.94], ["G4", 0.91], ["G5", 0.97]], ref: 1 },
+  insight: {
+    model: "Regression + optimisation", tech: "Multiple regression for pay equity; budget optimiser for merit",
+    finding: "After controlling for grade, tenure, performance and location, women are paid 3.8% less (p = 0.03). Grade G4 sits furthest below market at 0.91.",
+    action: "Ring-fence ₹1.9 Cr of the merit budget for equity corrections and prioritise G4 increases.",
+    caution: "Explain the method to leaders and employees in simple terms; unexplained models reduce trust in pay decisions.",
+    plain: "Regression compares people doing similar work. If a gap remains after accounting for legitimate factors, it is unexplained and needs fixing."
+  },
+  quiz: [
+    { q: "Why look at the adjusted pay gap, not only the raw gap?",
+      o: ["The adjusted gap is always smaller", "It compares like-for-like (same grade, tenure, performance), so what remains is unexplained",
+          "Regulators ban raw gaps", "The raw gap includes bonuses"],
+      a: 1, why: "The raw gap mixes in differences in role and level. The adjusted gap isolates pay differences for comparable work, which is what equity fixes target.",
+      hint: "Think like-for-like." },
+    { q: "Grade G4 has a compa-ratio of 0.91. What does that mean?",
+      o: ["G4 is paid 9% above market midpoint", "G4 is paid on average 9% below market midpoint",
+          "91% of G4 employees are underpaid", "G4 received a 9% raise"],
+      a: 1, why: "Compa-ratio = actual pay ÷ range midpoint. 0.91 means 91% of midpoint, so about 9% below the market reference.",
+      hint: "1.00 is the midpoint." },
+    { q: "The gap has p = 0.03. What does this suggest?",
+      o: ["The gap is probably due to chance", "A gap this size is unlikely to be due to chance alone (below 0.05)",
+          "Only 3% of women are affected", "The gap is 3%"],
+      a: 1, why: "A p-value under 0.05 is usually treated as statistically significant: the pattern is unlikely to be random.",
+      hint: "Compare against the common 0.05 threshold." }
+  ],
+  cases: [
+    { level: 1, title: "Draft a clear pay-revision letter template",
+      brief: "Create a friendly, compliant letter template explaining each employee's merit increase, with placeholders for name, old pay and new pay, then email each letter automatically.",
+      caps: { gen: 3, auto: 1 }, tool: "copilot", stack: ["copilot", "powerautomate"],
+      model: "Generative AI (large language model)",
+      why: "Drafting text is a GenAI task. Microsoft 365 Copilot works inside Word and Outlook, and Power Automate sends each personalised letter." },
+    { level: 2, title: "Pay-equity analysis and merit budget allocation",
+      brief: "Benchmark pay against the market, test for unexplained gender gaps, and propose merit allocations within budget on a dashboard for the reward committee.",
+      caps: { pay: 3, pred: 2, ats: 2, viz: 1 }, tool: "payscale", stack: ["workday", "payscale", "azureml", "powerbi"],
+      model: "Regression + optimisation",
+      why: "Payscale provides market data, the HRIS holds pay and grade, an ML tool runs the equity regression, and BI presents scenarios." }
+  ]
+}
+];
+
+/* ---------- Custom use-case need detection ---------- */
+const KEYWORDS = [
+  [/(draft|write|job description|\bjd\b|letter|email|offer|policy|template|content|quiz|question)/i, "gen"],
+  [/(summar|analys[ei]|review comments|feedback|document|notes|transcript)/i, "summ"],
+  [/(sentiment|mood|tone|theme|comment|open text)/i, "sent"],
+  [/(automat|workflow|remind|nudge|trigger|notify|alert|schedul|route|approval)/i, "auto"],
+  [/(dashboard|report|visual|chart|trend|metric|kpi|track)/i, "viz"],
+  [/(predict|risk|attrition|turnover|churn|flight|likel|classif|score)/i, "pred"],
+  [/(forecast|demand|headcount plan|future|next year|quarters? ahead|capacity)/i, "fcst"],
+  [/(match|source|sourcing|shortlist|candidate|resume|\bcv\b|screen|talent pool|skills? inference)/i, "match"],
+  [/(hris|hr system|employee data|records|payroll data|ats|applicant tracking|master data)/i, "ats"],
+  [/(survey|pulse|enps|engagement|listening|questionnaire)/i, "survey"],
+  [/(learning|training|course|upskill|reskill|development path|lms|lxp)/i, "learn"],
+  [/(salary|pay|compensation|reward|benchmark|equity|bonus|merit)/i, "pay"],
+  [/(interview|assessment|test|psychometric|video interview)/i, "assess"],
+  [/(performance|goal|okr|appraisal|rating|calibration|review cycle)/i, "perf"]
+];
+function detectNeeds(text) {
+  const caps = {};
+  KEYWORDS.forEach(([re, cap]) => { if (re.test(text)) caps[cap] = 2; });
+  return caps;
+}
+
+/* ---------- Evaluation engine ---------- */
+function coverage(toolIds, caps) {
+  let got = 0, total = 0;
+  const detail = [];
+  for (const [cap, w] of Object.entries(caps)) {
+    total += w;
+    let best = 0, by = null;
+    toolIds.forEach(id => { const s = T[id].caps[cap] || 0; if (s > best) { best = s; by = id; } });
+    got += w * best;
+    detail.push({ cap, w, s: best, by });
+  }
+  return { ratio: total ? got / total : 0, detail };
+}
+function bestSingle(caps) {
+  let best = null, ratio = -1;
+  TOOLS.forEach(t => { const r = coverage([t.id], caps).ratio; if (r > ratio) { ratio = r; best = t.id; } });
+  return { id: best, ratio };
+}
+function bestStack(caps) {
+  const pick = [];
+  let cur = 0;
+  while (pick.length < 4) {
+    let cand = null, gain = 0;
+    TOOLS.forEach(t => {
+      if (pick.includes(t.id)) return;
+      const g = coverage([...pick, t.id], caps).ratio - cur;
+      if (g > gain + 1e-9) { gain = g; cand = t.id; }
+    });
+    if (!cand) break;
+    pick.push(cand); cur += gain;
+    if (cur >= 0.999) break;
+  }
+  return pick;
+}
+function parseTools(text) {
+  const low = " " + text.toLowerCase() + " ";
+  return TOOLS.filter(t => t.alias.some(a => low.includes(a))).map(t => t.id);
+}
+function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
+
+function evaluate(c, ids, mode) {
+  const caps = c.caps;
+  const recTool = c.tool || bestSingle(caps).id;
+  const recStack = c.stack || bestStack(caps);
+  const L = [];
+  if (!ids.length) {
+    L.push("We could not recognise any tools in your answer.");
+    L.push("Try names from the catalogue, e.g. ChatGPT, Power BI, Workday, Azure ML, Qualtrics.");
+    L.push("This use case needs: " + Object.keys(caps).map(k => CAPS[k]).join("; ") + ".");
+    L.push("Recommended single tool: " + T[recTool].name + ".");
+    L.push("Recommended stack: " + stackName(recStack) + ".");
+    return { score: 1, correct: false, detail: [], idle: [], lines: L, recTool, recStack,
+      justification: "No recognisable tool, so the answer cannot meet the use case's needs." };
+  }
+  const cov = coverage(ids, caps);
+  const contributing = new Set(cov.detail.filter(d => d.s > 0).map(d => d.by));
+  const idle = ids.filter(id => !contributing.has(id) && !Object.keys(caps).some(k => T[id].caps[k]));
+  let score, base;
+  if (ids.length === 1) {
+    base = bestSingle(caps).ratio || 1;
+    score = Math.round(1 + 9 * Math.min(1, cov.ratio / base));
+  } else {
+    score = Math.round(1 + 9 * cov.ratio);
+    score -= idle.length;
+    if (c.level === 1 && ids.length > 3) score -= 1;
+  }
+  score = clamp(score, 1, 10);
+  const correct = score >= 7;
+  const ok = cov.detail.filter(d => d.s === 1).map(d => CAPS[d.cap]);
+  const part = cov.detail.filter(d => d.s > 0 && d.s < 1).map(d => CAPS[d.cap]);
+  const miss = cov.detail.filter(d => d.s === 0).sort((a, b) => b.w - a.w).map(d => CAPS[d.cap]);
+
+  let just = "Your " + (ids.length === 1 ? "tool covers" : "stack covers") + " " + Math.round(cov.ratio * 100) + "% of what this use case needs";
+  if (ids.length === 1) just += " (a single tool can reach at most " + Math.round(bestSingle(caps).ratio * 100) + "% here)";
+  just += ". ";
+  if (ok.length) just += "Strong on: " + ok.join(", ") + ". ";
+  if (part.length) just += "Partly covered: " + part.join(", ") + ". ";
+  if (miss.length) just += "Missing: " + miss.join(", ") + ". ";
+  if (idle.length) just += stackName(idle) + " adds no value for this use case. ";
+  if (c.level === 1 && ids.length > 3) just += "For a Level 1 use case, a simpler stack is better. ";
+
+  if (!correct) {
+    L.push("This use case needs: " + Object.keys(caps).sort((a, b) => caps[b] - caps[a]).map(k => CAPS[k]).join("; ") + ".");
+    if (miss.length) L.push("Your answer leaves out: " + miss.join("; ") + ".");
+    if (part.length) L.push("Only partly covered: " + part.join("; ") + ".");
+    if (idle.length) L.push(stackName(idle) + " does not help with any of these needs.");
+    L.push("Decision model behind this use case: " + c.model + ".");
+    L.push("Best single tool: " + T[recTool].name + " (" + CATS[T[recTool].cat] + ").");
+    L.push("Recommended stack: " + stackName(recStack) + ".");
+    recStack.forEach(id => {
+      const roles = Object.keys(caps).filter(k => T[id].caps[k]).map(k => CAPS[k]);
+      if (roles.length) L.push("• " + T[id].name + " → " + roles.join(", ") + ".");
+    });
+    if (c.why) L.push("Why: " + c.why);
+    L.push("Tip: start from the need, then pick one tool per need from the five stack categories.");
+  } else {
+    if (c.why) L.push("Expert view: " + c.why);
+    if (score < 10) L.push("To reach 10, compare with the recommended " + (ids.length === 1 ? "stack" : "combination") + ": " + stackName(recStack) + ".");
+  }
+  return { score, correct, detail: cov.detail, idle, lines: L.slice(0, 20), recTool, recStack, justification: just.trim() };
+}
+
+/* ---------- State ---------- */
+const state = {
+  area: "ta", tab: "dash", level: 1,
+  custom: { text: "", caps: {} },
+  quizAnswers: {},   // key area:qIndex -> chosen index
+  log: []            // attempts for download
+};
+try {
+  const saved = JSON.parse(localStorage.getItem("hrm-lab") || "null");
+  if (saved && saved.area) Object.assign(state, saved);
+} catch (e) {}
+function persist() { try { localStorage.setItem("hrm-lab", JSON.stringify(state)); } catch (e) {} }
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const area = () => AREAS.find(a => a.id === state.area);
+
+/* ---------- Charts (inline SVG) ---------- */
+function fmt(v) { return Number.isInteger(v) ? v.toLocaleString("en-IN") : v.toFixed(2); }
+function niceMax(m) { const p = Math.pow(10, Math.floor(Math.log10(m))); const n = m / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+function hbar(ch) {
+  const W = 520, rowH = 34, padL = 128, padR = 56, H = ch.data.length * rowH + 12;
+  const max = Math.max(...ch.data.map(d => d[1]));
+  const x = v => padL + (W - padL - padR) * v / max;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ch.title)}">`;
+  ch.data.forEach((d, i) => {
+    const y = i * rowH + 6;
+    s += `<text x="${padL - 10}" y="${y + 17}" text-anchor="end">${esc(d[0])}</text>`;
+    s += `<rect x="${padL}" y="${y + 4}" width="${W - padL - padR}" height="20" rx="3" fill="var(--grid)" opacity=".55"></rect>`;
+    s += `<rect x="${padL}" y="${y + 4}" width="${Math.max(2, x(d[1]) - padL)}" height="20" rx="3" fill="var(--chart-1)"></rect>`;
+    s += `<text class="vlab" x="${x(d[1]) + 6}" y="${y + 18}">${fmt(d[1])}${ch.unit === "%" ? "%" : ""}</text>`;
+  });
+  return s + "</svg>";
+}
+function vbar(ch) {
+  const W = 520, H = 230, padL = 40, padB = 28, padT = 16, padR = 12;
+  const rawMax = Math.max(...ch.data.map(d => d[1]), ch.ref || 0);
+  const max = ch.ref ? 1.1 : niceMax(rawMax);
+  const min = ch.ref ? 0.8 : 0;
+  const ih = H - padB - padT, iw = W - padL - padR;
+  const y = v => padT + ih * (1 - (v - min) / (max - min));
+  const bw = iw / ch.data.length * 0.56;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ch.title)}">`;
+  const ticks = ch.ref ? [0.8, 0.9, 1.0, 1.1] : [0, max / 4, max / 2, max * 3 / 4, max];
+  ticks.forEach(t => {
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)" stroke-width="1"></line>`;
+    s += `<text x="${padL - 6}" y="${y(t) + 4}" text-anchor="end">${ch.ref ? t.toFixed(1) : fmt(Math.round(t))}</text>`;
+  });
+  ch.data.forEach((d, i) => {
+    const cx = padL + iw / ch.data.length * (i + 0.5);
+    const below = ch.ref && d[1] < ch.ref;
+    s += `<rect x="${cx - bw / 2}" y="${y(d[1])}" width="${bw}" height="${y(min) - y(d[1])}" rx="3" fill="${below ? "var(--chart-2)" : "var(--chart-1)"}"></rect>`;
+    s += `<text class="vlab" x="${cx}" y="${y(d[1]) - 5}" text-anchor="middle">${fmt(d[1])}${ch.unit === "%" ? "%" : ""}</text>`;
+    s += `<text x="${cx}" y="${H - 8}" text-anchor="middle">${esc(d[0])}</text>`;
+  });
+  if (ch.ref) s += `<line x1="${padL}" x2="${W - padR}" y1="${y(ch.ref)}" y2="${y(ch.ref)}" stroke="var(--ink)" stroke-width="1.2" stroke-dasharray="4 4"></line>`;
+  return s + "</svg>";
+}
+function line(ch) {
+  const W = 520, H = 230, padL = 48, padB = 28, padT = 16, padR = 20;
+  const all = ch.series.flatMap(s => s.values);
+  const min = Math.floor((Math.min(...all) - 50) / 50) * 50, max = Math.ceil((Math.max(...all) + 50) / 50) * 50;
+  const ih = H - padB - padT, iw = W - padL - padR;
+  const y = v => padT + ih * (1 - (v - min) / (max - min));
+  const x = i => padL + iw * i / (ch.labels.length - 1);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(ch.title)}">`;
+  for (let t = min; t <= max; t += (max - min) / 4) {
+    s += `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--grid)"></line>`;
+    s += `<text x="${padL - 6}" y="${y(t) + 4}" text-anchor="end">${fmt(Math.round(t))}</text>`;
+  }
+  ch.labels.forEach((l, i) => { s += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(l)}</text>`; });
+  const cols = ["var(--chart-1)", "var(--chart-2)"];
+  const a = ch.series[0].values, b = ch.series[1].values;
+  let gap = a.map((v, i) => `${x(i)},${y(v)}`).join(" ") + " " + b.map((v, i) => `${x(i)},${y(v)}`).reverse().join(" ");
+  s += `<polygon points="${gap}" fill="var(--chart-2)" opacity=".16"></polygon>`;
+  ch.series.forEach((se, k) => {
+    s += `<polyline points="${se.values.map((v, i) => `${x(i)},${y(v)}`).join(" ")}" fill="none" stroke="${cols[k]}" stroke-width="2.5" ${k ? 'stroke-dasharray="6 4"' : ""}></polyline>`;
+    se.values.forEach((v, i) => { s += `<circle cx="${x(i)}" cy="${y(v)}" r="${i === se.values.length - 1 ? 4.5 : 3}" fill="${cols[k]}"></circle>`; });
+    const last = se.values[se.values.length - 1];
+    s += `<text class="vlab" x="${x(se.values.length - 1) - 8}" y="${y(last) + (k ? 16 : -9)}" text-anchor="end">${fmt(last)}</text>`;
+  });
+  return s + "</svg>";
+}
+function chartHTML(ch) {
+  const svg = ch.type === "hbar" ? hbar(ch) : ch.type === "vbar" ? vbar(ch) : line(ch);
+  let legend = "";
+  if (ch.type === "line") legend = `<div class="legend">${ch.series.map((s, k) => `<span><i style="background:${k ? "var(--chart-2)" : "var(--chart-1)"}"></i>${esc(s.name)}</span>`).join("")}<span><i style="background:var(--chart-2);opacity:.3"></i>Gap</span></div>`;
+  if (ch.ref) legend = `<div class="legend"><span><i style="background:var(--chart-1)"></i>At or above midpoint</span><span><i style="background:var(--chart-2)"></i>Below midpoint</span><span>– – Market midpoint 1.00</span></div>`;
+  return `<div class="box chart"><h3>${esc(ch.title)}</h3>${legend}${svg}<p class="note">Illustrative sample data · ${esc(ch.unit)}</p></div>`;
+}
+
+/* ---------- Renderers ---------- */
+function renderAreas() {
+  $("#areas").innerHTML = AREAS.map(a =>
+    `<button class="area-btn" id="area-${a.id}" data-area="${a.id}" aria-pressed="${a.id === state.area}"><span class="code">${esc(a.code)}</span><strong>${esc(a.name)}</strong></button>`
+  ).join("");
+}
+function renderHead() {
+  const a = area();
+  $("#wsTitle").textContent = a.name;
+  $("#wsSub").textContent = a.sub;
+  document.querySelectorAll(".tab").forEach(t => t.setAttribute("aria-selected", t.dataset.tab === state.tab));
+}
+function renderDash() {
+  const a = area(), i = a.insight;
+  return `
+  <div class="kpis">${a.kpis.map(k => `
+    <div class="kpi"><span class="label">${esc(k.label)}</span><span class="val">${esc(k.val)}</span>
+    <span class="ctx"><span class="pill ${k.s}">${esc(k.st)}</span><span class="muted">${esc(k.ctx)}</span></span></div>`).join("")}
+  </div>
+  <div class="grid2">
+    ${chartHTML(a.chart)}
+    <div class="box insight">
+      <div class="eyebrow">AI decision insight</div>
+      <div class="model"><span class="chip">${esc(i.model)}</span><span class="chip ghost">${esc(i.tech)}</span></div>
+      <dl>
+        <div><dt>What the model found</dt><dd>${esc(i.finding)}</dd></div>
+        <div><dt>Recommended decision</dt><dd>${esc(i.action)}</dd></div>
+        <div><dt>Human check</dt><dd>${esc(i.caution)}</dd></div>
+      </dl>
+      <p class="plain"><strong>In plain words:</strong> ${esc(i.plain)}</p>
+    </div>
+  </div>
+  <div class="row"><button class="btn" data-go="quiz">Test your interpretation →</button><span class="muted">3 questions on this dashboard</span></div>`;
+}
+function renderQuiz() {
+  const a = area();
+  return `<p class="muted">Read the dashboard, then answer. You get one attempt per question; the explanation appears right after you answer.</p>` +
+  a.quiz.map((q, qi) => {
+    const key = a.id + ":" + qi, chosen = state.quizAnswers[key];
+    const done = chosen !== undefined;
+    const opts = q.o.map((o, oi) => {
+      let cls = "";
+      if (done && oi === q.a) cls = "right";
+      else if (done && oi === chosen) cls = "wrong";
+      return `<button class="opt ${cls}" id="opt-${key.replace(/\W/g, "")}-${oi}" data-q="${qi}" data-o="${oi}" ${done ? "disabled" : ""}><span class="k">${"ABCD"[oi]}</span><span>${esc(o)}</span></button>`;
+    }).join("");
+    let fb = "";
+    if (done) {
+      fb = chosen === q.a
+        ? `<div class="fb good" role="status"><span class="head">😊 Correct, well done!</span><span>${esc(q.why)}</span></div>`
+        : `<div class="fb bad" role="status"><span class="head">Better luck next time.</span><span>The answer is <strong>${"ABCD"[q.a]}</strong>. ${esc(q.why)}</span><span><strong>Hint for next time:</strong> ${esc(q.hint)}</span></div>`;
+    }
+    return `<div class="q"><span class="qn">Question ${qi + 1} of ${a.quiz.length}</span><h3>${esc(q.q)}</h3><div class="opts">${opts}</div>${fb}</div>`;
+  }).join("") + `<div class="row"><button class="btn" data-go="lab">Next: choose the AI stack →</button></div>`;
+}
+function toolOptions() {
+  return `<option value="">Select one tool…</option>` + Object.entries(CATS).map(([k, n]) =>
+    `<optgroup label="${esc(n)}">${TOOLS.filter(t => t.cat === k).map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join("")}</optgroup>`).join("");
+}
+function stackOptions() {
+  return `<option value="">Select a combination…</option>` + STACKS.map((s, i) => `<option value="${i}">${esc(stackName(s))}</option>`).join("");
+}
+function currentCase() {
+  const a = area();
+  if (state.level === 3) {
+    return { level: 0, title: "My own use case", brief: state.custom.text, caps: state.custom.caps, model: "Depends on the need: see the recommended stack", custom: true };
+  }
+  return a.cases.find(c => c.level === state.level);
+}
+function renderLab() {
+  const c = currentCase();
+  let caseBox;
+  if (c.custom) {
+    caseBox = `<div class="case">
+      <div class="eyebrow">My own use case</div>
+      <label for="customText"><strong>Describe an HR problem you want AI to help with</strong></label>
+      <textarea id="customText" placeholder="Example: Predict which new joiners may leave in their first 90 days and alert their buddy and manager automatically.">${esc(state.custom.text)}</textarea>
+      <div class="row"><button class="btn secondary" id="detectBtn">Identify the needs</button><span class="muted">Then adjust the needs if something is missing.</span></div>
+      <div class="needs" role="group" aria-label="Needs for this use case">${Object.entries(CAPS).map(([k, n]) =>
+        `<button class="need" data-cap="${k}" aria-pressed="${!!state.custom.caps[k]}">${esc(n)}</button>`).join("")}</div>
+    </div>`;
+  } else {
+    caseBox = `<div class="case"><div class="eyebrow">Level ${c.level} use case · ${esc(area().name)}</div><h3>${esc(c.title)}</h3><p>${esc(c.brief)}</p></div>`;
+  }
+  const hasNeeds = Object.keys(c.caps).length > 0;
+  return `
+  <div class="levels" role="group" aria-label="Use case level">
+    <button class="lvl" data-level="1" aria-pressed="${state.level === 1}">Level 1 · Getting started</button>
+    <button class="lvl" data-level="2" aria-pressed="${state.level === 2}">Level 2 · Building up</button>
+    <button class="lvl" data-level="3" aria-pressed="${state.level === 3}">My own use case</button>
+  </div>
+  ${caseBox}
+  <div>
+    <div class="eyebrow">Your answer: use any one of the three options</div>
+  </div>
+  <div class="form">
+    <div class="field"><label for="selTool">A · Single tool</label><select id="selTool">${toolOptions()}</select><span class="hint">Grouped by the 5 business AI stack categories.</span></div>
+    <div class="field"><label for="selStack">B · Tech stack combination</label><select id="selStack">${stackOptions()}</select><span class="hint">Pre-built combinations of tools.</span></div>
+    <div class="field"><label for="ownStack">C · Type your own stack</label><input type="text" id="ownStack" placeholder="e.g. Workday + Azure ML + Power BI"><span class="hint">Separate tools with + or commas.</span></div>
+  </div>
+  <div class="row"><button class="btn" id="evalBtn" ${hasNeeds ? "" : "disabled"}>Evaluate my answer</button><span class="muted" id="evalMsg">${hasNeeds ? "" : "Describe your use case and identify its needs first."}</span></div>
+  <div id="result"></div>`;
+}
+function renderRes() {
+  const quiz = state.log.filter(l => l.kind === "quiz"), lab = state.log.filter(l => l.kind === "lab");
+  if (!state.log.length) return `<div class="empty">No attempts yet. Answer the insight questions or evaluate a stack and your results will appear here, ready to download.</div>`;
+  const qc = quiz.filter(q => q.correct).length;
+  const avg = lab.length ? (lab.reduce((s, l) => s + l.score, 0) / lab.length).toFixed(1) : "–";
+  return `
+  <div class="kpis">
+    <div class="kpi"><span class="label">Insight questions</span><span class="val">${qc} / ${quiz.length}</span><span class="ctx muted">correct</span></div>
+    <div class="kpi"><span class="label">Stack evaluations</span><span class="val">${lab.length}</span><span class="ctx muted">attempts</span></div>
+    <div class="kpi"><span class="label">Average stack score</span><span class="val">${avg}</span><span class="ctx muted">out of 10</span></div>
+    <div class="kpi"><span class="label">Areas practised</span><span class="val">${new Set(state.log.map(l => l.area)).size} / 7</span><span class="ctx muted">HRM areas</span></div>
+  </div>
+  <div class="row">
+    <button class="btn" id="dlMd">Download quiz &amp; answers (.md)</button>
+    <button class="btn secondary" id="dlCsv">Download scores (.csv)</button>
+    <button class="btn secondary" id="copyRep">Copy report</button>
+    <button class="btn secondary" id="resetAll">Clear results</button>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+  ${quiz.length ? `<h3>Insight questions</h3><div class="tablewrap"><table><thead><tr><th>Area</th><th>Question</th><th>Your answer</th><th>Correct answer</th><th>Result</th></tr></thead><tbody>
+    ${quiz.map(q => `<tr><td>${esc(q.areaName)}</td><td>${esc(q.question)}</td><td>${esc(q.answer)}</td><td>${esc(q.correctAnswer)}</td><td>${q.correct ? "😊 Correct" : "Incorrect"}</td></tr>`).join("")}
+  </tbody></table></div>` : ""}
+  ${lab.length ? `<h3>AI stack lab</h3><div class="tablewrap"><table><thead><tr><th>Area</th><th>Use case</th><th>Your answer</th><th>Score</th><th>Recommended stack</th><th>Justification</th></tr></thead><tbody>
+    ${lab.map(l => `<tr><td>${esc(l.areaName)}</td><td>${esc(l.useCase)}</td><td>${esc(l.answer)}</td><td class="num">${l.score}/10</td><td>${esc(l.recommended)}</td><td>${esc(l.justification)}</td></tr>`).join("")}
+  </tbody></table></div>` : ""}`;
+}
+function renderScores() {
+  const quiz = state.log.filter(l => l.kind === "quiz"), lab = state.log.filter(l => l.kind === "lab");
+  $("#sQuiz").textContent = quiz.filter(q => q.correct).length + " / " + quiz.length;
+  $("#sLab").textContent = lab.length ? (lab.reduce((s, l) => s + l.score, 0) / lab.length).toFixed(1) : "–";
+}
+function render() {
+  renderAreas(); renderHead(); renderScores();
+  const p = $("#panel");
+  p.setAttribute("role", "tabpanel");
+  p.setAttribute("aria-labelledby", "tab-" + state.tab);
+  p.innerHTML = state.tab === "dash" ? renderDash() : state.tab === "quiz" ? renderQuiz() : state.tab === "lab" ? renderLab() : renderRes();
+  persist();
+}
+
+function dial(score) {
+  const r = 34, c = 2 * Math.PI * r, f = score / 10;
+  const col = score >= 7 ? "var(--good)" : score >= 5 ? "var(--warn)" : "var(--bad)";
+  return `<svg class="dial" viewBox="0 0 84 84" aria-label="Score ${score} out of 10">
+    <circle cx="42" cy="42" r="${r}" fill="none" stroke="var(--grid)" stroke-width="8"></circle>
+    <circle cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 42 42)"></circle>
+    <text x="42" y="47" text-anchor="middle" font-size="20">${score}</text><text x="42" y="62" text-anchor="middle" font-size="9" fill="var(--muted)">/ 10</text></svg>`;
+}
+function showResult(c, ids, answerLabel) {
+  const r = evaluate(c, ids, "x");
+  const cov = r.detail.map(d => `<span class="chip ${d.s === 1 ? "ok" : d.s > 0 ? "part" : "no"}">${d.s === 1 ? "✓" : d.s > 0 ? "◐" : "✗"} ${esc(CAPS[d.cap])}</span>`).join("");
+  $("#result").innerHTML = `
+  <div class="result ${r.correct ? "good" : "bad"}">
+    <div class="result-top">${dial(r.score)}
+      <div><div class="head">${r.correct ? "😊 Great choice! This fits the use case well." : "Better luck next time."}</div>
+      <div class="muted">Your answer: ${esc(answerLabel)}</div></div>
+    </div>
+    <div class="result-body">
+      ${cov ? `<div><div class="eyebrow">Needs covered</div><div class="cov">${cov}</div></div>` : ""}
+      <div><div class="eyebrow">Justification</div><p>${esc(r.justification)}</p></div>
+      ${r.lines.length ? `<div><div class="eyebrow">${r.correct ? "Expert note" : "Explanation"}</div><ol>${r.lines.map(l => `<li>${esc(l)}</li>`).join("")}</ol></div>` : ""}
+      <div class="ai-review" id="aiReview" hidden></div>
+    </div>
+  </div>`;
+  const a = area();
+  state.log.push({
+    kind: "lab", area: a.id, areaName: a.name, level: c.custom ? "Own" : "Level " + c.level,
+    useCase: c.custom ? (c.brief || "Own use case") : c.title, answer: answerLabel, score: r.score,
+    verdict: r.correct ? "Correct" : "Incorrect", justification: r.justification,
+    recommended: stackName(r.recStack), explanation: r.lines, when: new Date().toISOString()
+  });
+  renderScores(); persist();
+  offerAiReview(c, answerLabel, r);
+}
+
+/* ---------- Optional: Claude second opinion (only where the viewer supports it) ---------- */
+let samplePromise = null;
+function getSample() {
+  if (!samplePromise) samplePromise = (window.claude && window.claude.use) ? window.claude.use("sample").catch(() => null) : Promise.resolve(null);
+  return samplePromise;
+}
+async function offerAiReview(c, answerLabel, r) {
+  const sample = await getSample();
+  const box = $("#aiReview");
+  if (!sample || !box) return;
+  box.hidden = false;
+  box.innerHTML = `<div class="row"><button class="btn secondary" id="aiBtn">Ask Claude for a second opinion</button><span class="muted">Optional expert review in plain language.</span></div><div id="aiOut"></div>`;
+  $("#aiBtn").addEventListener("click", async () => {
+    $("#aiBtn").disabled = true;
+    $("#aiOut").innerHTML = `<p class="muted">Reviewing…</p>`;
+    const prompt = `You are an expert HR technology and AI coach assessing a beginner-to-intermediate learner.
+HRM area: ${area().name}
+Use case: ${c.title || "Own use case"} — ${c.brief}
+Business AI stack categories: ${Object.values(CATS).join("; ")}.
+Learner's answer (tool or stack): ${answerLabel}
+Rule-based score: ${r.score}/10. Recommended stack: ${stackName(r.recStack)}.
+Evaluate the learner's choice strictly on fit to the use case. Be encouraging and constructive.
+Reply as JSON: {"score": integer 1-10, "correct": boolean (true if score >= 7), "justification": string (2-3 sentences), "explanation": array of at most 8 short strings}.`;
+    try {
+      const out = await sample.json(prompt, { modelTier: "quick" });
+      const ok = !!out.correct;
+      $("#aiOut").innerHTML = `<div class="fb ${ok ? "good" : "bad"}"><span class="head">${ok ? "😊" : "Better luck next time."} Claude's score: ${esc(out.score)}/10</span><span>${esc(out.justification || "")}</span>${Array.isArray(out.explanation) ? `<ol>${out.explanation.slice(0, 20).map(l => `<li>${esc(l)}</li>`).join("")}</ol>` : ""}</div>`;
+      const last = state.log[state.log.length - 1];
+      if (last && last.kind === "lab") { last.aiScore = out.score; last.aiJustification = out.justification; persist(); }
+    } catch (e) {
+      if (e && e.code === "not_granted") { box.hidden = true; return; }
+      $("#aiOut").innerHTML = `<p class="muted">Claude could not review this right now. The built-in score above still applies.</p>`;
+      $("#aiBtn").disabled = false;
+    }
+  });
+}
+
+/* ---------- Downloads ---------- */
+function reportMd() {
+  const quiz = state.log.filter(l => l.kind === "quiz"), lab = state.log.filter(l => l.kind === "lab");
+  const L = ["# HRM Decision Lab: my results", "", "Generated " + new Date().toLocaleString(), ""];
+  L.push(`**Insight questions correct:** ${quiz.filter(q => q.correct).length} / ${quiz.length}`);
+  if (lab.length) L.push(`**Average stack score:** ${(lab.reduce((s, l) => s + l.score, 0) / lab.length).toFixed(1)} / 10`);
+  if (quiz.length) {
+    L.push("", "## Insight questions", "");
+    quiz.forEach((q, i) => {
+      L.push(`### ${i + 1}. ${q.areaName}: ${q.question}`, `- Your answer: ${q.answer}`, `- Correct answer: ${q.correctAnswer}`, `- Result: ${q.correct ? "Correct 😊" : "Incorrect (Better luck next time)"}`, `- Explanation: ${q.why}`, "");
+    });
+  }
+  if (lab.length) {
+    L.push("## AI stack lab", "");
+    lab.forEach((l, i) => {
+      L.push(`### ${i + 1}. ${l.areaName} · ${l.level}: ${l.useCase}`, `- Your answer: ${l.answer}`, `- Score: ${l.score}/10 (${l.verdict})`, `- Recommended stack: ${l.recommended}`, `- Justification: ${l.justification}`);
+      if (l.explanation && l.explanation.length) { L.push("- Explanation:"); l.explanation.forEach(x => L.push("  - " + x)); }
+      if (l.aiScore !== undefined) L.push(`- Claude's second opinion: ${l.aiScore}/10. ${l.aiJustification || ""}`);
+      L.push("");
+    });
+  }
+  return L.join("\n");
+}
+function reportCsv() {
+  const q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  const rows = [["Type", "Area", "Level", "Question / use case", "Your answer", "Correct / recommended", "Score", "Result", "Justification"]];
+  state.log.forEach(l => {
+    if (l.kind === "quiz") rows.push(["Insight question", l.areaName, "", l.question, l.answer, l.correctAnswer, l.correct ? 1 : 0, l.correct ? "Correct" : "Incorrect", l.why]);
+    else rows.push(["Stack lab", l.areaName, l.level, l.useCase, l.answer, l.recommended, l.score, l.verdict, l.justification]);
+  });
+  return rows.map(r => r.map(q).join(",")).join("\r\n");
+}
+function toast(msg) { const t = $("#toast"); if (t) t.textContent = msg; }
+async function saveFile(filename, data, mime) {
+  try {
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) {
+      try { await dl.save({ filename, data }); toast("Saved " + filename); }
+      catch (e) { toast(e && e.code === "declined" ? "Download cancelled." : "Download is not available here. Use Copy report instead."); }
+      return;
+    }
+  } catch (e) {}
+  const blob = new Blob([data], { type: mime });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast("Downloaded " + filename);
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.area) { state.area = b.dataset.area; state.tab = "dash"; render(); $("#workspace").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+  if (b.dataset.tab) { state.tab = b.dataset.tab; render(); return; }
+  if (b.dataset.go) { state.tab = b.dataset.go; render(); return; }
+  if (b.dataset.level) { state.level = +b.dataset.level; render(); return; }
+  if (b.dataset.q !== undefined && b.classList.contains("opt")) {
+    const a = area(), qi = +b.dataset.q, oi = +b.dataset.o, q = a.quiz[qi];
+    const key = a.id + ":" + qi;
+    if (state.quizAnswers[key] !== undefined) return;
+    state.quizAnswers[key] = oi;
+    state.log.push({ kind: "quiz", area: a.id, areaName: a.name, question: q.q, answer: q.o[oi], correctAnswer: q.o[q.a], correct: oi === q.a, why: q.why, when: new Date().toISOString() });
+    render(); return;
+  }
+  if (b.dataset.cap) {
+    const k = b.dataset.cap;
+    if (state.custom.caps[k]) delete state.custom.caps[k]; else state.custom.caps[k] = 2;
+    render(); return;
+  }
+  if (b.id === "detectBtn") {
+    state.custom.text = $("#customText").value.trim();
+    state.custom.caps = detectNeeds(state.custom.text);
+    render();
+    if (!Object.keys(state.custom.caps).length) $("#evalMsg").textContent = "No needs detected. Add more detail, or select the needs yourself.";
+    return;
+  }
+  if (b.id === "evalBtn") {
+    const c = currentCase();
+    if (c.custom) { state.custom.text = $("#customText").value.trim(); c.brief = state.custom.text; }
+    const tool = $("#selTool").value, stack = $("#selStack").value, own = $("#ownStack").value.trim();
+    const filled = [tool, stack, own].filter(Boolean).length;
+    if (!filled) { $("#evalMsg").textContent = "Choose a tool, a stack, or type your own stack first."; return; }
+    if (filled > 1) { $("#evalMsg").textContent = "Use one option at a time so each answer gets its own score. Clear the others first."; return; }
+    $("#evalMsg").textContent = "";
+    if (tool) showResult(c, [tool], T[tool].name);
+    else if (stack !== "") showResult(c, STACKS[+stack], stackName(STACKS[+stack]));
+    else showResult(c, parseTools(own), own);
+    return;
+  }
+  if (b.id === "dlMd") { saveFile("hrm-decision-lab-results.md", reportMd(), "text/markdown"); return; }
+  if (b.id === "dlCsv") { saveFile("hrm-decision-lab-scores.csv", reportCsv(), "text/csv"); return; }
+  if (b.id === "copyRep") {
+    const text = reportMd();
+    navigator.clipboard.writeText(text).then(() => toast("Report copied to clipboard.")).catch(() => {
+      const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); toast("Report copied to clipboard."); } catch (err) { toast("Copy is blocked here. Select the table text instead."); }
+      ta.remove();
+    });
+    return;
+  }
+  if (b.id === "resetAll") {
+    if (b.dataset.confirm) { state.log = []; state.quizAnswers = {}; render(); return; }
+    b.dataset.confirm = "1"; b.textContent = "Click again to clear everything";
+    return;
+  }
+});
+document.addEventListener("input", e => { if (e.target.id === "customText") { state.custom.text = e.target.value; persist(); } });
+document.addEventListener("change", e => {
+  // picking in one answer box clears the other two, so only one answer is scored at a time
+  const ids = ["selTool", "selStack", "ownStack"];
+  if (ids.includes(e.target.id) && e.target.value) ids.filter(i => i !== e.target.id).forEach(i => { const el = $("#" + i); if (el) el.value = ""; });
+});
+document.getElementById("tabs").addEventListener("keydown", e => {
+  const order = ["dash", "quiz", "lab", "res"];
+  let i = order.indexOf(state.tab);
+  if (e.key === "ArrowRight") i = (i + 1) % 4; else if (e.key === "ArrowLeft") i = (i + 3) % 4; else return;
+  state.tab = order[i]; render(); $("#tab-" + state.tab).focus();
+});
+
+render();
+})();
+</script>
+<!--/PAGE-->
+</body>
+</html>
