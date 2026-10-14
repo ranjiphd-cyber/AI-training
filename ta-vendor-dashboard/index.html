@@ -156,6 +156,8 @@ td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; 
 tbody tr { cursor: pointer; }
 tbody tr:hover td { background: var(--sunk); }
 td .nm { font-weight: 600; color: var(--fg); }
+.wbl { border-top: 1px solid var(--line); }
+.wbl > summary { padding: 12px 16px; cursor: pointer; background: var(--sunk); }
 .sm-sel { font-size: 12px; padding: 4px 6px; max-width: 100%; }
 .sel { user-select: all; overflow-wrap: anywhere; }
 td .al { font-size: 11px; color: var(--faint); }
@@ -496,7 +498,7 @@ function renderRail() {
     <button data-go="contacts" ${cur("contacts")}>Contact register <span class="ct">${allContacts().length}</span></button>
     <div class="grp">Shortlist · one category each</div>
     <button data-go="shortlist" data-sltab="all" ${UI.view === "shortlist" && UI.slTab === "all" ? 'aria-current="true"' : ""}>All shortlisted <span class="ct">${VENDORS.filter(slCat).length}</span></button>
-    ${Object.entries(SLCATS).map(([k, c]) => `<button data-go="shortlist" data-sltab="${k}" ${UI.view === "shortlist" && UI.slTab === k ? 'aria-current="true"' : ""}>${esc(c.label)} <span class="ct">${VENDORS.filter(v => slCat(v) === k).length} · ${esc(bandText(k))}</span></button>`).join("")}
+    ${Object.entries(SLCATS).map(([k, c]) => `<button data-go="shortlist" data-sltab="${k}" ${UI.view === "shortlist" && UI.slTab === k ? 'aria-current="true"' : ""}>${esc(c.label)} <span class="ct" title="shortlisted / listed in workbook · fee band">${VENDORS.filter(v => slCat(v) === k).length}/${VENDORS.filter(v => inList(v, k) || slCat(v) === k).length} · ${esc(bandText(k))}</span></button>`).join("")}
     <div class="grp">Service model</div>
     ${["permanent", "staffAug"].map(k => `<button data-go="directory" data-cat="${k}" ${cur("directory", k)}>${CATS[k]} <span class="ct">${n(k)}</span></button>`).join("")}
     <div class="grp">Decisions</div>
@@ -579,6 +581,11 @@ const DEFAULT_FEES = { executive: [22, 33], leadership: [16, 22], juniorMid: [8.
 function feeBands() { const f = Store.data.perf.fees; return f && f.bands ? f.bands : DEFAULT_FEES; }
 function bandText(cat) { const b = feeBands()[cat]; return b && b.length === 2 ? `${b[0]}–${b[1]}%` : "Not set"; }
 const slCat = v => (v.slCat && v.slCat.v && SLCATS[v.slCat.v]) ? v.slCat.v : null;
+const inList = (v, k) => !!(v.wbLists && v.wbLists[k] && v.wbLists[k].length);
+/* The junior–mid shortlist only takes vendors from the workbook's junior–mid
+   list (Module C or a Mid Level tag); vendors added in the dashboard are
+   allowed because they cannot appear in the workbook. */
+const canGo = (v, k) => k !== "juniorMid" || inList(v, "juniorMid") || v.origin === "added";
 const blocked = v => v.status.stage1 === "HOLD" || v.status.stage1 === "FAIL";
 function feeInfo(v) {
   if (v.fee && v.fee.v) return { text: v.fee.v, q: v.fee.q === "confirmed" ? "provided" : "verify", label: v.fee.q === "confirmed" ? "Confirmed by vendor" : "Estimate (vendor-specific)", note: v.fee.note };
@@ -596,11 +603,12 @@ function moveSelect(v) {
   if (!Store.canWrite) return "";
   if (blocked(v)) return `<span class="al" title="HOLD and FAIL vendors cannot be shortlisted">Status ${esc(v.status.stage1)}: cannot be shortlisted</span>`;
   const cur = slCat(v) || "";
-  return `<select class="inp sm-sel" data-move="${esc(v.id)}" aria-label="Shortlist category for ${esc(v.name)}">${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${cur === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  return `<select class="inp sm-sel" data-move="${esc(v.id)}" aria-label="Shortlist category for ${esc(v.name)}">${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${cur === k ? "selected" : ""} ${k && !canGo(v, k) ? "disabled" : ""}>${esc(l)}${k && !canGo(v, k) ? " (not in workbook list)" : ""}</option>`).join("")}</select>`;
 }
 async function moveVendor(id, cat) {
   const v = BY_ID[id]; if (!v) return;
   if (cat && blocked(v)) { toast("HOLD and FAIL vendors cannot be shortlisted. Change the status first."); render(); return; }
+  if (cat && !canGo(v, cat)) { toast("Junior–mid takes only vendors from the workbook’s junior–mid list."); render(); return; }
   const rec = clone(v); delete rec._edited; delete rec._editedBy; delete rec._approved;
   const prev = v.slCat && v.slCat.v ? `${SLCATS[v.slCat.v] ? SLCATS[v.slCat.v].label : v.slCat.v} (${v.slCat.basis})` : "not shortlisted";
   rec.slCat = cat ? { v: cat, basis: "edited", ref: `Set ${new Date().toLocaleDateString()}; previously ${prev}` } : { v: null, basis: "edited", ref: `Removed ${new Date().toLocaleDateString()}; previously ${prev}` };
@@ -648,7 +656,7 @@ function viewShortlist() {
   const proposed = VENDORS.filter(v => slCat(v) && v.slCat.basis === "proposed").length;
   return `
   <div class="vhead"><div><div class="eyebrow">Shortlist · exclusive categories</div><h2>Shortlist by hiring category</h2>
-  <p>Every shortlisted vendor belongs to one category only, because each category carries its own fee band. The workbook’s CXO and Leadership shortlist tab decides the category where it covers a vendor. Other PASS vendors have a proposed category from their recorded specialization; confirm or move them with the selector on each row.</p></div>
+  <p>Every shortlisted vendor belongs to one category only, because each category carries its own fee band. The workbook’s CXO and Leadership shortlist tab decides the category where it covers a vendor. Other PASS vendors have a proposed category from their recorded specialization; confirm or move them with the selector on each row. Junior–mid only takes vendors from the workbook’s junior–mid list. Below each ranked list, every vendor the workbook lists under that category is shown, unranked, so no name is lost.</p></div>
   <div class="chips"><button class="btn" type="button" data-act="feeCfg">Fee bands</button></div></div>
   ${proposed ? `<div class="note-box warn">${proposed} placements are dashboard proposals (marked <span class="q q-verify">Proposed · confirm</span>). Choosing a category on a row records it as your decision.</div>` : ""}
   <div style="margin-bottom:14px">${slCatTabs(tab, "data-sltab")}</div>
@@ -659,7 +667,8 @@ function viewShortlist() {
     return `<section class="panel" style="padding:0;margin-bottom:16px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:14px 16px 4px;align-items:baseline">
       <h3 style="margin:0">${esc(c.label)} <small>&nbsp;${esc(c.desc)} · ${list.length} vendor${list.length === 1 ? "" : "s"}</small></h3>
       <span><span class="eyebrow">Fee band</span> <b class="num">${esc(bandText(k))}</b> <span class="al">of annual CTC · estimate</span></span></div>
-      ${list.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No vendors in this category. Move one here from another category or from the PASS pool below.</div>'}</section>`; }).join("")}
+      ${list.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No vendors in this category. Move one here from another category or from the PASS pool below.</div>'}
+      ${wbListTable(k)}</section>`; }).join("")}
   ${tab === "all" ? `<section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">PASS vendors not shortlisted <small>${unassigned.length}</small></h3>
     ${unassigned.map((v, i) => rankRow(v, rank(v, "all"), i + 1)).join("") || '<div class="empty">Every PASS vendor is in a category.</div>'}</section>
   <section class="panel webmark"><h3>Web-suggested leadership firms <small>not shortlisted · no workbook evidence</small></h3>
@@ -683,6 +692,20 @@ function rankRow(v, r, pos) {
     <div class="side"><div class="eyebrow">Recommendation pts</div><div class="score">${r.total}<span class="count"> / 100</span></div>${meter(r)}
       <div class="al" style="margin-top:6px">Fee: ${f.text ? `<b>${esc(f.text)}</b> (${esc(f.label)})` : "missing"}</div>
       <div style="margin-top:6px" data-stop>${moveSelect(v)}</div></div></div>`;
+}
+/* Every vendor the workbook lists under a category, shortlisted or not.
+   Unranked; nobody is dropped. */
+function wbListTable(k) {
+  const rows = VENDORS.filter(v => inList(v, k) || slCat(v) === k)
+    .sort((a, b) => (slCat(b) === k) - (slCat(a) === k) || STATUSES.indexOf(a.status.stage1) - STATUSES.indexOf(b.status.stage1) || a.name.localeCompare(b.name));
+  const where = v => slCat(v) === k ? `<span class="badge b-fit">Shortlisted here</span>` : slCat(v) ? `<span class="chip">Shortlisted under ${esc(SLCATS[slCat(v)].label)}</span>` : blocked(v) ? `<span class="al">Not shortlisted (${esc(v.status.stage1)})</span>` : `<span class="al">Not shortlisted</span>`;
+  return `<details class="wbl" open><summary><b>All ${rows.length} vendors the workbook lists under ${esc(SLCATS[k].label)}</b> <span class="count">· unranked · ${rows.filter(v => slCat(v) === k).length} shortlisted here</span></summary>
+    <div class="tw" style="border:0;border-top:1px solid var(--line);border-radius:0"><table>
+    <thead><tr><th>Vendor</th><th>Status</th><th>Shortlist</th><th>Where the workbook lists it</th><th>SPOC</th><th>Phone</th><th>Email</th></tr></thead>
+    <tbody>${rows.map(v => `<tr data-open="${esc(v.id)}"><td class="wrap"><div class="nm">${esc(v.name)}</div></td><td>${badge(v.status.stage1)}</td><td class="wrap">${where(v)}</td>
+      <td class="wrap"><div class="src">${esc((v.wbLists && v.wbLists[k] || ["Placed here in the dashboard"]).join(" · "))}</div></td>
+      <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">Missing</span>'}</td>
+      <td class="wrap"><span class="sel">${esc(fv(v, "spocPhone") || fv(v, "companyPhone"))}</span></td><td class="wrap"><span class="sel">${esc(fv(v, "spocEmail") || fv(v, "companyEmail"))}</span></td></tr>`).join("") || '<tr><td colspan="7" class="empty">The workbook lists no vendors under this category.</td></tr>'}</tbody></table></div></details>`;
 }
 function feeForm() {
   const b = feeBands();
@@ -759,6 +782,7 @@ function filtered() {
     if (UI.slcat === "any" && !slCat(v)) return false;
     if (UI.slcat === "none" && slCat(v)) return false;
     if (UI.slcat && SLCATS[UI.slcat] && slCat(v) !== UI.slcat) return false;
+    if (UI.slcat && UI.slcat.startsWith("wb:") && !inList(v, UI.slcat.slice(3))) return false;
     if (UI.svc === "permanent" && !v.categories.permanent) return false;
     if (UI.svc === "staffAug" && !v.categories.staffAug) return false;
     if (UI.svc === "both" && !(v.categories.permanent && v.categories.staffAug)) return false;
@@ -810,7 +834,7 @@ function viewDirectory() {
   <div class="legend"><span><span class="badge b-web">Violet</span> = added from web research</span></div></div>
   <div class="filters" role="search">
     <input class="inp" type="search" id="fq" placeholder="Search vendor, SPOC, email, phone, skill, industry…" value="${esc(UI.q)}" aria-label="Search vendors">
-    <select class="inp" id="fslcat" aria-label="Shortlist category">${opt("", "Any shortlist category", UI.slcat)}${opt("any", "Shortlisted (any category)", UI.slcat)}${Object.entries(SLCATS).map(([k, c]) => opt(k, "Shortlisted · " + c.label, UI.slcat)).join("")}${opt("none", "Not shortlisted", UI.slcat)}</select>
+    <select class="inp" id="fslcat" aria-label="Shortlist category">${opt("", "Any shortlist category", UI.slcat)}${opt("any", "Shortlisted (any category)", UI.slcat)}${Object.entries(SLCATS).map(([k, c]) => opt(k, "Shortlisted · " + c.label, UI.slcat)).join("")}${opt("none", "Not shortlisted", UI.slcat)}${Object.entries(SLCATS).map(([k, c]) => opt("wb:" + k, "Workbook list · " + c.label, UI.slcat)).join("")}</select>
     <select class="inp" id="fcat" aria-label="Capability">${opt("", "Any capability", UI.cat)}${Object.entries(CATS).map(([k, l]) => opt(k, "Capability · " + l, UI.cat)).join("")}</select>
     <select class="inp" id="fsvc" aria-label="Service model">${opt("", "Any service model", UI.svc)}${opt("permanent", "Permanent placement", UI.svc)}${opt("staffAug", "Staff augmentation", UI.svc)}${opt("both", "Both models", UI.svc)}${opt("none", "Model not stated", UI.svc)}</select>
     <select class="inp" id="fst" aria-label="Status">${opt("", "Any status", UI.status)}${STATUSES.map(s => opt(s, s, UI.status)).join("")}</select>
@@ -946,6 +970,7 @@ function drawerHTML(v) {
     <section class="sec"><h4>Status &amp; assessment</h4><dl class="kv">
       <dt>Stage 1 status</dt><dd><div class="line">${badge(v.status.stage1)} <span class="src">${esc(v.status.src || "no assessment record")}</span></div><div>${v.status.reason ? esc(v.status.reason) : '<span class="note">No reason recorded.</span>'}</div></dd>
       <dt>Shortlist category</dt><dd>${slCat(v) ? `<div class="line"><b>${esc(SLCATS[slCat(v)].label)}</b> ${basisChip(v)} <span class="count">fee band ${esc(bandText(slCat(v)))}</span></div><div class="note">${esc(v.slCat.ref || "")}</div>` : `<span class="note">${v.slCat && v.slCat.ref ? esc(v.slCat.ref) : "Not shortlisted."}</span>`}<div style="margin-top:4px">${moveSelect(v)}</div></dd>
+      <dt>Workbook category lists</dt><dd>${v.wbLists && Object.keys(v.wbLists).length ? Object.entries(v.wbLists).map(([k, refs]) => `<div><b>${esc(SLCATS[k].label)}</b> <span class="src">${esc(refs.join(" · "))}</span></div>`).join("") : '<span class="note">Not listed under any category in the workbook.</span>'}</dd>
       <dt>CXO / leadership shortlist tab</dt><dd>${v.shortlist ? `<div class="line"><b>${esc(v.shortlist.fit)}</b> · ${esc(v.shortlist.tier)} <span class="src">${esc(v.shortlist.src)}</span></div><div>${esc(v.shortlist.why)}</div>` : '<span class="note">Not on the shortlist tab.</span>'}</dd>
       <dt>Modules</dt><dd>${["A Executive/CXO", "B Senior leadership", "C Junior–mid"].map(l => { const m = v.modules[l[0]]; return `<div>${esc(l)}: <b>${m ? esc(m.v) : "—"}</b> ${m ? `<span class="src">${esc(m.src)}</span>` : ""}</div>`; }).join("")}</dd>
       ${(v.levelTags || []).length ? `<dt>Level tags</dt><dd>${v.levelTags.map(t => `<div>${esc(t.v)} <span class="src">${esc(t.src)}</span></div>`).join("")}</dd>` : ""}
@@ -990,7 +1015,7 @@ function editForm(v) {
     <label>CXO-fit rating<select class="inp" id="e_fit">${["", "Excellent", "Very Good", "Good"].map(s => `<option value="${s}" ${((v.shortlist && v.shortlist.fit) || "").trim() === s ? "selected" : ""}>${s || "Not shortlisted"}</option>`).join("")}</select></label>
     <label>Shortlist tier<select class="inp" id="e_tier">${["CXO / Senior Leadership", "Leadership Hiring"].map(s => `<option ${v.shortlist && v.shortlist.tier === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
     <label class="full">Why shortlisted${ta("e_why", v.shortlist ? v.shortlist.why : "")}</label>
-    <label>Shortlist category (exclusive)<select class="inp" id="e_slcat" ${blocked(v) ? "disabled" : ""}>${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${(slCat(v) || "") === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+    <label>Shortlist category (exclusive)<select class="inp" id="e_slcat" ${blocked(v) ? "disabled" : ""}>${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${(slCat(v) || "") === k ? "selected" : ""} ${k && v.id && !canGo(v, k) ? "disabled" : ""}>${esc(l)}${k && v.id && !canGo(v, k) ? " (not in workbook list)" : ""}</option>`).join("")}</select></label>
     <fieldset><legend>Hiring capability tags (can overlap)</legend><div class="checks">${Object.entries(CATS).map(([k, l]) => `<label><input type="checkbox" id="e_cat_${k}" ${v.categories[k] ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div></fieldset>
     <fieldset><legend>Modules (Stage 1)</legend><div class="checks">${["A", "B", "C"].map(m => `<label>${m} <select class="inp" id="e_mod_${m}">${["", "yes", "no", "pending"].map(o => `<option value="${o}" ${(v.modules[m] || {}).v === o ? "selected" : ""}>${o || "—"}</option>`).join("")}</select></label>`).join("")}</div></fieldset>
     ${FIELD_GROUPS.map(([g, fs]) => `<div class="fh">${esc(g)}</div>${fs.map(([k, l]) => `<label class="${long.has(k) ? "full" : ""}">${esc(l)}${long.has(k) ? ta("e_f_" + k, fv(v, k)) : inp("e_f_" + k, fv(v, k))}</label>`).join("")}`).join("")}
@@ -1030,7 +1055,7 @@ async function submitEdit(form) {
     rec.fields[k] = nv ? { v: nv, q: "edited", src: [stamp], note: cur && cur.v ? `Previously “${cur.v}” (${(cur.src || []).join(", ")})` : undefined } : { v: "", q: "missing", src: [stamp], note: "Cleared in dashboard" };
   }));
   const sc = val("e_slcat");
-  if ((slCat(rec) || "") !== sc && !(st === "HOLD" || st === "FAIL")) rec.slCat = sc ? { v: sc, basis: "edited", ref: stamp } : { v: null, basis: "edited", ref: "Removed · " + stamp };
+  if ((slCat(rec) || "") !== sc && !(st === "HOLD" || st === "FAIL") && (!sc || canGo(rec, sc))) rec.slCat = sc ? { v: sc, basis: "edited", ref: stamp } : { v: null, basis: "edited", ref: "Removed · " + stamp };
   if (st === "HOLD" || st === "FAIL") { if (slCat(rec)) rec.slCat = { v: null, basis: "edited", ref: `Removed: status ${st} · ${stamp}` }; }
   rec.extraContacts = val("e_extra").split("\n").map(l => l.split("|").map(x => x.trim())).filter(p => p.some(Boolean)).map(([name = "", designation = "", phone = "", email = ""]) => ({ name, designation, phone, email, src: stamp }));
   const fee = val("e_fee");

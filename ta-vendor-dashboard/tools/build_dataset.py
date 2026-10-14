@@ -591,7 +591,34 @@ def contact_register(v):
 LEAD_RX = re.compile(r"leadership|senior|executive search|headhunt|board|cxo|c-suite|mid to senior|middle & senior", re.I)
 STAFF_RX = re.compile(r"contract staffing|staff aug|staffing|c2h|managed services|msp|sow|workforce|blue.?collar|non-it|it & non|it and non", re.I)
 VOL_RX = re.compile(r"bulk|volume|workforce management|blue.?collar|campus|apprentice|temp staffing", re.I)
+def workbook_lists(v):
+    """Category lists exactly as the workbook records them (non-exclusive)."""
+    L = {"executive": [], "leadership": [], "juniorMid": [], "volume": []}
+    for l in v["lists"]:
+        if l["v"] == "Executive search tab": L["executive"].append(l["src"])
+        elif l["v"] == "Volume hiring tab": L["volume"].append(l["src"])
+    sl = v["shortlist"]
+    if sl:
+        L["executive" if sl["tier"].startswith("CXO") else "leadership"].append(f"{SV} · {sl['tier']} ({sl['src']})")
+    m = v["modules"]
+    if m.get("B", {}).get("v") == "yes": L["leadership"].append(f"Module B – Senior Leadership = yes ({m['B']['src']})")
+    if m.get("C", {}).get("v") == "yes": L["juniorMid"].append(f"Module C – Junior to Mid-Level = yes ({m['C']['src']})")
+    for t in v["levelTags"]:
+        tv = t["v"].lower()
+        if "senior leadership" in tv: L["executive"].append(f"Level tag “{t['v']}” ({t['src']})")
+        elif "leadership" in tv or "senior level" in tv: L["leadership"].append(f"Level tag “{t['v']}” ({t['src']})")
+        elif "mid" in tv: L["juniorMid"].append(f"Level tag “{t['v']}” ({t['src']})")
+        elif "mass" in tv or "blue collar" in tv: L["volume"].append(f"Level tag “{t['v']}” ({t['src']})")
+    return {k: sorted(set(x)) for k, x in L.items() if x}
+
 def propose_category(v):
+    p = _propose(v)
+    # Junior–mid shortlist is limited to the workbook's junior–mid list.
+    if p and p["v"] == "juniorMid" and "juniorMid" not in v["wbLists"]:
+        return {"v": None, "basis": "proposed", "ref": "Not shortlisted: not in the workbook’s junior–mid list (Module C / Mid Level tag). " + p["ref"]}
+    return p
+
+def _propose(v):
     st = v["status"]["stage1"]
     if st in ("FAIL", "HOLD"):
         return None
@@ -622,6 +649,7 @@ def propose_category(v):
 
 for v in vendors.values():
     v["contactRegister"] = contact_register(v)
+    v["wbLists"] = workbook_lists(v)
     v["slCat"] = propose_category(v)
 
 out = {

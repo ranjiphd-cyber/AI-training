@@ -29,7 +29,8 @@ Opened as a local file, the page saves edits and evaluations in that browser onl
 - Workbook values are kept as written. Conflicts between tabs are shown side by side and labelled **Conflicting**, not resolved.
 - Quality labels: Provided, Needs verification, Conflicting, Missing, Web-sourced, Edited, Not evaluated.
 - Hiring categories show their basis: from the workbook, derived from keywords, or ambiguous.
-- Each shortlisted vendor sits in exactly one category: Executive / CXO, Leadership, Junior–mid or Volume. The workbook's CXO/Leadership shortlist tab decides where it covers a vendor; other PASS vendors get a proposed category marked "Proposed · confirm". HOLD and FAIL vendors cannot be shortlisted.
+- Each shortlisted vendor sits in exactly one category: Executive / CXO, Leadership, Junior–mid or Volume. The workbook's CXO/Leadership shortlist tab decides where it covers a vendor; other PASS vendors get a proposed category marked "Proposed · confirm". HOLD and FAIL vendors cannot be shortlisted. The Junior–mid shortlist only takes vendors from the workbook's junior–mid list (Module C = yes or a Mid Level tag).
+- Under each category, every vendor the workbook lists for it (Executive search tab, Volume hiring tab, Shortlisted Vendors blocks, Modules B/C, level tags) is shown unranked, so no listed name is dropped.
 - Fee bands per category come from TA guidance (Executive 22–33%, Leadership 16–22%, Junior–mid 8.33–10%) and are editable. They show as estimates until a vendor-specific fee is entered. The workbook itself contains no fee data.
 - A contact register lists every name, phone and e-mail in the workbook, splitting combined cells into one row per person.
 - Web research is never applied without approval. Firms added from the web are shown in violet and carry no contact details.
