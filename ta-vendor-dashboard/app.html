@@ -154,6 +154,7 @@ td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; 
 tbody tr { cursor: pointer; }
 tbody tr:hover td { background: var(--sunk); }
 td .nm { font-weight: 600; color: var(--fg); }
+.sel { user-select: all; overflow-wrap: anywhere; }
 td .al { font-size: 11px; color: var(--faint); }
 td.wrap { max-width: 360px; }
 .clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -519,10 +520,11 @@ function viewOverview() {
   const dCount = k => delivery.filter(v => has(v, k)).length;
   const empty = !RAW.vendors.length;
   return `
-  <div class="vhead"><div><div class="eyebrow">Executive overview</div><h2>Vendor landscape at a glance</h2>
+  <div class="vhead"><div><div class="eyebrow">Executive overview</div><h2>Choose and shortlist vendors</h2>
   <p>Counts come from the shortlisting workbook (last saved ${fmtDate(META.workbookModified)}) plus any edits. Click a bar or tile to open the matching list.</p></div></div>
   ${empty ? `<div class="note-box warn"><b>No vendor data is loaded.</b> This copy ships without the workbook data because it contains personal contact details. Use <b>Import</b> to load <span class="mono">vendors.json</span> (built with <span class="mono">tools/build_dataset.py</span>) or a JSON export from the shared dashboard.</div>` : ""}
   ${META.powerpointReceived === false ? `<div class="note-box warn">Only the Excel workbook was received. The PowerPoint mentioned in the brief was not attached, so nothing here is sourced from it.</div>` : ""}
+  ${readyTable()}
   <div class="tiles">
     <button class="tile" data-act="goDir" data-arg=""><div class="k">Organisations listed</div><div class="v">${VENDORS.length}</div><div class="s">${R.length} recruitment / staffing</div></button>
     <button class="tile pass" data-act="goStatus" data-arg="PASS"><div class="k">Stage 1 PASS</div><div class="v">${st("PASS")}</div><div class="s">${VENDORS.filter(v => v.status.stage1 === "PASS" && /additional information/i.test(v.status.reason)).length} with info still pending</div></button>
@@ -550,6 +552,36 @@ function viewOverview() {
   <section class="panel" style="margin-top:14px"><h3>Delivery evidence on file <small>PASS / HOLD / not-yet-assessed shortlisted vendors · vendor self-reported, Base Data tab</small></h3>
     <p class="count" style="margin-top:0">Of ${delivery.length} vendors still in contention, this many supplied each metric. Ratios that Excel stored as times (e.g. 05:07:00) are shown as 5:7 and marked Needs verification.</p>
     ${bars([["Average closure timeline", dCount("closureTimeline")], ["Positions closed (12 months)", dCount("positionsClosed12m")], ["Joining ratio", dCount("joiningRatio")], ["Profiles per requirement", dCount("profilesPerReq")], ["Client reference supplied", delivery.filter(v => (v.clientRefs || []).some(r => r.q === "provided")).length], ["Placement fee %", delivery.filter(v => v.fee && v.fee.v).length, "na"]], "go", "")}
+  </section>`;
+}
+
+/* Opening-screen table: who can be shortlisted now, with contacts. HOLD
+   and FAIL vendors are never listed here. */
+function readyTable() {
+  if (!RAW.vendors.length) return "";
+  const pool = VENDORS.filter(v => v.origin !== "web" && (v.shortlist || v.status.stage1 === "PASS") && v.status.stage1 !== "FAIL" && v.status.stage1 !== "HOLD")
+    .map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
+  const shown = UI.readyAll ? pool : pool.slice(0, 15);
+  const ctxBtns = Object.entries(CTX).map(([k, [, l]]) => `<button type="button" data-ctx="${k}" aria-pressed="${UI.ctx === k}">${l}</button>`).join("");
+  const cell = (v, k) => has(v, k) ? `<span class="sel">${esc(fv(v, k))}</span>` : "";
+  return `<section class="panel" style="padding:0;margin-bottom:14px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-end;padding:14px 16px 10px">
+      <div><h3 style="margin:0">Shortlist-ready vendors <small>&nbsp;Stage 1 PASS or on the CXO / leadership shortlist · ${pool.length} vendors</small></h3>
+      <p class="count" style="margin:4px 0 0">Ranked by recommendation points for the chosen hiring level. HOLD and FAIL vendors are left out. Click a row for the full profile, assessment and client references.</p></div>
+      <div class="ctx" role="group" aria-label="Hiring level">${ctxBtns}</div></div>
+    <div class="tw" style="border:0;border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r)"><table>
+      <thead><tr><th>#</th><th>Vendor</th><th>Assessment</th><th>SPOC</th><th>Phone</th><th>Email</th><th>Location</th><th>Specialization</th><th class="num">Pts</th></tr></thead>
+      <tbody>${shown.map(([v, r], i) => `<tr data-open="${esc(v.id)}" tabindex="0">
+        <td class="num al">${i + 1}</td>
+        <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.shortlist ? `<div class="al">${esc(v.shortlist.tier)}</div>` : ""}</td>
+        <td><div class="chips">${badge(v.status.stage1)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}</div>${/additional information/i.test(v.status.reason || "") ? '<div class="al">Info pending</div>' : ""}</td>
+        <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">Missing</span>'}${has(v, "spocDesignation") ? `<div class="al">${esc(fv(v, "spocDesignation"))}</div>` : ""}</td>
+        <td class="wrap">${cell(v, "spocPhone") || cell(v, "companyPhone") || '<span class="q q-missing">Missing</span>'}</td>
+        <td class="wrap">${cell(v, "spocEmail") || cell(v, "companyEmail") || '<span class="q q-missing">Missing</span>'}</td>
+        <td>${esc(has(v, "hq") ? fv(v, "hq").split("\n")[0].slice(0, 40) : "Missing")}</td>
+        <td class="wrap"><div class="clip al" style="font-size:12px">${esc(fv(v, "specialization") || fv(v, "domain") || (v.shortlist ? v.shortlist.why : "")) || "—"}</div></td>
+        <td class="num"><b>${r.total}</b></td></tr>`).join("")}</tbody></table></div>
+    ${pool.length > 15 ? `<div style="padding:10px 16px"><button class="btn sm" type="button" data-act="readyAll">${UI.readyAll ? "Show top 15" : `Show all ${pool.length}`}</button> <button class="btn sm ghost" type="button" data-act="go" data-arg="shortlist">Ranking rationale</button></div>` : ""}
   </section>`;
 }
 
@@ -1286,6 +1318,7 @@ document.addEventListener("click", async e => {
     if (d.act === "goLoc") return go("directory", { loc: a });
     if (d.act === "goSpec") return go("directory", { spec: a, type: "all" });
     if (d.act === "clearCmp") { UI.compare = []; return render(); }
+    if (d.act === "readyAll") { UI.readyAll = !UI.readyAll; return render(); }
     if (d.act === "perfCfg") { $("#layer").insertAdjacentHTML("beforeend", cfgForm()); return; }
     if (d.act === "addEval") { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, "")); return; }
     if (d.act === "perfBand") { UI.pband = a; return render(); }
