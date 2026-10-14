@@ -1,0 +1,4 @@
+# Vendor data contains personal contact details – never commit it to this public repo.
+*.xlsx
+vendors.json
+*-with-data.html

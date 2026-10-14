@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style></head><body>
+<title>TA Vendor Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: navy masthead, left rail of views (top tabs on phones), working canvas, right-hand vendor profile drawer. */
+:root {
+  --navy: #001433;
+  --slate: #4A5568;
+  --paper: #F7FAFC;
+  --surface: #FFFFFF;
+  --sunk: #EEF3F7;
+  --fg: #0F1C2E;
+  --muted: #4A5568;
+  --faint: #718096;
+  --line: #DCE3EA;
+  --accent: #2B8A99;
+  --accent-ink: #1D6672;
+  --accent-soft: #E1F1F3;
+  --web: #6E52A3;
+  --web-soft: #EFEAF7;
+  --pass: #2F7D4F; --pass-soft: #E3F2E8;
+  --hold: #A8650F; --hold-soft: #FBEEDB;
+  --fail: #B23A3A; --fail-soft: #F8E3E3;
+  --na: #64748B; --na-soft: #EDF1F5;
+  --mast-fg: #F7FAFC;
+  --shadow: 0 10px 30px rgba(0, 20, 51, .14);
+  --font: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #07101D; --surface: #0D1A2C; --sunk: #12233A; --fg: #E7EDF4; --muted: #AEB9C7; --faint: #8492A6;
+  --line: #22344D; --accent: #5DB7C5; --accent-ink: #8AD0DA; --accent-soft: #123A44; --web: #B49BE0; --web-soft: #2A2142;
+  --pass: #6CC08F; --pass-soft: #14321F; --hold: #E5A95A; --hold-soft: #3A2A12; --fail: #EE8A8A; --fail-soft: #3D1A1D;
+  --na: #9AA8BA; --na-soft: #1B2A3E; --shadow: 0 10px 30px rgba(0,0,0,.5); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --paper: #07101D; --surface: #0D1A2C; --sunk: #12233A; --fg: #E7EDF4; --muted: #AEB9C7; --faint: #8492A6;
+  --line: #22344D; --accent: #5DB7C5; --accent-ink: #8AD0DA; --accent-soft: #123A44; --web: #B49BE0; --web-soft: #2A2142;
+  --pass: #6CC08F; --pass-soft: #14321F; --hold: #E5A95A; --hold-soft: #3A2A12; --fail: #EE8A8A; --fail-soft: #3D1A1D;
+  --na: #9AA8BA; --na-soft: #1B2A3E; --shadow: 0 10px 30px rgba(0,0,0,.5); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--paper); color: var(--fg); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent-ink); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* masthead */
+.mast { background: var(--navy); color: var(--mast-fg); padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+.mast h1 { font-size: 18px; font-weight: 700; letter-spacing: .01em; }
+.mast .sub { font-size: 12px; color: #A9B8CC; }
+.mast .acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mast .mode { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid #2C4468; color: #C9D6E6; }
+.btn { border: 1px solid var(--line); background: var(--surface); padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+:root[data-theme="dark"] .btn.primary { color: #04121A; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primary { color: #04121A; } }
+.btn.ghost { background: transparent; }
+.btn.danger { color: var(--fail); border-color: var(--fail); background: transparent; }
+.btn.sm { padding: 4px 9px; font-size: 12px; }
+.mast .btn { background: transparent; color: var(--mast-fg); border-color: #2C4468; }
+.mast .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* frame */
+.frame { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: calc(100% - 64px); }
+.rail { border-right: 1px solid var(--line); padding: 16px 10px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
+.rail .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); padding: 14px 10px 4px; }
+.rail button { text-align: left; border: 0; background: transparent; padding: 7px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
+.rail button:hover { background: var(--sunk); color: var(--fg); }
+.rail button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
+.rail .ct { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+main { padding-block: 22px 60px; padding-inline: 24px; min-width: 0; }
+.vhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
+.vhead h2 { font-size: 22px; font-weight: 700; }
+.vhead p { margin: 4px 0 0; color: var(--muted); max-width: 72ch; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); font-weight: 600; }
+
+@media (max-width: 860px) {
+  .frame { grid-template-columns: minmax(0, 1fr); }
+  .rail { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 16px; gap: 4px; }
+  .rail .grp { display: none; }
+  .rail button { white-space: nowrap; flex: none; }
+  main { padding-inline: 16px; }
+  .mast { padding: 12px 16px; }
+}
+
+/* panels & tiles */
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px; min-width: 0; }
+.panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.panel h3 small { font-weight: 400; color: var(--faint); font-size: 12px; }
+.grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(128px, 1fr)); margin-bottom: 14px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; cursor: pointer; text-align: left; }
+.tile:hover { border-color: var(--accent); }
+.tile .k { font-size: 12px; color: var(--muted); }
+.tile .v { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.tile .s { font-size: 11px; color: var(--faint); }
+.tile.pass .v { color: var(--pass); } .tile.hold .v { color: var(--hold); } .tile.fail .v { color: var(--fail); } .tile.web .v { color: var(--web); }
+
+/* bar lists */
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: minmax(110px, 38%) 1fr 40px; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; border: 0; background: none; padding: 2px 0; text-align: left; }
+.bar:hover .lbl { color: var(--accent-ink); }
+.bar .lbl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
+.bar .trk, .bar .fil { display: block; }
+.bar .trk { height: 10px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+.bar .fil { height: 100%; background: var(--accent); border-radius: 3px; }
+.bar .fil.pass { background: var(--pass); } .bar .fil.hold { background: var(--hold); } .bar .fil.fail { background: var(--fail); } .bar .fil.na { background: var(--na); } .bar .fil.web { background: var(--web); }
+.bar .n { font-family: var(--mono); font-size: 12px; text-align: right; color: var(--muted); }
+
+/* chips & badges */
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; letter-spacing: .02em; }
+.b-PASS { background: var(--pass-soft); color: var(--pass); }
+.b-HOLD { background: var(--hold-soft); color: var(--hold); }
+.b-FAIL { background: var(--fail-soft); color: var(--fail); }
+.b-NA { background: var(--na-soft); color: var(--na); }
+.b-web { background: var(--web-soft); color: var(--web); }
+.b-fit { background: var(--accent-soft); color: var(--accent-ink); }
+.chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.q { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.q-provided { color: var(--pass); background: var(--pass-soft); }
+.q-verify { color: var(--hold); background: var(--hold-soft); }
+.q-conflict { color: var(--fail); background: var(--fail-soft); }
+.q-missing { color: var(--na); background: var(--na-soft); }
+.q-web { color: var(--web); background: var(--web-soft); }
+.q-edited { color: var(--accent-ink); background: var(--accent-soft); }
+.src { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.webmark { border-left: 3px solid var(--web); }
+tr.webrow td:first-child { box-shadow: inset 3px 0 0 var(--web); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); align-items: center; }
+
+/* filters */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.filters input[type="search"] { flex: 1 1 260px; min-width: 0; }
+.inp, select.inp, textarea.inp { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 7px 10px; min-width: 0; max-width: 100%; }
+.filters select.inp { flex: 0 1 auto; }
+.count { color: var(--muted); font-size: 13px; }
+
+/* tables */
+.tw { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); background: var(--sunk); padding: 8px 10px; white-space: nowrap; position: sticky; top: 0; }
+th button { border: 0; background: none; font-weight: 600; cursor: pointer; padding: 0; color: inherit; }
+td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--sunk); }
+td .nm { font-weight: 600; color: var(--fg); }
+td .al { font-size: 11px; color: var(--faint); }
+td.wrap { max-width: 360px; }
+.clip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.empty { padding: 28px; text-align: center; color: var(--muted); }
+
+/* shortlist cards */
+.ctx { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--surface); }
+.ctx button { border: 0; background: none; padding: 6px 12px; cursor: pointer; color: var(--muted); }
+.ctx button[aria-pressed="true"] { background: var(--navy); color: #F7FAFC; }
+.rank { display: grid; grid-template-columns: 44px minmax(0, 1fr) 150px; gap: 14px; padding: 14px 16px; border-top: 1px solid var(--line); align-items: start; cursor: pointer; }
+.rank:first-of-type { border-top: 0; }
+.rank:hover { background: var(--sunk); }
+.rank .pos { font-family: var(--mono); font-size: 20px; color: var(--faint); }
+.rank .title { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.rank .title b { font-size: 15px; }
+.rank .why { margin: 6px 0 4px; color: var(--fg); }
+.rank .meta { font-size: 12px; color: var(--muted); }
+.meter { height: 8px; background: var(--sunk); border-radius: 4px; overflow: hidden; display: flex; }
+.meter i { display: block; height: 100%; }
+.score { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gaps { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.gap { font-size: 11px; color: var(--na); border: 1px dashed var(--na); border-radius: 4px; padding: 0 6px; }
+@media (max-width: 640px) { .rank { grid-template-columns: 30px minmax(0, 1fr); } .rank .side { grid-column: 2; } }
+
+/* drawer */
+.scrim { position: fixed; inset: 0; background: rgba(0, 20, 51, .35); z-index: 40; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(640px, 100%); background: var(--surface); z-index: 41; box-shadow: var(--shadow); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.dh { padding: 16px 20px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.dh .row { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+.dh h2 { font-size: 19px; }
+.db { overflow-y: auto; padding: 8px 20px 40px; }
+.sec { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.sec h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); }
+.kv { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 6px 14px; font-size: 13px; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.kv dd .line { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.kv dd .val { white-space: pre-line; }
+.kv dd .alt { font-size: 12px; color: var(--fail); margin-top: 2px; }
+.kv dd .note { font-size: 12px; color: var(--muted); }
+.copy { border: 0; background: none; color: var(--accent-ink); cursor: pointer; font-size: 11px; padding: 0 2px; }
+.flag { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 8px; font-size: 13px; padding: 5px 0; }
+.parts { display: grid; gap: 4px; font-size: 13px; }
+.parts .p { display: grid; grid-template-columns: minmax(0,1fr) 60px; gap: 8px; }
+.parts .p span:last-child { text-align: right; font-family: var(--mono); font-size: 12px; }
+@media (max-width: 560px) { .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; } .kv dt { margin-top: 8px; font-size: 12px; } .db, .dh { padding-inline: 16px; } }
+
+/* modal */
+.modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(0, 20, 51, .45); }
+.mbox { background: var(--surface); border-radius: 10px; width: min(860px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); min-height: 0; display: flex; flex-direction: column; box-shadow: var(--shadow); }
+.mbody { min-height: 0; }
+.mbox header, .mbox footer { padding: 14px 18px; display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mbox header { border-bottom: 1px solid var(--line); }
+.mbox footer { border-top: 1px solid var(--line); }
+.mbody { overflow-y: auto; padding: 14px 18px; }
+.form { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px 14px; }
+.form label { display: grid; gap: 3px; font-size: 12px; color: var(--muted); }
+.form .full { grid-column: 1 / -1; }
+.form fieldset { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; margin: 0; }
+.form legend { font-size: 12px; color: var(--muted); padding: 0 4px; }
+.form .checks { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.form .checks label { display: flex; gap: 6px; align-items: center; color: var(--fg); font-size: 13px; }
+.fh { grid-column: 1 / -1; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--faint); margin-top: 8px; }
+textarea.inp { min-height: 64px; resize: vertical; }
+
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--navy); color: #F7FAFC; padding: 9px 16px; border-radius: 6px; z-index: 60; font-size: 13px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+.note-box { border: 1px solid var(--line); border-left: 3px solid var(--accent); background: var(--surface); padding: 10px 14px; border-radius: 6px; font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+.note-box.warn { border-left-color: var(--hold); }
+.note-box.web { border-left-color: var(--web); }
+.list { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.sugg { border: 1px solid var(--line); border-left: 3px solid var(--web); border-radius: 6px; padding: 12px 14px; background: var(--surface); display: grid; gap: 6px; }
+.sugg .top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sugg .srcs a { font-size: 12px; margin-right: 10px; overflow-wrap: anywhere; }
+.cmp th:first-child, .cmp td:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; }
+.cmp th { position: static; }
+.cmp td { min-width: 200px; cursor: default; }
+.cmp tbody tr { cursor: default; }
+.cmp tbody tr:hover td { background: transparent; }
+@media (prefers-reduced-motion: no-preference) { .drawer { animation: slide .18s ease-out; } @keyframes slide { from { transform: translateX(24px); opacity: .6; } } }
+</style>
+
+<header class="mast">
+  <div>
+    <h1>TA Vendor Register</h1>
+    <div class="sub">Talent Acquisition vendor directory, shortlist, assessment and annual performance record · prepared for Dr. Ranjith TP</div>
+  </div>
+  <div class="acts">
+    <span class="mode" id="modeChip">Loading storage…</span>
+    <button class="btn" id="btnImport" type="button">Import</button>
+    <button class="btn" id="btnExport" type="button">Export</button>
+    <button class="btn primary" id="btnAdd" type="button">+ Add Vendor</button>
+  </div>
+</header>
+<input type="file" id="fileIn" accept=".json,.csv,application/json,text/csv" hidden>
+
+<div class="frame">
+  <nav class="rail" id="rail" aria-label="Views"></nav>
+  <main id="main"></main>
+</div>
+<div id="layer"></div>
+
+<script id="vendor-data" type="application/json">/*VENDOR_DATA*/{"meta":{},"vendors":[]}</script>
+<script>
+"use strict";
+/* ------------------------------------------------------------------ data */
+const RAW = JSON.parse(document.getElementById("vendor-data").textContent.replace("/*VENDOR_DATA*/", ""));
+const META = RAW.meta || {};
+const NOW_ISO = () => new Date().toISOString();
+
+/* Web research gathered 14 Oct 2026. Nothing here is applied to a vendor
+   record until someone approves it in the Web research view. */
+const WEB_VENDORS = [
+  { id: "web-egon-zehnder", name: "Egon Zehnder", hq: "Zurich, Switzerland (global)", india: "New Delhi (1995), Mumbai (1997), Bangalore (2008)", website: "https://www.egonzehnder.com/office/india/bangalore", cats: ["executive", "leadership", "permanent"], spec: "Board, CEO and C-suite search; leadership advisory", why: "Global retained search firm with an India practice in three cities including Bangalore.", sources: ["https://www.egonzehnder.com/office/india/bangalore", "https://www.egonzehnder.com/de/office/bangalore"] },
+  { id: "web-heidrick", name: "Heidrick & Struggles", hq: "Chicago, USA (global)", india: "New Delhi, Bangalore, Mumbai", website: "https://www.heidrick.com/en/offices/bangalore", cats: ["executive", "leadership", "permanent"], spec: "CXO and board search; leadership consulting", why: "Global retained search firm; India business run from New Delhi with Bangalore and Mumbai offices.", sources: ["https://www.heidrick.com/en/offices/bangalore", "https://www.consultancy.in/news/3716/suresh-raina-joins-heidrick-struggles-as-a-partner-in-mumbai"] },
+  { id: "web-russell-reynolds", name: "Russell Reynolds Associates", hq: "New York, USA (global)", india: "Gurgaon / New Delhi (2006), Mumbai (2008)", website: "https://russellreynolds.com", cats: ["executive", "leadership", "permanent"], spec: "CEO, board and senior executive search", why: "Global retained search firm with two India offices.", sources: ["https://russellreynolds.com/zh-cn/locations/india/new-delhi", "https://russellreynolds.com/ja-jp/locations/india/mumbai"] },
+  { id: "web-spencer-stuart", name: "Spencer Stuart", hq: "Chicago, USA (global; founded 1956)", india: "", website: "https://www.spencerstuart.com", cats: ["executive", "leadership", "permanent"], spec: "Executive search and leadership consulting", why: "Global retained search firm commonly benchmarked with the firms above. India office locations were not confirmed in this research.", sources: ["https://www.cbinsights.com/company/spencer-stuart/people"], gap: "India offices not confirmed" },
+  { id: "web-boyden", name: "Boyden India", hq: "Global network; India office since 1979", india: "Pune and Bangalore named in announcements", website: "https://www.boyden.com/india", cats: ["executive", "leadership", "permanent"], spec: "Retained executive search", why: "Describes itself as the first global retained search firm in India.", sources: ["https://www.boyden.com/india", "https://boyden.com/media/boyden-asia-pacific-sees-growth-across-the-region-with-new-35513293"] },
+  { id: "web-transearch", name: "TRANSEARCH India", hq: "Global network", india: "New Delhi, Mumbai, Bangalore, Chennai (as of 2012 report)", website: "https://huntscanlon.com/transearch-expands-india-team/", cats: ["executive", "leadership", "permanent"], spec: "Executive search", why: "Chennai office opened for the automotive and manufacturing corridor; office list is dated.", sources: ["https://www.recruiter.co.uk/news/2012/09/international-india-transearch-opens-chennai-office", "https://huntscanlon.com/transearch-expands-india-team/"], gap: "Office list dated 2012" },
+  { id: "web-signium", name: "Signium India", hq: "Global network (40 offices, 25 countries per 2009 report)", india: "Mumbai (Goregaon East)", website: "https://www.signium.com", cats: ["executive", "leadership", "permanent"], spec: "Executive search", why: "Global search network with an India member firm.", sources: ["https://www.signium.com/?p=2940", "https://huntscanlon.com/signium-international-expands-in-india/"], gap: "Current India footprint not stated" },
+];
+const WEB_ENRICH = [
+  { id: "en-korn-hq", vendor: "korn-ferry", field: "hq", value: "Global (Los Angeles, USA); India offices in Mumbai, Bengaluru and Delhi NCR", note: "Third-party directory and consultant profiles; office list not confirmed on an official Korn Ferry page.", sources: ["https://www.businessofgcc.com/gcc-partners/korn-ferry-india", "https://www.kornferry.com/jp/about-us/consultants/suchet-narain"] },
+  { id: "en-korn-spec", vendor: "korn-ferry", field: "specialization", value: "Global executive search and leadership consulting; India practice includes automotive and aerospace leadership.", note: "From a Korn Ferry consultant profile.", sources: ["https://www.kornferry.com/about-us/consultants/manisha-malik"] },
+  { id: "en-stanton-hq", vendor: "stanton-chase", field: "hq", value: "Global network; India offices in Mumbai, Chennai, Kolkata, Bangalore (UB City), Delhi and Ahmedabad", note: "Six India offices per an undated Stanton Chase announcement.", sources: ["https://www.stantonchase.com/insights/blog/stanton-chase-announces-new-leadership-team-in-india", "https://www.stantonchase.com/office/executive-search-firm-in-bangalore-india"] },
+  { id: "en-stanton-spec", vendor: "stanton-chase", field: "specialization", value: "CEO, CFO, COO, CHRO, Director, Plant Head and GM searches; Chennai office cites automotive and manufacturing strength.", note: "Self-reported on the Stanton Chase Chennai office page.", sources: ["https://www.stantonchase.com/office/executive-search-firm-in-chennai-india"] },
+  { id: "en-odgers-hq", vendor: "odgers", field: "hq", value: "Global (London, UK); India offices in Bengaluru (MG Road), Mumbai and Delhi", note: "From Odgers Berndtson India pages and announcements (2015–2022).", sources: ["https://www.odgers.com/about-us/locations/asia-pacific/india/", "https://www.odgers.com/en-in/insights/odgers-berndtson-india-moving-ahead-full-steam-important-leadership-announcements"] },
+  { id: "en-odgers-spec", vendor: "odgers", field: "specialization", value: "Industrial practice covering Automotive OEM, Components, Discrete Manufacturing, Industrial Automation, Aerospace & Defence, Power & Renewables.", note: "From Odgers consultant profiles.", sources: ["https://odgersberndtson.com/nl-nl/mensen/vineeta-chopra"] },
+  { id: "en-corner-hq", vendor: "cornerstone", field: "hq", value: "Mumbai-led India operations since 2004; offices in Mumbai, Bangalore, Pune and Delhi/Gurgaon (sources differ)", note: "Office list conflicts between sources. Part of Cornerstone International Group.", sources: ["https://et-edge.com/conferences/hr/2024/mumbai/?p=3145", "https://m.indiamart.com/cornerstone-india/aboutus.html"], q: "conflict" },
+  { id: "en-corner-spec", vendor: "cornerstone", field: "specialization", value: "CXO / C-suite search, board and independent-director search, leadership advisory; 1,500–2,000+ mandates claimed (sources differ).", note: "Mandate count conflicts between sources.", sources: ["https://et-edge.com/conferences/hr/2024/mumbai/?p=3145", "https://hrtoday.in/r-srinivasa-raghavan-appointed-as-partner-global-industrial-practice-group-at-cornerstone-international-group/"], q: "conflict" },
+  { id: "en-abc-years", vendor: "abc-consultants", field: "years", value: "Founded 1969 (Kolkata)", note: "From the ABC Consultants website.", sources: ["https://abcconsultants.in", "https://abcconsultants.in/new/services.html"] },
+  { id: "en-abc-spec", vendor: "abc-consultants", field: "specialization", value: "Executive search and leadership hiring; sold its FlexAbility staffing business to AMS in 2022 to focus on leadership hiring.", note: "Headquarters is reported as Mumbai by one source and New Delhi by others.", sources: ["https://abcconsultants.in", "https://www.businessofgcc.com/gcc-partners/abc-consultants"] },
+  { id: "en-leaders-edge", vendor: "leaders-edge", field: "comments", value: "Web search found no independent information for Leaders' Edge (leadersedge.company). Reputation unverified.", note: "Search returned only similarly named firms.", sources: [], q: "verify" },
+];
+
+const CATS = {
+  executive: "Executive / CXO", leadership: "Senior leadership", juniorMid: "Junior–mid level",
+  volume: "Volume / generic", permanent: "Permanent placement", staffAug: "Staff augmentation",
+};
+const CAT_INFO = {
+  executive: "Module A (Executive/CXO) = yes in the Stage 1 assessment, the CXO block of the Shortlisted Vendors tab, or a “Senior Leadership” level tag.",
+  leadership: "Module B (Senior Leadership) = yes, the Leadership Hiring block of the Shortlisted Vendors tab, or a Leadership / Senior Level tag.",
+  juniorMid: "Module C (Junior to Mid-Level) = yes, or a Mid Level tag.",
+  volume: "Mass number / Blue Collar tags, keywords such as bulk or campus hiring, and membership of the Volume hiring tab. That tab’s list matches Module B, so its entries are marked ambiguous.",
+  permanent: "Derived from service keywords in specialization, domain and comments (permanent, executive search, headhunting, RPO…). Check before relying on it.",
+  staffAug: "Derived from service keywords (contract staffing, C2H, managed services, payroll…). Check before relying on it.",
+};
+const FIELD_GROUPS = [
+  ["Contacts", [["spocName", "SPOC name"], ["spocDesignation", "Designation"], ["spocPhone", "Phone"], ["spocEmail", "Email"], ["companyEmail", "Company email"], ["companyPhone", "Company phone"], ["website", "Website"]]],
+  ["Company", [["hq", "Headquarters / location"], ["years", "Years in operation"], ["recruiters", "Recruiter strength"], ["headcount", "Total headcount"], ["entityType", "Entity type"], ["revenue", "Annual revenue"], ["gstPan", "GST & PAN"]]],
+  ["Capability", [["domain", "Domain"], ["specialization", "Specialization"], ["industries", "Industries"], ["majorClients", "Major clients (last 2 yrs)"], ["activeClients", "Current active clients"]]],
+  ["Delivery (vendor-reported)", [["profilesPerReq", "Profiles per requirement"], ["closureTimeline", "Average closure timeline"], ["positionsClosed12m", "Positions closed (12 months)"], ["joiningRatio", "Joining ratio"], ["wfo", "Work-from-office hiring"], ["nicheUrgent", "Niche / urgent hiring"], ["dedicatedRecruiters", "Dedicated skill recruiters"], ["trackingReports", "Daily/weekly tracking"], ["diversity", "Diversity hiring"]]],
+  ["Workbook assessment", [["comments", "Comments"], ["score", "Score (1–5)"], ["finalDecision", "Final decision"]]],
+];
+const FIELD_LABEL = Object.fromEntries(FIELD_GROUPS.flatMap(g => g[1]));
+const Q_LABEL = { provided: "Provided", verify: "Needs verification", conflict: "Conflicting", missing: "Missing", web: "Web-sourced", edited: "Edited" };
+const TYPES = ["Recruitment / staffing", "HR tech / platform", "Campus / education", "Background verification", "Relocation / other HR service"];
+const STATUSES = ["PASS", "HOLD", "FAIL", "Not assessed"];
+
+/* ------------------------------------------------------------ helpers */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+const fv = (v, k) => (v.fields[k] && v.fields[k].v) || "";
+const has = (v, k) => !!fv(v, k) && v.fields[k].q !== "missing";
+const fmtDate = iso => { if (!iso) return "—"; const d = new Date(iso); return isNaN(d) ? iso : d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }); };
+const statusKey = s => s === "Not assessed" ? "NA" : s;
+const badge = s => `<span class="badge b-${statusKey(s)}">${esc(s)}</span>`;
+const qBadge = q => `<span class="q q-${esc(q)}">${esc(Q_LABEL[q] || q)}</span>`;
+function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.setAttribute("role", "status"); t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+
+function locBucket(v) {
+  const h = fv(v, "hq");
+  if (!h) return "Missing";
+  const L = [["Bengaluru", /bangalore|bengaluru/i], ["Delhi NCR", /delhi|noida|gurgaon|gurugram|ghaziabad|okhla/i], ["Mumbai", /mumbai|colaba|malad/i], ["Chennai", /chennai/i], ["Hyderabad", /hyderabad|secunderabad/i], ["Pune", /pune/i], ["Kolkata", /kolkat/i], ["Jaipur", /jaipur/i]];
+  for (const [n, rx] of L) if (rx.test(h)) return n;
+  return /india/i.test(h) && !/usa|uk|london/i.test(h) ? "India (city not given)" : "International HQ";
+}
+const SPEC = [["IT & software", /\bit\b|software|technolog|sap\b|cloud|data|\bai\b|digital|erp/i], ["Engineering & automotive", /engineer|automo|embedded|semiconductor|mobility|r&d/i], ["Manufacturing & industrial", /manufactur|industrial|plant|epc|energy|infra/i], ["Leadership & executive search", /leadership|executive|cxo|board|c-suite|senior/i], ["BFSI", /bfsi|bank|financ|insurance|fintech/i], ["GCC / captives", /gcc|gic|captive/i], ["Pharma & healthcare", /pharma|health|life science/i], ["Consumer & retail", /retail|fmcg|consumer|e-?commerce/i]];
+function specBuckets(v) { const t = [fv(v, "specialization"), fv(v, "domain"), fv(v, "industries"), v.shortlist ? v.shortlist.why : ""].join(" "); return SPEC.filter(([, rx]) => rx.test(t)).map(s => s[0]); }
+
+/* -------------------------------------------------------------- store */
+/* One adapter for every collection the page keeps: the shared artifact
+   database when the viewer grants it, otherwise this browser's storage. */
+const COLLS = ["vendorEdits", "webDecisions", "evaluations", "engagements", "perf"];
+const Store = {
+  mode: "local", db: null, user: null, canWrite: true, uid: null, names: {},
+  data: Object.fromEntries(COLLS.map(c => [c, {}])),
+  get edits() { return this.data.vendorEdits; },
+  get decisions() { return this.data.webDecisions; },
+  async init() {
+    try { COLLS.forEach(c => { this.data[c] = JSON.parse(localStorage.getItem("taVR." + c + ".v1") || "{}"); }); } catch (e) {}
+    setMode();
+    const c = window.claude;
+    if (!c || typeof c.use !== "function") return;
+    let db = null, user = null;
+    try { [db, user] = await Promise.all([c.use("db"), c.use("user")]); } catch (e) { db = null; }
+    if (!db) return;
+    this.db = db; this.user = user; this.mode = "shared"; COLLS.forEach(k => { this.data[k] = {}; });
+    try { if (user) { this.uid = await user.id(); const w = await user.can("data.write"); this.canWrite = w !== false; } } catch (e) {}
+    setMode();
+    COLLS.forEach(k => db.collection(k).onSnapshot(snap => {
+      const m = {}; snap.docs.forEach(d => { if (d.exists) m[d.id] = d.data(); }); this.data[k] = m;
+      if (k === "vendorEdits" || k === "evaluations") resolveNames();
+      render();
+    }, () => { if (k === "vendorEdits") { this.mode = "error"; setMode(); } }));
+  },
+  async put(coll, id, body) {
+    body = Object.assign({}, body, { updatedAt: NOW_ISO(), updatedBy: this.uid || "this browser" });
+    id = safeId(id);
+    if (this.mode === "shared") {
+      try { await this.db.collection(coll).doc(id).set(JSON.parse(JSON.stringify(body))); }
+      catch (e) { if (e && e.code === "invalid_argument") { this.canWrite = false; setMode(); toast("You have view-only access, so changes cannot be saved."); } else toast("Save failed: " + (e && e.message || "unknown error")); return false; }
+    } else { this.data[coll][id] = body; this.persist(coll); }
+    return true;
+  },
+  async del(coll, id) {
+    id = safeId(id);
+    if (this.mode === "shared") { try { await this.db.collection(coll).doc(id).delete(); } catch (e) { toast("Delete failed."); return false; } }
+    else { delete this.data[coll][id]; this.persist(coll); }
+    return true;
+  },
+  putEdit(id, body) { return this.put("vendorEdits", id, body); },
+  dropEdit(id) { return this.del("vendorEdits", id); },
+  decide(sid, decision) { return this.put("webDecisions", sid, { decision, at: NOW_ISO(), by: this.uid || "this browser" }); },
+  persist(coll) { try { localStorage.setItem("taVR." + coll + ".v1", JSON.stringify(this.data[coll])); } catch (e) { toast("This browser blocked local storage; changes last only until reload."); } },
+};
+const safeId = id => String(id).replace(/[^A-Za-z0-9_\-.~:@+]/g, "-").slice(0, 180) || "vendor";
+function setMode() {
+  const el = $("#modeChip");
+  if (Store.mode === "shared") el.textContent = Store.canWrite ? "Shared · changes saved for all viewers" : "Shared · view only";
+  else if (Store.mode === "error") el.textContent = "Storage unavailable";
+  else el.textContent = "Local · changes saved in this browser";
+  $("#btnAdd").disabled = !Store.canWrite; $("#btnImport").disabled = !Store.canWrite;
+}
+async function resolveNames() {
+  const u = Store.user; if (!u || typeof u.profiles !== "function") return;
+  const ids = [...new Set(Object.values(Store.edits).concat(Object.values(Store.data.evaluations), Object.values(Store.data.engagements)).map(e => e.updatedBy).filter(x => x && x !== "this browser"))];
+  if (!ids.length) return;
+  try { const ps = await u.profiles(ids); ids.forEach(id => { Store.names[id] = (ps[id] && ps[id].name) || ""; }); } catch (e) {}
+}
+const who = id => !id ? "" : id === "this browser" ? "this browser" : (Store.names[id] || "a team member");
+
+/* ----------------------------------------------------- vendor assembly */
+function webVendorRecord(w) {
+  const f = (v, q = "web", note) => v ? { v, q, src: ["Web research 14 Oct 2026"], note } : { v: "", q: "missing", src: [] };
+  return {
+    id: w.id, name: w.name, aliases: [], origin: "web",
+    vendorType: { v: "Recruitment / staffing", q: "web", note: "Web research" },
+    fields: { hq: f(w.hq + (w.india ? " · India: " + w.india : "")), website: f(w.website), specialization: f(w.spec), comments: f(w.why), spocName: f(""), spocEmail: f(""), spocPhone: f("") },
+    contacts: [], clientRefs: [], sources: ["Web research 14 Oct 2026"], webSources: w.sources,
+    status: { stage1: "Not assessed", reason: "Suggested from web research; not part of the workbook assessment.", src: null },
+    modules: {}, levelTags: [], lists: [], shortlist: null,
+    flags: [{ kind: "web", text: "Added from web research. Contact details are deliberately left blank; none were found or invented." }].concat(w.gap ? [{ kind: "verify", text: w.gap }] : []),
+    categories: Object.fromEntries(w.cats.map(c => [c, [{ basis: "web", ref: "Web research: " + w.spec }]])),
+    fee: { v: "", q: "missing", note: "No fee information." }, lastUpdated: "2026-10-14",
+  };
+}
+let VENDORS = [], BY_ID = {};
+function assemble() {
+  const out = [];
+  const base = RAW.vendors.concat(WEB_VENDORS.filter(w => (Store.decisions[w.id] || {}).decision !== "dismissed").map(webVendorRecord));
+  const seen = new Set();
+  for (const b of base) {
+    const e = Store.edits[safeId(b.id)];
+    seen.add(safeId(b.id));
+    if (e && e.deleted) continue;
+    const v = e && e.record ? Object.assign(clone(e.record), { _edited: e.updatedAt, _editedBy: e.updatedBy }) : b;
+    if (b.origin === "web" && (Store.decisions[b.id] || {}).decision === "approved") v._approved = true;
+    out.push(v);
+  }
+  for (const [id, e] of Object.entries(Store.edits)) {
+    if (seen.has(id) || e.deleted || !e.record) continue;
+    out.push(Object.assign(clone(e.record), { _edited: e.updatedAt, _editedBy: e.updatedBy }));
+  }
+  VENDORS = out; BY_ID = Object.fromEntries(out.map(v => [v.id, v]));
+}
+const isRecruiter = v => (v.vendorType && v.vendorType.v) === "Recruitment / staffing";
+const deletedBase = () => RAW.vendors.filter(b => (Store.edits[safeId(b.id)] || {}).deleted);
+
+/* ------------------------------------------------------------- ranking */
+const CTX = { exec: ["A", "Executive / CXO"], lead: ["B", "Senior leadership"], mid: ["C", "Junior–mid level"], all: [null, "All levels"] };
+function rank(v, ctx) {
+  const parts = [], gaps = [];
+  const fit = ((v.shortlist && v.shortlist.fit) || "").trim().toLowerCase();
+  const fitPts = { excellent: 30, "very good": 20, good: 12 }[fit] || 0;
+  parts.push({ k: "CXO-fit rating", pts: fitPts, max: 30, c: "var(--accent)", ev: v.shortlist ? `${v.shortlist.fit} · ${v.shortlist.tier} (${v.shortlist.src})` : "Not on the CXO / leadership shortlist" });
+  if (!v.shortlist) gaps.push("No CXO-fit rating");
+  const st = v.status.stage1, pend = /additional information/i.test(v.status.reason || "");
+  const stPts = st === "PASS" ? (pend ? 12 : 20) : st === "HOLD" ? 5 : 0;
+  parts.push({ k: "Stage 1 assessment", pts: stPts, max: 20, c: "var(--pass)", ev: st + (v.status.reason ? " — " + v.status.reason : "") });
+  if (st === "Not assessed") gaps.push("Stage 1 not assessed"); if (pend) gaps.push("Stage 1 info pending");
+  const [mod] = CTX[ctx];
+  let mPts = 0, mEv;
+  const mv = m => (v.modules[m] || {}).v;
+  if (mod) { mPts = mv(mod) === "yes" ? 18 : 0; mEv = `Module ${mod}: ${mv(mod) || "not recorded"}`; if (!mv(mod)) gaps.push(`Module ${mod} not recorded`); }
+  else { mPts = ["A", "B", "C"].filter(m => mv(m) === "yes").length * 6; mEv = ["A", "B", "C"].map(m => `${m}: ${mv(m) || "—"}`).join(" · "); if (!Object.keys(v.modules).length) gaps.push("Modules not recorded"); }
+  parts.push({ k: "Module coverage", pts: mPts, max: 18, c: "var(--navy)", ev: mEv });
+  const sc = parseFloat(fv(v, "score"));
+  const scPts = sc >= 1 && sc <= 5 ? sc * 3 : 0;
+  parts.push({ k: "Workbook score", pts: scPts, max: 15, c: "var(--slate)", ev: isNaN(sc) ? "No score in Base Data" : sc < 1 ? `${sc} recorded (outside 1–5; treated as not scored)` : `${sc} / 5` });
+  if (isNaN(sc) || sc < 1) gaps.push("No workbook score");
+  const ref = (v.clientRefs || []).find(r => r.q === "provided");
+  parts.push({ k: "Client reference", pts: ref ? 7 : 0, max: 7, c: "var(--hold)", ev: ref ? `${ref.company} — ${ref.person || "contact"}` : "None provided" });
+  if (!ref) gaps.push("No client reference");
+  const dk = ["closureTimeline", "positionsClosed12m", "joiningRatio"].filter(k => has(v, k));
+  parts.push({ k: "Delivery evidence", pts: dk.length * 10 / 3, max: 10, c: "var(--web)", ev: dk.length ? dk.map(k => FIELD_LABEL[k]).join(", ") : "No delivery metrics" });
+  ["closureTimeline", "positionsClosed12m", "joiningRatio"].filter(k => !has(v, k)).forEach(k => gaps.push("Missing " + FIELD_LABEL[k].toLowerCase()));
+  return { total: Math.round(parts.reduce((s, p) => s + p.pts, 0)), parts, gaps, excluded: st === "FAIL" };
+}
+function meter(r) { return `<div class="meter" aria-hidden="true">${r.parts.map(p => `<i style="width:${p.pts}%;background:${p.c}"></i>`).join("")}</div>`; }
+
+/* --------------------------------------------------------------- state */
+const UI = { view: "overview", pq: "", pscope: "", pcomp: "", pyear: "", pband: "", perf: "", evYear: "", q: "", cat: "", svc: "", status: "", type: "recruit", loc: "", origin: "", minScore: "", dq: "", sort: "name", dir: 1, ctx: "exec", stTab: "PASS", compare: [] };
+try { Object.assign(UI, JSON.parse(localStorage.getItem("taVR.ui.v1") || "{}"), { compare: [] }); } catch (e) {}
+function saveUI() { try { localStorage.setItem("taVR.ui.v1", JSON.stringify({ ctx: UI.ctx, type: UI.type, sort: UI.sort, dir: UI.dir })); } catch (e) {} }
+const hash = location.hash.replace("#", "");
+const VIEWS = ["overview", "shortlist", "directory", "status", "performance", "compare", "quality", "research"];
+if (VIEWS.includes(hash)) UI.view = hash;
+else if (CATS[hash]) { UI.view = "directory"; UI.cat = hash; }
+
+function go(view, patch) {
+  Object.assign(UI, { q: "", cat: "", svc: "", status: "", loc: "", spec: "", origin: "", minScore: "", dq: "", perf: "", evYear: "" }, patch || {}, { view });
+  render(); window.scrollTo(0, 0);
+}
+
+/* ---------------------------------------------------------------- rail */
+function renderRail() {
+  const n = k => VENDORS.filter(v => v.categories[k]).length;
+  const cur = (view, cat) => UI.view === view && (cat === undefined || UI.cat === cat) ? 'aria-current="true"' : "";
+  const st = s => VENDORS.filter(v => v.status.stage1 === s).length;
+  $("#rail").innerHTML = `
+    <div class="grp">Review</div>
+    <button data-go="overview" ${cur("overview")}>Overview</button>
+    <button data-go="shortlist" ${cur("shortlist")}>Shortlist &amp; ranking <span class="ct">${VENDORS.filter(v => v.shortlist).length}</span></button>
+    <button data-go="directory" data-cat="" ${cur("directory", "")}>Vendor directory <span class="ct">${VENDORS.length}</span></button>
+    <div class="grp">Hiring category</div>
+    ${Object.entries(CATS).map(([k, l]) => `<button data-go="directory" data-cat="${k}" ${cur("directory", k)}>${l} <span class="ct">${n(k)}</span></button>`).join("")}
+    <div class="grp">Decisions</div>
+    <button data-go="status" ${cur("status")}>PASS / HOLD / FAIL <span class="ct">${st("PASS")}/${st("HOLD")}/${st("FAIL")}</span></button>
+    <div class="grp">Performance</div>
+    <button data-go="performance" ${cur("performance")}>Annual evaluation <span class="ct">${Object.keys(Store.data.evaluations).length}</span></button>
+    <div class="grp">Analyse</div>
+    <button data-go="compare" ${cur("compare")}>Compare <span class="ct">${UI.compare.length}/4</span></button>
+    <div class="grp">Evidence</div>
+    <button data-go="quality" ${cur("quality")}>Data quality</button>
+    <button data-go="research" ${cur("research")}>Web research <span class="ct">${WEB_VENDORS.length + WEB_ENRICH.length}</span></button>`;
+}
+
+/* ------------------------------------------------------------ overview */
+function bars(rows, onClick, cls) {
+  const max = Math.max(1, ...rows.map(r => r[1]));
+  return `<div class="bars">${rows.map(([l, n, c, arg]) => `<button class="bar" type="button" data-act="${onClick}" data-arg="${esc(arg ?? l)}"><span class="lbl" title="${esc(l)}">${esc(l)}</span><span class="trk"><span class="fil ${c || cls || ""}" style="width:${(n / max * 100).toFixed(1)}%"></span></span><span class="n">${n}</span></button>`).join("")}</div>`;
+}
+function countBy(list, fn) { const m = new Map(); list.forEach(v => [].concat(fn(v)).forEach(k => m.set(k, (m.get(k) || 0) + 1))); return [...m.entries()].sort((a, b) => b[1] - a[1]); }
+function viewOverview() {
+  const R = VENDORS.filter(isRecruiter);
+  const st = s => VENDORS.filter(v => v.status.stage1 === s).length;
+  const web = VENDORS.filter(v => v.origin === "web").length;
+  const flagged = VENDORS.filter(v => v.flags.some(f => ["conflict", "verify", "duplicate", "missing"].includes(f.kind)) || Object.values(v.fields).some(f => f.q === "conflict")).length;
+  const noContact = R.filter(v => !has(v, "spocPhone") && !has(v, "spocEmail")).length;
+  const assessed = VENDORS.filter(v => v.status.stage1 !== "Not assessed");
+  const delivery = assessed.filter(v => v.status.stage1 !== "FAIL");
+  const dCount = k => delivery.filter(v => has(v, k)).length;
+  const empty = !RAW.vendors.length;
+  return `
+  <div class="vhead"><div><div class="eyebrow">Executive overview</div><h2>Vendor landscape at a glance</h2>
+  <p>Counts come from the shortlisting workbook (last saved ${fmtDate(META.workbookModified)}) plus any edits. Click a bar or tile to open the matching list.</p></div></div>
+  ${empty ? `<div class="note-box warn"><b>No vendor data is loaded.</b> This copy ships without the workbook data because it contains personal contact details. Use <b>Import</b> to load <span class="mono">vendors.json</span> (built with <span class="mono">tools/build_dataset.py</span>) or a JSON export from the shared dashboard.</div>` : ""}
+  ${META.powerpointReceived === false ? `<div class="note-box warn">Only the Excel workbook was received. The PowerPoint mentioned in the brief was not attached, so nothing here is sourced from it.</div>` : ""}
+  <div class="tiles">
+    <button class="tile" data-act="goDir" data-arg=""><div class="k">Organisations listed</div><div class="v">${VENDORS.length}</div><div class="s">${R.length} recruitment / staffing</div></button>
+    <button class="tile pass" data-act="goStatus" data-arg="PASS"><div class="k">Stage 1 PASS</div><div class="v">${st("PASS")}</div><div class="s">${VENDORS.filter(v => v.status.stage1 === "PASS" && /additional information/i.test(v.status.reason)).length} with info still pending</div></button>
+    <button class="tile hold" data-act="goStatus" data-arg="HOLD"><div class="k">On HOLD</div><div class="v">${st("HOLD")}</div><div class="s">Not approved</div></button>
+    <button class="tile fail" data-act="goStatus" data-arg="FAIL"><div class="k">FAIL (rejected)</div><div class="v">${st("FAIL")}</div><div class="s">Reasons recorded</div></button>
+    <button class="tile" data-act="go" data-arg="shortlist"><div class="k">CXO / leadership shortlist</div><div class="v">${VENDORS.filter(v => v.shortlist).length}</div><div class="s">${VENDORS.filter(v => v.shortlist && v.status.stage1 === "Not assessed").length} lack a Stage 1 assessment</div></button>
+    <button class="tile web" data-act="go" data-arg="research"><div class="k">Web-suggested firms</div><div class="v">${web}</div><div class="s">Shown in violet; pending approval</div></button>
+    <button class="tile" data-act="go" data-arg="performance"><div class="k">Performance evaluations</div><div class="v">${Object.keys(Store.data.evaluations).length}</div><div class="s">${new Set(Object.values(Store.data.evaluations).map(e => e.vendorId)).size} vendors evaluated · others Not evaluated</div></button>
+    <button class="tile" data-act="go" data-arg="quality"><div class="k">Records with data issues</div><div class="v">${flagged}</div><div class="s">${noContact} recruiters lack phone and email</div></button>
+  </div>
+  <div class="grid g2">
+    <section class="panel"><h3>Stage 1 status <small>Short Listed Vendor &amp; Rejected Vendors tabs</small></h3>
+      ${bars(STATUSES.map(s => [s, st(s), statusKey(s).toLowerCase()]), "goStatus")}</section>
+    <section class="panel"><h3>Hiring category <small>a vendor can sit in several</small></h3>
+      ${bars(Object.entries(CATS).map(([k, l]) => [l, VENDORS.filter(v => v.categories[k]).length, "", k]), "goCat")}</section>
+    <section class="panel"><h3>Service model <small>keyword-derived · verify</small></h3>
+      ${bars([["Permanent placement", VENDORS.filter(v => v.categories.permanent).length, "", "permanent"], ["Staff augmentation", VENDORS.filter(v => v.categories.staffAug).length, "", "staffAug"], ["Both", VENDORS.filter(v => v.categories.permanent && v.categories.staffAug).length, "", "both"], ["Not stated", VENDORS.filter(v => !v.categories.permanent && !v.categories.staffAug).length, "na", "none"]], "goSvc")}</section>
+    <section class="panel"><h3>Organisation type <small>dashboard classification</small></h3>
+      ${bars(countBy(VENDORS, v => v.vendorType.v).map(([l, n]) => [l, n]), "goType")}</section>
+    <section class="panel"><h3>Headquarters <small>recruitment vendors</small></h3>
+      ${bars(countBy(R, locBucket).map(([l, n]) => [l, n, l === "Missing" ? "na" : ""]), "goLoc")}</section>
+    <section class="panel"><h3>Specialization focus <small>assessed &amp; shortlisted vendors</small></h3>
+      ${bars(countBy(VENDORS.filter(v => v.status.stage1 !== "Not assessed" || v.shortlist), specBuckets).map(([l, n]) => [l, n]), "goSpec")}</section>
+  </div>
+  <section class="panel" style="margin-top:14px"><h3>Delivery evidence on file <small>PASS / HOLD / not-yet-assessed shortlisted vendors · vendor self-reported, Base Data tab</small></h3>
+    <p class="count" style="margin-top:0">Of ${delivery.length} vendors still in contention, this many supplied each metric. Ratios that Excel stored as times (e.g. 05:07:00) are shown as 5:7 and marked Needs verification.</p>
+    ${bars([["Average closure timeline", dCount("closureTimeline")], ["Positions closed (12 months)", dCount("positionsClosed12m")], ["Joining ratio", dCount("joiningRatio")], ["Profiles per requirement", dCount("profilesPerReq")], ["Client reference supplied", delivery.filter(v => (v.clientRefs || []).some(r => r.q === "provided")).length], ["Placement fee %", delivery.filter(v => v.fee && v.fee.v).length, "na"]], "go", "")}
+  </section>`;
+}
+
+/* ----------------------------------------------------------- directory */
+function filtered() {
+  const q = UI.q.trim().toLowerCase();
+  let list = VENDORS.filter(v => {
+    if (UI.cat && !v.categories[UI.cat]) return false;
+    if (UI.svc === "permanent" && !v.categories.permanent) return false;
+    if (UI.svc === "staffAug" && !v.categories.staffAug) return false;
+    if (UI.svc === "both" && !(v.categories.permanent && v.categories.staffAug)) return false;
+    if (UI.svc === "none" && (v.categories.permanent || v.categories.staffAug)) return false;
+    if (UI.status && v.status.stage1 !== UI.status) return false;
+    if (UI.type === "recruit" && !isRecruiter(v)) return false;
+    if (UI.type && UI.type !== "recruit" && UI.type !== "all" && v.vendorType.v !== UI.type) return false;
+    if (UI.loc && locBucket(v) !== UI.loc) return false;
+    if (UI.spec && !specBuckets(v).includes(UI.spec)) return false;
+    if (UI.origin === "web" && v.origin !== "web") return false;
+    if (UI.origin === "source" && v.origin !== "source") return false;
+    if (UI.origin === "edited" && !v._edited) return false;
+    if (UI.minScore && !(parseFloat(fv(v, "score")) >= +UI.minScore)) return false;
+    if (UI.perf || UI.evYear) {
+      const w = perfWindow(v.id);
+      if (UI.perf === "evaluated" && w.summary === null) return false;
+      if (UI.perf === "notEvaluated" && w.summary !== null) return false;
+      if (UI.perf === "partial" && perfStatus(w) !== "partial") return false;
+      if (UI.perf === "ge4" && !(w.summary >= 4)) return false;
+      if (UI.perf === "lt3" && !(w.summary !== null && w.summary < 3)) return false;
+      if (UI.evYear && !w.evs.some(e => +e.year === +UI.evYear)) return false;
+    }
+    if (UI.dq === "conflict" && !(Object.values(v.fields).some(f => f.q === "conflict") || v.flags.some(f => f.kind === "conflict"))) return false;
+    if (UI.dq === "nocontact" && (has(v, "spocPhone") || has(v, "spocEmail"))) return false;
+    if (UI.dq === "flagged" && !v.flags.length) return false;
+    if (q) {
+      const hay = [v.name, ...(v.aliases || []), ...Object.values(v.fields).map(f => f.v), ...(v.contacts || []).flatMap(c => [c.name, c.email, c.phone]), v.status.reason, v.shortlist && v.shortlist.why].join(" ").toLowerCase();
+      if (!q.split(/\s+/).every(t => hay.includes(t))) return false;
+    }
+    return true;
+  });
+  const order = { PASS: 0, HOLD: 1, "Not assessed": 2, FAIL: 3 };
+  const key = {
+    name: v => v.name.toLowerCase(), status: v => order[v.status.stage1] ?? 9, score: v => -(parseFloat(fv(v, "score")) || -1),
+    rank: v => -rank(v, UI.ctx).total, perf: v => -(perfWindow(v.id).summary ?? -1), loc: v => locBucket(v), updated: v => -(new Date(v._edited || v.lastUpdated || 0).getTime() || 0),
+  }[UI.sort] || (v => v.name);
+  return list.sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * UI.dir || a.name.localeCompare(b.name); });
+}
+function catChips(v) { return `<div class="chips">${Object.keys(CATS).filter(k => v.categories[k]).map(k => { const b = v.categories[k].map(x => x.basis); const t = b.includes("workbook") ? "" : b.includes("web") ? " (web)" : b.includes("ambiguous") && !b.includes("derived") ? " (ambiguous)" : " (derived)"; return `<span class="chip" title="${esc(v.categories[k].map(x => x.ref).join("\n"))}">${esc(CATS[k])}${t}</span>`; }).join("") || '<span class="q q-missing">None</span>'}</div>`; }
+function originChip(v) { return v.origin === "web" ? `<span class="badge b-web">${v._approved ? "Web · approved" : "Web-suggested"}</span>` : v.origin === "added" ? `<span class="badge b-fit">Added</span>` : ""; }
+function viewDirectory() {
+  const list = filtered();
+  const opt = (val, lab, cur) => `<option value="${esc(val)}" ${cur === val ? "selected" : ""}>${esc(lab)}</option>`;
+  const title = UI.cat ? CATS[UI.cat] : "Vendor directory";
+  const sortTh = (k, l) => `<th><button type="button" data-sort="${k}">${l}${UI.sort === k ? (UI.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
+  return `
+  <div class="vhead"><div><div class="eyebrow">${UI.cat ? "Hiring category view" : "Directory"}</div><h2>${esc(title)}</h2>
+  <p>${UI.cat ? esc(CAT_INFO[UI.cat]) : "Every organisation in the workbook, merged across tabs. Search covers names, aliases, contacts, specialization, industries and recorded reasons."}</p></div>
+  <div class="legend"><span><span class="badge b-web">Violet</span> = added from web research</span></div></div>
+  <div class="filters" role="search">
+    <input class="inp" type="search" id="fq" placeholder="Search vendor, SPOC, email, phone, skill, industry…" value="${esc(UI.q)}" aria-label="Search vendors">
+    <select class="inp" id="fcat" aria-label="Hiring category">${opt("", "All categories", UI.cat)}${Object.entries(CATS).map(([k, l]) => opt(k, l, UI.cat)).join("")}</select>
+    <select class="inp" id="fsvc" aria-label="Service model">${opt("", "Any service model", UI.svc)}${opt("permanent", "Permanent placement", UI.svc)}${opt("staffAug", "Staff augmentation", UI.svc)}${opt("both", "Both models", UI.svc)}${opt("none", "Model not stated", UI.svc)}</select>
+    <select class="inp" id="fst" aria-label="Status">${opt("", "Any status", UI.status)}${STATUSES.map(s => opt(s, s, UI.status)).join("")}</select>
+    <select class="inp" id="ftype" aria-label="Organisation type">${opt("recruit", "Recruitment / staffing only", UI.type)}${opt("all", "All organisation types", UI.type)}${TYPES.slice(1).map(t => opt(t, t, UI.type)).join("")}</select>
+    <select class="inp" id="floc" aria-label="Location">${opt("", "Any location", UI.loc)}${[...new Set(VENDORS.map(locBucket))].sort().map(l => opt(l, l, UI.loc)).join("")}</select>
+    <select class="inp" id="fspec" aria-label="Specialization">${opt("", "Any specialization", UI.spec)}${SPEC.map(s => opt(s[0], s[0], UI.spec)).join("")}</select>
+    <select class="inp" id="fscore" aria-label="Minimum score">${opt("", "Any score", UI.minScore)}${[5, 4, 3].map(n => opt(String(n), `Score ≥ ${n}`, UI.minScore)).join("")}</select>
+    <select class="inp" id="forig" aria-label="Origin">${opt("", "Any origin", UI.origin)}${opt("source", "From workbook", UI.origin)}${opt("web", "Web-suggested", UI.origin)}${opt("edited", "Edited or added", UI.origin)}</select>
+    <select class="inp" id="fdq" aria-label="Data quality">${opt("", "Any data quality", UI.dq)}${opt("conflict", "Has conflicts", UI.dq)}${opt("nocontact", "No phone or email", UI.dq)}${opt("flagged", "Any flag", UI.dq)}</select>
+    <select class="inp" id="fperf" aria-label="Performance rating">${opt("", "Any performance", UI.perf)}${opt("evaluated", "Evaluated", UI.perf)}${opt("notEvaluated", "Not evaluated", UI.perf)}${opt("partial", "Partly evaluated", UI.perf)}${opt("ge4", "Summary rating ≥ 4", UI.perf)}${opt("lt3", "Summary rating < 3", UI.perf)}</select>
+    <select class="inp" id="fevy" aria-label="Evaluation year">${opt("", "Any evaluation year", UI.evYear)}${Array.from({ length: +perfCfg().window || 5 }, (_, i) => currentPerfYear() - i).map(y => opt(String(y), "Evaluated in " + yearLabel(y), UI.evYear)).join("")}</select>
+    <span class="count num">${list.length} shown</span>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th><span class="sr" aria-label="Compare">⇄</span></th>${sortTh("name", "Vendor")}${sortTh("status", "Status")}<th>Categories</th><th>SPOC &amp; contact</th>${sortTh("loc", "Location")}${sortTh("score", "Score")}${sortTh("rank", "Rank pts")}${sortTh("perf", "Performance")}<th>Data</th></tr></thead>
+    <tbody>${list.map(v => row(v)).join("") || `<tr><td colspan="10" class="empty">No vendors match these filters.</td></tr>`}</tbody>
+  </table></div>`;
+}
+function row(v) {
+  const r = rank(v, UI.ctx);
+  const dq = Object.values(v.fields).filter(f => f.q === "conflict").length + v.flags.filter(f => f.kind === "conflict").length;
+  const vf = v.flags.filter(f => f.kind === "verify" || f.kind === "duplicate").length + Object.values(v.fields).filter(f => f.q === "verify").length;
+  const email = fv(v, "spocEmail") || fv(v, "companyEmail"), phone = fv(v, "spocPhone") || fv(v, "companyPhone");
+  return `<tr data-open="${esc(v.id)}" class="${v.origin === "web" ? "webrow" : ""}">
+    <td><input type="checkbox" data-cmp="${esc(v.id)}" ${UI.compare.includes(v.id) ? "checked" : ""} aria-label="Compare ${esc(v.name)}"></td>
+    <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
+    <td>${badge(v.status.stage1)}</td>
+    <td class="wrap">${catChips(v)}</td>
+    <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">SPOC missing</span>'}<div class="al">${esc(email) || "no email"} · ${esc(phone) || "no phone"}</div></td>
+    <td>${esc(locBucket(v))}</td>
+    <td class="num">${esc(fv(v, "score")) || "—"}</td>
+    <td class="num">${r.excluded ? '<span class="al">FAIL</span>' : r.total}</td>
+    <td>${(() => { const w = perfWindow(v.id); return w.summary === null ? '<span class="al">Not evaluated</span>' : ratingBadge(w.summary); })()}</td>
+    <td>${dq ? qBadge("conflict") : vf ? qBadge("verify") : ""}</td></tr>`;
+}
+
+/* ----------------------------------------------------------- shortlist */
+function viewShortlist() {
+  const ctxBtns = Object.entries(CTX).map(([k, [, l]]) => `<button type="button" data-ctx="${k}" aria-pressed="${UI.ctx === k}">${l}</button>`).join("");
+  const sl = VENDORS.filter(v => v.shortlist).map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
+  const pool = VENDORS.filter(v => !v.shortlist && v.status.stage1 === "PASS" && (!CTX[UI.ctx][0] || (v.modules[CTX[UI.ctx][0]] || {}).v === "yes")).map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
+  const web = VENDORS.filter(v => v.origin === "web");
+  return `
+  <div class="vhead"><div><div class="eyebrow">Shortlist &amp; ranking</div><h2>Who to call first</h2>
+  <p>The workbook’s own shortlist and Stage 1 decisions come first. The points total is a dashboard recommendation built only from recorded evidence; it is not a workbook figure. Gaps show what evidence is missing.</p></div>
+  <div><div class="eyebrow" style="margin-bottom:4px">Hiring context</div><div class="ctx" role="group" aria-label="Hiring context">${ctxBtns}</div></div></div>
+  <details class="note-box"><summary><b>How the points are built (max 100)</b></summary>
+    <ul class="list" style="margin-top:8px"><li>CXO-fit rating from the Shortlisted Vendors tab: Excellent 30, Very Good 20.</li><li>Stage 1: PASS 20, PASS with information pending 12, HOLD 5, not assessed 0. FAIL vendors are excluded.</li><li>Module for the chosen context (A Executive, B Senior leadership, C Junior–mid): yes = 18. “All levels” gives 6 per module.</li><li>Base Data score (1–5) × 3.</li><li>Client reference supplied (not “Pending”): 7.</li><li>Delivery metrics supplied (closure timeline, positions closed, joining ratio): up to 10.</li></ul></details>
+  <section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">CXO / leadership shortlist <small>Shortlisted Vendors tab · ${sl.length} firms</small></h3>
+    ${sl.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No shortlisted vendors.</div>'}</section>
+  <section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">Stage 1 PASS pool for ${esc(CTX[UI.ctx][1].toLowerCase())} <small>${pool.length} vendors not on the CXO shortlist</small></h3>
+    ${pool.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No PASS vendors for this context.</div>'}</section>
+  <section class="panel webmark"><h3>Web-suggested leadership firms <small>not ranked · no workbook evidence</small></h3>
+    <div class="chips">${web.map(v => `<button class="btn sm" type="button" data-open="${esc(v.id)}">${esc(v.name)}</button>`).join("") || "None"}</div></section>`;
+}
+function rankRow(v, r, pos) {
+  const why = v.shortlist ? v.shortlist.why : v.status.reason;
+  const whySrc = v.shortlist ? v.shortlist.src : v.status.src;
+  const spec = fv(v, "specialization") || fv(v, "domain");
+  const clients = fv(v, "majorClients") || fv(v, "activeClients");
+  return `<div class="rank ${v.origin === "web" ? "webmark" : ""}" data-open="${esc(v.id)}" tabindex="0" role="button" aria-label="Open ${esc(v.name)}">
+    <div class="pos">${pos}</div>
+    <div style="min-width:0"><div class="title"><b>${esc(v.name)}</b>${badge(v.status.stage1)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}</div>
+      <div class="why">${esc(why || "No rationale recorded.")} <span class="src">${esc(whySrc || "")}</span></div>
+      ${spec ? `<div class="meta clip"><b>Specialization:</b> ${esc(spec)}</div>` : ""}
+      ${clients ? `<div class="meta clip"><b>Clients:</b> ${esc(clients)}</div>` : ""}
+      <div class="gaps">${r.gaps.slice(0, 6).map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div></div>
+    <div class="side"><div class="eyebrow">Recommendation pts</div><div class="score">${r.total}<span class="count"> / 100</span></div>${meter(r)}</div></div>`;
+}
+
+/* -------------------------------------------------------------- status */
+function viewStatus() {
+  const list = VENDORS.filter(v => v.status.stage1 === UI.stTab).sort((a, b) => a.name.localeCompare(b.name));
+  const tabs = STATUSES.map(s => `<button type="button" data-st="${s}" aria-pressed="${UI.stTab === s}">${s} · ${VENDORS.filter(v => v.status.stage1 === s).length}</button>`).join("");
+  const intro = { PASS: "Recorded as PASS in the Short Listed Vendor tab. Some PASS entries still say additional information is required; they are flagged.", HOLD: "On hold in the Short Listed Vendor tab. Not approved or shortlisted. Most holds have no written reason in the workbook.", FAIL: "Listed in the Rejected Vendors tab with the recorded reason. Not approved or shortlisted.", "Not assessed": "Present in the workbook but with no Stage 1 decision, including firms on the CXO shortlist and the contact list." }[UI.stTab];
+  return `
+  <div class="vhead"><div><div class="eyebrow">Recorded decisions</div><h2>PASS, HOLD and FAIL</h2><p>${esc(intro)}</p></div>
+  <div class="ctx" role="group" aria-label="Status">${tabs}</div></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Status</th><th>Recorded reason</th><th>Source</th><th>Modules A / B / C</th><th>Flags</th></tr></thead>
+  <tbody>${list.map(v => `<tr data-open="${esc(v.id)}" class="${v.origin === "web" ? "webrow" : ""}"><td class="wrap"><div class="nm">${esc(v.name)}</div>${originChip(v)}</td><td>${badge(v.status.stage1)}</td>
+    <td class="wrap">${v.status.reason ? esc(v.status.reason) : qBadge("missing") + ' <span class="al">No reason recorded</span>'}</td>
+    <td class="src">${esc(v.status.src || "—")}</td>
+    <td class="mono">${["A", "B", "C"].map(m => (v.modules[m] || {}).v || "—").join(" / ")}</td>
+    <td>${v.flags.filter(f => f.field === "status").map(f => `<div class="al">${esc(f.text)}</div>`).join("")}</td></tr>`).join("") || `<tr><td colspan="6" class="empty">None.</td></tr>`}</tbody></table></div>`;
+}
+
+/* ------------------------------------------------------------- compare */
+function viewCompare() {
+  const vs = UI.compare.map(id => BY_ID[id]).filter(Boolean);
+  if (!vs.length) return `<div class="vhead"><div><div class="eyebrow">Compare</div><h2>Side-by-side comparison</h2><p>Tick up to four vendors in the directory, or use “Add to compare” on a vendor profile.</p></div></div><div class="panel empty">Nothing selected yet. <button class="btn sm" type="button" data-act="go" data-arg="shortlist">Open the shortlist</button></div>`;
+  const rowsDef = [["Status", v => badge(v.status.stage1) + `<div class="al">${esc(v.status.reason || "")}</div>`], ["CXO fit", v => v.shortlist ? `${esc(v.shortlist.fit)}<div class="al">${esc(v.shortlist.why)}</div>` : qBadge("missing")], ["Recommendation pts", v => { const r = rank(v, UI.ctx); return `<b class="num">${r.total}</b> / 100 (${esc(CTX[UI.ctx][1])})${meter(r)}`; }], ["Modules A/B/C", v => ["A", "B", "C"].map(m => (v.modules[m] || {}).v || "—").join(" / ")], ["Categories", catChips], ["Performance summary", v => { const w = perfWindow(v.id); return ratingBadge(w.summary) + `<div class="al">${w.years.length ? w.done.length + "/" + w.years.length + " years evaluated" : "No engagement recorded"}</div>${w.years.length ? sparkline(w) : ""}`; }], ["Placement fee", v => v.fee && v.fee.v ? `${esc(v.fee.v)} ${qBadge(v.fee.q)}` : qBadge("missing")]]
+    .concat(["spocName", "spocPhone", "spocEmail", "hq", "years", "recruiters", "revenue", "specialization", "industries", "majorClients", "profilesPerReq", "closureTimeline", "positionsClosed12m", "joiningRatio", "score"].map(k => [FIELD_LABEL[k], v => { const f = v.fields[k]; return f && f.v ? `<span class="val">${esc(f.v)}</span> ${f.q !== "provided" ? qBadge(f.q) : ""}` : qBadge("missing"); }]));
+  return `<div class="vhead"><div><div class="eyebrow">Compare</div><h2>Side-by-side comparison</h2><p>Values as recorded, with quality labels. Delivery figures are vendor self-reported in the Base Data tab.</p></div><button class="btn" type="button" data-act="clearCmp">Clear selection</button></div>
+  <div class="tw"><table class="cmp"><thead><tr><th>Field</th>${vs.map(v => `<th><button type="button" data-open="${esc(v.id)}">${esc(v.name)}</button> <button class="copy" type="button" data-uncmp="${esc(v.id)}" aria-label="Remove ${esc(v.name)}">✕</button></th>`).join("")}</tr></thead>
+  <tbody>${rowsDef.map(([l, fn]) => `<tr><td><b>${esc(l)}</b></td>${vs.map(v => `<td>${fn(v)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ------------------------------------------------------------- quality */
+function viewQuality() {
+  const items = [];
+  VENDORS.forEach(v => {
+    v.flags.forEach(f => items.push([v, f.kind, f.text]));
+    Object.entries(v.fields).forEach(([k, f]) => { if (f.q === "conflict") items.push([v, "conflict", `${FIELD_LABEL[k] || k}: “${f.v}” vs ${f.alt.map(a => `“${a.v}” (${a.src})`).join(", ")}`]); if (f.q === "verify" && f.note) items.push([v, "verify", `${FIELD_LABEL[k] || k}: ${f.note}`]); });
+  });
+  const kinds = ["conflict", "verify", "duplicate", "missing", "related", "web"];
+  const R = VENDORS.filter(isRecruiter);
+  const comp = ["spocName", "spocPhone", "spocEmail", "hq", "years", "specialization", "closureTimeline", "joiningRatio"].map(k => [FIELD_LABEL[k], R.filter(v => has(v, k)).length]);
+  const del = deletedBase();
+  return `
+  <div class="vhead"><div><div class="eyebrow">Evidence</div><h2>Data quality and source notes</h2><p>Conflicts, ambiguous cells and look-alike organisations are listed here rather than silently resolved. Labels used across the dashboard: ${["provided", "verify", "conflict", "missing", "web", "edited"].map(qBadge).join(" ")}</p></div></div>
+  <div class="grid g2">
+    <section class="panel"><h3>Workbook notes <small>structure and ambiguity</small></h3><ul class="list">
+      ${META.powerpointReceived === false ? "<li>The PowerPoint named in the brief was not attached. No PowerPoint content is used.</li>" : ""}
+      ${(META.notes || []).map(n => `<li><span class="src">${esc(n.tab)}</span> ${esc(n.text)}</li>`).join("")}
+      <li>No placement-fee percentages appear anywhere in the workbook. Fee fields are empty and labelled Missing until someone enters a confirmed figure or estimate.</li>
+      <li>Rows in the contact list that are universities, HR-tech platforms or background-verification firms are classified by the dashboard from their names (Needs verification) and hidden from the default directory filter.</li></ul></section>
+    <section class="panel"><h3>Field completeness <small>${R.length} recruitment / staffing vendors</small></h3>${bars(comp.map(([l, n]) => [l, n]), "go", "")}</section>
+  </div>
+  ${del.length ? `<section class="panel" style="margin-top:14px"><h3>Deleted workbook records <small>${del.length}</small></h3><div class="chips">${del.map(b => `<span class="chip">${esc(b.name)} <button class="copy" type="button" data-restore="${esc(b.id)}" ${Store.canWrite ? "" : "disabled"}>Restore</button></span>`).join("")}</div></section>` : ""}
+  <h3 style="margin:20px 0 10px">Flagged items <span class="count">(${items.length})</span></h3>
+  <div class="tw"><table><thead><tr><th>Type</th><th>Vendor</th><th>Detail</th></tr></thead><tbody>
+  ${items.sort((a, b) => kinds.indexOf(a[1]) - kinds.indexOf(b[1])).map(([v, k, t]) => `<tr data-open="${esc(v.id)}"><td>${qBadge({ duplicate: "verify", related: "verify", web: "web", provided: "provided" }[k] || k)} <span class="al">${esc(k)}</span></td><td class="wrap nm">${esc(v.name)}</td><td class="wrap">${esc(t)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
+/* ------------------------------------------------------------ research */
+function viewResearch() {
+  const dec = id => (Store.decisions[id] || {}).decision;
+  const btns = id => Store.canWrite ? (dec(id) ? `<span class="chip">${dec(id) === "approved" ? "Approved" : "Dismissed"} ${fmtDate(Store.decisions[id].at)}</span> <button class="btn sm ghost" type="button" data-undo="${id}">Undo</button>` : `<button class="btn sm primary" type="button" data-approve="${id}">Approve</button> <button class="btn sm" type="button" data-dismiss="${id}">Dismiss</button>`) : (dec(id) ? `<span class="chip">${esc(dec(id))}</span>` : "");
+  const srcs = s => `<div class="srcs">${s.map(u => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60))}</a>`).join("") || '<span class="count">No source found</span>'}</div>`;
+  return `
+  <div class="vhead"><div><div class="eyebrow">Web research · 14 Oct 2026</div><h2>Suggestions awaiting your decision</h2>
+  <p>Everything on this page came from public web sources, not the workbook. New firms appear in violet across the dashboard. Field suggestions for existing vendors are not applied until you approve them; approved values carry a Web-sourced label and their links.</p></div></div>
+  <div class="note-box web">No contact names, phone numbers or e-mail addresses were added from the web. Use <b>Edit</b> on a vendor to add contacts you have confirmed.</div>
+  <h3 style="margin:0 0 10px">Additional leadership / executive search firms <span class="count">(${WEB_VENDORS.length})</span></h3>
+  <div class="grid g2" style="margin-bottom:22px">${WEB_VENDORS.map(w => `<div class="sugg"><div class="top"><b>${esc(w.name)}</b><span>${btns(w.id)}</span></div>
+    <div class="count">${esc(w.spec)}</div><div>${esc(w.why)}</div><div class="count"><b>Global HQ:</b> ${esc(w.hq)}${w.india ? ` · <b>India:</b> ${esc(w.india)}` : ""}</div>${w.gap ? `<div>${qBadge("verify")} ${esc(w.gap)}</div>` : ""}${srcs(w.sources)}
+    ${dec(w.id) !== "dismissed" ? `<div><button class="btn sm ghost" type="button" data-open="${esc(w.id)}">Open profile</button></div>` : ""}</div>`).join("")}</div>
+  <h3 style="margin:0 0 10px">Missing details for shortlisted vendors <span class="count">(${WEB_ENRICH.length})</span></h3>
+  <div class="grid g2">${WEB_ENRICH.map(s => { const v = BY_ID[s.vendor]; const cur = v ? fv(v, s.field) : ""; return `<div class="sugg"><div class="top"><b>${esc(v ? v.name : s.vendor)} · ${esc(FIELD_LABEL[s.field] || s.field)}</b><span>${btns(s.id)}</span></div>
+    <div>${esc(s.value)}</div><div class="count">${esc(s.note)}${s.q ? " " + qBadge(s.q) : ""}</div><div class="count"><b>Currently:</b> ${cur ? esc(cur) : "Missing"}</div>${srcs(s.sources)}</div>`; }).join("")}</div>`;
+}
+
+/* -------------------------------------------------------------- drawer */
+let openId = null;
+function fieldRow(v, k, label) {
+  const f = v.fields[k];
+  if (!f || (!f.v && f.q !== "missing" && f.q !== "conflict")) return `<dt>${esc(label)}</dt><dd>${qBadge("missing")}</dd>`;
+  const copyable = /Email|Phone/.test(label) && f.v;
+  return `<dt>${esc(label)}</dt><dd><div class="line">${f.v ? `<span class="val">${esc(f.v)}</span>` : ""}${copyable ? `<button class="copy" type="button" data-copy="${esc(f.v)}">Copy</button>` : ""}${qBadge(f.q)}</div>
+    ${(f.alt || []).map(a => `<div class="alt">Also recorded: “${esc(a.v)}” <span class="src">${esc(a.src)}</span></div>`).join("")}
+    ${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}${(f.links || []).map(u => `<a class="src" href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, "").slice(0, 70))}</a>`).join(" ")}
+    ${f.src && f.src.length ? `<div class="src">${esc(f.src.join(" · "))}</div>` : ""}</dd>`;
+}
+function drawerHTML(v) {
+  const r = rank(v, UI.ctx);
+  const conf = Store.canWrite;
+  return `<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="dh"><div class="row"><div style="min-width:0"><div class="eyebrow">${esc(v.vendorType.v)}${v.vendorType.q !== "provided" ? " · classification needs verification" : ""}</div><h2 id="dTitle">${esc(v.name)}</h2>
+    ${v.aliases && v.aliases.length ? `<div class="count">Also recorded as: ${esc(v.aliases.join("; "))}</div>` : ""}</div>
+    <button class="btn sm ghost" type="button" data-close aria-label="Close profile">✕</button></div>
+    <div class="chips">${badge(v.status.stage1)}${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}${v._edited ? `<span class="q q-edited">Edited ${fmtDate(v._edited)} by ${esc(who(v._editedBy))}</span>` : ""}</div>
+    <div class="chips"><button class="btn sm" type="button" data-edit="${esc(v.id)}" ${conf ? "" : "disabled"}>Edit</button>
+      <button class="btn sm" type="button" data-cmp-btn="${esc(v.id)}">${UI.compare.includes(v.id) ? "Remove from compare" : "Add to compare"}</button>
+      <span id="delZone"><button class="btn sm danger" type="button" data-del="${esc(v.id)}" ${conf ? "" : "disabled"}>Delete</button></span></div></div>
+  <div class="db">
+    <section class="sec"><h4>Status &amp; assessment</h4><dl class="kv">
+      <dt>Stage 1 status</dt><dd><div class="line">${badge(v.status.stage1)} <span class="src">${esc(v.status.src || "no assessment record")}</span></div><div>${v.status.reason ? esc(v.status.reason) : '<span class="note">No reason recorded.</span>'}</div></dd>
+      <dt>CXO / leadership shortlist</dt><dd>${v.shortlist ? `<div class="line"><b>${esc(v.shortlist.fit)}</b> · ${esc(v.shortlist.tier)} <span class="src">${esc(v.shortlist.src)}</span></div><div>${esc(v.shortlist.why)}</div>` : '<span class="note">Not on the shortlist tab.</span>'}</dd>
+      <dt>Modules</dt><dd>${["A Executive/CXO", "B Senior leadership", "C Junior–mid"].map(l => { const m = v.modules[l[0]]; return `<div>${esc(l)}: <b>${m ? esc(m.v) : "—"}</b> ${m ? `<span class="src">${esc(m.src)}</span>` : ""}</div>`; }).join("")}</dd>
+      ${(v.levelTags || []).length ? `<dt>Level tags</dt><dd>${v.levelTags.map(t => `<div>${esc(t.v)} <span class="src">${esc(t.src)}</span></div>`).join("")}</dd>` : ""}
+      ${(v.lists || []).length ? `<dt>Listed in</dt><dd>${v.lists.map(t => `<div>${esc(t.v)} <span class="src">${esc(t.src)}</span></div>`).join("")}</dd>` : ""}
+      ${v.unlabeledAE ? `<dt>Unlabeled flag (col AE)</dt><dd>Yes <span class="src">${esc(v.unlabeledAE.join(", "))}</span> ${qBadge("verify")}</dd>` : ""}
+    </dl></section>
+    <section class="sec"><h4>Ranking rationale (recommendation · ${esc(CTX[UI.ctx][1])})</h4>
+      <div class="line"><span class="score">${r.total}</span><span class="count">/ 100 ${r.excluded ? "· excluded from ranking (FAIL)" : ""}</span></div>${meter(r)}
+      <div class="parts" style="margin-top:8px">${r.parts.map(p => `<div class="p"><span><b>${esc(p.k)}</b> — ${esc(p.ev)}</span><span>${Math.round(p.pts * 10) / 10}/${p.max}</span></div>`).join("")}</div>
+      ${r.gaps.length ? `<div class="gaps">${r.gaps.map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div>` : ""}</section>
+    ${perfSection(v)}
+    <section class="sec"><h4>Hiring categories</h4><dl class="kv">${Object.keys(CATS).map(k => `<dt>${esc(CATS[k])}</dt><dd>${v.categories[k] ? v.categories[k].map(b => `<div>${qBadge(b.basis === "workbook" ? "provided" : b.basis === "web" ? "web" : b.basis === "edited" ? "edited" : "verify")} ${esc(b.ref)}</div>`).join("") : '<span class="note">—</span>'}</dd>`).join("")}</dl></section>
+    ${FIELD_GROUPS.map(([g, fs]) => `<section class="sec"><h4>${esc(g)}</h4><dl class="kv">${fs.map(([k, l]) => (["companyEmail", "companyPhone", "website", "finalDecision"].includes(k) && !v.fields[k]) ? "" : fieldRow(v, k, l)).join("")}</dl>
+      ${g === "Contacts" && (v.contacts || []).length ? `<div style="margin-top:10px"><div class="eyebrow">Contacts recorded in the contact list</div>${v.contacts.map(c => `<div style="padding:6px 0;border-top:1px dashed var(--line)"><b>${esc(c.name || "Name not given")}</b>${c.designation ? " · " + esc(c.designation) : ""}<div>${c.email ? `${esc(c.email)} <button class="copy" type="button" data-copy="${esc(c.email)}">Copy</button>` : ""} ${c.phone ? `${esc(c.phone)} <button class="copy" type="button" data-copy="${esc(c.phone)}">Copy</button>` : ""}</div>${c.raw ? `<div class="note">As written: ${esc(c.raw)}</div>` : ""}${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}<div class="src">${esc(c.src)}</div></div>`).join("")}</div>` : ""}</section>`).join("")}
+    <section class="sec"><h4>Client references</h4>${(v.clientRefs || []).length ? v.clientRefs.map(c => `<dl class="kv"><dt>Client</dt><dd>${esc(c.company || "—")} ${qBadge(c.q)}</dd><dt>Reference person</dt><dd>${esc(c.person || "—")}${c.designation ? " · " + esc(c.designation) : ""}</dd><dt>Contact</dt><dd>${esc(c.contact || "—")} ${c.contact && c.q === "provided" ? `<button class="copy" type="button" data-copy="${esc(c.contact)}">Copy</button>` : ""}<div class="src">${esc(c.src)}</div></dd></dl>`).join("") : `${qBadge("missing")} <span class="note">No client reference recorded.</span>`}</section>
+    <section class="sec"><h4>Placement fee</h4><dl class="kv"><dt>Fee %</dt><dd>${v.fee && v.fee.v ? `<span class="val">${esc(v.fee.v)}</span> ${qBadge(v.fee.q === "confirmed" ? "provided" : v.fee.q === "estimate" ? "verify" : v.fee.q)} <span class="note">${esc(v.fee.q === "confirmed" ? "Confirmed" : v.fee.q === "estimate" ? "Estimate" : "")}</span>` : qBadge("missing")}${v.fee && v.fee.note ? `<div class="note">${esc(v.fee.note)}</div>` : ""}</dd></dl></section>
+    <section class="sec"><h4>Data-quality notes</h4>${v.flags.length ? v.flags.map(f => `<div class="flag"><span>${qBadge({ duplicate: "verify", related: "verify", web: "web" }[f.kind] || f.kind)}</span><span>${esc(f.text)}</span></div>`).join("") : '<span class="note">No flags.</span>'}</section>
+    <section class="sec"><h4>Sources</h4><div class="src">${esc((v.sources || []).join(" · ") || "—")}</div>${(v.webSources || []).map(u => `<div><a class="src" href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></div>`).join("")}
+      <div class="count" style="margin-top:6px">Workbook snapshot: ${fmtDate(v.lastUpdated)}${v._edited ? ` · last edited ${new Date(v._edited).toLocaleString()} by ${esc(who(v._editedBy))}` : ""}</div></section>
+  </div></aside>`;
+}
+function openDrawer(id, tab) { const v = BY_ID[id]; if (!v) return; openId = id; $("#layer").innerHTML = drawerHTML(v); const b = $(".drawer [data-close]"); if (b) b.focus(); if (tab === "perf") { const sec = $("#perfSec"); if (sec) $(".drawer .db").scrollTop = sec.offsetTop - 70; } }
+function closeDrawer() { openId = null; $("#layer").innerHTML = ""; }
+
+/* ---------------------------------------------------------------- edit */
+function editForm(v) {
+  const isNew = !v;
+  v = v || { id: "", name: "", aliases: [], origin: "added", vendorType: { v: "Recruitment / staffing", q: "edited" }, fields: {}, contacts: [], clientRefs: [], sources: [], status: { stage1: "Not assessed", reason: "", src: null }, modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, fee: { v: "", q: "missing", note: "" } };
+  const inp = (id, val, ph = "") => `<input class="inp" id="${id}" value="${esc(val)}" placeholder="${esc(ph)}">`;
+  const ta = (id, val) => `<textarea class="inp" id="${id}">${esc(val)}</textarea>`;
+  const long = new Set(["specialization", "industries", "majorClients", "activeClients", "domain", "comments", "finalDecision"]);
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><form class="mbox" id="editForm" data-id="${esc(v.id)}" novalidate>
+  <header><h2 id="mTitle" style="font-size:17px">${isNew ? "Add vendor" : "Edit " + esc(v.name)}</h2><span class="count">Blank fields stay labelled Missing. Saved changes are labelled Edited with the date.</span></header>
+  <div class="mbody"><div class="form">
+    <div class="fh">Identity</div>
+    <label class="full">Company name *${inp("e_name", v.name)}</label>
+    <label class="full">Aliases / brands (separate with ;)${inp("e_aliases", (v.aliases || []).join("; "))}</label>
+    <label>Organisation type<select class="inp" id="e_type">${TYPES.map(t => `<option ${v.vendorType.v === t ? "selected" : ""}>${esc(t)}</option>`).join("")}</select></label>
+    <label>Stage 1 status<select class="inp" id="e_status">${STATUSES.map(s => `<option ${v.status.stage1 === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+    <label class="full">Reason for status${ta("e_reason", v.status.reason)}</label>
+    <label>CXO-fit rating<select class="inp" id="e_fit">${["", "Excellent", "Very Good", "Good"].map(s => `<option value="${s}" ${((v.shortlist && v.shortlist.fit) || "").trim() === s ? "selected" : ""}>${s || "Not shortlisted"}</option>`).join("")}</select></label>
+    <label>Shortlist tier<select class="inp" id="e_tier">${["CXO / Senior Leadership", "Leadership Hiring"].map(s => `<option ${v.shortlist && v.shortlist.tier === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
+    <label class="full">Why shortlisted${ta("e_why", v.shortlist ? v.shortlist.why : "")}</label>
+    <fieldset><legend>Hiring categories</legend><div class="checks">${Object.entries(CATS).map(([k, l]) => `<label><input type="checkbox" id="e_cat_${k}" ${v.categories[k] ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div></fieldset>
+    <fieldset><legend>Modules (Stage 1)</legend><div class="checks">${["A", "B", "C"].map(m => `<label>${m} <select class="inp" id="e_mod_${m}">${["", "yes", "no", "pending"].map(o => `<option value="${o}" ${(v.modules[m] || {}).v === o ? "selected" : ""}>${o || "—"}</option>`).join("")}</select></label>`).join("")}</div></fieldset>
+    ${FIELD_GROUPS.map(([g, fs]) => `<div class="fh">${esc(g)}</div>${fs.map(([k, l]) => `<label class="${long.has(k) ? "full" : ""}">${esc(l)}${long.has(k) ? ta("e_f_" + k, fv(v, k)) : inp("e_f_" + k, fv(v, k))}</label>`).join("")}`).join("")}
+    <div class="fh">Placement fee</div>
+    <label>Fee % of annual CTC${inp("e_fee", v.fee ? v.fee.v : "", "e.g. 8.33%")}</label>
+    <label>Fee status<select class="inp" id="e_feeq">${[["missing", "Missing"], ["confirmed", "Confirmed (contract / proposal)"], ["estimate", "Estimate"]].map(([k, l]) => `<option value="${k}" ${v.fee && v.fee.q === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label class="full">Fee source / note${inp("e_feenote", v.fee ? v.fee.note : "")}</label>
+    <div class="fh">Client reference</div>
+    ${(() => { const c = (v.clientRefs || [])[0] || {}; return `<label>Client company${inp("e_ref_company", c.company || "")}</label><label>Reference person${inp("e_ref_person", c.person || "")}</label><label>Designation${inp("e_ref_designation", c.designation || "")}</label><label>Phone / email${inp("e_ref_contact", c.contact || "")}</label>`; })()}
+  </div><p class="count" id="formErr" role="alert"></p></div>
+  <footer><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">${isNew ? "Add vendor" : "Save changes"}</button></footer></form></div>`;
+}
+function openEdit(id) { $("#layer").insertAdjacentHTML("beforeend", editForm(id ? BY_ID[id] : null)); $("#e_name").focus(); }
+async function submitEdit(form) {
+  const id0 = form.dataset.id, old = id0 ? BY_ID[id0] : null;
+  const val = s => ($("#" + s, form) || {}).value?.trim() ?? "";
+  const name = val("e_name");
+  if (!name) { $("#formErr").textContent = "Enter a company name before saving."; return; }
+  const stamp = "Dashboard edit " + new Date().toLocaleDateString();
+  const v = old ? clone(old) : null;
+  const rec = v || { id: "added-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Date.now().toString(36), origin: "added", fields: {}, contacts: [], clientRefs: [], sources: ["Added in dashboard"], modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, lastUpdated: NOW_ISO() };
+  delete rec._edited; delete rec._editedBy; delete rec._approved;
+  rec.name = name;
+  rec.aliases = val("e_aliases").split(";").map(s => s.trim()).filter(Boolean);
+  const t = val("e_type"); if (!rec.vendorType || rec.vendorType.v !== t) rec.vendorType = { v: t, q: "edited", note: stamp };
+  const st = val("e_status"), reason = val("e_reason");
+  if (!rec.status || rec.status.stage1 !== st || rec.status.reason !== reason) rec.status = { stage1: st, reason, src: stamp, prev: rec.status ? `${rec.status.stage1} (${rec.status.src || "—"})` : undefined };
+  const fit = val("e_fit");
+  if (fit) rec.shortlist = Object.assign({}, rec.shortlist || {}, { fit, tier: val("e_tier"), why: val("e_why"), src: rec.shortlist && rec.shortlist.fit === fit && rec.shortlist.why === val("e_why") ? rec.shortlist.src : stamp });
+  else rec.shortlist = null;
+  Object.keys(CATS).forEach(k => { const on = $("#e_cat_" + k, form).checked; if (on && !rec.categories[k]) rec.categories[k] = [{ basis: "edited", ref: stamp }]; if (!on) delete rec.categories[k]; });
+  ["A", "B", "C"].forEach(m => { const o = val("e_mod_" + m); if (!o) delete rec.modules[m]; else if ((rec.modules[m] || {}).v !== o) rec.modules[m] = { v: o, src: stamp }; });
+  FIELD_GROUPS.forEach(([, fs]) => fs.forEach(([k]) => {
+    const nv = val("e_f_" + k), cur = rec.fields[k];
+    if ((cur ? cur.v : "") === nv) return;
+    rec.fields[k] = nv ? { v: nv, q: "edited", src: [stamp], note: cur && cur.v ? `Previously “${cur.v}” (${(cur.src || []).join(", ")})` : undefined } : { v: "", q: "missing", src: [stamp], note: "Cleared in dashboard" };
+  }));
+  const fee = val("e_fee");
+  rec.fee = { v: fee, q: fee ? (val("e_feeq") === "missing" ? "estimate" : val("e_feeq")) : "missing", note: val("e_feenote") || (fee ? stamp : "No fee recorded.") };
+  const ref = { company: val("e_ref_company"), person: val("e_ref_person"), designation: val("e_ref_designation"), contact: val("e_ref_contact") };
+  const r0 = (rec.clientRefs || [])[0] || {};
+  if (["company", "person", "designation", "contact"].some(k => (r0[k] || "") !== ref[k])) rec.clientRefs = [Object.assign(ref, { q: ref.company || ref.person ? "provided" : "missing", src: stamp })].concat((rec.clientRefs || []).slice(1));
+  if (!rec.sources.includes("Dashboard edits")) rec.sources.push("Dashboard edits");
+  const ok = await Store.putEdit(rec.id, { record: rec });
+  if (ok) { form.closest(".modal").remove(); assemble(); render(); openDrawer(rec.id); toast(old ? "Changes saved" : "Vendor added"); }
+}
+
+/* ----------------------------------------------------- research actions */
+async function decide(sid, decision) {
+  if (!(await Store.decide(sid, decision))) return;
+  const s = WEB_ENRICH.find(x => x.id === sid);
+  if (s && decision === "approved" && BY_ID[s.vendor]) {
+    const rec = clone(BY_ID[s.vendor]); delete rec._edited; delete rec._editedBy;
+    const cur = rec.fields[s.field];
+    rec.fields[s.field] = { v: s.value, q: s.q === "conflict" ? "conflict" : s.q === "verify" ? "verify" : "web", src: ["Web research 14 Oct 2026 (approved)"], note: s.note + (cur && cur.v ? ` Previous value: “${cur.v}”.` : ""), links: s.sources, alt: cur && cur.v ? [{ v: cur.v, src: (cur.src || []).join(", ") }] : undefined };
+    if (s.q !== "conflict" && rec.fields[s.field].alt) rec.fields[s.field].q = "web";
+    if (!rec.sources.includes("Web research (approved)")) rec.sources.push("Web research (approved)");
+    rec.webSources = [...new Set((rec.webSources || []).concat(s.sources))];
+    await Store.putEdit(rec.id, { record: rec, webApplied: (Store.edits[safeId(rec.id)] || {}).webApplied ? Store.edits[safeId(rec.id)].webApplied.concat(sid) : [sid] });
+  }
+  assemble(); render(); toast(decision === "approved" ? "Approved" : decision === "dismissed" ? "Dismissed" : "Updated");
+}
+async function undoDecision(sid) {
+  if (!(await Store.del("webDecisions", sid))) return;
+  const s = WEB_ENRICH.find(x => x.id === sid);
+  if (s) toast("Decision cleared. Edit the vendor to change any value already applied.");
+  assemble(); render();
+}
+
+/* ------------------------------------------------------ import / export */
+const FLAT_KEYS = FIELD_GROUPS.flatMap(g => g[1].map(f => f[0]));
+function toCSV(list) {
+  const head = ["id", "name", "aliases", "origin", "vendorType", "stage1Status", "statusReason", "statusSource", "cxoFit", "shortlistTier", "shortlistWhy", "categories", "moduleA", "moduleB", "moduleC", ...FLAT_KEYS, "feePercent", "feeStatus", "feeNote", "clientRefCompany", "clientRefPerson", "clientRefDesignation", "clientRefContact", "flags", "sources", "lastUpdated"];
+  const q = s => { s = String(s ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const rows = list.map(v => { const c = (v.clientRefs || [])[0] || {}; return [v.id, v.name, (v.aliases || []).join("; "), v.origin, v.vendorType.v, v.status.stage1, v.status.reason, v.status.src, v.shortlist ? v.shortlist.fit : "", v.shortlist ? v.shortlist.tier : "", v.shortlist ? v.shortlist.why : "", Object.keys(v.categories).join("; "), ...["A", "B", "C"].map(m => (v.modules[m] || {}).v || ""), ...FLAT_KEYS.map(k => fv(v, k)), v.fee ? v.fee.v : "", v.fee ? v.fee.q : "", v.fee ? v.fee.note : "", c.company, c.person, c.designation, c.contact, v.flags.map(f => f.text).join(" | "), (v.sources || []).join("; "), v._edited || v.lastUpdated].map(q).join(","); });
+  return [head.join(","), ...rows].join("\n");
+}
+function parseCSV(text) {
+  const rows = []; let row = [], cell = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false; } else cell += ch; }
+    else if (ch === '"') inQ = true; else if (ch === ",") { row.push(cell); cell = ""; } else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; } else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  const head = rows.shift() || [];
+  return rows.filter(r => r.some(c => c.trim())).map(r => Object.fromEntries(head.map((h, i) => [h.trim(), (r[i] || "").trim()])));
+}
+function recordFromRow(o) {
+  const ex = o.id && BY_ID[o.id] ? clone(BY_ID[o.id]) : null;
+  const stamp = "Imported " + new Date().toLocaleDateString();
+  const rec = ex || { id: o.id || "added-" + (o.name || "vendor").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Math.random().toString(36).slice(2, 7), origin: "added", aliases: [], fields: {}, contacts: [], clientRefs: [], sources: [], modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, vendorType: { v: "Recruitment / staffing", q: "edited" }, status: { stage1: "Not assessed", reason: "", src: null }, fee: { v: "", q: "missing" }, lastUpdated: NOW_ISO() };
+  delete rec._edited; delete rec._editedBy;
+  if (o.name) rec.name = o.name;
+  if (o.aliases) rec.aliases = o.aliases.split(";").map(s => s.trim()).filter(Boolean);
+  if (o.vendorType && TYPES.includes(o.vendorType)) rec.vendorType = { v: o.vendorType, q: "edited", note: stamp };
+  if (o.stage1Status && STATUSES.includes(o.stage1Status.toUpperCase() === "NOT ASSESSED" ? "Not assessed" : o.stage1Status.toUpperCase())) rec.status = { stage1: o.stage1Status.toUpperCase() === "NOT ASSESSED" ? "Not assessed" : o.stage1Status.toUpperCase(), reason: o.statusReason || "", src: stamp };
+  FLAT_KEYS.forEach(k => { if (o[k] !== undefined && o[k] !== fv(rec, k)) rec.fields[k] = o[k] ? { v: o[k], q: "edited", src: [stamp] } : { v: "", q: "missing", src: [stamp] }; });
+  if (o.categories !== undefined) { const ks = o.categories.split(";").map(s => s.trim()).filter(k => CATS[k]); Object.keys(CATS).forEach(k => { if (ks.includes(k)) rec.categories[k] = rec.categories[k] || [{ basis: "edited", ref: stamp }]; else delete rec.categories[k]; }); }
+  if (o.feePercent !== undefined) rec.fee = { v: o.feePercent, q: o.feePercent ? (["confirmed", "estimate"].includes(o.feeStatus) ? o.feeStatus : "estimate") : "missing", note: o.feeNote || stamp };
+  if (!rec.sources.includes(stamp)) rec.sources.push(stamp);
+  return rec;
+}
+async function importFile(file) {
+  const text = await file.text();
+  let recs = [];
+  try {
+    if (/\.json$/i.test(file.name) || text.trim().startsWith("{") || text.trim().startsWith("[")) {
+      const d = JSON.parse(text); const list = Array.isArray(d) ? d : d.vendors || [];
+      recs = list.map(x => x.fields ? x : recordFromRow(x));
+      if (!RAW.vendors.length && d.meta) Object.assign(META, d.meta);
+      if (!Array.isArray(d)) {
+        let pn = 0;
+        for (const [id, ev] of Object.entries(d.evaluations || {})) { const c = Object.assign({}, ev); delete c.updatedAt; delete c.updatedBy; if (await Store.put("evaluations", id, c)) pn++; }
+        for (const [id, en] of Object.entries(d.engagements || {})) { const c = Object.assign({}, en); delete c.updatedAt; delete c.updatedBy; await Store.put("engagements", id, c); }
+        if (d.perfConfig && d.perfConfig.criteria) { const c = Object.assign({}, d.perfConfig); delete c.updatedAt; delete c.updatedBy; await Store.put("perf", "config", c); }
+        if (pn) toast(`Imported ${pn} evaluation${pn === 1 ? "" : "s"}`);
+      }
+    } else recs = parseCSV(text).map(recordFromRow);
+  } catch (e) { toast("That file could not be read. Use a JSON or CSV export from this dashboard."); return; }
+  if (!recs.length) { toast("No vendor rows found in that file."); return; }
+  let n = 0;
+  for (const r of recs) { if (!r.id || !r.name) continue; const c = clone(r); delete c._edited; delete c._editedBy; if (await Store.putEdit(c.id, { record: c })) n++; }
+  assemble(); render(); toast(`Imported ${n} vendor record${n === 1 ? "" : "s"}`);
+}
+function exportMenu() {
+  $("#layer").insertAdjacentHTML("beforeend", `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="xTitle"><div class="mbox" style="width:min(560px,100%)"><header><h2 id="xTitle" style="font-size:17px">Export vendors</h2></header>
+  <div class="mbody"><p>Exports include every field, contact and quality label currently shown, including your edits. The JSON file also carries performance evaluations, engagement periods and rating criteria. Treat the files as confidential: they contain personal contact details.</p>
+  <div class="chips"><button class="btn primary" type="button" data-x="json">Full data (JSON)</button><button class="btn" type="button" data-x="csv">Spreadsheet (CSV)</button><button class="btn" type="button" data-x="csvf">CSV · current directory filter</button></div>
+  <p class="count" id="xMsg"></p><textarea class="inp" id="xText" hidden readonly style="width:100%;min-height:140px" aria-label="Export text"></textarea></div>
+  <footer><span></span><button class="btn" type="button" data-cancel>Close</button></footer></div></div>`);
+}
+async function doExport(kind) {
+  const list = kind === "csvf" ? filtered() : VENDORS;
+  const data = kind === "json" ? JSON.stringify({ meta: Object.assign({}, META, { exportedAt: NOW_ISO() }), vendors: list.map(v => { const c = clone(v); return c; }), evaluations: Store.data.evaluations, engagements: Store.data.engagements, perfConfig: Store.data.perf.config || null }, null, 1) : toCSV(list);
+  const filename = `ta-vendor-register-${new Date().toISOString().slice(0, 10)}.${kind === "json" ? "json" : "csv"}`;
+  const msg = $("#xMsg");
+  try {
+    const dl = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
+    if (dl) { const r = await dl.save({ filename, data }); msg.textContent = r && r.status === "saved" ? "Saved." : "Handed to your device."; return; }
+  } catch (e) { if (e && e.code === "cancelled") { msg.textContent = "Save cancelled."; return; } }
+  try { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([data], { type: kind === "json" ? "application/json" : "text/csv" })); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); } catch (e) {}
+  const ta = $("#xText"); ta.hidden = false; ta.value = data; msg.textContent = "If no download started, copy the text below into a file named " + filename + ".";
+}
+
+/* ------------------------------------------------- performance evaluation */
+/* Nothing in this module is derived from the workbook or the web: every
+   rating is entered by an authorised user. Missing ratings are excluded
+   from calculations, never counted as zero. */
+const DEFAULT_PERF = {
+  scale: { min: 1, max: 5, labels: { 1: "Unsatisfactory — well below expectations; repeated misses", 2: "Below expectations — frequent gaps needing intervention", 3: "Meets expectations — delivers what was agreed", 4: "Exceeds expectations — consistently better than agreed", 5: "Outstanding — best-in-class; a benchmark for other vendors" } },
+  criteria: [
+    { id: "quality", name: "Quality of candidate submissions", desc: "Share of submitted profiles that match the brief and clear first screening.", weight: 15, active: true },
+    { id: "tts", name: "Time to submit", desc: "Days from requisition hand-over to first qualified profiles.", weight: 10, active: true },
+    { id: "ttf", name: "Time to fill", desc: "Days from requisition to accepted offer for vendor-sourced hires.", weight: 10, active: true },
+    { id: "otj", name: "Offer-to-joining ratio", desc: "Accepted offers that convert to joiners.", weight: 15, active: true },
+    { id: "hm", name: "Hiring-manager satisfaction", desc: "Hiring-manager feedback on the vendor’s partnership and candidates.", weight: 15, active: true },
+    { id: "resp", name: "Responsiveness", desc: "Speed and quality of communication with TA and hiring managers.", weight: 8, active: true },
+    { id: "niche", name: "Niche-hiring effectiveness", desc: "Success on hard-to-fill, leadership or niche mandates.", weight: 7, active: true },
+    { id: "compliance", name: "Compliance", desc: "Contract, data-privacy, background-check and invoicing compliance.", weight: 8, active: true },
+    { id: "diversity", name: "Diversity support", desc: "Diverse shortlists and support for diversity hiring goals.", weight: 4, active: true },
+    { id: "reporting", name: "Reporting quality", desc: "Accuracy and timeliness of trackers and MIS.", weight: 4, active: true },
+    { id: "cost", name: "Cost / fee competitiveness", desc: "Fee level and commercial flexibility relative to value delivered.", weight: 4, active: true },
+  ],
+  window: 5, yearType: "calendar", fyStartMonth: 4,
+  summary: { method: "mean", recency: [5, 4, 3, 2, 1] },
+};
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+function perfCfg() { const c = Store.data.perf.config; return c && c.criteria ? c : DEFAULT_PERF; }
+function currentPerfYear() { const c = perfCfg(), d = new Date(); return c.yearType === "fiscal" && d.getMonth() + 1 < c.fyStartMonth ? d.getFullYear() - 1 : d.getFullYear(); }
+function yearLabel(y) { const c = perfCfg(); if (c.yearType !== "fiscal" || c.fyStartMonth === 1) return String(y); return `FY${String(y).slice(2)}–${String(y + 1).slice(2)}`; }
+function periodLabel(y) { const c = perfCfg(); if (c.yearType !== "fiscal") return `Jan–Dec ${y}`; const s = c.fyStartMonth; return `${MONTHS[s - 1]} ${y} – ${MONTHS[(s + 10) % 12]} ${s === 1 ? y : y + 1}`; }
+const evalsOf = vid => Object.entries(Store.data.evaluations).map(([id, e]) => Object.assign({ _id: id }, e)).filter(e => e.vendorId === vid);
+const allEvals = () => Object.entries(Store.data.evaluations).map(([id, e]) => Object.assign({ _id: id }, e));
+
+/* Weighted mean over criteria that were actually rated (not blank, not N/A). */
+function evalScore(e) {
+  const crit = e.criteriaSnapshot || perfCfg().criteria, sc = e.scaleSnapshot || perfCfg().scale;
+  let w = 0, sum = 0, rated = 0, applicable = 0;
+  const rows = crit.map(c => {
+    const r = e.ratings ? e.ratings[c.id] : undefined;
+    const na = e.na && e.na[c.id];
+    if (!na) applicable++;
+    if (r === null || r === undefined || r === "" || na) return { c, r: null, na };
+    rated++; w += +c.weight; sum += +c.weight * +r; return { c, r: +r, na: false };
+  });
+  return { score: w > 0 ? sum / w : null, rated, applicable, rows, scale: sc, weightUsed: w };
+}
+/* Applicable evaluation window: the most recent N years, limited to the
+   vendor's recorded Volvo engagement. With no engagement recorded, only
+   years that have evaluations count. */
+function perfWindow(vid) {
+  const cfg = perfCfg(), cur = currentPerfYear(), N = +cfg.window || 5;
+  const eng = Store.data.engagements[safeId(vid)];
+  const evs = evalsOf(vid);
+  let years = [], basis;
+  /* The window closes at the last completed year, or the current year
+     once an evaluation for it exists. */
+  const last = evs.some(e => +e.year === cur) ? cur : cur - 1;
+  if (eng && eng.startYear) {
+    const end = Math.min(eng.endYear ? +eng.endYear : last, last);
+    const start = Math.max(+eng.startYear, end - N + 1);
+    for (let y = end; y >= start; y--) years.push(y);
+    const total = end - +eng.startYear + 1;
+    basis = total < N ? `Engaged with Volvo since ${yearLabel(+eng.startYear)} (${Math.max(total, 0)} year${total === 1 ? "" : "s"}); window limited to those years.` : `Most recent ${N} years of a ${total}-year engagement.`;
+  } else {
+    years = [...new Set(evs.map(e => +e.year))].filter(y => y > last - N && y <= last).sort((a, b) => b - a);
+    basis = evs.length ? "Engagement period not recorded; only evaluated years within the last " + N + " are counted." : "Engagement period not recorded and no evaluations yet.";
+  }
+  const perYear = years.map(y => {
+    const list = evs.filter(e => +e.year === y).map(e => Object.assign(e, { _s: evalScore(e) })).filter(e => e._s.score !== null);
+    return { y, n: list.length, score: list.length ? list.reduce((s, e) => s + e._s.score, 0) / list.length : null, list };
+  });
+  const done = perYear.filter(p => p.score !== null);
+  let summary = null, calc = "";
+  if (done.length) {
+    if (cfg.summary.method === "recency") {
+      const ws = done.map(p => +(cfg.summary.recency[years.indexOf(p.y)] ?? 1));
+      const W = ws.reduce((a, b) => a + b, 0);
+      summary = done.reduce((s, p, i) => s + p.score * ws[i], 0) / W;
+      calc = "Recency-weighted mean: " + done.map((p, i) => `${yearLabel(p.y)} ${p.score.toFixed(2)}×${ws[i]}`).join(" + ") + ` ÷ ${W}`;
+    } else {
+      summary = done.reduce((s, p) => s + p.score, 0) / done.length;
+      calc = "Simple mean of evaluated years: (" + done.map(p => p.score.toFixed(2)).join(" + ") + `) ÷ ${done.length}`;
+    }
+  }
+  const outside = evs.filter(e => !years.includes(+e.year)).length;
+  return { years, perYear, done, summary, calc, basis, eng, evs, outside, coverage: years.length ? done.length / years.length : null };
+}
+function ratingBand(s, sc) {
+  if (s === null || s === undefined) return ["Not evaluated", "na"];
+  const sc2 = sc || perfCfg().scale, f = (s - sc2.min) / (sc2.max - sc2.min);
+  return f >= .875 ? ["Outstanding", "pass"] : f >= .625 ? ["Exceeds", "pass"] : f >= .375 ? ["Meets", "fit"] : f >= .125 ? ["Below", "hold"] : ["Unsatisfactory", "fail"];
+}
+function ratingBadge(s, sc) { const [l, k] = ratingBand(s, sc); return s === null || s === undefined ? `<span class="badge b-NA">Not evaluated</span>` : `<span class="badge b-${k === "pass" ? "PASS" : k === "hold" ? "HOLD" : k === "fail" ? "FAIL" : "fit"}" title="${esc(l)}">${s.toFixed(2)} · ${esc(l)}</span>`; }
+function sparkline(w, big) {
+  const cfg = perfCfg(), sc = cfg.scale, ys = w.years.slice().reverse();
+  if (!ys.length) return `<span class="count">—</span>`;
+  const W = big ? 420 : 110, H = big ? 150 : 30, pl = big ? 30 : 4, pr = big ? 12 : 4, pt = big ? 12 : 4, pb = big ? 26 : 4;
+  const x = i => ys.length === 1 ? (pl + W - pr) / 2 : pl + i * (W - pl - pr) / (ys.length - 1);
+  const y = v => pt + (1 - (v - sc.min) / (sc.max - sc.min)) * (H - pt - pb);
+  const pts = ys.map((yr, i) => { const p = w.perYear.find(q => q.y === yr); return { i, yr, v: p ? p.score : null }; });
+  let path = "", pen = false;
+  pts.forEach(p => { if (p.v === null) { pen = false; return; } path += (pen ? "L" : "M") + x(p.i).toFixed(1) + " " + y(p.v).toFixed(1) + " "; pen = true; });
+  const grid = big ? Array.from({ length: sc.max - sc.min + 1 }, (_, k) => sc.min + k).map(v => `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y(v) + 4}" text-anchor="end" font-size="10" fill="var(--faint)">${v}</text>`).join("") : "";
+  const labels = big ? pts.map(p => `<text x="${x(p.i)}" y="${H - 8}" text-anchor="middle" font-size="10" fill="var(--muted)">${esc(yearLabel(p.yr))}</text>`).join("") : "";
+  const dots = pts.map((p, k) => p.v === null ? (big ? `<circle cx="${x(p.i)}" cy="${y(sc.min) }" r="3.5" fill="var(--surface)" stroke="var(--na)" stroke-dasharray="2 2"><title>${yearLabel(p.yr)}: not evaluated</title></circle>` : "") : `<circle cx="${x(p.i)}" cy="${y(p.v)}" r="${big ? (k === pts.length - 1 ? 5 : 3.5) : 2.5}" fill="var(--accent)"><title>${yearLabel(p.yr)}: ${p.v.toFixed(2)}</title></circle>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" ${big ? 'style="width:100%;height:auto;max-width:520px"' : `width="${W}" height="${H}" style="max-width:100%"`} role="img" aria-label="Annual rating trend">${grid}<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="${big ? 2 : 1.5}"/>${dots}${labels}</svg>`;
+}
+function perfStatus(w) { if (!w.years.length && !w.evs.length) return "none"; if (!w.done.length) return "notEvaluated"; return w.done.length === w.years.length ? "complete" : "partial"; }
+const PERF_STATUS = { complete: "All applicable years evaluated", partial: "Partly evaluated", notEvaluated: "Applicable years not evaluated", none: "No engagement or evaluation recorded" };
+
+function viewPerformance() {
+  const cfg = perfCfg(), cur = currentPerfYear(), N = +cfg.window || 5;
+  const anyCur = allEvals().some(e => +e.year === cur);
+  const yrs = Array.from({ length: N }, (_, i) => (anyCur ? cur : cur - 1) - i);
+  const q = (UI.pq || "").toLowerCase();
+  const evs = allEvals();
+  let list = VENDORS.filter(v => isRecruiter(v) || evalsOf(v.id).length || Store.data.engagements[safeId(v.id)]).map(v => [v, perfWindow(v.id)]);
+  if (UI.pscope !== "all") list = list.filter(([v, w]) => w.evs.length || w.eng || v.status.stage1 === "PASS" || v.shortlist);
+  if (q) list = list.filter(([v]) => (v.name + " " + (v.aliases || []).join(" ")).toLowerCase().includes(q));
+  if (UI.pcomp) list = list.filter(([, w]) => perfStatus(w) === UI.pcomp);
+  if (UI.pyear) list = list.filter(([, w]) => w.evs.some(e => +e.year === +UI.pyear));
+  if (UI.pband) list = list.filter(([, w]) => ratingBand(w.summary)[0] === UI.pband);
+  list.sort((a, b) => (b[1].summary ?? -1) - (a[1].summary ?? -1) || a[0].name.localeCompare(b[0].name));
+  const withEng = Object.keys(Store.data.engagements).length;
+  const evaluatedV = new Set(evs.map(e => e.vendorId)).size;
+  const all = VENDORS.map(v => perfWindow(v.id));
+  const appl = all.reduce((s, w) => s + w.years.length, 0), doneY = all.reduce((s, w) => s + w.done.length, 0);
+  const sums = all.filter(w => w.summary !== null);
+  const yearAvg = yrs.slice().reverse().map(y => { const ss = all.map(w => w.perYear.find(p => p.y === y)).filter(p => p && p.score !== null); return [yearLabel(y), ss.length ? ss.reduce((s, p) => s + p.score, 0) / ss.length : null, ss.length]; });
+  const sel = (id, cur, opts) => `<select class="inp" id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur ?? "") === String(v) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  return `
+  <div class="vhead"><div><div class="eyebrow">Annual vendor performance</div><h2>Performance evaluation</h2>
+  <p>Ratings are entered by authorised users, one evaluation per vendor, year and business unit. Each vendor is judged over its most recent ${N} completed ${cfg.yearType === "fiscal" ? "fiscal" : "calendar"} years of Volvo engagement, or fewer if the engagement is shorter. Years without a rating show as Not evaluated and never count as zero.</p></div>
+  <div class="chips"><button class="btn" type="button" data-act="perfCfg">Criteria &amp; scale</button><button class="btn primary" type="button" data-act="addEval" ${Store.canWrite ? "" : "disabled"}>+ Add evaluation</button></div></div>
+  ${!evs.length ? `<div class="note-box">No performance evaluations have been recorded yet, so every vendor shows <b>Not evaluated</b>. The workbook holds no Volvo performance data and none has been inferred. Start with <b>Add evaluation</b>, and set each vendor’s Volvo engagement start year from its profile so the evaluation window is right.</div>` : ""}
+  <div class="tiles">
+    <div class="tile"><div class="k">Evaluations recorded</div><div class="v">${evs.length}</div><div class="s">${evaluatedV} vendor${evaluatedV === 1 ? "" : "s"} evaluated</div></div>
+    <div class="tile"><div class="k">Engagement periods set</div><div class="v">${withEng}</div><div class="s">Defines each vendor’s window</div></div>
+    <div class="tile"><div class="k">Evaluation coverage</div><div class="v">${appl ? Math.round(doneY / appl * 100) + "%" : "—"}</div><div class="s">${doneY} of ${appl} applicable vendor-years</div></div>
+    <div class="tile"><div class="k">Average summary rating</div><div class="v">${sums.length ? (sums.reduce((s, w) => s + w.summary, 0) / sums.length).toFixed(2) : "—"}</div><div class="s">${sums.length ? `${sums.length} rated vendors · scale ${cfg.scale.min}–${cfg.scale.max}` : "Not evaluated"}</div></div>
+  </div>
+  <div class="grid g2" style="margin-bottom:14px">
+    <section class="panel"><h3>Average annual rating by year <small>evaluated vendors only</small></h3>
+      ${yearAvg.some(r => r[1] !== null) ? `<div class="bars">${yearAvg.map(([l, s, n]) => `<div class="bar" style="cursor:default"><span class="lbl">${esc(l)}</span><span class="trk"><span class="fil" style="width:${s === null ? 0 : ((s - cfg.scale.min) / (cfg.scale.max - cfg.scale.min) * 100).toFixed(1)}%"></span></span><span class="n">${s === null ? "n/e" : s.toFixed(2)}</span></div>`).join("")}</div><p class="count">n/e = not evaluated. Counts per year: ${yearAvg.map(r => `${r[0]} ${r[2]}`).join(" · ")}</p>` : '<p class="count">Not evaluated yet.</p>'}</section>
+    <section class="panel"><h3>Summary rating bands <small>vendors with at least one evaluated year</small></h3>
+      ${bars(["Outstanding", "Exceeds", "Meets", "Below", "Unsatisfactory"].map(b => [b, sums.filter(w => ratingBand(w.summary)[0] === b).length, { Outstanding: "pass", Exceeds: "pass", Below: "hold", Unsatisfactory: "fail" }[b] || ""]).concat([["Not evaluated", all.filter(w => w.summary === null && (w.years.length || w.eng)).length, "na"]]), "perfBand")}</section>
+  </div>
+  <div class="filters">
+    <input class="inp" type="search" id="pq" placeholder="Search vendor…" value="${esc(UI.pq || "")}" aria-label="Search vendors">
+    ${sel("pscope", UI.pscope || "", [["", "PASS, shortlisted & evaluated vendors"], ["all", "All recruitment vendors"]])}
+    ${sel("pcomp", UI.pcomp || "", [["", "Any completeness"]].concat(Object.entries(PERF_STATUS)))}
+    ${sel("pyear", UI.pyear || "", [["", "Any evaluation year"]].concat(yrs.map(y => [y, "Evaluated in " + yearLabel(y)])))}
+    ${sel("pband", UI.pband || "", [["", "Any summary rating"], ["Outstanding", "Outstanding"], ["Exceeds", "Exceeds"], ["Meets", "Meets"], ["Below", "Below"], ["Unsatisfactory", "Unsatisfactory"], ["Not evaluated", "Not evaluated"]])}
+    <span class="count">${list.length} shown</span></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Evaluation window</th>${yrs.map(y => `<th class="num">${esc(yearLabel(y))}</th>`).join("")}<th>Trend</th><th>Summary (${N}-yr max)</th></tr></thead>
+  <tbody>${list.map(([v, w]) => `<tr data-open="${esc(v.id)}" data-tab="perf"><td class="wrap"><div class="nm">${esc(v.name)}</div>${badge(v.status.stage1)}</td>
+    <td class="wrap"><div class="al">${esc(w.basis)}</div></td>
+    ${yrs.map(y => { const p = w.perYear.find(q => q.y === y); if (!w.years.includes(y)) return `<td><span class="al" title="Outside the vendor’s evaluation window">—</span></td>`; return `<td>${p && p.score !== null ? `<span class="num"><b>${p.score.toFixed(2)}</b></span>${p.n > 1 ? `<div class="al">${p.n} evals</div>` : ""}` : '<span class="q q-missing">Not evaluated</span>'}</td>`; }).join("")}
+    <td>${sparkline(w)}</td><td>${ratingBadge(w.summary)}<div class="al">${w.years.length ? `${w.done.length}/${w.years.length} years evaluated` : ""}</div></td></tr>`).join("") || `<tr><td colspan="${N + 4}" class="empty">No vendors match.</td></tr>`}</tbody></table></div>
+  <p class="count">— means the year is outside that vendor’s window (before its Volvo engagement began or beyond the ${N}-year limit). Summary method: ${cfg.summary.method === "recency" ? "recency-weighted mean (weights " + cfg.summary.recency.join(", ") + ", most recent first)" : "simple mean of evaluated years"}. Change it under Criteria &amp; scale.</p>`;
+}
+
+function perfSection(v) {
+  const w = perfWindow(v.id), cfg = perfCfg(), can = Store.canWrite;
+  const hints = [];
+  if (/old vendor/i.test(fv(v, "domain"))) hints.push("Workbook lists this firm as an “Old Vendor” (Short Listed Vendor tab), which suggests prior Volvo engagement. Years not stated.");
+  if (/volvo|vce/i.test(fv(v, "comments"))) hints.push("Vendor comment mentions Volvo work: “" + fv(v, "comments").slice(0, 140) + "”. Self-reported; years not stated.");
+  return `<section class="sec" id="perfSec"><h4>Annual performance (Volvo engagement)</h4>
+    <dl class="kv"><dt>Volvo engagement</dt><dd>${w.eng ? `${esc(yearLabel(+w.eng.startYear))} – ${w.eng.endYear ? esc(yearLabel(+w.eng.endYear)) : "ongoing"} ${qBadge("edited")}<div class="note">${esc(w.eng.note || "")}</div><div class="src">Set ${fmtDate(w.eng.updatedAt)} by ${esc(who(w.eng.updatedBy))}</div>` : `${qBadge("missing")} <span class="note">Not recorded.</span>`} <button class="btn sm" type="button" data-eng="${esc(v.id)}" ${can ? "" : "disabled"}>${w.eng ? "Change" : "Set engagement"}</button>
+      ${hints.map(h => `<div class="note">${qBadge("verify")} ${esc(h)}</div>`).join("")}</dd>
+    <dt>Evaluation window</dt><dd>${w.years.length ? w.years.slice().reverse().map(yearLabel).join(", ") : "—"}<div class="note">${esc(w.basis)}</div></dd>
+    <dt>Summary rating</dt><dd>${ratingBadge(w.summary)}${w.calc ? `<div class="note">${esc(w.calc)}</div>` : ""}${w.years.length ? `<div class="note">${w.done.length} of ${w.years.length} applicable years evaluated · ${w.evs.length} evaluation${w.evs.length === 1 ? "" : "s"} on file${w.outside ? ` (${w.outside} outside the window, not counted)` : ""}</div>` : ""}</dd></dl>
+    ${w.years.length ? `<div style="margin:10px 0">${sparkline(w, true)}</div>` : ""}
+    <div class="chips" style="margin:8px 0"><button class="btn sm primary" type="button" data-addeval="${esc(v.id)}" ${can ? "" : "disabled"}>+ Add evaluation</button></div>
+    ${w.evs.sort((a, b) => b.year - a.year).map(e => { const s = evalScore(e); return `<div style="border-top:1px dashed var(--line);padding:8px 0">
+      <div class="line" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><b>${esc(yearLabel(+e.year))}</b> <span class="count">${esc(e.period || "")}</span> ${ratingBadge(s.score, s.scale)} <span class="chip">${s.rated}/${s.applicable} criteria rated</span>
+      <button class="copy" type="button" data-editeval="${esc(e._id)}" ${can ? "" : "disabled"}>Edit</button><button class="copy" type="button" data-deleval="${esc(e._id)}" ${can ? "" : "disabled"}>Delete</button></div>
+      <div class="count">${esc([e.businessUnit, e.category].filter(Boolean).join(" · "))}${e.evaluator ? " · evaluated by " + esc(e.evaluator) : ""}${e.reviewDate ? " · reviewed " + esc(fmtDate(e.reviewDate)) : ""}</div>
+      <details><summary class="count">Criteria scores, comments and evidence</summary><div class="parts" style="margin-top:6px">${s.rows.map(r => `<div class="p"><span>${esc(r.c.name)} <span class="src">w${r.c.weight}</span></span><span>${r.na ? "N/A" : r.r === null ? "—" : r.r}</span></div>`).join("")}</div>
+      ${["comments", "strengths", "improvements", "evidence"].filter(k => e[k]).map(k => `<p style="margin:6px 0"><b>${{ comments: "Comments", strengths: "Strengths", improvements: "Improvement areas", evidence: "Evidence" }[k]}:</b> <span class="val">${esc(e[k])}</span></p>`).join("")}
+      <div class="src">Entered ${fmtDate(e.createdAt)} by ${esc(who(e.createdBy))} · last updated ${fmtDate(e.updatedAt)} by ${esc(who(e.updatedBy))}${(e.revisions || []).length ? ` · ${e.revisions.length} earlier version(s) kept` : ""}</div></details></div>`; }).join("") || '<p class="count"><span class="q q-missing">Not evaluated</span> No evaluations recorded for this vendor.</p>'}
+  </section>`;
+}
+
+function evalForm(e, vid) {
+  const cfg = perfCfg(), isNew = !e;
+  e = e || { vendorId: vid || "", year: currentPerfYear() - (new Date().getMonth() < 3 ? 1 : 0), ratings: {}, na: {} };
+  const crit = isNew ? cfg.criteria.filter(c => c.active) : (e.criteriaSnapshot || cfg.criteria);
+  const sc = isNew ? cfg.scale : (e.scaleSnapshot || cfg.scale);
+  const opts = [];
+  for (let i = sc.max; i >= sc.min; i--) opts.push(i);
+  const names = VENDORS.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const yrs = Array.from({ length: 8 }, (_, i) => currentPerfYear() + 1 - i);
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle"><form class="mbox" id="evalForm" data-id="${esc(e._id || "")}" novalidate>
+  <header><h2 id="evTitle" style="font-size:17px">${isNew ? "Add annual evaluation" : "Edit evaluation"}</h2><span class="count" id="evLive">Overall: not evaluated</span></header>
+  <div class="mbody"><div class="form">
+    <label class="full">Vendor *<select class="inp" id="ev_vendor" ${isNew ? "" : "disabled"}>${!e.vendorId ? '<option value="">Choose a vendor…</option>' : ""}${names.map(v => `<option value="${esc(v.id)}" ${v.id === e.vendorId ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select></label>
+    <label>Evaluation year *<select class="inp" id="ev_year">${yrs.map(y => `<option value="${y}" ${+e.year === y ? "selected" : ""}>${esc(yearLabel(y))}</option>`).join("")}</select></label>
+    <label>Evaluation period<input class="inp" id="ev_period" value="${esc(e.period || periodLabel(+e.year))}"></label>
+    <label>Business unit<input class="inp" id="ev_bu" value="${esc(e.businessUnit || "")}" placeholder="e.g. Volvo Trucks, VCE, GTT"></label>
+    <label>Hiring category<select class="inp" id="ev_cat">${[""].concat(Object.values(CATS)).map(c => `<option ${e.category === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
+    <label>Evaluator *<input class="inp" id="ev_evaluator" value="${esc(e.evaluator || "")}" placeholder="Name and role"></label>
+    <label>Review date<input class="inp" type="date" id="ev_date" value="${esc(e.reviewDate || new Date().toISOString().slice(0, 10))}"></label>
+    <div class="fh">Ratings · ${sc.min}–${sc.max} scale. Leave blank if there is no evidence; choose N/A if the criterion did not apply.</div>
+    ${crit.map(c => `<label title="${esc(c.desc || "")}">${esc(c.name)} <span class="src">weight ${c.weight}</span><select class="inp" id="ev_r_${esc(c.id)}" data-crit="${esc(c.id)}"><option value="">Not rated</option><option value="na" ${e.na && e.na[c.id] ? "selected" : ""}>N/A — did not apply</option>${opts.map(o => `<option value="${o}" ${e.ratings && +e.ratings[c.id] === o && !(e.na && e.na[c.id]) ? "selected" : ""}>${o} — ${esc((sc.labels[o] || "").split("—")[0].trim())}</option>`).join("")}</select></label>`).join("")}
+    <label class="full">Supporting comments<textarea class="inp" id="ev_comments">${esc(e.comments || "")}</textarea></label>
+    <label class="full">Strengths<textarea class="inp" id="ev_strengths">${esc(e.strengths || "")}</textarea></label>
+    <label class="full">Improvement areas<textarea class="inp" id="ev_improvements">${esc(e.improvements || "")}</textarea></label>
+    <label class="full">Evidence (metrics, reports, links)<textarea class="inp" id="ev_evidence" placeholder="e.g. 42 profiles submitted, 9 hires, offer-to-join 82% (TA tracker FY25)">${esc(e.evidence || "")}</textarea></label>
+  </div>${!isNew ? `<p class="count">This evaluation keeps the criteria and weights that applied when it was entered${e.criteriaSnapshot ? "" : " (current criteria)"}, so later configuration changes do not rewrite history.</p>` : ""}<p class="count" id="evErr" role="alert"></p></div>
+  <footer><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">${isNew ? "Save evaluation" : "Save changes"}</button></footer></form></div>`;
+}
+function readEval(form) {
+  const val = id => ($("#" + id, form) || {}).value?.trim() ?? "";
+  const ratings = {}, na = {};
+  form.querySelectorAll("[data-crit]").forEach(s => { if (s.value === "na") na[s.dataset.crit] = true; else if (s.value) ratings[s.dataset.crit] = +s.value; });
+  return { vendorId: val("ev_vendor"), year: +val("ev_year"), period: val("ev_period"), businessUnit: val("ev_bu"), category: val("ev_cat"), evaluator: val("ev_evaluator"), reviewDate: val("ev_date"), ratings, na, comments: val("ev_comments"), strengths: val("ev_strengths"), improvements: val("ev_improvements"), evidence: val("ev_evidence") };
+}
+function liveEval(form) {
+  const id = form.dataset.id, old = id ? Store.data.evaluations[id] : null, cfg = perfCfg();
+  const e = Object.assign(readEval(form), { criteriaSnapshot: old ? old.criteriaSnapshot : cfg.criteria.filter(c => c.active), scaleSnapshot: old ? old.scaleSnapshot : cfg.scale });
+  const s = evalScore(e);
+  $("#evLive").innerHTML = s.score === null ? "Overall: not evaluated" : `Overall ${s.score.toFixed(2)} from ${s.rated}/${s.applicable} rated criteria (weights ${s.weightUsed})`;
+}
+async function submitEval(form) {
+  const id = form.dataset.id, old = id ? Store.data.evaluations[id] : null, cfg = perfCfg();
+  const e = readEval(form);
+  if (old) e.vendorId = old.vendorId;
+  if (!e.vendorId) { $("#evErr").textContent = "Choose the vendor this evaluation is for."; return; }
+  if (!e.evaluator) { $("#evErr").textContent = "Enter the evaluator’s name so the record is auditable."; return; }
+  const body = Object.assign({}, old || {}, e, {
+    criteriaSnapshot: old ? old.criteriaSnapshot || cfg.criteria : cfg.criteria.filter(c => c.active),
+    scaleSnapshot: old ? old.scaleSnapshot || cfg.scale : cfg.scale,
+    createdAt: old ? old.createdAt : NOW_ISO(), createdBy: old ? old.createdBy : (Store.uid || "this browser"),
+  });
+  if (old) body.revisions = (old.revisions || []).concat([{ at: old.updatedAt, by: old.updatedBy, ratings: old.ratings, na: old.na, evaluator: old.evaluator, comments: old.comments }]).slice(-20);
+  delete body.updatedAt; delete body.updatedBy; delete body._id;
+  const newId = id || ("ev-" + safeId(e.vendorId).slice(0, 60) + "-" + e.year + "-" + Date.now().toString(36));
+  if (await Store.put("evaluations", newId, body)) { form.closest(".modal").remove(); render(); if (openId === e.vendorId || !openId) openDrawer(e.vendorId, "perf"); toast(old ? "Evaluation updated" : "Evaluation saved"); }
+}
+function engForm(vid) {
+  const v = BY_ID[vid], g = Store.data.engagements[safeId(vid)] || {}, cur = currentPerfYear();
+  const yrs = Array.from({ length: 30 }, (_, i) => cur - i);
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="enTitle"><form class="mbox" id="engForm" data-id="${esc(vid)}" style="width:min(560px,100%)" novalidate>
+  <header><h2 id="enTitle" style="font-size:17px">Volvo engagement · ${esc(v.name)}</h2></header>
+  <div class="mbody"><div class="form">
+    <label>First year with Volvo *<select class="inp" id="en_start"><option value="">Choose…</option>${yrs.map(y => `<option value="${y}" ${+g.startYear === y ? "selected" : ""}>${esc(yearLabel(y))}</option>`).join("")}</select></label>
+    <label>Last year (blank = ongoing)<select class="inp" id="en_end"><option value="">Ongoing</option>${yrs.map(y => `<option value="${y}" ${+g.endYear === y ? "selected" : ""}>${esc(yearLabel(y))}</option>`).join("")}</select></label>
+    <label class="full">Source / note<input class="inp" id="en_note" value="${esc(g.note || "")}" placeholder="e.g. Master service agreement signed Mar 2022"></label>
+  </div><p class="count">The evaluation window is the most recent ${perfCfg().window} years inside this period. A shorter engagement is evaluated only on the years worked.</p><p class="count" id="enErr" role="alert"></p></div>
+  <footer>${g.startYear ? `<button class="btn danger" type="button" data-engclear="${esc(vid)}">Clear</button>` : "<span></span>"}<span class="chips"><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">Save</button></span></footer></form></div>`;
+}
+async function submitEng(form) {
+  const vid = form.dataset.id, s = $("#en_start", form).value, en = $("#en_end", form).value;
+  if (!s) { $("#enErr").textContent = "Choose the first year of the Volvo engagement."; return; }
+  if (en && +en < +s) { $("#enErr").textContent = "The last year cannot be before the first year."; return; }
+  if (await Store.put("engagements", vid, { startYear: +s, endYear: en ? +en : null, note: $("#en_note", form).value.trim() })) { form.closest(".modal").remove(); render(); openDrawer(vid, "perf"); toast("Engagement saved"); }
+}
+function cfgForm() {
+  const c = clone(perfCfg()), can = Store.canWrite;
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cfTitle"><form class="mbox" id="cfgForm" novalidate>
+  <header><h2 id="cfTitle" style="font-size:17px">Rating criteria, scale and summary method</h2><span class="count">${Store.data.perf.config ? `Last changed ${fmtDate(Store.data.perf.config.updatedAt)} by ${esc(who(Store.data.perf.config.updatedBy))}` : "Default configuration"}</span></header>
+  <div class="mbody"><div class="form">
+    <div class="fh">Criteria · weights are relative; the total does not need to be 100</div>
+    <div class="full tw"><table id="critTable"><thead><tr><th>Active</th><th>Criterion</th><th>Definition</th><th>Weight</th><th></th></tr></thead><tbody>
+    ${c.criteria.map((k, i) => critRow(k, i)).join("")}</tbody></table></div>
+    <div class="full"><button class="btn sm" type="button" data-act="addCrit">+ Add criterion</button> <span class="count" id="wTotal"></span></div>
+    <div class="fh">Rating scale</div>
+    <label>Lowest rating<select class="inp" id="cf_min">${[0, 1].map(n => `<option ${c.scale.min === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <label>Highest rating<select class="inp" id="cf_max">${[4, 5, 7, 10].map(n => `<option ${c.scale.max === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <div class="full" id="scaleDefs">${scaleDefs(c.scale)}</div>
+    <div class="fh">Evaluation years</div>
+    <label>Year type<select class="inp" id="cf_ytype"><option value="calendar" ${c.yearType === "calendar" ? "selected" : ""}>Calendar year</option><option value="fiscal" ${c.yearType === "fiscal" ? "selected" : ""}>Fiscal year</option></select></label>
+    <label>Fiscal year starts<select class="inp" id="cf_fy">${MONTHS.map((m, i) => `<option value="${i + 1}" ${c.fyStartMonth === i + 1 ? "selected" : ""}>${m}</option>`).join("")}</select></label>
+    <label>Window (most recent years)<select class="inp" id="cf_win">${[3, 4, 5].map(n => `<option ${+c.window === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+    <div class="fh">Multi-year summary</div>
+    <label>Method<select class="inp" id="cf_method"><option value="mean" ${c.summary.method === "mean" ? "selected" : ""}>Simple mean of evaluated years</option><option value="recency" ${c.summary.method === "recency" ? "selected" : ""}>Recency-weighted mean</option></select></label>
+    <label>Recency weights, most recent first<input class="inp" id="cf_rec" value="${esc(c.summary.recency.join(", "))}"></label>
+  </div><p class="count">Saved evaluations keep the criteria and weights they were entered with. Changes here apply to new evaluations.</p><p class="count" id="cfErr" role="alert"></p></div>
+  <footer><button class="btn ghost" type="button" data-act="resetCfg" ${can ? "" : "disabled"}>Restore defaults</button><span class="chips"><button class="btn" type="button" data-cancel>Close</button><button class="btn primary" type="submit" ${can ? "" : "disabled"}>Save configuration</button></span></footer></form></div>`;
+}
+function critRow(k, i) { return `<tr data-crow="${esc(k.id)}"><td><input type="checkbox" class="cr_active" ${k.active ? "checked" : ""} aria-label="Active"></td><td><input class="inp cr_name" value="${esc(k.name)}" aria-label="Criterion name"></td><td><input class="inp cr_desc" value="${esc(k.desc || "")}" aria-label="Definition"></td><td><input class="inp cr_w num" type="number" min="0" max="100" step="1" value="${esc(k.weight)}" style="width:70px" aria-label="Weight"></td><td><button class="copy" type="button" data-rmcrit aria-label="Remove criterion">Remove</button></td></tr>`; }
+function scaleDefs(sc) { let h = ""; for (let i = sc.max; i >= sc.min; i--) h += `<label style="margin-bottom:6px">${i} means<input class="inp sc_def" data-pt="${i}" value="${esc(sc.labels[i] || "")}"></label>`; return h; }
+async function submitCfg(form) {
+  const crit = [...form.querySelectorAll("[data-crow]")].map(r => ({ id: r.dataset.crow, name: $(".cr_name", r).value.trim(), desc: $(".cr_desc", r).value.trim(), weight: Math.max(0, +$(".cr_w", r).value || 0), active: $(".cr_active", r).checked })).filter(c => c.name);
+  if (!crit.some(c => c.active && c.weight > 0)) { $("#cfErr").textContent = "Keep at least one active criterion with a weight above zero."; return; }
+  const min = +$("#cf_min", form).value, max = +$("#cf_max", form).value, labels = {};
+  form.querySelectorAll(".sc_def").forEach(i => { labels[i.dataset.pt] = i.value.trim(); });
+  const rec = $("#cf_rec", form).value.split(",").map(x => +x.trim()).filter(x => x > 0);
+  const cfg = { criteria: crit, scale: { min, max, labels }, yearType: $("#cf_ytype", form).value, fyStartMonth: +$("#cf_fy", form).value, window: +$("#cf_win", form).value, summary: { method: $("#cf_method", form).value, recency: rec.length ? rec : [5, 4, 3, 2, 1] } };
+  if (await Store.put("perf", "config", cfg)) { form.closest(".modal").remove(); render(); toast("Configuration saved"); }
+}
+
+/* -------------------------------------------------------------- render */
+function render() {
+  assemble();
+  renderRail();
+  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
+  const focusId = document.activeElement && document.activeElement.id;
+  const pos = (focusId === "fq" || focusId === "pq") ? document.activeElement.selectionStart : null;
+  $("#main").innerHTML = fn();
+  if ((focusId === "fq" || focusId === "pq") && $("#" + focusId)) { const el = $("#" + focusId); el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
+  if (openId && $("#layer .drawer") && BY_ID[openId] && !$("#layer .modal")) { const sc = $(".drawer .db").scrollTop; $("#layer").innerHTML = drawerHTML(BY_ID[openId]); $(".drawer .db").scrollTop = sc; }
+  try { history.replaceState(null, "", "#" + (UI.view === "directory" && UI.cat ? UI.cat : UI.view)); } catch (e) {}
+}
+
+/* -------------------------------------------------------------- events */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("button, [data-open], [data-close], input[type=checkbox]");
+  if (t && t.matches("input[type=checkbox]") && !t.dataset.cmp) return;
+  if (!t) return;
+  const d = t.dataset;
+  if (t.matches("input[data-cmp]")) { e.stopPropagation(); toggleCmp(d.cmp); return; }
+  if (d.go !== undefined) return go(d.go, d.cat ? { cat: d.cat } : {});
+  if (d.act) {
+    const a = d.arg;
+    if (d.act === "go") return a ? go(a) : null;
+    if (d.act === "goDir") return go("directory", { type: "all" });
+    if (d.act === "goStatus") { UI.stTab = a; return go("status"); }
+    if (d.act === "goCat") return go("directory", { cat: a, type: "all" });
+    if (d.act === "goSvc") return go("directory", { svc: a, type: "all" });
+    if (d.act === "goType") return go("directory", { type: a === "Recruitment / staffing" ? "recruit" : a });
+    if (d.act === "goLoc") return go("directory", { loc: a });
+    if (d.act === "goSpec") return go("directory", { spec: a, type: "all" });
+    if (d.act === "clearCmp") { UI.compare = []; return render(); }
+    if (d.act === "perfCfg") { $("#layer").insertAdjacentHTML("beforeend", cfgForm()); return; }
+    if (d.act === "addEval") { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, "")); return; }
+    if (d.act === "perfBand") { UI.pband = a; return render(); }
+    if (d.act === "addCrit") { $("#critTable tbody").insertAdjacentHTML("beforeend", critRow({ id: "c-" + Date.now().toString(36), name: "", desc: "", weight: 5, active: true })); $("#critTable tbody tr:last-child .cr_name").focus(); return; }
+    if (d.act === "resetCfg") { if (await Store.del("perf", "config")) { t.closest(".modal").remove(); render(); toast("Default criteria restored for new evaluations"); } return; }
+  }
+  if (d.sort) { UI.dir = UI.sort === d.sort ? -UI.dir : 1; UI.sort = d.sort; saveUI(); return render(); }
+  if (d.ctx) { UI.ctx = d.ctx; saveUI(); return render(); }
+  if (d.st) { UI.stTab = d.st; return render(); }
+  if (d.close !== undefined) return closeDrawer();
+  if (d.addeval) { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, d.addeval)); return; }
+  if (d.editeval) { const ev = Store.data.evaluations[d.editeval]; if (ev) $("#layer").insertAdjacentHTML("beforeend", evalForm(Object.assign({ _id: d.editeval }, ev))); return; }
+  if (d.deleval) { t.outerHTML = `<span class="count">Delete this evaluation?</span> <button class="copy" type="button" data-delevalok="${esc(d.deleval)}">Yes, delete</button> <button class="copy" type="button" data-delno>Keep</button>`; return; }
+  if (d.delevalok) { const vid = (Store.data.evaluations[d.delevalok] || {}).vendorId; if (await Store.del("evaluations", d.delevalok)) { render(); openDrawer(vid, "perf"); toast("Evaluation deleted"); } return; }
+  if (d.eng) { $("#layer").insertAdjacentHTML("beforeend", engForm(d.eng)); return; }
+  if (d.engclear) { if (await Store.del("engagements", d.engclear)) { t.closest(".modal").remove(); render(); openDrawer(d.engclear, "perf"); toast("Engagement cleared"); } return; }
+  if (d.rmcrit !== undefined) { t.closest("tr").remove(); return; }
+  if (d.edit) return openEdit(d.edit);
+  if (d.cmpBtn) { toggleCmp(d.cmpBtn); return; }
+  if (d.uncmp) { toggleCmp(d.uncmp); return; }
+  if (d.del) { $("#delZone").innerHTML = `<span class="count">Delete this record for everyone?</span> <button class="btn sm danger" type="button" data-delok="${esc(d.del)}">Delete</button> <button class="btn sm" type="button" data-delno>Keep</button>`; return; }
+  if (d.delno !== undefined) return openDrawer(openId, t.closest("#perfSec") ? "perf" : undefined);
+  if (d.delok) { const v = BY_ID[d.delok]; const ok = v.origin === "added" ? await Store.dropEdit(v.id) : await Store.putEdit(v.id, { deleted: true, name: v.name }); if (ok) { closeDrawer(); render(); toast("Deleted. Workbook records can be restored from Data quality."); } return; }
+  if (d.restore) { if (await Store.dropEdit(d.restore)) { render(); toast("Restored"); } return; }
+  if (d.copy) { try { await navigator.clipboard.writeText(d.copy); toast("Copied"); } catch (err) { const r = document.createRange(); r.selectNodeContents(t.previousElementSibling || t); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected. Press Ctrl+C to copy."); } return; }
+  if (d.approve) return decide(d.approve, "approved");
+  if (d.dismiss) return decide(d.dismiss, "dismissed");
+  if (d.undo) return undoDecision(d.undo);
+  if (d.cancel !== undefined) { t.closest(".modal").remove(); return; }
+  if (d.x) return doExport(d.x);
+  if (d.open) return openDrawer(d.open, d.tab);
+  if (t.id === "btnAdd") return openEdit(null);
+  if (t.id === "btnExport") return exportMenu();
+  if (t.id === "btnImport") return $("#fileIn").click();
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { const m = $("#layer .modal"); if (m) m.remove(); else if (openId) closeDrawer(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches(".rank[data-open], tr[data-open]")) { e.preventDefault(); openDrawer(e.target.dataset.open, e.target.dataset.tab); }
+});
+document.addEventListener("submit", e => {
+  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm"].includes(f.id)) return;
+  e.preventDefault();
+  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg })[f.id](f);
+});
+let qTimer;
+document.addEventListener("input", e => {
+  const id = e.target.id;
+  if (id === "fq" || id === "pq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[id === "fq" ? "q" : "pq"] = e.target.value; render(); }, 160); }
+});
+document.addEventListener("change", e => {
+  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", pscope: "pscope", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  const ef = e.target.closest("#evalForm");
+  if (ef) { if (e.target.id === "ev_year") $("#ev_period").value = periodLabel(+e.target.value); liveEval(ef); return; }
+  if (e.target.id === "cf_min" || e.target.id === "cf_max") { const old = {}; document.querySelectorAll(".sc_def").forEach(i => { old[i.dataset.pt] = i.value; }); $("#scaleDefs").innerHTML = scaleDefs({ min: +$("#cf_min").value, max: +$("#cf_max").value, labels: old }); return; }
+  if (map[e.target.id]) { UI[map[e.target.id]] = e.target.value; if (e.target.id === "ftype") saveUI(); render(); }
+  if (e.target.id === "fileIn" && e.target.files[0]) { importFile(e.target.files[0]); e.target.value = ""; }
+});
+function toggleCmp(id) {
+  const i = UI.compare.indexOf(id);
+  if (i >= 0) UI.compare.splice(i, 1); else if (UI.compare.length >= 4) { toast("Compare holds four vendors. Remove one first."); render(); return; } else UI.compare.push(id);
+  render();
+}
+
+render();
+Store.init().then(render);
+</script>
+
+</body></html>
