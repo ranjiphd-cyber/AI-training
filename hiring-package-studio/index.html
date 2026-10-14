@@ -1,0 +1,1018 @@
+<title>Hiring Package Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: navy app bar, section rail on the left (tabs on phones), one working sheet on the right. */
+:root{
+  --navy:#001433; --slate:#4A5568; --paper:#F7FAFC; --surface:#FFFFFF; --ink:#0D1B2E;
+  --muted:#4A5568; --line:#D9E1EA; --line-strong:#B9C5D3; --field:#FFFFFF;
+  --accent:#B7791F; --accent-ink:#8A5A12; --accent-soft:#FBF1DF;
+  --bar:#001433; --bar-ink:#F7FAFC; --bar-muted:#A9B8CC;
+  --btn:#001433; --btn-ink:#FFFFFF; --btn2:#E9EEF4; --btn2-ink:#001433;
+  --ok:#22704A; --ok-soft:#E3F2EA; --tbc:#B42318; --tbc-soft:#FCE9E7; --prop:#2B4C7E; --prop-soft:#E6EDF7;
+  --font:"Inter","Segoe UI","Helvetica Neue",Arial,sans-serif;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#020B1A; --surface:#0A1830; --ink:#E6ECF4; --muted:#A3B1C4; --line:#1D2F4D; --line-strong:#2E4468; --field:#06122A;
+  --accent:#E0A84A; --accent-ink:#F0C27A; --accent-soft:#2A2110;
+  --bar:#000A1C; --bar-ink:#F7FAFC; --bar-muted:#8C9DB4;
+  --btn:#E6ECF4; --btn-ink:#001433; --btn2:#14274A; --btn2-ink:#E6ECF4;
+  --ok:#6FCF9B; --ok-soft:#10301F; --tbc:#F2877C; --tbc-soft:#3A1512; --prop:#9DB8E6; --prop-soft:#14274A;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#020B1A; --surface:#0A1830; --ink:#E6ECF4; --muted:#A3B1C4; --line:#1D2F4D; --line-strong:#2E4468; --field:#06122A;
+  --accent:#E0A84A; --accent-ink:#F0C27A; --accent-soft:#2A2110;
+  --bar:#000A1C; --bar-ink:#F7FAFC; --bar-muted:#8C9DB4;
+  --btn:#E6ECF4; --btn-ink:#001433; --btn2:#14274A; --btn2-ink:#E6ECF4;
+  --ok:#6FCF9B; --ok-soft:#10301F; --tbc:#F2877C; --tbc-soft:#3A1512; --prop:#9DB8E6; --prop-soft:#14274A;
+  color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5}
+h1,h2,h3{text-wrap:balance;margin:0;color:var(--ink)}
+a{color:var(--prop)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* App bar */
+.bar{background:var(--bar);color:var(--bar-ink);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+.bar-in{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
+.brand b{font-size:16px;font-weight:700;letter-spacing:.01em}
+.brand span{color:var(--bar-muted);font-size:12px}
+.mark{width:10px;height:10px;background:var(--accent);display:inline-block;transform:translateY(-1px)}
+.bar select{background:#0B2147;color:var(--bar-ink);border:1px solid #2A4472;border-radius:var(--r);padding:6px 8px;max-width:340px;min-width:0}
+.bar .btn2{background:#0B2147;color:var(--bar-ink);border-color:#2A4472}
+.savestate{font-size:12px;color:var(--bar-muted);min-width:110px;font-variant-numeric:tabular-nums}
+.savestate.dirty{color:var(--accent)}
+.baracts{display:flex;flex-wrap:wrap;gap:6px}
+
+.btn,.btn2,.btn3{border-radius:var(--r);padding:7px 12px;border:1px solid transparent;cursor:pointer;font-weight:500;font-size:13px;white-space:nowrap}
+.btn{background:var(--btn);color:var(--btn-ink)}
+.btn2{background:var(--btn2);color:var(--btn2-ink);border-color:var(--line)}
+.btn3{background:transparent;color:var(--muted);border-color:transparent;padding:4px 8px}
+.btn3:hover{color:var(--tbc)}
+.btn:hover,.btn2:hover{filter:brightness(1.08)}
+.btn.danger{background:var(--tbc);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+
+/* Notices */
+.notices{max-width:1400px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.notice{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-left:3px solid var(--accent);background:var(--surface);border-radius:var(--r);display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.notice.warn{border-left-color:var(--tbc)}
+.notice p{margin:0;flex:1 1 260px;min-width:0}
+
+/* Shell */
+.shell{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+nav.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);align-self:start;display:flex;flex-direction:column;gap:2px}
+.rail .grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 10px 4px}
+.rail button{display:flex;gap:10px;align-items:baseline;text-align:left;background:none;border:0;border-left:2px solid transparent;padding:7px 10px;cursor:pointer;color:var(--muted);border-radius:0 var(--r) var(--r) 0}
+.rail button .n{font-variant-numeric:tabular-nums;font-size:12px;width:24px;flex:0 0 24px;white-space:nowrap;color:var(--muted)}
+.rail button:hover{color:var(--ink);background:var(--surface)}
+.rail button[aria-current="true"]{color:var(--ink);font-weight:600;border-left-color:var(--accent);background:var(--surface)}
+.rail .cnt{margin-left:auto;font-size:11px;background:var(--tbc-soft);color:var(--tbc);border-radius:10px;padding:0 7px;font-weight:600}
+main{min-width:0}
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px 28px 32px}
+.sheet-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:6px}
+.eyebrow{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--accent-ink);font-weight:600}
+.sheet-head h1{font-size:22px;font-weight:700;margin-top:2px}
+.sheet-head p{margin:4px 0 0;color:var(--muted);max-width:70ch}
+section.blk{padding-top:22px}
+section.blk>h2{font-size:15px;font-weight:600;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+section.blk>h2 small{font-weight:400;color:var(--muted);font-size:12.5px}
+.help{color:var(--muted);font-size:12.5px;margin:4px 0 10px;max-width:80ch}
+
+/* Fields */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px 18px;margin-top:10px}
+.fld{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12px;font-weight:500;color:var(--muted)}
+.fld .row{display:flex;gap:6px;min-width:0}
+.fld .row>input,.fld .row>select,.fld .row>textarea{flex:1 1 auto;min-width:0}
+input[type=text],input[type=date],input[type=number],input[type=url],select,textarea{background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r);padding:6px 8px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.45}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+select.st{width:auto;flex:0 0 auto;font-size:12px;font-weight:600;border-radius:14px;padding:4px 8px}
+.st-confirmed{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.st-tbc,.st-pending,.st-open,.st-unverified{background:var(--tbc-soft);color:var(--tbc);border-color:transparent}
+.st-proposed,.st-recommended,.st-discuss,.st-estimate,.st-in-progress{background:var(--prop-soft);color:var(--prop);border-color:transparent}
+.st-accept,.st-decided,.st-answered,.st-done,.st-verified{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.st-reject,.st-declined,.st-assumption{background:var(--btn2);color:var(--muted);border-color:transparent}
+select.st option{background:var(--field);color:var(--ink)}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);margin-top:8px}
+table.ed{border-collapse:collapse;width:100%;font-size:13px}
+table.ed th{background:var(--paper);text-align:left;font-weight:600;font-size:11.5px;letter-spacing:.03em;color:var(--muted);padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.ed td{padding:5px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+table.ed tr:last-child td{border-bottom:0}
+table.ed td input,table.ed td select,table.ed td textarea{font-size:13px;padding:5px 6px}
+table.ed td.num{font-variant-numeric:tabular-nums;color:var(--muted);width:34px;padding-top:10px}
+table.ed td.empty{color:var(--muted);padding:14px 10px;font-style:italic}
+table.ed td.act{width:36px}
+.addrow{margin-top:8px}
+.diff{display:flex;flex-direction:column;gap:4px;min-width:120px;padding-top:4px}
+.diff b{font-size:12.5px}
+.meter{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent)}
+.lvl-Low b{color:var(--ok)} .lvl-Moderate b{color:var(--prop)} .lvl-High b,.lvl-Very\ high b{color:var(--tbc)}
+
+/* Read-only lists and tiles */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.tile{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;background:var(--surface)}
+.tile .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.tile.ok .v{color:var(--ok)} .tile.tbc .v{color:var(--tbc)} .tile.prop .v{color:var(--prop)}
+.chip{display:inline-block;font-size:11.5px;font-weight:600;border-radius:12px;padding:1px 8px;white-space:nowrap}
+ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
+.kv{display:grid;grid-template-columns:minmax(120px,200px) minmax(0,1fr);gap:4px 14px;margin-top:8px;font-size:13px}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.callout{border:1px solid var(--line);background:var(--accent-soft);border-radius:var(--r);padding:10px 12px;font-size:13px;margin-top:10px}
+.callout.warn{background:var(--tbc-soft);color:var(--ink)}
+.inline-confirm{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px;margin-left:6px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.linklist{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.linklist a{font-size:13px;border:1px solid var(--line);border-radius:14px;padding:3px 10px;text-decoration:none}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12px;color:var(--muted);margin-top:8px}
+
+/* Email document */
+.docframe{border:1px solid var(--line);border-radius:var(--r);background:#FFFFFF;margin-top:12px;overflow:auto;max-height:none}
+.docframe .docpad{padding:20px;min-width:0}
+.emailbox{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px 18px}
+
+/* Toast */
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:9px 14px;border-radius:var(--r);font-size:13px;box-shadow:0 6px 20px rgba(0,20,51,.25);max-width:calc(100% - 32px);z-index:20}
+.ro input,.ro select,.ro textarea{pointer-events:none;opacity:.85}
+
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:14px}
+  nav.rail{position:static;flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:4px;border-bottom:1px solid var(--line)}
+  .rail .grp{display:none}
+  .rail button{border-left:0;border-bottom:2px solid transparent;border-radius:0;white-space:nowrap}
+  .rail button[aria-current="true"]{border-bottom-color:var(--accent)}
+  .sheet{padding:18px 16px 24px}
+  .kv{grid-template-columns:minmax(0,1fr)}
+  .kv dt{margin-top:6px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><span class="mark" aria-hidden="true"></span><b>Hiring Package Studio</b><span id="brandSub">Kickoff to closure, in one record</span></div>
+    <label for="pkgSel" class="sr" hidden>Hiring package</label>
+    <select id="pkgSel" aria-label="Open hiring package"></select>
+    <span class="savestate" id="saveState" aria-live="polite">Not saved yet</span>
+    <div class="baracts">
+      <button class="btn2" id="bNew" type="button">New package</button>
+      <button class="btn2" id="bDup" type="button">Duplicate</button>
+      <button class="btn2" id="bSnap" type="button">Save meeting snapshot</button>
+    </div>
+  </div>
+</header>
+<div class="notices" id="notices"></div>
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Package sections"></nav>
+  <main id="main"></main>
+</div>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+<input type="file" id="inputFile" accept=".txt,.md,.csv,.json,.html,.htm,text/*" hidden>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- constants ---------- */
+const STATUS=[["confirmed","Confirmed"],["tbc","To confirm"],["proposed","Proposed"]];
+const EVIDENCE=[["unverified","Not yet verified"],["verified","Verified fact"],["estimate","Sourced estimate"],["assumption","Internal assumption"]];
+const TIERS=[["primary","Primary (must-have)"],["secondary","Secondary"],["good","Good to have"]];
+const PREF_AREAS=[["Candidate trait","Candidate trait"],["Team fit","Team fit"],["Cultural fit","Cultural fit"],["Background preference","Background preference"],["Deal-breaker","Deal-breaker"]];
+const MEET_TYPES=[["Kickoff","Kickoff"],["Follow-up","Follow-up / calibration"],["Shortlist review","Shortlist review"],["Debrief","Interview debrief"],["Other","Other"]];
+const ROLES=[["TA Partner","TA Partner"],["Hiring manager","Hiring manager"],["P&C partner","P&C partner"],["Interviewer","Interviewer"],["Other","Other"]];
+const ACT_ST=[["open","Open"],["in-progress","In progress"],["done","Done"]];
+const Q_ST=[["open","Open"],["answered","Answered"]];
+const HM_ALT=[["pending","Pending HM"],["accept","Accept"],["discuss","Discuss"],["reject","Reject"]];
+const ASSESS_ST=[["recommended","Recommended"],["confirmed","Confirmed"],["declined","Declined"]];
+const DEC_ST=[["pending","Pending"],["decided","Decided"]];
+const LMH=[["","—"],["Low","Low"],["Medium","Medium"],["High","High"]];
+const POOL=[["","—"],["Scarce","Scarce"],["Limited","Limited"],["Moderate","Moderate"],["Healthy","Healthy"],["Unknown","Unknown"]];
+const SCORE=[["","—"],["1","1"],["2","2"],["3","3"],["4","4"],["5","5"]];
+const CURR=[["","—"],["SEK","SEK"],["EUR","EUR"],["USD","USD"],["INR","INR"],["GBP","GBP"],["BRL","BRL"],["CNY","CNY"],["PLN","PLN"],["BEF","Other"]];
+const PERIOD=[["annual","Annual"],["monthly","Monthly"]];
+const BASIS=[["Base salary","Base salary"],["Total cash","Total cash"],["Total compensation","Total compensation"]];
+const INFO=[["draft","Draft: before kickoff"],["kickoff","Kickoff held: awaiting confirmation"],["partial","Partially confirmed"],["confirmed","Confirmed with hiring manager"]];
+const INPUT_TYPES=[["Job description","Job description"],["Kickoff notes","Kickoff / meeting notes"],["Hiring manager email","Hiring manager email or message"],["Org chart / team info","Org chart / team information"],["Market report","Market report or salary data"],["Competitor intel","Competitor or talent-mapping notes"],["Interview guide","Interview guide or scorecard"],["Policy","Policy or P&C guidance"],["Other","Other"]];
+const USES=[["minutes","Minutes"],["market","Market intelligence"],["plan","Interview & hiring plan"]];
+const TBC="[To confirm]";
+const LS_KEY="hps.v1.packages", LS_LAST="hps.v1.last", LS_VER="hps.v1.versions.";
+const MAX_VERSIONS=40;
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-5);
+const F=(v="",s="tbc")=>({v,s});
+const todayISO=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10)};
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const getPath=(o,p)=>p.split(".").reduce((a,k)=>a==null?undefined:a[k],o);
+function setPath(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++){if(a[ks[i]]==null)a[ks[i]]={};a=a[ks[i]]}a[ks[ks.length-1]]=v}
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(iso){if(!iso||!/^\d{4}-\d{2}-\d{2}/.test(iso))return iso||"";const [y,m,d]=iso.slice(0,10).split("-").map(Number);return d+" "+MON[m-1]+" "+y}
+function parseISO(iso){const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d)}
+function toISO(dt){return dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0")}
+function addBD(iso,n){const d=parseISO(iso);let k=0;while(k<n){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)k++}return toISO(d)}
+function bdBetween(a,b){let d=parseISO(a),e=parseISO(b),n=0,sign=1;if(d>e){[d,e]=[e,d];sign=-1}while(d<e){d.setDate(d.getDate()+1);const w=d.getDay();if(w!==0&&w!==6)n++}return n*sign}
+const label=(opts,v)=>{const o=opts.find(x=>x[0]===v);return o?o[1]:(v||"")};
+const slug=s=>(s||"package").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,48)||"package";
+
+/* ---------- package template ---------- */
+function blankPackage(){
+  const now=new Date().toISOString();
+  return {
+    id:uid(), schema:1, createdAt:now, updatedAt:now, rev:"",
+    meta:{
+      org:F("Volvo Group","confirmed"), role:F(), reqId:F(), businessUnit:F(), department:F(), grade:F(), positions:F("1"),
+      reportsTo:F(), reasonForHire:F(), location:F(), workArrangement:F(), relocation:F(), hiringMarket:F(), travel:F(),
+      hiringManager:F(), taPartner:F(), pcPartner:F(), decisionMaker:F(), kickoffDate:F(), closureDate:F(),
+      closureDefinition:F("Offer accepted by the selected candidate","proposed"), prepDate:todayISO(), infoStatus:"draft"
+    },
+    text:{exec:"",context:"",jd:"",selection:"",decisionRights:"",marketSummary:"",resumeNote:""},
+    inputs:[], meetings:[], skills:[], prefs:[], success:[],
+    interviewers:[
+      {level:"L1 interviewer",name:"",title:"",focus:"",s:"tbc"},
+      {level:"L2 interviewer",name:"",title:"",focus:"",s:"tbc"},
+      {level:"P&C partner",name:"",title:"",focus:"",s:"tbc"},
+      {level:"Final decision maker",name:"",title:"",focus:"",s:"tbc"}
+    ],
+    decisions:[], questions:[], actions:[],
+    market:{availability:[],comp:[],factors:[],alternatives:[],sources:[]},
+    plan:{
+      resumeCount:F("5","proposed"), resumeDate:F("","proposed"), daysToResumes:"5", feedbackSla:F("2 business days","proposed"),
+      offerDate:F("","proposed"), onboardingDate:F("","proposed"), noticeWeeks:"", onboardingNote:"",
+      stages:[
+        {name:"Resume screening",format:"TA review against the agreed scorecard",duration:"",focus:"Primary skills, location and eligibility, notice period, compensation expectations",owner:"TA Partner",criteria:"Meets all primary skills; no deal-breakers",s:"proposed"},
+        {name:"TA screening call",format:"Phone or video",duration:"30 min",focus:"Motivation, understanding of the role, notice period, compensation, mobility, communication",owner:"TA Partner",criteria:"Clear motivation; logistics workable",s:"proposed"},
+        {name:"L1 interview: technical / functional",format:"Structured interview, video or on-site",duration:"60 min",focus:"Depth in primary skills, problem solving, review of work sample if used",owner:"L1 interviewer [to confirm]",criteria:"Scorecard rating at or above the agreed threshold on each primary skill",s:"proposed"},
+        {name:"L2 interview: hiring manager",format:"Structured and competency-based",duration:"60 min",focus:"Secondary skills, fit to success measures, team fit, ways of working",owner:"Hiring manager / L2 interviewer [to confirm]",criteria:"Evidence against success measures and the team-fit criteria agreed at kickoff",s:"proposed"},
+        {name:"Values and culture conversation",format:"With P&C partner (can be combined with L2)",duration:"30–45 min",focus:"Behaviours linked to Volvo Group values (confirm the current framework with P&C)",owner:"P&C partner",criteria:"Consistent behavioural evidence; no values concerns",s:"proposed"},
+        {name:"References, approvals and offer",format:"",duration:"",focus:"Reference checks, compensation approval, offer",owner:"TA Partner, hiring manager, P&C",criteria:"References satisfactory; offer within approved range",s:"proposed"}
+      ],
+      schedule:[],
+      assessments:[
+        {name:"Structured interview scorecard",type:"Structured interview",purpose:"All interview stages",rationale:"Gives comparable evidence across candidates and reduces bias. Interviewers score against the skills agreed at kickoff.",s:"recommended"},
+        {name:"Work sample or case exercise",type:"Practical assessment",purpose:"Primary skills",rationale:"Tests the primary skills directly. Keep candidate effort to about 2 hours to protect candidate experience.",s:"recommended"},
+        {name:"Psychometric assessment",type:"Personality and/or cognitive",purpose:"Supporting evidence",rationale:"Use only if it is part of Volvo Group's approved process for this role level. Confirm the tool, purpose and data-privacy handling with P&C. Never the only basis for a decision.",s:"recommended"}
+      ],
+      milestones:[],
+      risks:[
+        {risk:"Small candidate pool for the primary skill combination",likelihood:"",impact:"High",mitigation:"Agree alternative or transferable skills early; consider a wider geography or work arrangement if acceptable; start direct sourcing on day 1",owner:"TA Partner"},
+        {risk:"Interviewer availability delays scheduling",likelihood:"Medium",impact:"High",mitigation:"Block interview slots at kickoff; name back-up interviewers",owner:"Hiring manager"},
+        {risk:"Slow feedback between stages",likelihood:"Medium",impact:"Medium",mitigation:"Agree a feedback deadline (for example 2 business days); TA follows up daily",owner:"TA Partner"},
+        {risk:"Candidate pay expectations above the approved range",likelihood:"",impact:"High",mitigation:"Check the range against market data before sourcing; agree flexibility and approvals in advance",owner:"TA Partner, P&C"},
+        {risk:"Long notice periods push out the start date",likelihood:"",impact:"Medium",mitigation:"Confirm typical notice periods in this market; plan the start date accordingly",owner:"TA Partner"},
+        {risk:"Counter-offers or competing offers",likelihood:"Medium",impact:"High",mitigation:"Test motivation early; keep the process tight; prepare offer approvals in advance",owner:"TA Partner, hiring manager"}
+      ]
+    },
+    hmDecisions:[
+      {decision:"Confirm which skills are primary, secondary and good to have",options:"Confirm / adjust",recommendation:"Keep primary skills to the few that are truly non-negotiable",needBy:"",s:"pending",answer:""},
+      {decision:"Confirm L1 and L2 interviewers and the P&C partner, and block their availability",options:"Names and back-ups",recommendation:"",needBy:"",s:"pending",answer:""},
+      {decision:"Approve the interview stages and assessments",options:"Approve / amend",recommendation:"See the interview and hiring plan",needBy:"",s:"pending",answer:""},
+      {decision:"Accept, reject or discuss the alternative skill options",options:"Per option in the market report",recommendation:"",needBy:"",s:"pending",answer:""},
+      {decision:"Confirm the compensation range and any flexibility (with P&C)",options:"",recommendation:"",needBy:"",s:"pending",answer:""},
+      {decision:"Agree the first resume commitment (number and date)",options:"",recommendation:"",needBy:"",s:"pending",answer:""},
+      {decision:"Confirm the tentative closure date and what counts as closure",options:"",recommendation:"",needBy:"",s:"pending",answer:""}
+    ],
+    taActions:[
+      {action:"Send the hiring package to the hiring manager for review",due:"",status:"open",note:""},
+      {action:"Validate the compensation range with P&C / Compensation & Benefits",due:"",status:"open",note:""},
+      {action:"Research the market for each priority skill and record sources with access dates",due:"",status:"open",note:""},
+      {action:"Draft the job advert and publish it after the JD is signed off",due:"",status:"open",note:""},
+      {action:"Build the sourcing plan: channels, target companies, internal candidates",due:"",status:"open",note:""},
+      {action:"Run an interviewer briefing and scorecard calibration",due:"",status:"open",note:""},
+      {action:"Submit the first resumes by the committed date",due:"",status:"open",note:""}
+    ],
+    email:{recipient:"",subject:"",note:"",includeMeetings:true,includeMarket:true,includeSources:true}
+  };
+}
+function fillDefaults(t,d){for(const k in d){if(t[k]===undefined)t[k]=clone(d[k]);else if(d[k]&&typeof d[k]==="object"&&!Array.isArray(d[k])&&t[k]&&typeof t[k]==="object"&&!Array.isArray(t[k]))fillDefaults(t[k],d[k])}return t}
+function normalize(p){const b=blankPackage();const out=fillDefaults(clone(p),b);out.id=p.id||b.id;
+  if(out.text.jd&&!out.inputs.some(i=>i.type==="Job description")){out.inputs.unshift(newInput("Job description",out.text.jd));out.text.jd=""}
+  return out}
+function newInput(type,content){return {id:uid(),type:type||"Job description",title:"",date:todayISO(),source:"",link:"",content:content||"",uses:{minutes:true,market:true,plan:true}}}
+
+/* ---------- list definitions ---------- */
+const LISTS={
+  "meetings":{cols:[{k:"date",l:"Date",type:"date",min:140},{k:"type",l:"Meeting",type:"select",opts:MEET_TYPES,min:150},{k:"attendees",l:"Attendees",min:200},{k:"notes",l:"Key notes and changes",type:"area",min:320}],blank:()=>({date:todayISO(),type:"Kickoff",attendees:"",notes:""}),empty:"No meetings recorded yet. Add one at the start of each kickoff or follow-up."},
+  "skills":{cols:[{k:"name",l:"Skill",min:200},{k:"tier",l:"Priority",type:"select",opts:TIERS,min:160},{k:"level",l:"Depth / years expected",min:170},{k:"assess",l:"How we will assess it",min:190},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({name:"",tier:"primary",level:"",assess:"",s:"tbc"}),empty:"No skills yet. Add them from the JD, then confirm priority with the hiring manager."},
+  "prefs":{cols:[{k:"area",l:"Area",type:"select",opts:PREF_AREAS,min:170},{k:"detail",l:"What the hiring manager is looking for",type:"area",min:320},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({area:"Candidate trait",detail:"",s:"tbc"}),empty:"No preferences captured yet."},
+  "success":{cols:[{k:"measure",l:"Success measure / outcome",type:"area",min:280},{k:"target",l:"Target or evidence",min:180},{k:"timeframe",l:"By when",min:120},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({measure:"",target:"",timeframe:"",s:"tbc"}),empty:"No success measures yet. Ask: what will this person have delivered at 90 days, 6 months and 12 months?"},
+  "interviewers":{cols:[{k:"level",l:"Role in process",min:160},{k:"name",l:"Name",min:160},{k:"title",l:"Job title",min:160},{k:"focus",l:"Assesses",min:200},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({level:"",name:"",title:"",focus:"",s:"tbc"}),empty:"No interviewers yet."},
+  "decisions":{cols:[{k:"date",l:"Date",type:"date",min:140},{k:"decision",l:"Decision agreed",type:"area",min:320},{k:"by",l:"Agreed by",min:160}],blank:()=>({date:todayISO(),decision:"",by:""}),empty:"No decisions recorded yet. Only record what was actually agreed."},
+  "questions":{cols:[{k:"question",l:"Open question",type:"area",min:280},{k:"owner",l:"Owner",min:140},{k:"due",l:"Due",type:"date",min:140},{k:"s",l:"Status",type:"select",opts:Q_ST,cls:"st",min:120},{k:"answer",l:"Answer",type:"area",min:220}],blank:()=>({question:"",owner:"",due:"",s:"open",answer:""}),empty:"No open questions."},
+  "actions":{cols:[{k:"action",l:"Action item",type:"area",min:280},{k:"ownerRole",l:"Owner role",type:"select",opts:ROLES,min:140},{k:"owner",l:"Owner name",min:140},{k:"due",l:"Due",type:"date",min:140},{k:"status",l:"Status",type:"select",opts:ACT_ST,cls:"st",min:120}],blank:()=>({action:"",ownerRole:"TA Partner",owner:"",due:"",status:"open"}),empty:"No action items yet."},
+  "market.availability":{cols:[{k:"skill",l:"Skill or combination",min:190},{k:"market",l:"Market",min:130},{k:"pool",l:"Pool",type:"select",opts:POOL,min:110},{k:"poolEvidence",l:"Pool evidence (e.g. profile or posting counts, date)",type:"area",min:220},{k:"supply",l:"Supply scarcity",type:"select",opts:SCORE,min:80},{k:"competition",l:"Competing demand",type:"select",opts:SCORE,min:80},{k:"pay",l:"Pay pressure",type:"select",opts:SCORE,min:80},{k:"location",l:"Location constraint",type:"select",opts:SCORE,min:80},{k:"niche",l:"Niche / seniority",type:"select",opts:SCORE,min:80},{k:"_diff",l:"Difficulty",type:"diff",min:130},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150},{k:"sources",l:"Sources (e.g. S1, S3)",min:110}],blank:()=>({skill:"",market:"",pool:"",poolEvidence:"",supply:"",competition:"",pay:"",location:"",niche:"",evidence:"unverified",sources:""}),empty:"No availability findings yet. Add one row per primary skill or skill combination."},
+  "market.comp":{cols:[{k:"role",l:"Role / benchmark",min:180},{k:"level",l:"Level",min:110},{k:"geo",l:"Geography",min:130},{k:"currency",l:"Currency",type:"select",opts:CURR,min:90},{k:"low",l:"Low",min:100},{k:"mid",l:"Median / mid",min:100},{k:"high",l:"High",min:100},{k:"period",l:"Period",type:"select",opts:PERIOD,min:100},{k:"basis",l:"Basis",type:"select",opts:BASIS,min:140},{k:"dataDate",l:"Data date",min:110},{k:"sources",l:"Sources",min:90},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150},{k:"limits",l:"Limitations",type:"area",min:220}],blank:()=>({role:"",level:"",geo:"",currency:"",low:"",mid:"",high:"",period:"annual",basis:"Base salary",dataDate:"",sources:"",evidence:"unverified",limits:""}),empty:"No compensation data yet. Add only ranges you can source. The internal band comes from P&C."},
+  "market.factors":{cols:[{k:"factor",l:"Market factor",type:"area",min:260},{k:"effect",l:"Effect on availability, pay or speed",type:"area",min:260},{k:"sources",l:"Sources",min:90},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150}],blank:()=>({factor:"",effect:"",sources:"",evidence:"unverified"}),empty:"No market factors recorded yet."},
+  "market.alternatives":{cols:[{k:"alt",l:"Alternative or transferable skill",type:"area",min:240},{k:"forSkill",l:"Instead of / alongside",min:160},{k:"gain",l:"Expected effect on pool or speed",type:"area",min:200},{k:"risk",l:"Risk and how to close the gap",type:"area",min:220},{k:"hm",l:"Hiring manager",type:"select",opts:HM_ALT,cls:"st",min:130}],blank:()=>({alt:"",forSkill:"",gain:"",risk:"",hm:"pending"}),empty:"No alternatives proposed yet."},
+  "market.sources":{cols:[{k:"_id",l:"ID",type:"rowid",min:40},{k:"title",l:"Title",min:220},{k:"publisher",l:"Publisher",min:140},{k:"url",l:"Link",type:"url",min:220},{k:"published",l:"Published / data date",min:120},{k:"accessed",l:"Accessed",type:"date",min:140},{k:"note",l:"Note",min:160}],blank:()=>({title:"",publisher:"",url:"",published:"",accessed:todayISO(),note:""}),empty:"No sources yet. Every market figure should point to a source here."},
+  "plan.stages":{cols:[{k:"name",l:"Stage",min:180},{k:"format",l:"Format",min:160},{k:"duration",l:"Length",min:90},{k:"focus",l:"Focus areas",type:"area",min:240},{k:"owner",l:"Interviewer / owner",min:170},{k:"criteria",l:"Evaluation criteria",type:"area",min:240},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({name:"",format:"",duration:"",focus:"",owner:"",criteria:"",s:"proposed"}),empty:"No stages yet."},
+  "plan.schedule":{cols:[{k:"stage",l:"Stage",min:200},{k:"date",l:"Date or window",min:180},{k:"slots",l:"Slots / time",min:140},{k:"who",l:"Interviewers",min:180},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({stage:"",date:"",slots:"",who:"",s:"proposed"}),empty:"No schedule yet. Use “Build proposed timeline” above, or add rows."},
+  "plan.assessments":{cols:[{k:"name",l:"Assessment",min:180},{k:"type",l:"Type",min:150},{k:"purpose",l:"Used for",min:150},{k:"rationale",l:"Rationale",type:"area",min:300},{k:"s",l:"Status",type:"select",opts:ASSESS_ST,cls:"st",min:130}],blank:()=>({name:"",type:"",purpose:"",rationale:"",s:"recommended"}),empty:"No assessments."},
+  "plan.milestones":{cols:[{k:"name",l:"Milestone",min:220},{k:"owner",l:"Owner",min:140},{k:"date",l:"Date",type:"date",min:140},{k:"dependency",l:"Depends on",min:180},{k:"decision",l:"Decision point",type:"check",min:80},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({name:"",owner:"",date:"",dependency:"",decision:false,s:"proposed"}),empty:"No milestones yet. Use “Build proposed timeline” above."},
+  "plan.risks":{cols:[{k:"risk",l:"Risk to timeline",type:"area",min:240},{k:"likelihood",l:"Likelihood",type:"select",opts:LMH,min:100},{k:"impact",l:"Impact",type:"select",opts:LMH,min:100},{k:"mitigation",l:"Mitigation",type:"area",min:280},{k:"owner",l:"Owner",min:140}],blank:()=>({risk:"",likelihood:"",impact:"",mitigation:"",owner:""}),empty:"No risks recorded."},
+  "hmDecisions":{cols:[{k:"decision",l:"Decision needed",type:"area",min:260},{k:"options",l:"Options",min:160},{k:"recommendation",l:"TA recommendation",type:"area",min:220},{k:"needBy",l:"Needed by",type:"date",min:140},{k:"s",l:"Status",type:"select",opts:DEC_ST,cls:"st",min:110},{k:"answer",l:"Hiring manager's answer",type:"area",min:220}],blank:()=>({decision:"",options:"",recommendation:"",needBy:"",s:"pending",answer:""}),empty:"No decisions requested."},
+  "taActions":{cols:[{k:"action",l:"Action",type:"area",min:300},{k:"due",l:"Due",type:"date",min:140},{k:"status",l:"Status",type:"select",opts:ACT_ST,cls:"st",min:120},{k:"note",l:"Note",min:200}],blank:()=>({action:"",due:"",status:"open",note:""}),empty:"No TA actions yet."}
+};
+
+/* ---------- state ---------- */
+const S={mode:"local",db:null,user:null,canWrite:true,inViewer:!!(window.claude&&window.claude.use),dl:null};
+let packages={}, pkg=null, cur=lsGetRaw("hps.v1.tab")||"overview";
+let dirty=false, editSeq=0, saveTimer=null, writeChain=Promise.resolve(), myRevs=new Set(), remotePending=null;
+let localDraftsOffered=false;
+
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch(e){return null}}
+function lsGetRaw(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,typeof v==="string"?v:JSON.stringify(v));return true}catch(e){return false}}
+
+/* ---------- value helpers for display ---------- */
+function fv(f){if(!f)return TBC;const v=String(f.v||"").trim();if(!v)return TBC;if(f.s==="tbc")return v+" "+TBC;if(f.s==="proposed")return v+" (proposed)";return v}
+function txt(v){v=String(v==null?"":v).trim();return v||TBC}
+function scoreOf(r){const ks=["supply","competition","pay","location","niche"];const vals=ks.map(k=>Number(r[k])).filter(n=>n>0);if(!vals.length)return null;const avg=vals.reduce((a,b)=>a+b,0)/vals.length;const lvl=avg<2?"Low":avg<3?"Moderate":avg<4?"High":"Very high";return {avg,lvl,n:vals.length}}
+function srcIdx(){return (pkg.market.sources||[]).map((s,i)=>({...s,_id:"S"+(i+1)}))}
+
+/* ---------- confirmation tracker ---------- */
+const META_LABELS={role:"Role title",reqId:"Requisition ID",businessUnit:"Business unit / company",department:"Department / function",grade:"Grade / level",positions:"Number of positions",reportsTo:"Reports to",reasonForHire:"Reason for hire",location:"Location",workArrangement:"Work arrangement",relocation:"Relocation / visa support",hiringMarket:"Geographic hiring market",travel:"Travel",hiringManager:"Hiring manager",taPartner:"TA Partner",pcPartner:"P&C partner",decisionMaker:"Final decision maker",kickoffDate:"Kickoff date",closureDate:"Tentative closure date",closureDefinition:"Definition of closure"};
+const CRITICAL=["role","location","workArrangement","hiringMarket","hiringManager","taPartner","pcPartner","closureDate"];
+function tracker(){
+  const items=[];const push=(area,item,status,detail)=>items.push({area,item,status,detail:detail||""});
+  for(const k in META_LABELS){const f=pkg.meta[k];if(!f)continue;const v=String(f.v||"").trim();push("Role details",META_LABELS[k],v?f.s:"missing",v)}
+  push("Interview plan","First resumes: number",pkg.plan.resumeCount.v?pkg.plan.resumeCount.s:"missing",pkg.plan.resumeCount.v);
+  push("Interview plan","First resumes: date",pkg.plan.resumeDate.v?pkg.plan.resumeDate.s:"missing",fmtDate(pkg.plan.resumeDate.v));
+  push("Offer and onboarding","Tentative offer date",pkg.plan.offerDate.v?pkg.plan.offerDate.s:"missing",fmtDate(pkg.plan.offerDate.v));
+  push("Offer and onboarding","Tentative onboarding / start date",pkg.plan.onboardingDate.v?pkg.plan.onboardingDate.s:"missing",fmtDate(pkg.plan.onboardingDate.v));
+  push("Interview plan","Feedback turnaround",pkg.plan.feedbackSla.v?pkg.plan.feedbackSla.s:"missing",pkg.plan.feedbackSla.v);
+  pkg.skills.forEach(r=>r.name&&push("Skills",r.name,r.s,label(TIERS,r.tier)));
+  pkg.prefs.forEach(r=>r.detail&&push("Hiring manager preferences",r.area,r.s,r.detail));
+  pkg.success.forEach(r=>r.measure&&push("Success measures",r.measure,r.s,r.timeframe));
+  pkg.interviewers.forEach(r=>push("Interviewers",r.level||"Interviewer",r.name?r.s:"missing",r.name));
+  pkg.plan.stages.forEach(r=>r.name&&push("Interview stages",r.name,r.s,r.owner));
+  pkg.plan.schedule.forEach(r=>r.stage&&push("Schedule",r.stage,r.s,r.date));
+  pkg.plan.milestones.forEach(r=>r.name&&push("Milestones",r.name,r.s,fmtDate(r.date)));
+  pkg.plan.assessments.forEach(r=>r.name&&push("Assessments",r.name,r.s==="confirmed"?"confirmed":r.s==="declined"?"declined":"proposed",""));
+  pkg.market.alternatives.forEach(r=>r.alt&&push("Alternative skills",r.alt,r.hm==="accept"?"confirmed":r.hm==="reject"?"declined":"tbc",label(HM_ALT,r.hm)));
+  pkg.hmDecisions.forEach(r=>r.decision&&push("Decisions for hiring manager",r.decision,r.s==="decided"?"confirmed":"tbc",r.answer));
+  pkg.questions.forEach(r=>r.question&&push("Open questions",r.question,r.s==="answered"?"confirmed":"tbc",r.owner));
+  const c={confirmed:0,tbc:0,proposed:0,missing:0};items.forEach(i=>{if(c[i.status]!=null)c[i.status]++});
+  const critMissing=CRITICAL.filter(k=>!String(pkg.meta[k].v||"").trim()||pkg.meta[k].s!=="confirmed").map(k=>META_LABELS[k]);
+  if(!pkg.skills.some(s=>s.tier==="primary"&&s.name))critMissing.push("At least one primary skill");
+  if(!pkg.market.comp.some(r=>r.low||r.mid||r.high))critMissing.push("Sourced compensation range");
+  return {items,c,critMissing};
+}
+
+/* ---------- rendering primitives ---------- */
+function opts(list,v){return list.map(([k,l])=>`<option value="${esc(k)}"${String(v)===k?" selected":""}>${esc(l)}</option>`).join("")}
+function statusSel(path,v){return `<select class="st st-${esc(v)}" data-path="${path}" aria-label="Status">${opts(STATUS,v)}</select>`}
+function field(path,lab,o={}){
+  const f=getPath(pkg,path)||F();const id="f_"+path.replace(/\./g,"_");
+  let inp;
+  if(o.type==="select")inp=`<select id="${id}" data-path="${path}.v">${opts(o.opts,f.v)}</select>`;
+  else if(o.type==="area")inp=`<textarea id="${id}" rows="${o.rows||3}" data-path="${path}.v" placeholder="${esc(o.ph||"")}">${esc(f.v)}</textarea>`;
+  else inp=`<input id="${id}" type="${o.type||"text"}" data-path="${path}.v" value="${esc(f.v)}" placeholder="${esc(o.ph||"")}">`;
+  return `<div class="fld${o.full?" full":""}"><label for="${id}">${esc(lab)}</label><div class="row">${inp}${statusSel(path+".s",f.s)}</div>${o.hint?`<div class="help" style="margin:0">${o.hint}</div>`:""}</div>`;
+}
+function plainField(path,lab,o={}){
+  const v=getPath(pkg,path)||"";const id="f_"+path.replace(/\./g,"_");
+  const inp=o.type==="area"?`<textarea id="${id}" rows="${o.rows||4}" data-path="${path}" placeholder="${esc(o.ph||"")}">${esc(v)}</textarea>`
+    :o.type==="select"?`<select id="${id}" data-path="${path}">${opts(o.opts,v)}</select>`
+    :`<input id="${id}" type="${o.type||"text"}" data-path="${path}" value="${esc(v)}" placeholder="${esc(o.ph||"")}">`;
+  return `<div class="fld${o.full?" full":""}"><label for="${id}">${esc(lab)}</label>${inp}${o.hint?`<div class="help" style="margin:0">${o.hint}</div>`:""}</div>`;
+}
+function cell(path,r,c,i){
+  const p=path+"."+i+"."+c.k, v=r[c.k];
+  switch(c.type){
+    case "select":return `<select data-path="${p}"${c.cls?` class="st st-${esc(v)}"`:""} aria-label="${esc(c.l)}">${opts(c.opts,v)}</select>`;
+    case "status":return statusSel(p,v);
+    case "area":return `<textarea rows="2" data-path="${p}" aria-label="${esc(c.l)}">${esc(v)}</textarea>`;
+    case "date":return `<input type="date" data-path="${p}" value="${esc(v)}" aria-label="${esc(c.l)}">`;
+    case "url":return `<input type="url" data-path="${p}" value="${esc(v)}" placeholder="https://" aria-label="${esc(c.l)}">`;
+    case "check":return `<input type="checkbox" data-path="${p}"${v?" checked":""} aria-label="${esc(c.l)}">`;
+    case "rowid":return `<b style="font-variant-numeric:tabular-nums">S${i+1}</b>`;
+    case "diff":return `<div id="diff-${i}">${diffHTML(r)}</div>`;
+    default:return `<input type="text" data-path="${p}" value="${esc(v)}" aria-label="${esc(c.l)}">`;
+  }
+}
+function diffHTML(r){const sc=scoreOf(r);if(!sc)return `<div class="diff"><span class="help" style="margin:0">Score the factors</span></div>`;return `<div class="diff lvl-${sc.lvl}"><b>${sc.lvl} · ${sc.avg.toFixed(1)}</b><span class="meter"><i style="width:${(sc.avg/5*100).toFixed(0)}%"></i></span>${sc.n<5?`<span class="help" style="margin:0">${sc.n}/5 factors scored</span>`:""}</div>`}
+function listEditor(path,o={}){
+  const def=LISTS[path];const rows=getPath(pkg,path)||[];
+  const head=`<tr><th aria-label="Row"></th>${def.cols.map(c=>`<th style="min-width:${c.min||120}px">${esc(c.l)}</th>`).join("")}<th aria-label="Remove"></th></tr>`;
+  const body=rows.length?rows.map((r,i)=>`<tr><td class="num">${i+1}</td>${def.cols.map(c=>`<td>${cell(path,r,c,i)}</td>`).join("")}<td class="act"><button class="btn3" type="button" data-act="del" data-list="${path}" data-idx="${i}" title="Remove row" aria-label="Remove row ${i+1}">✕</button></td></tr>`).join("")
+    :`<tr><td></td><td class="empty" colspan="${def.cols.length+1}">${esc(def.empty)}</td></tr>`;
+  return `<div class="tbl-wrap"><table class="ed">${head}${body}</table></div><button class="btn2 addrow" type="button" data-act="add" data-list="${path}">+ ${esc(o.add||"Add row")}</button>`;
+}
+const blk=(title,sub,inner,help)=>`<section class="blk"><h2>${title}${sub?` <small>${sub}</small>`:""}</h2>${help?`<p class="help">${help}</p>`:""}${inner}</section>`;
+function head(eyebrow,title,desc,right){return `<div class="sheet-head"><div><div class="eyebrow">${eyebrow}</div><h1>${title}</h1>${desc?`<p>${desc}</p>`:""}</div>${right||""}</div>`}
+
+/* ---------- sections ---------- */
+const SECTIONS=[
+  {id:"inputs",n:"In",name:"Inputs: JD, notes, data",grp:"Inputs"},
+  {id:"overview",n:"1–2",name:"Overview & summary",grp:"Package"},
+  {id:"kickoff",n:"3",name:"Kickoff & minutes",grp:"Package"},
+  {id:"confirm",n:"4",name:"Confirmation tracker",grp:"Package"},
+  {id:"market",n:"5",name:"Market intelligence",grp:"Package"},
+  {id:"plan",n:"6",name:"Interview & hiring plan",grp:"Package"},
+  {id:"hm",n:"7",name:"Decisions for HM",grp:"Package"},
+  {id:"ta",n:"8",name:"TA action list",grp:"Package"},
+  {id:"email",n:"✉",name:"Email document",grp:"Share"},
+  {id:"history",n:"⟲",name:"Meeting snapshots",grp:"Share"}
+];
+function renderRail(){
+  const t=pkg?tracker():null;let g="",h="";
+  SECTIONS.forEach(s=>{if(s.grp!==g){g=s.grp;h+=`<div class="grp">${g}</div>`}
+    let cnt="";if(t&&s.id==="confirm"&&(t.c.tbc+t.c.missing))cnt=`<span class="cnt">${t.c.tbc+t.c.missing}</span>`;
+    if(t&&s.id==="hm"){const p=pkg.hmDecisions.filter(d=>d.s!=="decided"&&d.decision).length;if(p)cnt=`<span class="cnt">${p}</span>`}
+    h+=`<button type="button" data-tab="${s.id}" aria-current="${cur===s.id}"><span class="n">${s.n}</span><span>${s.name}</span>${cnt}</button>`});
+  $("#rail").innerHTML=h;
+}
+
+function rOverview(){
+  const t=tracker();const m=pkg.meta;
+  const pct=t.items.length?Math.round(t.c.confirmed/t.items.length*100):0;
+  return head("Sections 1–2 · Document header and executive summary",esc(m.role.v||"New hiring package"),"Fill in what the job description and kickoff confirm. Set each field's status: Confirmed (agreed), To confirm (missing or unverified), or Proposed (your recommendation, not agreed yet).")
+  +`<div class="tiles"><div class="tile ok"><div class="k">Confirmed</div><div class="v">${t.c.confirmed}</div></div><div class="tile tbc"><div class="k">To confirm / missing</div><div class="v">${t.c.tbc+t.c.missing}</div></div><div class="tile prop"><div class="k">Proposed</div><div class="v">${t.c.proposed}</div></div><div class="tile"><div class="k">Confirmed share</div><div class="v">${pct}%</div></div></div>`
+  +(t.critMissing.length?`<div class="callout warn"><b>Critical inputs not yet confirmed:</b> ${t.critMissing.map(esc).join(" · ")}</div>`:"")
+  +blk("Role and requisition","",`<div class="grid">${field("meta.org","Organisation")}${field("meta.role","Role title")}${field("meta.reqId","Requisition ID")}${field("meta.businessUnit","Business unit / company",{ph:"e.g. Volvo Trucks, Volvo CE, GTT"})}${field("meta.department","Department / function")}${field("meta.grade","Grade / level")}${field("meta.positions","Number of positions",{type:"number"})}${field("meta.reportsTo","Reports to")}${field("meta.reasonForHire","Reason for hire",{ph:"Replacement, growth, new capability…"})}</div>`)
+  +blk("People","",`<div class="grid">${field("meta.hiringManager","Hiring manager")}${field("meta.taPartner","TA Partner")}${field("meta.pcPartner","P&C partner")}${field("meta.decisionMaker","Final decision maker")}</div>`)
+  +blk("Dates and status","",`<div class="grid">${field("meta.kickoffDate","Kickoff date",{type:"date"})}${plainField("meta.prepDate","Preparation date",{type:"date"})}${field("meta.closureDate","Tentative closure date",{type:"date"})}${field("meta.closureDefinition","What counts as closure")}${plainField("meta.infoStatus","Information status",{type:"select",opts:INFO})}</div>`)
+  +blk("Executive summary","Section 2 of the document",`<div class="toolbar"><button class="btn2" type="button" data-act="draftExec">Draft from package data</button><span id="execConfirm"></span></div><div class="fld full" style="margin-top:8px"><textarea id="f_text_exec" rows="9" data-path="text.exec" placeholder="Three to five short paragraphs: the hiring need, the hardest skills to find, the plan and commitment, and what you need from the hiring manager.">${esc(pkg.text.exec)}</textarea></div>`,"The draft uses only what is in this package and marks gaps as [To confirm]. Edit it before sending.");
+}
+
+function rKickoff(){
+  return head("Section 3 · Kickoff meeting summary and minutes","Kickoff &amp; minutes","Add a meeting row each time you meet the hiring manager, update the sections below, then save a snapshot so you can see what changed between meetings.",`<button class="btn" type="button" data-act="newMeeting">Record a new meeting</button>`)
+  +refPanel("minutes")+blk("Meeting log","",listEditor("meetings",{add:"Add meeting"}))
+  +blk("Role and hiring context","",`<div class="fld full"><textarea id="f_text_context" rows="5" data-path="text.context" placeholder="Why the role exists, team and scope, key stakeholders, what changed since the last hire.">${esc(pkg.text.context)}</textarea></div>`)
+  +blk("Skills","primary · secondary · good to have",listEditor("skills",{add:"Add skill"}),"Keep primary skills to the few the hiring manager will not compromise on. Each one should map to an interview stage.")
+  +blk("Location, work arrangement and hiring market","",`<div class="grid">${field("meta.location","Role location",{ph:"City, country, site"})}${field("meta.workArrangement","Work arrangement",{ph:"On-site / hybrid (days) / remote"})}${field("meta.hiringMarket","Geographic hiring market",{ph:"Commuting area, country, region"})}${field("meta.relocation","Relocation / visa support")}${field("meta.travel","Travel")}</div>`)
+  +blk("Hiring manager's preferences","traits · team fit · cultural fit",listEditor("prefs",{add:"Add preference"}),"Write observable behaviours rather than labels (for example “explains trade-offs to non-specialists” rather than “good communicator”). Volvo Group's published values are Customer Success, Trust, Passion, Change and Performance; check the current wording with P&C before using them as criteria.")
+  +blk("Success measures and key outcomes","",listEditor("success",{add:"Add measure"}))
+  +blk("Selection process and decision rights","",`<div class="grid"><div class="fld full"><label for="f_text_selection">Agreed selection process</label><textarea id="f_text_selection" rows="3" data-path="text.selection" placeholder="Stages agreed in the meeting. Detailed design lives in the Interview & hiring plan.">${esc(pkg.text.selection)}</textarea></div><div class="fld full"><label for="f_text_decisionRights">Decision-making responsibilities</label><textarea id="f_text_decisionRights" rows="3" data-path="text.decisionRights" placeholder="Who shortlists, who has veto, who approves the offer, how ties are resolved.">${esc(pkg.text.decisionRights)}</textarea></div>${field("plan.feedbackSla","Feedback turnaround between stages")}</div>`)
+  +blk("Interviewers and P&C partner","",listEditor("interviewers",{add:"Add interviewer"}))
+  +blk("Tentative closure date","",`<div class="grid">${field("meta.closureDate","Tentative closure date",{type:"date"})}${field("meta.closureDefinition","What counts as closure")}</div>`)
+  +blk("Decisions agreed","",listEditor("decisions",{add:"Add decision"}))
+  +blk("Open questions","",listEditor("questions",{add:"Add question"}))
+  +blk("Action items","",listEditor("actions",{add:"Add action"}));
+}
+
+function rConfirm(){
+  const t=tracker();const g={confirmed:[],tbc:[],proposed:[],missing:[],declined:[]};t.items.forEach(i=>(g[i.status]||g.tbc).push(i));
+  const tbl=(rows,empty)=>rows.length?`<div class="tbl-wrap"><table class="ed"><tr><th>Area</th><th>Item</th><th>Detail</th></tr>${rows.map(r=>`<tr><td style="white-space:nowrap">${esc(r.area)}</td><td>${esc(r.item)}</td><td>${esc(r.detail)}</td></tr>`).join("")}</table></div>`:`<p class="help">${empty}</p>`;
+  return head("Section 4 · Confirmed requirements and items requiring confirmation","Confirmation tracker","Built from the statuses you set across the package. Change a status where it was set and this view updates.")
+  +`<div class="tiles"><div class="tile ok"><div class="k">Confirmed</div><div class="v">${t.c.confirmed}</div></div><div class="tile tbc"><div class="k">To confirm</div><div class="v">${t.c.tbc}</div></div><div class="tile tbc"><div class="k">Missing</div><div class="v">${t.c.missing}</div></div><div class="tile prop"><div class="k">Proposed</div><div class="v">${t.c.proposed}</div></div></div>`
+  +(t.critMissing.length?`<div class="callout warn"><b>Critical inputs to confirm before sourcing:</b><ul class="plain">${t.critMissing.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:`<div class="callout">All critical inputs are confirmed.</div>`)
+  +blk("Missing","",tbl(g.missing,"Nothing missing."))
+  +blk("To confirm","",tbl(g.tbc,"Nothing waiting for confirmation."))
+  +blk("Proposed, not yet agreed","",tbl(g.proposed,"No open proposals."))
+  +blk("Confirmed","",tbl(g.confirmed,"Nothing confirmed yet."));
+}
+
+function researchLinks(){
+  const role=(pkg.meta.role.v||"").trim(), loc=(pkg.meta.location.v||pkg.meta.hiringMarket.v||"").trim();
+  const skills=pkg.skills.filter(s=>s.tier==="primary"&&s.name).map(s=>s.name);
+  if(!role&&!skills.length)return `<p class="help">Add a role title and location on the Overview to get search links.</p>`;
+  const q=encodeURIComponent, links=[];
+  if(role){links.push([`LinkedIn jobs: ${role}${loc?" · "+loc:""}`,`https://www.linkedin.com/jobs/search/?keywords=${q(role)}${loc?"&location="+q(loc):""}`]);
+    links.push([`Web: ${role} salary${loc?" "+loc:""}`,`https://www.google.com/search?q=${q(role+" salary "+loc)}`]);
+    links.push([`Web: ${role} talent shortage${loc?" "+loc:""}`,`https://www.google.com/search?q=${q(role+" talent shortage "+loc)}`]);}
+  skills.slice(0,4).forEach(s=>links.push([`LinkedIn jobs: ${s}${loc?" · "+loc:""}`,`https://www.linkedin.com/jobs/search/?keywords=${q(s)}${loc?"&location="+q(loc):""}`]));
+  return `<div class="linklist">${links.map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div><p class="help" style="margin-top:6px">Live posting counts change daily. When you record one as evidence, note the date and the exact search used.</p>`;
+}
+function rMarket(){
+  const comp=pkg.market.comp;const old=comp.filter(r=>{const m=String(r.dataDate||"").match(/(\d{4})/);return m&&(new Date().getFullYear()-Number(m[1]))>=2});
+  const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
+  return head("Section 5 · Talent availability and market intelligence","Market intelligence","Record what you can source, and say so where you cannot. Every finding carries an evidence type and points to a source in the register at the bottom.")
+  +refPanel("market")+blk("Research starting points","",researchLinks()+`<div class="callout"><b>Where to look, in order of reliability for pay data:</b><ul class="plain"><li>Salary surveys held by Volvo Group Compensation &amp; Benefits (ask your P&amp;C partner). Use these for the internal range.</li><li>Official statistics and professional bodies, for example <a href="https://www.scb.se/en/" target="_blank" rel="noopener">Statistics Sweden (SCB)</a>, <a href="https://www.bls.gov/oes/" target="_blank" rel="noopener">US BLS OEWS</a>, <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noopener">Eurostat</a>, and engineering unions or associations in the market.</li><li>Talent-supply tools your team licenses (for example LinkedIn Talent Insights): profile counts, competing employers, talent flows.</li><li>Self-reported salary sites (Glassdoor, PayScale, Levels.fyi, AmbitionBox and similar). Treat these as indicative only and note sample size and date.</li></ul></div>`)
+  +blk("Market summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two or three sentences: how available the talent is, the main constraint, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div>`)
+  +blk("Availability and hiring difficulty","by skill or combination",listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>How difficulty is scored:</b> rate each factor from 1 (easy) to 5 (hard). The difficulty is the average of the factors you scored: below 2 is Low, 2 to 2.9 is Moderate, 3 to 3.9 is High, 4 and above is Very high. The scores are your judgement. Put the evidence behind them in the evidence column and the source register.</div>`)
+  +blk("Indicative compensation","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old. Refresh them or explain why in the limitations column.</div>`:"")+`<p class="help">State currency, geography, period and basis on every row. Do not mix base salary and total compensation in one comparison. The internal band is confidential unless P&amp;C agrees to share it.</p>`)
+  +blk("Market factors","",listEditor("market.factors",{add:"Add factor"}),"For example: competing employers hiring for the same skills, notice-period norms, demand from electrification or software programs, local labour-market conditions.")
+  +blk("Alternative and transferable skills","options for the hiring manager",listEditor("market.alternatives",{add:"Add option"}),"These are options to accept, reject or discuss. They are not approved changes to the role until the hiring manager decides.")
+  +(nosrc.length?`<div class="callout warn">${nosrc.length} finding(s) are marked Verified or Sourced estimate but have no source ID.</div>`:"")
+  +blk("Source register","",listEditor("market.sources",{add:"Add source"}),"Refer to sources by ID (S1, S2…) in the tables above. Deleting a source renumbers the ones after it, so check your references.");
+}
+
+function rPlan(){
+  const ms=pkg.plan.milestones.filter(m=>m.date).sort((a,b)=>a.date<b.date?-1:1);const cl=pkg.meta.closureDate.v;
+  let check="";
+  if(ms.length&&cl){const last=ms[ms.length-1];const gap=bdBetween(last.date,cl);check=gap>=0?`<div class="callout">The last milestone (${esc(last.name)}, ${fmtDate(last.date)}) is ${gap} business day(s) before the tentative closure date (${fmtDate(cl)}).</div>`:`<div class="callout warn">The last milestone (${esc(last.name)}, ${fmtDate(last.date)}) is ${-gap} business day(s) after the tentative closure date (${fmtDate(cl)}). Compress the plan or agree a new date.</div>`}
+  else if(!cl)check=`<div class="callout warn">Tentative closure date not set. Milestones cannot be checked against it.</div>`;
+  return head("Section 6 · Recommended interview and hiring plan","Interview &amp; hiring plan","Stages, assessments and dates start as Proposed. Mark them Confirmed only once the hiring manager agrees.")
+  +refPanel("plan")+blk("Interview stages","",listEditor("plan.stages",{add:"Add stage"}))
+  +blk("First resume commitment","",`<div class="grid">${field("plan.resumeCount","Number of resumes",{type:"number"})}${field("plan.resumeDate","Committed date",{type:"date"})}${plainField("plan.daysToResumes","Business days from kickoff (for the proposed timeline)",{type:"number"})}<div class="fld full"><label for="f_text_resumeNote">Conditions</label><textarea id="f_text_resumeNote" rows="2" data-path="text.resumeNote" placeholder="e.g. Depends on JD sign-off and the comp range confirmed by the date above.">${esc(pkg.text.resumeNote)}</textarea></div></div>`,"Five is a sensible default for the first set. Adjust it to the difficulty rating.")
+  +blk("Proposed timeline","",`<div class="toolbar"><button class="btn" type="button" data-act="buildTimeline">Build proposed timeline</button><span id="tlConfirm"></span><span class="help" style="margin:0">Uses the kickoff date (or today), the resume lead time and the feedback turnaround. Business days only; holidays are not excluded.</span></div>`)
+  +blk("Interview schedule","",listEditor("plan.schedule",{add:"Add schedule row"}))
+  +blk("Offer and onboarding","tentative dates",`<div class="grid">${field("plan.offerDate","Tentative offer date",{type:"date"})}${plainField("plan.noticeWeeks","Expected notice period (weeks)",{type:"number",hint:"Used to estimate the start date. Confirm typical notice periods for this market."})}${field("plan.onboardingDate","Tentative onboarding / start date",{type:"date"})}<div class="fld full"><label for="f_plan_onboardingNote">Onboarding notes</label><textarea id="f_plan_onboardingNote" rows="2" data-path="plan.onboardingNote" placeholder="Buddy, equipment, site access, first-week plan, pre-boarding contact.">${esc(pkg.plan.onboardingNote)}</textarea></div></div>${onbCheck()}`,"“Build proposed timeline” fills these in from the plan. Change them as soon as the real dates are known.")
+  +blk("Milestones and decision points","",listEditor("plan.milestones",{add:"Add milestone"})+check)
+  +blk("Assessments","recommendations unless confirmed",listEditor("plan.assessments",{add:"Add assessment"}))
+  +blk("Risks to the timeline","",listEditor("plan.risks",{add:"Add risk"}));
+}
+function rHM(){return head("Section 7 · Decisions requested from the hiring manager","Decisions for the hiring manager","Each row goes into the email. Record the answer and set the status to Decided after the conversation.")+blk("Decisions requested","",listEditor("hmDecisions",{add:"Add decision"}))}
+function rTA(){
+  const fromMin=pkg.actions.filter(a=>a.ownerRole==="TA Partner"&&a.action);
+  return head("Section 8 · TA Partner action list","TA action list","Your own follow-ups. Action items from the minutes assigned to the TA Partner are listed below too.")
+  +blk("TA actions","",listEditor("taActions",{add:"Add action"}))
+  +blk("From the meeting minutes","",fromMin.length?`<div class="tbl-wrap"><table class="ed"><tr><th>Action</th><th>Due</th><th>Status</th></tr>${fromMin.map(a=>`<tr><td>${esc(a.action)}</td><td>${esc(fmtDate(a.due))||"—"}</td><td><span class="chip st-${esc(a.status)}">${esc(label(ACT_ST,a.status))}</span></td></tr>`).join("")}</table></div>`:`<p class="help">No minute actions are assigned to the TA Partner.</p>`);
+}
+
+function rEmail(){
+  const e=pkg.email;const subj=e.subject||defaultSubject();
+  return head("Share","Email document","A formatted version of the whole package for the hiring manager. Copy it into an email, or download it as Word or HTML to attach.")
+  +`<div class="emailbox" style="margin-top:14px">${plainField("email.recipient","Hiring manager's name (greeting)",{ph:pkg.meta.hiringManager.v||""})}${plainField("email.subject","Email subject",{ph:defaultSubject()})}<div class="fld full"><label for="f_email_note">Cover note (appears at the top)</label><textarea id="f_email_note" rows="3" data-path="email.note" placeholder="${esc(defaultNote())}">${esc(e.note)}</textarea></div></div>`
+  +`<div class="toolbar"><label><input type="checkbox" data-path="email.includeMeetings"${e.includeMeetings?" checked":""}> Include meeting log</label><label><input type="checkbox" data-path="email.includeMarket"${e.includeMarket?" checked":""}> Include market intelligence</label><label><input type="checkbox" data-path="email.includeSources"${e.includeSources?" checked":""}> Include source register</label></div>`
+  +`<div class="toolbar"><button class="btn" type="button" data-act="copyEmail">Copy formatted email</button><button class="btn2" type="button" data-act="copySubject">Copy subject</button><button class="btn2" type="button" data-act="dlDocx">Download Word (.docx)</button><button class="btn2" type="button" data-act="dlHtml">Download HTML</button><button class="btn2" type="button" data-act="copyText">Copy as plain text</button></div>`
+  +`<p class="help">Subject: <b>${esc(subj)}</b>. Paste with Ctrl/Cmd+V into Outlook or Gmail to keep the formatting. Read the preview before sending: anything shown as ${TBC} still needs confirming.</p>`
+  +`<div class="docframe"><div class="docpad" id="docPreview">${toEmailHTML(buildDoc())}</div></div>`;
+}
+
+function rHistory(){
+  return head("Share","Meeting snapshots","A snapshot is a saved copy of the whole package, taken after each meeting. Open one to compare it with the current version, or restore it.",`<button class="btn" type="button" data-act="snap">Save snapshot now</button>`)
+  +`<div id="verList" style="margin-top:14px"><p class="help">Loading snapshots…</p></div>`
+  +blk("Backup and transfer","",`<div class="toolbar"><button class="btn2" type="button" data-act="exportJson">Export package (.json)</button><button class="btn2" type="button" data-act="importJson">Import package (.json)</button></div><p class="help">Export creates a backup you can keep or send to another TA Partner. Import adds the file as a new package; it never overwrites an existing one.</p>`)
+  +blk("Delete this package","",`<button class="btn2" type="button" data-act="del-pkg" id="delPkgBtn">Delete package…</button><span id="delConfirm"></span>`);
+}
+
+function rInputs(){
+  const list=pkg.inputs;
+  const card=(x,i)=>{const p="inputs."+i;return `<section class="blk" style="border-top:1px solid var(--line);margin-top:18px"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><h2 style="font-size:15px">${esc(x.title||x.type)}</h2><span class="help" style="margin:0">${esc(x.type)} · received ${fmtDate(x.date)||"—"} · ${x.content?x.content.length.toLocaleString()+" characters":"empty"}</span><button class="btn3" type="button" data-act="delInput" data-idx="${i}" style="margin-left:auto">Remove…</button><span id="di-${i}"></span></div>
+  <div class="grid"><div class="fld"><label for="in_t_${i}">Type</label><select id="in_t_${i}" data-path="${p}.type">${opts(INPUT_TYPES,x.type)}</select></div>
+  <div class="fld"><label for="in_ti_${i}">Title</label><input id="in_ti_${i}" type="text" data-path="${p}.title" value="${esc(x.title)}" placeholder="e.g. JD v2 from hiring manager"></div>
+  <div class="fld"><label for="in_d_${i}">Date received</label><input id="in_d_${i}" type="date" data-path="${p}.date" value="${esc(x.date)}"></div>
+  <div class="fld"><label for="in_s_${i}">From</label><input id="in_s_${i}" type="text" data-path="${p}.source" value="${esc(x.source)}" placeholder="Person or system"></div>
+  <div class="fld full"><label for="in_l_${i}">Link (optional)</label><input id="in_l_${i}" type="url" data-path="${p}.link" value="${esc(x.link)}" placeholder="https://… e.g. the JD in your ATS or SharePoint"></div>
+  <div class="fld full"><span style="font-size:12px;font-weight:500;color:var(--muted)">Use as input for</span><div class="toolbar" style="margin-top:2px">${USES.map(([k,l])=>`<label><input type="checkbox" data-path="${p}.uses.${k}"${x.uses&&x.uses[k]?" checked":""}> ${l}</label>`).join("")}</div></div>
+  <div class="fld full"><label for="in_c_${i}">Content</label><textarea id="in_c_${i}" rows="${x.content?10:5}" data-path="${p}.content" placeholder="Paste the text here: the JD, your meeting notes, an email, salary data or a market report extract.">${esc(x.content)}</textarea>
+  <div class="toolbar" style="margin-top:4px"><button class="btn2" type="button" data-act="loadInputFile" data-idx="${i}">Load text from a file…</button><span class="help" style="margin:0">Reads .txt, .md, .csv, .json or .html files. For PDF or Word files, copy the text and paste it above.</span></div></div></div></section>`};
+  return head("Inputs","Inputs: job description, notes and data","Everything you receive for this requisition: the JD, your notes from each meeting, emails from the hiring manager, salary data and market reports. Tag each input with the sections it feeds. It then shows as a reference in those sections, so you can fill in the minutes, market intelligence and plan from it. Inputs stay internal and are not included in the email document.",`<div class="toolbar" style="margin:0"><select id="newInputType" aria-label="Type of input">${opts(INPUT_TYPES,"Job description")}</select><button class="btn" type="button" data-act="addInput">Add input</button></div>`)
+  +(list.length?list.map(card).join(""):`<div class="callout" style="margin-top:16px">No inputs yet. Start with the job description: choose “Job description” above, select <b>Add input</b>, and paste the text.</div>`);
+}
+function refPanel(use){
+  const ins=pkg.inputs.filter(x=>x.uses&&x.uses[use]&&(x.content||x.link));
+  const name=label(USES,use);
+  if(!ins.length)return `<div class="callout" style="margin-top:14px">No inputs are tagged for ${esc(name.toLowerCase())}. Add the JD, notes or data under <button class="btn3" type="button" data-tab="inputs" style="padding:0;color:var(--prop);text-decoration:underline">Inputs</button>.</div>`;
+  return `<section class="blk"><h2>Reference inputs <small>${ins.length} tagged for ${esc(name.toLowerCase())} · read-only here, edit under Inputs</small></h2>${ins.map(x=>`<details style="border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;margin-top:8px;background:var(--paper)"><summary style="cursor:pointer;font-weight:500">${esc(x.title||x.type)} <span class="help" style="margin:0">· ${esc(x.type)} · ${fmtDate(x.date)||"—"}${x.source?" · "+esc(x.source):""}</span></summary>${x.link?`<p style="margin:8px 0 0"><a href="${esc(x.link)}" target="_blank" rel="noopener">Open link ↗</a></p>`:""}${x.content?`<div style="white-space:pre-wrap;font-size:13px;margin-top:8px;max-height:360px;overflow:auto;overflow-wrap:anywhere">${esc(x.content)}</div>`:""}</details>`).join("")}</section>`;
+}
+function onbCheck(){
+  const o=pkg.plan.offerDate.v,b=pkg.plan.onboardingDate.v,cl=pkg.meta.closureDate.v,w=[];
+  if(o&&b&&b<o)w.push("The onboarding date is before the offer date.");
+  if(o&&cl&&o>cl)w.push(`The offer date is after the tentative closure date (${fmtDate(cl)}).`);
+  if(o&&b&&!(b<o))w.push(`${Math.round((parseISO(b)-parseISO(o))/86400000/7*10)/10} week(s) from offer to start.`);
+  return w.length?`<div class="callout${w.some(x=>/before|after/.test(x))?" warn":""}">${w.map(esc).join(" ")}</div>`:"";
+}
+const RENDER={inputs:rInputs,overview:rOverview,kickoff:rKickoff,confirm:rConfirm,market:rMarket,plan:rPlan,hm:rHM,ta:rTA,email:rEmail,history:rHistory};
+
+function render(){
+  renderRail();renderPkgSel();
+  if(!pkg){$("#main").innerHTML=`<div class="sheet">${head("Start here","No hiring package yet","Create one package per requisition. Start by adding the job description and any notes under Inputs, fill in the package during the kickoff, update it at every follow-up meeting, and email it to the hiring manager from the Email document section.")}<div class="toolbar"><button class="btn" type="button" data-act="newPkg">Create a hiring package</button><button class="btn2" type="button" data-act="importJson">Import a package (.json)</button></div></div>`;return}
+  const active=document.activeElement, ap=active&&active.dataset?active.dataset.path:null, sel=ap&&"selectionStart" in active?[active.selectionStart,active.selectionEnd]:null;
+  $("#main").innerHTML=`<div class="sheet${S.canWrite?"":" ro"}">${RENDER[cur]()}</div>`;
+  if(cur==="history")loadVersions();
+  if(ap){const el=document.querySelector(`[data-path="${CSS.escape(ap)}"]`);if(el){el.focus({preventScroll:true});if(sel&&el.setSelectionRange){try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
+}
+function renderPkgSel(){
+  const list=Object.values(packages).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
+  $("#pkgSel").innerHTML=list.length?list.map(p=>`<option value="${esc(p.id)}"${pkg&&p.id===pkg.id?" selected":""}>${esc((p.meta&&p.meta.role&&p.meta.role.v)||"Untitled role")}${p.meta&&p.meta.reqId&&p.meta.reqId.v?" · "+esc(p.meta.reqId.v):""}</option>`).join(""):`<option>No packages yet</option>`;
+  $("#pkgSel").disabled=!list.length;["#bDup","#bSnap"].forEach(s=>$(s).disabled=!pkg||!S.canWrite);$("#bNew").disabled=!S.canWrite;
+}
+function renderNotices(){
+  let h="";
+  if(S.mode==="db")h+=`<div class="notice"><p><b>Shared store.</b> Packages save automatically and everyone with edit access to this page sees the same versions.</p></div>`;
+  else h+=`<div class="notice"><p><b>Saved in this browser only.</b> ${S.inViewer?"Shared saving is not available in this view.":"Open the published page to save to the shared store."} Use <i>Meeting snapshots → Export package</i> to keep a backup.</p></div>`;
+  if(!S.canWrite)h+=`<div class="notice warn"><p>You can view these packages but not edit them. Ask the page owner for edit access.</p></div>`;
+  if(remotePending)h+=`<div class="notice warn"><p>Someone else saved a newer version of this package while you were editing.</p><button class="btn2" type="button" data-act="loadRemote">Load their version</button><button class="btn3" type="button" data-act="keepMine">Keep mine (overwrites theirs on next save)</button></div>`;
+  if(S.mode==="db"&&!localDraftsOffered){const loc=lsGet(LS_KEY);const n=loc?Object.keys(loc).filter(k=>!packages[k]).length:0;if(n)h+=`<div class="notice"><p>${n} package(s) were saved in this browser before shared saving was available.</p><button class="btn2" type="button" data-act="migrate">Copy them to the shared store</button><button class="btn3" type="button" data-act="dismissMigrate">Not now</button></div>`}
+  $("#notices").innerHTML=h;
+}
+
+/* ---------- saving ---------- */
+function setSave(t,isDirty){const el=$("#saveState");el.textContent=t;el.classList.toggle("dirty",!!isDirty)}
+function scheduleSave(){if(!S.canWrite)return;dirty=true;editSeq++;setSave("Unsaved changes",true);clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,900)}
+function saveNow(){
+  clearTimeout(saveTimer);if(!pkg||!S.canWrite)return Promise.resolve();
+  const seq=editSeq;pkg.updatedAt=new Date().toISOString();pkg.rev=uid();myRevs.add(pkg.rev);
+  const body=clone(pkg);packages[body.id]=body;lsSet(LS_LAST,body.id);
+  const size=JSON.stringify(body).length;
+  if(S.mode==="db"){
+    if(size>250000){setSave("Too large to save",true);toast("This package is too large to save (over 250 KB). Shorten the JD text or long notes.");return Promise.resolve()}
+    setSave("Saving…",true);
+    writeChain=writeChain.then(()=>S.db.collection("packages").doc(body.id).set(body)).then(()=>{if(seq===editSeq){dirty=false;setSave("Saved "+timeNow())}}).catch(e=>dbFail(e));
+    return writeChain;
+  }
+  const all=lsGet(LS_KEY)||{};all[body.id]=body;
+  if(lsSet(LS_KEY,all)){if(seq===editSeq){dirty=false;setSave("Saved in this browser "+timeNow())}}else setSave("Not saved: browser storage unavailable",true);
+  return Promise.resolve();
+}
+function dbFail(e){const c=e&&e.code;
+  if(c==="invalid_argument"&&S.user){S.canWrite=false;renderNotices();render();setSave("Read-only",true);return}
+  if(c==="quota_exceeded")toast("The shared store is full. Delete old packages or snapshots, then try again.");
+  else toast("Could not save ("+(c||"error")+"). Your changes are still on this page; edit again to retry.");
+  setSave("Save failed",true)}
+const timeNow=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+
+/* ---------- versions (meeting snapshots) ---------- */
+async function saveSnapshot(labelText){
+  if(!pkg)return;await saveNow();
+  const lastMeet=pkg.meetings.slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""))[0];
+  const ver={id:uid(),at:new Date().toISOString(),label:labelText||(lastMeet?`${lastMeet.type||"Meeting"} · ${fmtDate(lastMeet.date)}`:"Snapshot"),data:clone(pkg)};
+  try{
+    if(S.mode==="db"){const col=S.db.collection(`packages/${pkg.id}/versions`);await col.doc(ver.id).set(ver);
+      const all=await col.orderBy("at","desc").get();const extra=all.docs.slice(MAX_VERSIONS);for(const d of extra){await col.doc(d.id).delete()}}
+    else{const k=LS_VER+pkg.id;const arr=lsGet(k)||[];arr.unshift(ver);if(!lsSet(k,arr.slice(0,MAX_VERSIONS)))throw {code:"storage"}}
+    toast("Snapshot saved: "+ver.label);if(cur==="history")loadVersions();
+  }catch(e){toast("Could not save the snapshot ("+(e.code||"error")+").")}
+}
+let versionsCache=[];
+async function loadVersions(){
+  const box=$("#verList");if(!box||!pkg)return;
+  try{
+    if(S.mode==="db"){const snap=await S.db.collection(`packages/${pkg.id}/versions`).orderBy("at","desc").limit(MAX_VERSIONS).get();versionsCache=snap.docs.map(d=>d.data())}
+    else versionsCache=lsGet(LS_VER+pkg.id)||[];
+  }catch(e){box.innerHTML=`<p class="help">Snapshots could not be loaded (${esc(e.code||"error")}).</p>`;return}
+  if(!$("#verList"))return;
+  box.innerHTML=versionsCache.length?`<div class="tbl-wrap"><table class="ed"><tr><th>Saved</th><th>Label</th><th>Confirmed / to confirm</th><th></th></tr>${versionsCache.map((v,i)=>{const d=new Date(v.at);const c=countStatus(v.data);return `<tr><td style="white-space:nowrap">${fmtDate(toISO(d))} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}</td><td>${esc(v.label)}</td><td>${c.confirmed} / ${c.tbc}</td><td style="white-space:nowrap"><button class="btn2" type="button" data-act="diffVer" data-idx="${i}">Compare</button> <button class="btn2" type="button" data-act="restoreVer" data-idx="${i}"${S.canWrite?"":" disabled"}>Restore…</button><span id="rv-${i}"></span></td></tr>`}).join("")}</table></div><div id="verDiff"></div>`
+    :`<p class="help">No snapshots yet. Save one at the end of each meeting with “Save meeting snapshot”.</p>`;
+}
+function countStatus(p){const keep=pkg;try{pkg=normalize(p);return tracker().c}finally{pkg=keep}}
+function diffVersions(a,b){
+  const out=[];const walk=(x,y,path)=>{
+    if(typeof x!=="object"||x===null||typeof y!=="object"||y===null){if(JSON.stringify(x)!==JSON.stringify(y))out.push([path,x,y]);return}
+    if(Array.isArray(x)||Array.isArray(y)){if(JSON.stringify(x)!==JSON.stringify(y)){const ax=Array.isArray(x)?x.length:0,ay=Array.isArray(y)?y.length:0;out.push([path,ax+" row(s)",ay+" row(s), changed"])}return}
+    new Set([...Object.keys(x),...Object.keys(y)]).forEach(k=>{if(["updatedAt","rev","createdAt"].includes(k))return;walk(x[k],y[k],path?path+"."+k:k)})};
+  walk(a,b,"");return out;
+}
+function prettyPath(p){return p.replace(/^meta\.(\w+)\.v$/,(m,k)=>META_LABELS[k]||k).replace(/^meta\.(\w+)\.s$/,(m,k)=>(META_LABELS[k]||k)+" (status)").replace(/^text\./,"Text: ").replace(/^plan\./,"Plan: ").replace(/^market\./,"Market: ")}
+
+/* ---------- package ops ---------- */
+function openPkg(id){if(dirty)saveNow();pkg=packages[id]?normalize(packages[id]):null;remotePending=null;lsSet(LS_LAST,id||"");renderNotices();render();setSave(pkg?"Saved":"")}
+function createPkg(from){const p=from?normalize(clone(from)):blankPackage();if(from){p.id=uid();p.meta.role.v=(p.meta.role.v||"Untitled role")+" (copy)";p.createdAt=new Date().toISOString();p.meetings=[]}
+  pkg=p;packages[p.id]=clone(p);dirty=true;editSeq++;saveNow();cur=from?"overview":"inputs";lsSet("hps.v1.tab",cur);render();toast(from?"Package duplicated":"New package created")}
+async function deletePkg(){
+  if(!pkg)return;const id=pkg.id;
+  try{if(S.mode==="db")await S.db.collection("packages").doc(id).delete();else{const all=lsGet(LS_KEY)||{};delete all[id];lsSet(LS_KEY,all);try{localStorage.removeItem(LS_VER+id)}catch(e){}}}catch(e){toast("Could not delete ("+(e.code||"error")+").");return}
+  delete packages[id];dirty=false;const next=Object.values(packages).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0];
+  cur="overview";openPkg(next?next.id:null);toast("Package deleted")}
+
+/* ---------- proposed timeline ---------- */
+function buildTimeline(){
+  const k=pkg.meta.kickoffDate.v||todayISO();const lead=Math.max(1,parseInt(pkg.plan.daysToResumes,10)||5);
+  const sla=Math.max(1,parseInt(String(pkg.plan.feedbackSla.v).match(/\d+/)?.[0]||"2",10));
+  const r=addBD(k,lead), fb=addBD(r,sla), l1s=addBD(fb,1), l1e=addBD(l1s,4), sh=addBD(l1e,sla), l2s=addBD(sh,1), l2e=addBD(l2s,3), fd=addBD(l2e,sla), ref=addBD(fd,2), off=addBD(ref,1), acc=addBD(off,3);
+  const L1=pkg.interviewers.find(i=>/L1/i.test(i.level)),L2=pkg.interviewers.find(i=>/L2/i.test(i.level)),PC=pkg.interviewers.find(i=>/P&C/i.test(i.level));
+  const nm=(x,d)=>x&&x.name?x.name:d;
+  pkg.plan.resumeDate.v=pkg.plan.resumeDate.v||r;
+  pkg.plan.milestones=[
+    {name:"Kickoff held; package shared with hiring manager",owner:"TA Partner",date:addBD(k,1),dependency:"Kickoff notes",decision:false,s:"proposed"},
+    {name:"JD and comp range confirmed; sourcing live",owner:"TA Partner, P&C",date:addBD(k,2),dependency:"HM sign-off on JD; P&C range",decision:true,s:"proposed"},
+    {name:`First ${pkg.plan.resumeCount.v||5} resumes submitted`,owner:"TA Partner",date:r,dependency:"Sourcing live",decision:false,s:"proposed"},
+    {name:"Hiring manager resume feedback",owner:"Hiring manager",date:fb,dependency:"Resumes submitted",decision:true,s:"proposed"},
+    {name:"L1 interviews completed",owner:nm(L1,"L1 interviewer"),date:l1e,dependency:"Interviewer availability",decision:false,s:"proposed"},
+    {name:"Shortlist for L2 agreed",owner:"Hiring manager",date:sh,dependency:"L1 scorecards",decision:true,s:"proposed"},
+    {name:"L2 and values interviews completed",owner:nm(L2,"Hiring manager")+", "+nm(PC,"P&C partner"),date:l2e,dependency:"Shortlist",decision:false,s:"proposed"},
+    {name:"Final selection decision",owner:nm(pkg.interviewers.find(i=>/decision/i.test(i.level)),"Final decision maker"),date:fd,dependency:"All scorecards",decision:true,s:"proposed"},
+    {name:"References and offer approval",owner:"TA Partner, P&C",date:ref,dependency:"Selection decision",decision:false,s:"proposed"},
+    {name:"Tentative offer date",owner:"TA Partner",date:off,dependency:"Approvals",decision:false,s:"proposed"},
+    {name:"Offer accepted (hiring closure)",owner:"Candidate",date:acc,dependency:"Offer",decision:true,s:"proposed"}
+  ];
+  pkg.plan.schedule=[
+    {stage:"TA screening calls",date:`${fmtDate(addBD(k,2))} – ${fmtDate(r)}`,slots:"30 min",who:"TA Partner",s:"proposed"},
+    {stage:"L1 interviews",date:`${fmtDate(l1s)} – ${fmtDate(l1e)}`,slots:"[Slots to confirm]",who:nm(L1,TBC),s:"proposed"},
+    {stage:"L2 interviews",date:`${fmtDate(l2s)} – ${fmtDate(l2e)}`,slots:"[Slots to confirm]",who:nm(L2,TBC),s:"proposed"},
+    {stage:"Values and culture conversation",date:`${fmtDate(l2s)} – ${fmtDate(l2e)}`,slots:"[Slots to confirm]",who:nm(PC,TBC),s:"proposed"}
+  ];
+  if(pkg.plan.offerDate.s!=="confirmed")pkg.plan.offerDate={v:off,s:"proposed"};
+  const nw=parseFloat(pkg.plan.noticeWeeks);
+  if(pkg.plan.onboardingDate.s!=="confirmed"){if(nw>0){const d=parseISO(acc);d.setDate(d.getDate()+Math.round(nw*7));while(d.getDay()!==1)d.setDate(d.getDate()+1);pkg.plan.onboardingDate={v:toISO(d),s:"proposed"};
+      pkg.plan.milestones.push({name:"Onboarding / start date",owner:"Hiring manager, TA Partner",date:toISO(d),dependency:`Notice period (${nw} weeks)`,decision:false,s:"proposed"})}
+    else pkg.plan.onboardingDate={v:"",s:"tbc"}}
+  scheduleSave();render();toast(nw>0?"Proposed timeline built, including offer and start dates. All dates are proposals until agreed.":"Proposed timeline built. Add the notice period to estimate the start date.");
+}
+
+/* ---------- executive summary draft ---------- */
+function draftExec(){
+  const m=pkg.meta, t=tracker();
+  const prim=pkg.skills.filter(s=>s.tier==="primary"&&s.name).map(s=>s.name);
+  const hard=pkg.market.availability.map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc&&x.r.skill).sort((a,b)=>b.sc.avg-a.sc.avg);
+  const pend=pkg.hmDecisions.filter(d=>d.s!=="decided"&&d.decision).length;
+  const p=[];
+  p.push(`Hiring need: ${fv(m.positions)} × ${fv(m.role)} for ${fv(m.businessUnit)}, based in ${fv(m.location)} (${fv(m.workArrangement)}). Tentative closure: ${m.closureDate.v?fmtDate(m.closureDate.v)+(m.closureDate.s==="confirmed"?"":" "+TBC):TBC}.`);
+  p.push(`Priority skills: ${prim.length?prim.join("; "):TBC}.`);
+  p.push(hard.length?`Market outlook: the hardest area to hire is ${hard[0].r.skill} (${hard[0].sc.lvl.toLowerCase()} difficulty${hard[0].r.market?", "+hard[0].r.market:""}). ${pkg.text.marketSummary||""}`.trim():"Market outlook: research in progress. Availability, difficulty and pay ranges will be added with sources.");
+  p.push(`Plan: ${pkg.plan.stages.filter(s=>s.name).length} interview stages. The TA Partner proposes to submit the first ${pkg.plan.resumeCount.v||5} resumes by ${pkg.plan.resumeDate.v?fmtDate(pkg.plan.resumeDate.v):TBC}${pkg.plan.resumeCount.s==="confirmed"&&pkg.plan.resumeDate.s==="confirmed"?" (agreed)":" (proposed)"}.`);
+  p.push(`Open items: ${t.c.tbc+t.c.missing} item(s) still to confirm${pend?`, including ${pend} decision(s) needed from the hiring manager (section 7)`:""}.`);
+  return p.join("\n\n");
+}
+
+/* ---------- document model ---------- */
+function defaultSubject(){return `Hiring package for review: ${pkg.meta.role.v||"[Role]"}${pkg.meta.location.v?" · "+pkg.meta.location.v:""}${pkg.meta.reqId.v?" · "+pkg.meta.reqId.v:""}`}
+function defaultNote(){return `Thank you for the kickoff. Below is the hiring package: what we agreed, what still needs confirming, the market picture and the proposed plan. Please review section 7, the decisions I need from you, and reply with any corrections.`}
+const ST_LABEL={confirmed:"Confirmed",tbc:"To confirm",proposed:"Proposed",missing:"Missing",declined:"Declined",recommended:"Recommended"};
+function buildDoc(){
+  const m=pkg.meta,e=pkg.email,t=tracker(),B=[];
+  const st=s=>({text:ST_LABEL[s]||s,status:s});
+  B.push({t:"title",text:`Hiring Package: ${m.role.v||TBC}`});
+  B.push({t:"sub",text:`${m.org.v||"Volvo Group"} · Talent Acquisition · Prepared ${fmtDate(m.prepDate)}`});
+  if(e.recipient||m.hiringManager.v)B.push({t:"p",text:`Dear ${e.recipient||m.hiringManager.v},`});
+  B.push({t:"p",text:e.note||defaultNote()});
+  B.push({t:"kv",rows:[["Role",fv(m.role)],["Requisition",fv(m.reqId)],["Business unit",fv(m.businessUnit)],["Location",fv(m.location)],["Work arrangement",fv(m.workArrangement)],["Hiring manager",fv(m.hiringManager)],["TA Partner",fv(m.taPartner)],["P&C partner",fv(m.pcPartner)],["Preparation date",fmtDate(m.prepDate)],["Tentative closure date",m.closureDate.v?fmtDate(m.closureDate.v)+(m.closureDate.s==="confirmed"?"":m.closureDate.s==="proposed"?" (proposed)":" "+TBC):TBC],["Tentative offer date",fd(pkg.plan.offerDate)],["Tentative onboarding date",fd(pkg.plan.onboardingDate)],["Information status",`${label(INFO,m.infoStatus)}: ${t.c.confirmed} confirmed, ${t.c.tbc+t.c.missing} to confirm, ${t.c.proposed} proposed`]]});
+  B.push({t:"note",text:`How to read this: “Confirmed” means agreed with the hiring manager. ${TBC} means missing or not yet verified. “Proposed” and “Recommended” are TA Partner suggestions that have not been agreed.`});
+
+  B.push({t:"h1",text:"1. Executive summary"});
+  B.push({t:"p",text:pkg.text.exec||`${TBC} Executive summary not yet written.`});
+
+  B.push({t:"h1",text:"2. Kickoff meeting summary and minutes"});
+  if(e.includeMeetings){B.push({t:"h2",text:"Meeting log"});B.push(pkg.meetings.length?{t:"table",head:["Date","Meeting","Attendees","Key notes"],rows:pkg.meetings.slice().sort((a,b)=>(a.date||"").localeCompare(b.date||"")).map(r=>[fmtDate(r.date)||TBC,label(MEET_TYPES,r.type),txt(r.attendees),txt(r.notes)])}:{t:"p",text:`${TBC} No meetings recorded.`})}
+  B.push({t:"h2",text:"Role and hiring context"});B.push({t:"p",text:pkg.text.context||TBC});
+  B.push({t:"kv",rows:[["Department / function",fv(m.department)],["Grade / level",fv(m.grade)],["Number of positions",fv(m.positions)],["Reports to",fv(m.reportsTo)],["Reason for hire",fv(m.reasonForHire)]]});
+  B.push({t:"h2",text:"Skills"});
+  const sk=pkg.skills.filter(s=>s.name).sort((a,b)=>TIERS.findIndex(x=>x[0]===a.tier)-TIERS.findIndex(x=>x[0]===b.tier));
+  B.push(sk.length?{t:"table",head:["Priority","Skill","Depth expected","How assessed","Status"],rows:sk.map(s=>[label(TIERS,s.tier),s.name,txt(s.level),txt(s.assess),st(s.s)])}:{t:"p",text:`${TBC} Skills not yet captured.`});
+  B.push({t:"h2",text:"Location, work arrangement and hiring market"});
+  B.push({t:"kv",rows:[["Location",fv(m.location)],["Work arrangement",fv(m.workArrangement)],["Geographic hiring market",fv(m.hiringMarket)],["Relocation / visa support",fv(m.relocation)],["Travel",fv(m.travel)]]});
+  B.push({t:"h2",text:"Hiring manager's preferences"});
+  B.push(pkg.prefs.some(p=>p.detail)?{t:"table",head:["Area","Preference","Status"],rows:pkg.prefs.filter(p=>p.detail).map(p=>[p.area,p.detail,st(p.s)])}:{t:"p",text:TBC});
+  B.push({t:"h2",text:"Success measures and key outcomes"});
+  B.push(pkg.success.some(p=>p.measure)?{t:"table",head:["Measure / outcome","Target or evidence","By when","Status"],rows:pkg.success.filter(p=>p.measure).map(p=>[p.measure,txt(p.target),txt(p.timeframe),st(p.s)])}:{t:"p",text:TBC});
+  B.push({t:"h2",text:"Selection process and decision-making"});
+  B.push({t:"kv",rows:[["Agreed selection process",pkg.text.selection||TBC],["Decision-making responsibilities",pkg.text.decisionRights||TBC],["Feedback turnaround",fv(pkg.plan.feedbackSla)]]});
+  B.push({t:"h2",text:"Interviewers and P&C partner"});
+  B.push({t:"table",head:["Role in process","Name","Job title","Assesses","Status"],rows:pkg.interviewers.map(r=>[txt(r.level),r.name||TBC,txt(r.title),txt(r.focus),st(r.name?r.s:"missing")])});
+  B.push({t:"h2",text:"Decisions agreed"});
+  B.push(pkg.decisions.some(d=>d.decision)?{t:"table",head:["Date","Decision","Agreed by"],rows:pkg.decisions.filter(d=>d.decision).map(d=>[fmtDate(d.date),d.decision,txt(d.by)])}:{t:"p",text:"No decisions recorded yet."});
+  B.push({t:"h2",text:"Open questions"});
+  const oq=pkg.questions.filter(q=>q.question);
+  B.push(oq.length?{t:"table",head:["Question","Owner","Due","Status","Answer"],rows:oq.map(q=>[q.question,txt(q.owner),fmtDate(q.due)||TBC,st(q.s==="answered"?"confirmed":"tbc"),q.answer||"—"])}:{t:"p",text:"None recorded."});
+  B.push({t:"h2",text:"Action items"});
+  const ai=pkg.actions.filter(a=>a.action);
+  B.push(ai.length?{t:"table",head:["Action","Owner","Due","Status"],rows:ai.map(a=>[a.action,`${a.owner||TBC} (${a.ownerRole})`,fmtDate(a.due)||TBC,label(ACT_ST,a.status)])}:{t:"p",text:"None recorded."});
+
+  B.push({t:"h1",text:"3. Confirmed requirements and items requiring confirmation"});
+  if(t.critMissing.length)B.push({t:"note",warn:true,text:"Critical inputs not yet confirmed: "+t.critMissing.join("; ")+"."});
+  const conf=t.items.filter(i=>i.status==="confirmed"), open=t.items.filter(i=>i.status==="tbc"||i.status==="missing"), prop=t.items.filter(i=>i.status==="proposed");
+  B.push({t:"h2",text:`Confirmed (${conf.length})`});B.push(conf.length?{t:"table",head:["Area","Item","Detail"],rows:conf.map(i=>[i.area,i.item,i.detail||"—"])}:{t:"p",text:"Nothing confirmed yet."});
+  B.push({t:"h2",text:`To confirm (${open.length})`});B.push(open.length?{t:"table",head:["Area","Item","Status"],rows:open.map(i=>[i.area,i.item,st(i.status)])}:{t:"p",text:"Nothing outstanding."});
+  if(prop.length){B.push({t:"h2",text:`Proposed, awaiting agreement (${prop.length})`});B.push({t:"table",head:["Area","Item","Detail"],rows:prop.map(i=>[i.area,i.item,i.detail||"—"])})}
+
+  B.push({t:"h1",text:"4. Talent availability and market intelligence"});
+  if(e.includeMarket){
+    const mk=pkg.market;const has=mk.availability.length||mk.comp.length||mk.factors.length||mk.alternatives.length||pkg.text.marketSummary;
+    if(!has)B.push({t:"note",warn:true,text:`${TBC} Market research not yet completed. The TA Partner will add sourced findings.`});
+    if(pkg.text.marketSummary)B.push({t:"p",text:pkg.text.marketSummary});
+    if(mk.availability.length){B.push({t:"h2",text:"Availability and hiring difficulty"});
+      B.push({t:"table",head:["Skill / combination","Market","Pool","Evidence of pool","Difficulty","Evidence type","Sources"],rows:mk.availability.filter(r=>r.skill).map(r=>{const sc=scoreOf(r);return [r.skill,txt(r.market),r.pool||TBC,txt(r.poolEvidence),sc?`${sc.lvl} (${sc.avg.toFixed(1)}/5)`:TBC,st2(r.evidence),r.sources||"—"]})});
+      B.push({t:"note",text:"Difficulty method: the TA Partner scores supply scarcity, competing demand, pay pressure, location constraint and niche/seniority from 1 (easy) to 5 (hard). Difficulty is the average: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4+ Very high. Scores are professional judgement supported by the evidence listed."});}
+    if(mk.comp.length){B.push({t:"h2",text:"Indicative compensation"});
+      B.push({t:"table",head:["Benchmark","Level","Geography","Range (low – mid – high)","Period / basis","Data date","Evidence type","Sources","Limitations"],rows:mk.comp.filter(r=>r.role||r.low||r.mid||r.high).map(r=>[txt(r.role),txt(r.level),txt(r.geo),`${r.currency||"[currency?]"} ${r.low||"–"} – ${r.mid||"–"} – ${r.high||"–"}`,`${label(PERIOD,r.period)}, ${r.basis}`,r.dataDate||TBC,st2(r.evidence),r.sources||"—",r.limits||"—"])});
+      B.push({t:"note",text:"These are external, indicative ranges. They are not the approved offer range, which P&C sets."});}
+    if(mk.factors.length){B.push({t:"h2",text:"Market factors"});B.push({t:"table",head:["Factor","Effect on availability, pay or speed","Evidence type","Sources"],rows:mk.factors.filter(r=>r.factor).map(r=>[r.factor,txt(r.effect),st2(r.evidence),r.sources||"—"])})}
+    if(mk.alternatives.length){B.push({t:"h2",text:"Alternative and transferable skills: options for your decision"});B.push({t:"note",text:"These options are not approved changes to the role. Please accept, reject or flag each one for discussion."});
+      B.push({t:"table",head:["Option","Instead of / alongside","Expected effect","Risk and how to close the gap","Your decision"],rows:mk.alternatives.filter(r=>r.alt).map(r=>[r.alt,txt(r.forSkill),txt(r.gain),txt(r.risk),{text:label(HM_ALT,r.hm),status:r.hm==="accept"?"confirmed":r.hm==="reject"?"declined":"tbc"}])})}
+    if(e.includeSources){B.push({t:"h2",text:"Sources"});const ss=srcIdx().filter(s=>s.title||s.url);
+      B.push(ss.length?{t:"table",head:["ID","Source","Publisher","Data date","Accessed"],rows:ss.map(s=>[s._id,{text:s.title||s.url,url:s.url},txt(s.publisher),s.published||"—",fmtDate(s.accessed)||TBC])}:{t:"p",text:"No sources recorded yet. Findings without a source should be read as unverified."})}
+  }else B.push({t:"p",text:"Market intelligence is shared separately."});
+
+  B.push({t:"h1",text:"5. Recommended interview and hiring plan"});
+  B.push({t:"h2",text:"Interview stages"});
+  B.push({t:"table",head:["Stage","Format / length","Focus areas","Interviewer / owner","Evaluation criteria","Status"],rows:pkg.plan.stages.filter(s=>s.name).map(s=>[s.name,[s.format,s.duration].filter(Boolean).join(" · ")||"—",txt(s.focus),txt(s.owner),txt(s.criteria),st(s.s)])});
+  B.push({t:"h2",text:"First resume commitment"});
+  B.push({t:"kv",rows:[["Number of resumes",fv(pkg.plan.resumeCount)],["Committed date",pkg.plan.resumeDate.v?fmtDate(pkg.plan.resumeDate.v)+(pkg.plan.resumeDate.s==="confirmed"?"":pkg.plan.resumeDate.s==="proposed"?" (proposed)":" "+TBC):TBC],["Conditions",pkg.text.resumeNote||"—"]]});
+  B.push({t:"h2",text:"Proposed interview schedule"});
+  B.push(pkg.plan.schedule.length?{t:"table",head:["Stage","Date or window","Slots / time","Interviewers","Status"],rows:pkg.plan.schedule.map(s=>[txt(s.stage),txt(s.date),txt(s.slots),txt(s.who),st(s.s)])}:{t:"p",text:`${TBC} Interview dates not yet agreed. The TA Partner will propose slots once interviewers are confirmed.`});
+  B.push({t:"h2",text:"Assessments"});
+  B.push({t:"table",head:["Assessment","Type","Used for","Rationale","Status"],rows:pkg.plan.assessments.filter(a=>a.name).map(a=>[a.name,txt(a.type),txt(a.purpose),txt(a.rationale),{text:label(ASSESS_ST,a.s),status:a.s==="confirmed"?"confirmed":a.s==="declined"?"declined":"proposed"}])});
+  B.push({t:"h2",text:"Milestones and decision points"});
+  const ms=pkg.plan.milestones.filter(x=>x.name).slice().sort((a,b)=>(a.date||"9").localeCompare(b.date||"9"));
+  B.push(ms.length?{t:"table",head:["Milestone","Owner","Date","Depends on","Decision point","Status"],rows:ms.map(x=>[x.name,txt(x.owner),fmtDate(x.date)||TBC,txt(x.dependency),x.decision?"Yes":"—",st(x.s)])}:{t:"p",text:`${TBC} Milestones not yet planned.`});
+  const lastMs=ms.filter(x=>x.date).pop();if(lastMs&&m.closureDate.v){const gap=bdBetween(lastMs.date,m.closureDate.v);B.push({t:"note",warn:gap<0,text:gap>=0?`The plan ends ${gap} business day(s) before the tentative closure date (${fmtDate(m.closureDate.v)}).`:`The plan ends ${-gap} business day(s) after the tentative closure date (${fmtDate(m.closureDate.v)}). We need to compress the plan or agree a new date.`})}
+  B.push({t:"h2",text:"Offer and onboarding"});
+  B.push({t:"kv",rows:[["Tentative offer date",fd(pkg.plan.offerDate)],["Expected notice period",pkg.plan.noticeWeeks?pkg.plan.noticeWeeks+" week(s) [estimate]":TBC],["Tentative onboarding / start date",fd(pkg.plan.onboardingDate)],["Onboarding notes",pkg.plan.onboardingNote||"—"]]});
+  B.push({t:"h2",text:"Risks to the timeline"});
+  B.push({t:"table",head:["Risk","Likelihood","Impact","Mitigation","Owner"],rows:pkg.plan.risks.filter(r=>r.risk).map(r=>[r.risk,r.likelihood||TBC,r.impact||TBC,txt(r.mitigation),txt(r.owner)])});
+
+  B.push({t:"h1",text:"6. Decisions requested from you"});
+  const hd=pkg.hmDecisions.filter(d=>d.decision);
+  B.push(hd.length?{t:"table",head:["Decision needed","Options","TA recommendation","Needed by","Status / answer"],rows:hd.map(d=>[d.decision,d.options||"—",d.recommendation||"—",fmtDate(d.needBy)||TBC,d.s==="decided"?{text:"Decided: "+(d.answer||""),status:"confirmed"}:{text:"Pending",status:"tbc"}])}:{t:"p",text:"No decisions requested."});
+
+  B.push({t:"h1",text:"7. TA Partner action list"});
+  const ta=[...pkg.taActions.filter(a=>a.action).map(a=>[a.action,fmtDate(a.due)||TBC,label(ACT_ST,a.status),a.note||"—"]),...pkg.actions.filter(a=>a.ownerRole==="TA Partner"&&a.action).map(a=>[a.action,fmtDate(a.due)||TBC,label(ACT_ST,a.status),"From the minutes"])];
+  B.push(ta.length?{t:"table",head:["Action","Due","Status","Note"],rows:ta}:{t:"p",text:"No actions listed."});
+  B.push({t:"sig",text:`Kind regards,\n${m.taPartner.v||"[TA Partner]"}\nTalent Acquisition Partner, ${m.org.v||"Volvo Group"}`});
+  B.push({t:"foot",text:`Generated ${fmtDate(todayISO())} from Hiring Package Studio. Proposed and recommended items are suggestions until the hiring manager confirms them. Market figures are indicative and depend on the sources listed.`});
+  return B;
+}
+function fd(f){return f&&f.v?fmtDate(f.v)+(f.s==="confirmed"?"":f.s==="proposed"?" (proposed)":" "+TBC):TBC}
+function st2(ev){return {text:label(EVIDENCE,ev),status:ev==="verified"?"confirmed":ev==="estimate"?"proposed":ev==="assumption"?"declined":"tbc"}}
+
+/* ---------- email HTML (inline styles for mail clients) ---------- */
+const EC={navy:"#001433",slate:"#4A5568",line:"#D9E1EA",paper:"#F7FAFC",amber:"#B7791F",ok:"#22704A",okb:"#E3F2EA",tbc:"#B42318",tbcb:"#FCE9E7",pr:"#2B4C7E",prb:"#E6EDF7",grey:"#EDF1F5"};
+const EF="font-family:'Segoe UI','Helvetica Neue',Inter,Arial,sans-serif;";
+function chipHTML(c){const s=c.status;const [fg,bg]=s==="confirmed"?[EC.ok,EC.okb]:s==="proposed"?[EC.pr,EC.prb]:s==="declined"?[EC.slate,EC.grey]:[EC.tbc,EC.tbcb];return `<span style="${EF}display:inline-block;font-size:11px;font-weight:600;color:${fg};background:${bg};border-radius:10px;padding:1px 8px;white-space:nowrap">${esc(c.text)}</span>`}
+function cellHTML(c){if(c&&typeof c==="object"){if(c.status)return chipHTML(c);if(c.url)return `<a href="${esc(c.url)}" style="color:${EC.pr}">${esc(c.text)}</a>`;return esc(c.text)}return hiTBC(esc(c==null?"":c)).replace(/\n/g,"<br>")}
+const hiTBC=s=>s.replace(/\[To confirm\]/g,`<span style="color:${EC.tbc};font-weight:600">[To confirm]</span>`);
+function toEmailHTML(B){
+  const P=`${EF}font-size:14px;line-height:1.55;color:#1A202C;margin:0 0 10px`;
+  let h=`<div style="${EF}color:#1A202C;max-width:860px">`;
+  B.forEach(b=>{switch(b.t){
+    case "title":h+=`<div style="border-top:4px solid ${EC.amber};padding-top:12px"><h1 style="${EF}font-size:22px;color:${EC.navy};margin:0 0 4px">${esc(b.text)}</h1></div>`;break;
+    case "sub":h+=`<p style="${EF}font-size:12px;color:${EC.slate};margin:0 0 16px;letter-spacing:.02em">${esc(b.text)}</p>`;break;
+    case "h1":h+=`<h2 style="${EF}font-size:17px;color:${EC.navy};margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid ${EC.amber}">${esc(b.text)}</h2>`;break;
+    case "h2":h+=`<h3 style="${EF}font-size:14px;color:${EC.navy};margin:16px 0 6px">${esc(b.text)}</h3>`;break;
+    case "p":h+=String(b.text).split(/\n{2,}/).map(par=>`<p style="${P}">${hiTBC(esc(par)).replace(/\n/g,"<br>")}</p>`).join("");break;
+    case "sig":h+=`<p style="${P};margin-top:20px">${esc(b.text).replace(/\n/g,"<br>")}</p>`;break;
+    case "note":h+=`<p style="${EF}font-size:12.5px;line-height:1.5;color:${b.warn?EC.tbc:EC.slate};background:${b.warn?EC.tbcb:EC.paper};border-left:3px solid ${b.warn?EC.tbc:EC.amber};padding:8px 10px;margin:8px 0 12px">${hiTBC(esc(b.text))}</p>`;break;
+    case "foot":h+=`<p style="${EF}font-size:11px;color:${EC.slate};border-top:1px solid ${EC.line};padding-top:8px;margin-top:20px">${esc(b.text)}</p>`;break;
+    case "kv":h+=`<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 12px">${b.rows.map(([k,v])=>`<tr><td style="${EF}font-size:12.5px;color:${EC.slate};padding:5px 12px 5px 0;border-bottom:1px solid ${EC.line};width:34%;vertical-align:top">${esc(k)}</td><td style="${EF}font-size:13px;color:#1A202C;padding:5px 0;border-bottom:1px solid ${EC.line};vertical-align:top">${cellHTML(v)}</td></tr>`).join("")}</table>`;break;
+    case "table":h+=`<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 14px;border:1px solid ${EC.line}"><tr>${b.head.map(x=>`<th style="${EF}font-size:11.5px;font-weight:600;color:#FFFFFF;background:${EC.navy};text-align:left;padding:6px 8px;vertical-align:bottom">${esc(x)}</th>`).join("")}</tr>${b.rows.map((r,i)=>`<tr>${r.map(c=>`<td style="${EF}font-size:12.5px;line-height:1.45;color:#1A202C;padding:6px 8px;border-top:1px solid ${EC.line};vertical-align:top;background:${i%2?EC.paper:"#FFFFFF"}">${cellHTML(c)}</td>`).join("")}</tr>`).join("")}</table>`;break;
+  }});
+  return h+"</div>";
+}
+function toText(B){
+  const c=x=>x&&typeof x==="object"?(x.url?`${x.text} (${x.url})`:x.text):String(x==null?"":x);
+  return B.map(b=>{switch(b.t){
+    case "title":return b.text.toUpperCase();case "h1":return "\n"+b.text.toUpperCase()+"\n"+"-".repeat(Math.min(60,b.text.length));case "h2":return "\n"+b.text;
+    case "kv":return b.rows.map(([k,v])=>`${k}: ${c(v)}`).join("\n");
+    case "table":return b.rows.map(r=>"- "+r.map((x,i)=>`${b.head[i]}: ${c(x)}`).join(" | ")).join("\n");
+    default:return b.text}}).join("\n\n").replace(/\n{3,}/g,"\n\n");
+}
+
+/* ---------- .docx writer (WordprocessingML in a stored zip) ---------- */
+const xe=s=>String(s==null?"":s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+function runs(text,rpr){const parts=String(text==null?"":text).split("\n");return parts.map((t,i)=>{const segs=t.split(/(\[To confirm\])/);return (i?`<w:r><w:br/></w:r>`:"")+segs.filter(s=>s!=="").map(s=>`<w:r><w:rPr>${s===TBC?'<w:b/><w:color w:val="B42318"/>':""}${rpr||""}</w:rPr><w:t xml:space="preserve">${xe(s)}</w:t></w:r>`).join("")}).join("")}
+function para(inner,style,ppr){return `<w:p><w:pPr>${style?`<w:pStyle w:val="${style}"/>`:""}${ppr||""}</w:pPr>${inner}</w:p>`}
+function toDocx(B){
+  const rels=[];let body="";
+  const link=(text,url)=>{const id="rIdL"+(rels.length+1);rels.push(`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${xe(url)}" TargetMode="External"/>`);return `<w:hyperlink r:id="${id}"><w:r><w:rPr><w:color w:val="2B4C7E"/><w:u w:val="single"/></w:rPr><w:t xml:space="preserve">${xe(text)}</w:t></w:r></w:hyperlink>`};
+  const cellXML=(c,hdr,w,shade)=>{let inner;
+    if(c&&typeof c==="object"){if(c.status){const col=c.status==="confirmed"?"22704A":c.status==="proposed"?"2B4C7E":c.status==="declined"?"4A5568":"B42318";inner=para(runs(c.text,`<w:b/><w:color w:val="${col}"/>`),"Cell")}else if(c.url)inner=para(link(c.text,c.url),"Cell");else inner=para(runs(c.text),"Cell")}
+    else inner=para(runs(c,hdr?'<w:b/><w:color w:val="FFFFFF"/>':""),"Cell");
+    return `<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="pct"/>${hdr?'<w:shd w:val="clear" w:color="auto" w:fill="001433"/>':shade?'<w:shd w:val="clear" w:color="auto" w:fill="F7FAFC"/>':""}</w:tcPr>${inner}</w:tc>`};
+  const tbl=(rowsXML,grid)=>`<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="D9E1EA"/><w:left w:val="single" w:sz="4" w:color="D9E1EA"/><w:bottom w:val="single" w:sz="4" w:color="D9E1EA"/><w:right w:val="single" w:sz="4" w:color="D9E1EA"/><w:insideH w:val="single" w:sz="4" w:color="D9E1EA"/><w:insideV w:val="single" w:sz="4" w:color="D9E1EA"/></w:tblBorders><w:tblCellMar><w:top w:w="50" w:type="dxa"/><w:left w:w="90" w:type="dxa"/><w:bottom w:w="50" w:type="dxa"/><w:right w:w="90" w:type="dxa"/></w:tblCellMar></w:tblPr><w:tblGrid>${grid}</w:tblGrid>${rowsXML}</w:tbl>`+para("","Spacer");
+  B.forEach(b=>{switch(b.t){
+    case "title":body+=para(runs(b.text),"Title");break;
+    case "sub":body+=para(runs(b.text),"Subtle");break;
+    case "h1":body+=para(runs(b.text),"Heading1");break;
+    case "h2":body+=para(runs(b.text),"Heading2");break;
+    case "p":String(b.text).split(/\n{2,}/).forEach(p=>body+=para(runs(p)));break;
+    case "sig":body+=para(runs(b.text),null,'<w:spacing w:before="240"/>');break;
+    case "note":body+=para(runs(b.text,b.warn?'<w:color w:val="B42318"/>':'<w:color w:val="4A5568"/>'),"Note");break;
+    case "foot":body+=para(runs(b.text),"Subtle",'<w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D9E1EA"/></w:pBdr><w:spacing w:before="240"/>');break;
+    case "kv":{const rowsX=b.rows.map(([k,v])=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${cellXML({text:k,url:null,status:null}.text,false,1700,true)}${cellXML(v,false,3300,false)}</w:tr>`).join("");body+=tbl(rowsX,'<w:gridCol w:w="3000"/><w:gridCol w:w="6600"/>');break}
+    case "table":{const n=b.head.length,w=Math.floor(5000/n);const grid=b.head.map(()=>`<w:gridCol w:w="${Math.floor(9600/n)}"/>`).join("");
+      const hdr=`<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${b.head.map(x=>cellXML(x,true,w)).join("")}</w:tr>`;
+      const rowsX=b.rows.map((r,i)=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${r.map(c=>cellXML(c,false,w,i%2===1)).join("")}</w:tr>`).join("");body+=tbl(hdr+rowsX,grid);break}
+  }});
+  const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="1000" w:bottom="1000" w:left="1000" w:header="600" w:footer="600" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const sty=(id,name,ppr,rpr,extra)=>`<w:style w:type="paragraph" w:styleId="${id}"><w:name w:val="${name}"/><w:basedOn w:val="Normal"/>${extra||""}<w:pPr>${ppr}</w:pPr><w:rPr>${rpr}</w:rPr></w:style>`;
+  const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${NS}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Segoe UI" w:eastAsia="Segoe UI"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="1A202C"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`
+    +`<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>`
+    +sty("Title","Title",'<w:pBdr><w:top w:val="single" w:sz="24" w:space="8" w:color="B7791F"/></w:pBdr><w:spacing w:after="60"/>','<w:b/><w:color w:val="001433"/><w:sz w:val="40"/>','<w:qFormat/>')
+    +sty("Subtle","Subtle",'<w:spacing w:after="200"/>','<w:color w:val="4A5568"/><w:sz w:val="17"/>')
+    +sty("Heading1","heading 1",'<w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="12" w:space="3" w:color="B7791F"/></w:pBdr><w:spacing w:before="360" w:after="120"/><w:outlineLvl w:val="0"/>','<w:b/><w:color w:val="001433"/><w:sz w:val="30"/>','<w:next w:val="Normal"/><w:qFormat/>')
+    +sty("Heading2","heading 2",'<w:keepNext/><w:spacing w:before="220" w:after="80"/><w:outlineLvl w:val="1"/>','<w:b/><w:color w:val="001433"/><w:sz w:val="23"/>','<w:next w:val="Normal"/><w:qFormat/>')
+    +sty("Note","Note",'<w:shd w:val="clear" w:color="auto" w:fill="F7FAFC"/><w:pBdr><w:left w:val="single" w:sz="18" w:space="6" w:color="B7791F"/></w:pBdr><w:spacing w:before="80" w:after="160"/><w:ind w:left="120"/>','<w:sz w:val="18"/>')
+    +sty("Cell","Table text",'<w:spacing w:after="0" w:line="252" w:lineRule="auto"/>','<w:sz w:val="17"/>')
+    +sty("Spacer","Spacer",'<w:spacing w:after="80"/>','<w:sz w:val="8"/>')
+    +`</w:styles>`;
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const rootRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
+  const docRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdS" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${rels.join("")}</Relationships>`;
+  const now=new Date().toISOString().replace(/\.\d+Z$/,"Z");
+  const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xe(B[0].text)}</dc:title><dc:creator>${xe(pkg.meta.taPartner.v||"Talent Acquisition")}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
+  return zip([["[Content_Types].xml",ct],["_rels/.rels",rootRels],["docProps/core.xml",core],["word/document.xml",doc],["word/styles.xml",styles],["word/_rels/document.xml.rels",docRels]]);
+}
+const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
+function zip(entries){
+  const enc=new TextEncoder(),d=new Date();const time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  const chunks=[],central=[];let off=0;
+  entries.forEach(([name,str])=>{const nb=enc.encode(name),data=enc.encode(str),crc=crc32(data);
+    const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,time,true);lh.setUint16(12,date,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,nb.length,true);lh.setUint16(28,0,true);
+    chunks.push(new Uint8Array(lh.buffer),nb,data);
+    const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,time,true);ch.setUint16(14,date,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,nb.length,true);ch.setUint16(30,0,true);ch.setUint16(32,0,true);ch.setUint16(34,0,true);ch.setUint16(36,0,true);ch.setUint32(38,0,true);ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer),nb);off+=30+nb.length+data.length});
+  const cdSize=central.reduce((a,c)=>a+c.length,0);const eo=new DataView(new ArrayBuffer(22));eo.setUint32(0,0x06054b50,true);eo.setUint16(8,entries.length,true);eo.setUint16(10,entries.length,true);eo.setUint32(12,cdSize,true);eo.setUint32(16,off,true);
+  return new Blob([...chunks,...central,new Uint8Array(eo.buffer)],{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+
+/* ---------- files, clipboard, toast ---------- */
+let toastT;function toast(m){const t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,4200)}
+async function saveFile(filename,data,mime){
+  if(S.inViewer){const dl=S.dl||await window.claude.use("downloads");
+    if(!dl){toast("Downloads are not available in this view. Use “Copy formatted email” instead.");return}
+    try{const r=await dl.save({filename,data});if(r&&r.status==="saved")toast("Saved "+filename)}catch(e){toast(e&&e.code==="declined"?"Download cancelled":"Could not save the file ("+((e&&e.code)||"error")+").")}return}
+  const blob=data instanceof Blob?data:new Blob([data],{type:mime});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast("Saved "+filename);
+}
+function copyPlain(text){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>toast("Copied"),()=>fallbackCopy(text))}else fallbackCopy(text)}
+function fallbackCopy(text){const ta=document.createElement("textarea");ta.value=text;ta.style.position="fixed";ta.style.opacity="0";document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand("copy")}catch(e){}ta.remove();toast(ok?"Copied":"Copy was blocked. Select the text and copy it manually.")}
+function copyRich(html,text){
+  const sel=()=>{const el=$("#docPreview");if(!el)return;const r=document.createRange();r.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(r);let ok=false;try{ok=document.execCommand("copy")}catch(e){}
+    toast(ok?"Formatted email copied. Paste it into your email.":"The document is selected. Press Ctrl/Cmd+C to copy it.")};
+  try{if(window.ClipboardItem&&navigator.clipboard&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([text],{type:"text/plain"})})]).then(()=>toast("Formatted email copied. Paste it into your email."),sel);return}}catch(e){}
+  sel();
+}
+
+/* ---------- events ---------- */
+$("#main").addEventListener("input",onEdit);$("#main").addEventListener("change",onEdit);
+function onEdit(ev){
+  const el=ev.target;const p=el.dataset&&el.dataset.path;if(!p||!pkg||!S.canWrite)return;
+  if(ev.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"))return;
+  if(ev.type==="change"&&(el.tagName==="TEXTAREA"||(el.tagName==="INPUT"&&el.type!=="checkbox"&&el.type!=="date")))return;
+  const v=el.type==="checkbox"?el.checked:el.value;setPath(pkg,p,v);
+  if(el.classList.contains("st")){el.className="st st-"+v}
+  const m=p.match(/^market\.availability\.(\d+)\./);if(m){const d=document.getElementById("diff-"+m[1]);if(d)d.innerHTML=diffHTML(pkg.market.availability[+m[1]])}
+  if(p==="meta.role.v"){renderPkgSel()}
+  if(/\.s$|\.status$|\.hm$/.test(p)||p.startsWith("email.include"))renderRail();
+  if(cur==="email"&&p.startsWith("email."))refreshPreview();
+  scheduleSave();
+}
+let prevT;function refreshPreview(){clearTimeout(prevT);prevT=setTimeout(()=>{const el=$("#docPreview");if(el)el.innerHTML=toEmailHTML(buildDoc())},250)}
+
+document.addEventListener("click",async ev=>{
+  const tab=ev.target.closest("[data-tab]");if(tab){cur=tab.dataset.tab;lsSet("hps.v1.tab",cur);render();window.scrollTo({top:0});return}
+  const b=ev.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
+  const need=["addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
+  if(need.includes(a)&&!S.canWrite){toast("You have view access only.");return}
+  switch(a){
+    case "add":{const list=getPath(pkg,b.dataset.list);list.push(LISTS[b.dataset.list].blank());scheduleSave();render();break}
+    case "del":{const list=getPath(pkg,b.dataset.list);list.splice(+b.dataset.idx,1);scheduleSave();render();break}
+    case "newMeeting":{pkg.meetings.push(LISTS.meetings.blank());if(pkg.meetings.length>1)pkg.meetings[pkg.meetings.length-1].type="Follow-up";scheduleSave();render();toast("Meeting added. Update the sections below, then save a snapshot.");break}
+    case "draftExec":{if(!pkg.text.exec.trim()){pkg.text.exec=draftExec();scheduleSave();render()}else $("#execConfirm").innerHTML=`<span class="inline-confirm">Replace the current summary? <button class="btn" type="button" data-act="draftExecYes">Replace</button><button class="btn3" type="button" data-act="clearConfirm" data-target="execConfirm">Cancel</button></span>`;break}
+    case "draftExecYes":pkg.text.exec=draftExec();scheduleSave();render();break;
+    case "buildTimeline":{if(pkg.plan.milestones.length||pkg.plan.schedule.length)$("#tlConfirm").innerHTML=`<span class="inline-confirm">This replaces the current milestones and schedule. <button class="btn" type="button" data-act="buildYes">Replace</button><button class="btn3" type="button" data-act="clearConfirm" data-target="tlConfirm">Cancel</button></span>`;else buildTimeline();break}
+    case "buildYes":buildTimeline();break;
+    case "clearConfirm":{const t=document.getElementById(b.dataset.target);if(t)t.innerHTML="";break}
+    case "snap":saveSnapshot();break;
+    case "addInput":{const t=$("#newInputType");pkg.inputs.push(newInput(t?t.value:"Other",""));scheduleSave();render();const ta=document.getElementById("in_c_"+(pkg.inputs.length-1));if(ta){ta.focus();ta.scrollIntoView({block:"center"})}break}
+    case "delInput":{const i=+b.dataset.idx;$("#di-"+i).innerHTML=`<span class="inline-confirm">Remove this input? <button class="btn danger" type="button" data-act="delInputYes" data-idx="${i}">Remove</button><button class="btn3" type="button" data-act="clearConfirm" data-target="di-${i}">Cancel</button></span>`;break}
+    case "delInputYes":pkg.inputs.splice(+b.dataset.idx,1);scheduleSave();render();break;
+    case "loadInputFile":{inputFileTarget=+b.dataset.idx;$("#inputFile").click();break}
+    case "newPkg":createPkg();break;
+    case "copyEmail":{const B=buildDoc();copyRich(toEmailHTML(B),toText(B));break}
+    case "copyText":copyPlain(toText(buildDoc()));break;
+    case "copySubject":copyPlain(pkg.email.subject||defaultSubject());break;
+    case "dlDocx":saveFile(`hiring-package-${slug(pkg.meta.role.v)}-${todayISO()}.docx`,toDocx(buildDoc()));break;
+    case "dlHtml":{const B=buildDoc();const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(B[0].text)}</title></head><body style="margin:0;padding:24px;background:#FFFFFF">${toEmailHTML(B)}</body></html>`;saveFile(`hiring-package-${slug(pkg.meta.role.v)}-${todayISO()}.html`,html,"text/html");break}
+    case "exportJson":saveFile(`hiring-package-${slug(pkg.meta.role.v)}-${todayISO()}.json`,JSON.stringify(pkg,null,2),"application/json");break;
+    case "importJson":$("#importFile").click();break;
+    case "del-pkg":$("#delConfirm").innerHTML=`<span class="inline-confirm">Delete “${esc(pkg.meta.role.v||"Untitled role")}” for everyone? This cannot be undone. <button class="btn danger" type="button" data-act="delYes">Delete</button><button class="btn3" type="button" data-act="clearConfirm" data-target="delConfirm">Cancel</button></span>`;break;
+    case "delYes":deletePkg();break;
+    case "diffVer":{const v=versionsCache[+b.dataset.idx];const ch=diffVersions(normalize(v.data),pkg);$("#verDiff").innerHTML=blk(`Changes since “${esc(v.label)}”`,`${ch.length} change(s)`,ch.length?`<div class="tbl-wrap"><table class="ed"><tr><th>Field</th><th>Then</th><th>Now</th></tr>${ch.slice(0,200).map(([p,x,y])=>`<tr><td>${esc(prettyPath(p))}</td><td>${esc(typeof x==="object"?JSON.stringify(x):x)}</td><td>${esc(typeof y==="object"?JSON.stringify(y):y)}</td></tr>`).join("")}</table></div>`:`<p class="help">No differences.</p>`);break}
+    case "restoreVer":{const i=+b.dataset.idx;$("#rv-"+i).innerHTML=`<span class="inline-confirm">Replace the current package with this snapshot? <button class="btn" type="button" data-act="restoreYes" data-idx="${i}">Restore</button><button class="btn3" type="button" data-act="clearConfirm" data-target="rv-${i}">Cancel</button></span>`;break}
+    case "restoreYes":{const v=versionsCache[+b.dataset.idx];await saveSnapshot("Before restoring “"+v.label+"”");const id=pkg.id;pkg=normalize(v.data);pkg.id=id;scheduleSave();cur="overview";render();toast("Snapshot restored. The previous version was saved as a snapshot first.");break}
+    case "loadRemote":{pkg=normalize(remotePending);remotePending=null;dirty=false;renderNotices();render();setSave("Loaded latest");break}
+    case "keepMine":remotePending=null;renderNotices();scheduleSave();break;
+    case "migrate":{const loc=lsGet(LS_KEY)||{};let n=0;for(const k in loc){if(!packages[k]){try{await S.db.collection("packages").doc(k).set(normalize(loc[k]));n++}catch(e){toast("Copy stopped ("+(e.code||"error")+").");break}}}localDraftsOffered=true;renderNotices();toast(n+" package(s) copied to the shared store.");break}
+    case "dismissMigrate":localDraftsOffered=true;renderNotices();break;
+  }
+});
+let inputFileTarget=-1;
+$("#inputFile").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f||inputFileTarget<0||!pkg.inputs[inputFileTarget])return;
+  if(/\.(pdf|docx?|xlsx?|pptx?)$/i.test(f.name)){toast("This file type cannot be read here. Open it, copy the text and paste it into the Content box.");return}
+  if(f.size>200000){toast("That file is over 200 KB. Paste the relevant part instead.");return}
+  let t=await f.text();if(/\.html?$/i.test(f.name)){const d=new DOMParser().parseFromString(t,"text/html");t=d.body?d.body.innerText||d.body.textContent:t}
+  const x=pkg.inputs[inputFileTarget];x.content=(x.content?x.content+"\n\n":"")+t.trim();if(!x.title)x.title=f.name;scheduleSave();render();toast("Loaded "+f.name)});
+$("#pkgSel").addEventListener("change",e=>openPkg(e.target.value));
+$("#bNew").addEventListener("click",()=>createPkg());
+$("#bDup").addEventListener("click",()=>pkg&&createPkg(pkg));
+$("#bSnap").addEventListener("click",()=>saveSnapshot());
+$("#importFile").addEventListener("change",async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;
+  try{const data=JSON.parse(await f.text());if(!data||!data.meta)throw 0;const p=normalize(data);p.id=uid();pkg=p;packages[p.id]=clone(p);dirty=true;editSeq++;await saveNow();cur="overview";render();toast("Package imported")}catch(err){toast("That file is not a hiring package export.")}});
+window.addEventListener("beforeunload",()=>{if(dirty)saveNow()});
+
+/* ---------- boot ---------- */
+function bootLocal(){
+  const all=lsGet(LS_KEY)||{};packages={};for(const k in all)packages[k]=all[k];
+  const last=lsGetRaw(LS_LAST);const pick=packages[last]?last:Object.values(packages).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0]?.id;
+  pkg=pick?normalize(packages[pick]):null;if(!RENDER[cur])cur="overview";renderNotices();render();setSave(pkg?"Saved in this browser":"");
+}
+bootLocal();
+if(S.inViewer){
+  window.claude.use("downloads").then(d=>S.dl=d,()=>{});
+  Promise.all([window.claude.use("db"),window.claude.use("user")]).then(async([db,user])=>{
+    S.user=user;
+    if(user){try{const c=await user.can("data.write");if(c===false)S.canWrite=false}catch(e){}}
+    if(!db){renderNotices();render();return}
+    S.db=db;S.mode="db";packages={};let first=true;
+    db.collection("packages").onSnapshot(snap=>{
+      snap.docChanges().forEach(ch=>{const id=ch.doc.id;
+        if(ch.type==="removed"){delete packages[id];if(pkg&&pkg.id===id&&!first){pkg=null;toast("This package was deleted by someone else.")}return}
+        const data=clone(ch.doc.data());packages[id]=data;
+        if(!first&&pkg&&pkg.id===id&&data.rev!==pkg.rev&&!myRevs.has(data.rev)){if(dirty){remotePending=data;renderNotices()}else{pkg=normalize(data);render();setSave("Updated by a colleague "+timeNow())}}
+      });
+      if(first){first=false;const last=lsGetRaw(LS_LAST);const pick=packages[last]?last:Object.values(packages).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))[0]?.id;
+        if(pkg&&!packages[pkg.id])pkg=null;pkg=pick?normalize(packages[pick]):null;renderNotices();render();setSave(pkg?"Saved":"")}
+      else{renderPkgSel();if(!pkg)render()}
+    },err=>{toast("Live updates stopped ("+err.code+"). Reload the page to reconnect.")});
+  }).catch(()=>{});
+}
+})();
+</script>

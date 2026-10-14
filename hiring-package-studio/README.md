@@ -1,0 +1,26 @@
+# Hiring Package Studio
+
+A working tool for Talent Acquisition Partners. Use it to prepare, update and share a hiring package with a hiring manager, from the first kickoff meeting to the hiring closure date.
+
+## What it does
+
+- **Inputs:** keep the job description, meeting notes, hiring manager emails, salary data and market reports with the requisition. Tag each input for the minutes, the market intelligence or the interview plan. Tagged inputs appear as read-only references in those sections.
+- **Package sections:** these follow the order of the email document.
+  1. Overview: role, people, dates, information status and executive summary. The summary can be drafted from the package data.
+  2. Kickoff and minutes: a meeting log for every kickoff or follow-up; context; primary, secondary and good-to-have skills; location and market; hiring manager preferences; success measures; selection process and decision rights; interviewers and P&C partner; closure date; decisions; open questions; action items.
+  3. Confirmation tracker: lists everything that is Confirmed, To confirm, Proposed or Missing, and flags critical gaps.
+  4. Market intelligence: availability and a scored difficulty rating per skill, indicative pay ranges with currency, geography, date and limitations, market factors, alternative skills for the hiring manager to accept or reject, and a source register with links and access dates.
+  5. Interview and hiring plan: stages, criteria, the first resume commitment (default 5), the interview schedule, assessments, the tentative offer date and onboarding/start date, milestones with decision points, and risks. **Build proposed timeline** fills in dates from the kickoff date in business days.
+  6. Decisions requested from the hiring manager.
+  7. TA Partner action list.
+- **Meeting snapshots:** save a copy of the package after each meeting, compare it with the current version, or restore it.
+- **Email document:** copy the package as formatted email text for Outlook or Gmail, or download it as Word (.docx) or HTML.
+
+Every field and row carries a status, so recommendations are never shown as agreed. Empty fields appear as **[To confirm]** in the email document.
+
+## Saving
+
+- **Published artifact:** packages save to the artifact's shared store, so the TA team sees the same data and changes appear live.
+- **Opened as a local file:** packages save in that browser only. Use **Meeting snapshots → Export package (.json)** to back up or move a package, and **Import** to load one.
+
+The page ships with no market data. Pay figures and talent-supply findings must be researched and sourced for each role and location.
