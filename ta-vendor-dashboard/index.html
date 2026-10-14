@@ -157,6 +157,10 @@ tbody tr { cursor: pointer; }
 tbody tr:hover td { background: var(--sunk); }
 td .nm { font-weight: 600; color: var(--fg); }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.scrow { display: grid; grid-template-columns: minmax(0, 1fr) 92px 64px; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px dashed var(--line); }
+.scrow label { font-size: 13px; color: var(--fg); }
+.scrow .na { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.scrow input[type=number] { width: 92px; text-align: center; }
 .wbl { border-top: 1px solid var(--line); }
 .wbl > summary { padding: 12px 16px; cursor: pointer; background: var(--sunk); }
 .sm-sel { font-size: 12px; padding: 4px 6px; max-width: 100%; }
@@ -262,6 +266,7 @@ textarea.inp { min-height: 64px; resize: vertical; }
 </div>
 <div id="layer"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script id="vendor-data" type="application/json">/*VENDOR_DATA*/{"meta":{},"vendors":[]}</script>
 <script>
 "use strict";
@@ -382,7 +387,7 @@ function specBuckets(v) { const t = [fv(v, "specialization"), fv(v, "domain"), f
 /* -------------------------------------------------------------- store */
 /* One adapter for every collection the page keeps: the shared artifact
    database when the viewer grants it, otherwise this browser's storage. */
-const COLLS = ["vendorEdits", "webDecisions", "evaluations", "engagements", "perf"];
+const COLLS = ["vendorEdits", "webDecisions", "evaluations", "engagements", "perf", "assessments"];
 const Store = {
   mode: "local", db: null, user: null, canWrite: true, uid: null, names: {},
   data: Object.fromEntries(COLLS.map(c => [c, {}])),
@@ -526,10 +531,11 @@ function rank(v, ctx) {
   if (mod) { mPts = mv(mod) === "yes" ? 18 : 0; mEv = `Module ${mod}: ${mv(mod) || "not recorded"}`; if (!mv(mod)) gaps.push(`Module ${mod} not recorded`); }
   else { mPts = ["A", "B", "C"].filter(m => mv(m) === "yes").length * 6; mEv = ["A", "B", "C"].map(m => `${m}: ${mv(m) || "—"}`).join(" · "); if (!Object.keys(v.modules).length) gaps.push("Modules not recorded"); }
   parts.push({ k: "Module coverage", pts: mPts, max: 18, c: "var(--navy)", ev: mEv });
-  const sc = parseFloat(fv(v, "score"));
+  const la = latestAssessment(v);
+  const sc = la ? la.five : parseFloat(fv(v, "score"));
   const scPts = sc >= 1 && sc <= 5 ? sc * 3 : 0;
-  parts.push({ k: "Workbook score", pts: scPts, max: 15, c: "var(--slate)", ev: isNaN(sc) ? "No score in Base Data" : sc < 1 ? `${sc} recorded (outside 1–5; treated as not scored)` : `${sc} / 5` });
-  if (isNaN(sc) || sc < 1) gaps.push("No workbook score");
+  parts.push({ k: la ? "Assessment score" : "Workbook score", pts: scPts, max: 15, c: "var(--slate)", ev: la ? `${la.s.score.toFixed(2)} / ${la.s.scale.max} (${la.a.stage}, ${la.a.date})` : isNaN(sc) ? "No score in Base Data" : sc < 1 ? `${sc} recorded (outside 1–5; treated as not scored)` : `${sc} / 5` });
+  if (isNaN(sc) || sc < 1) gaps.push("No assessment score");
   const ref = (v.clientRefs || []).find(r => r.q === "provided");
   parts.push({ k: "Client reference", pts: ref ? 7 : 0, max: 7, c: "var(--hold)", ev: ref ? `${ref.company} — ${ref.person || "contact"}` : "None provided" });
   if (!ref) gaps.push("No client reference");
@@ -889,7 +895,7 @@ function filtered() {
   });
   const order = { PASS: 0, HOLD: 1, "Not assessed": 2, FAIL: 3 };
   const key = {
-    name: v => v.name.toLowerCase(), status: v => order[v.status.stage1] ?? 9, score: v => -(parseFloat(fv(v, "score")) || -1),
+    name: v => v.name.toLowerCase(), status: v => order[v.status.stage1] ?? 9, score: v => { const la = latestAssessment(v); return -(la ? la.five : parseFloat(fv(v, "score")) || -1); },
     rank: v => -rank(v, UI.ctx).total, perf: v => -(perfWindow(v.id).summary ?? -1), loc: v => locBucket(v), updated: v => -(new Date(v._edited || v.lastUpdated || 0).getTime() || 0),
   }[UI.sort] || (v => v.name);
   return list.sort((a, b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * UI.dir || a.name.localeCompare(b.name); });
@@ -938,11 +944,11 @@ function row(v) {
     <td class="wrap">${isRecruiter(v) ? catChips(v) : `<span class="chip">${esc(SERVICES[svcKey(v)].replace(/ \(.*\)$/, ""))}</span>`}</td>
     <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">SPOC missing</span>'}<div class="al">${esc(email) || "no email"} · ${esc(phone) || "no phone"}</div></td>
     <td>${esc(locBucket(v))}</td>
-    <td class="num">${esc(fv(v, "score")) || "—"}</td>
+    <td class="num">${(() => { const la = latestAssessment(v); return la ? `<b>${la.s.score.toFixed(1)}</b><div class="al">assessed</div>` : esc(fv(v, "score")) || "—"; })()}</td>
     <td class="num">${!isRecruiter(v) ? '<span class="al">—</span>' : r.excluded ? '<span class="al">FAIL</span>' : r.total}</td>
     <td>${(() => { const w = perfWindow(v.id); return w.summary === null ? '<span class="al">Not evaluated</span>' : ratingBadge(w.summary); })()}</td>
     <td>${dq ? qBadge("conflict") : vf ? qBadge("verify") : ""}</td>
-    <td data-stop>${Store.canWrite ? `<button class="btn sm danger" type="button" data-rowdel="${esc(v.id)}" aria-label="Delete ${esc(v.name)}">Delete</button>` : ""}</td></tr>`;
+    <td data-stop style="white-space:nowrap">${Store.canWrite ? `<button class="btn sm" type="button" data-assess="${esc(v.id)}">Assess</button> <button class="btn sm danger" type="button" data-rowdel="${esc(v.id)}" aria-label="Delete ${esc(v.name)}">Delete</button>` : ""}</td></tr>`;
 }
 
 /* ----------------------------------------------------------- shortlist */
@@ -1023,7 +1029,9 @@ function viewResearch() {
 let openId = null;
 function fieldRow(v, k, label) {
   const f = v.fields[k];
-  if (!f || (!f.v && f.q !== "missing" && f.q !== "conflict")) return `<dt>${esc(label)}</dt><dd>${qBadge("missing")}</dd>`;
+  const add = Store.canWrite && !SKIP_MISSING.has(k) ? ` <button class="copy" type="button" data-fill="${esc(v.id)}" data-focus="${k}">+ Add</button>` : "";
+  if (!f || (!f.v && f.q !== "missing" && f.q !== "conflict")) return `<dt>${esc(label)}</dt><dd>${qBadge("missing")}${add}</dd>`;
+  if (!f.v && f.q === "missing") return `<dt>${esc(label)}</dt><dd><div class="line">${qBadge("missing")}${add}</div>${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}</dd>`;
   const copyable = /Email|Phone/.test(label) && f.v;
   return `<dt>${esc(label)}</dt><dd><div class="line">${f.v ? `<span class="val">${esc(f.v)}</span>` : ""}${copyable ? `<button class="copy" type="button" data-copy="${esc(f.v)}">Copy</button>` : ""}${qBadge(f.q)}</div>
     ${(f.alt || []).map(a => `<div class="alt">Also recorded: “${esc(a.v)}” <span class="src">${esc(a.src)}</span></div>`).join("")}
@@ -1039,6 +1047,8 @@ function drawerHTML(v) {
     <button class="btn sm ghost" type="button" data-close aria-label="Close profile">✕</button></div>
     <div class="chips">${badge(v.status.stage1)}${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}${v._edited ? `<span class="q q-edited">Edited ${fmtDate(v._edited)} by ${esc(who(v._editedBy))}</span>` : ""}</div>
     <div class="chips"><button class="btn sm" type="button" data-edit="${esc(v.id)}" ${conf ? "" : "disabled"}>Edit</button>
+      <button class="btn sm" type="button" data-fill="${esc(v.id)}" ${conf ? "" : "disabled"}>Fill missing details (${missingFields(v).length})</button>
+      <button class="btn sm primary" type="button" data-assess="${esc(v.id)}" ${conf ? "" : "disabled"}>Assess</button>
       <button class="btn sm" type="button" data-cmp-btn="${esc(v.id)}">${UI.compare.includes(v.id) ? "Remove from compare" : "Add to compare"}</button>
       <span id="delZone"><button class="btn sm danger" type="button" data-del="${esc(v.id)}" ${conf ? "" : "disabled"}>Delete</button></span></div></div>
   <div class="db">
@@ -1056,6 +1066,7 @@ function drawerHTML(v) {
       <div class="line"><span class="score">${r.total}</span><span class="count">/ 100 ${r.excluded ? "· excluded from ranking (FAIL)" : ""}</span></div>${meter(r)}
       <div class="parts" style="margin-top:8px">${r.parts.map(p => `<div class="p"><span><b>${esc(p.k)}</b> — ${esc(p.ev)}</span><span>${Math.round(p.pts * 10) / 10}/${p.max}</span></div>`).join("")}</div>
       ${r.gaps.length ? `<div class="gaps">${r.gaps.map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div>` : ""}</section>
+    ${assessSection(v)}
     ${perfSection(v)}
     <section class="sec"><h4>Hiring categories</h4><dl class="kv">${Object.keys(CATS).map(k => `<dt>${esc(CATS[k])}</dt><dd>${v.categories[k] ? v.categories[k].map(b => `<div>${qBadge(b.basis === "workbook" ? "provided" : b.basis === "web" ? "web" : b.basis === "edited" ? "edited" : "verify")} ${esc(b.ref)}</div>`).join("") : '<span class="note">—</span>'}</dd>`).join("")}</dl></section>
     ${FIELD_GROUPS.map(([g, fs]) => `<section class="sec"><h4>${esc(g)}</h4><dl class="kv">${fs.map(([k, l]) => (["companyEmail", "companyPhone", "website", "finalDecision", "contractTerm"].includes(k) && !v.fields[k]) || (k === "pricing" && isRecruiter(v) && !v.fields[k]) ? "" : fieldRow(v, k, l)).join("")}</dl>
@@ -1068,7 +1079,7 @@ function drawerHTML(v) {
       <div class="count" style="margin-top:6px">Workbook snapshot: ${fmtDate(v.lastUpdated)}${v._edited ? ` · last edited ${new Date(v._edited).toLocaleString()} by ${esc(who(v._editedBy))}` : ""}</div></section>
   </div></aside>`;
 }
-function openDrawer(id, tab) { const v = BY_ID[id]; if (!v) return; openId = id; $("#layer").innerHTML = drawerHTML(v); const b = $(".drawer [data-close]"); if (b) b.focus(); if (tab === "perf") { const sec = $("#perfSec"); if (sec) $(".drawer .db").scrollTop = sec.offsetTop - 70; } }
+function openDrawer(id, tab) { const v = BY_ID[id]; if (!v) return; openId = id; $("#layer").innerHTML = drawerHTML(v); const b = $(".drawer [data-close]"); if (b) b.focus(); if (tab === "assess") { const sec = $("#assessSec"); if (sec) $(".drawer .db").scrollTop = sec.offsetTop - 70; } if (tab === "perf") { const sec = $("#perfSec"); if (sec) $(".drawer .db").scrollTop = sec.offsetTop - 70; } }
 function closeDrawer() { openId = null; $("#layer").innerHTML = ""; }
 
 /* ---------------------------------------------------------------- edit */
@@ -1224,8 +1235,8 @@ async function importFile(file) {
 }
 function exportMenu() {
   $("#layer").insertAdjacentHTML("beforeend", `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="xTitle"><div class="mbox" style="width:min(560px,100%)"><header><h2 id="xTitle" style="font-size:17px">Export vendors</h2></header>
-  <div class="mbody"><p>Exports include every field, contact and quality label currently shown, including your edits. The JSON file also carries performance evaluations, engagement periods and rating criteria. Treat the files as confidential: they contain personal contact details.</p>
-  <div class="chips"><button class="btn primary" type="button" data-x="json">Full data (JSON)</button><button class="btn" type="button" data-x="csv">Spreadsheet (CSV)</button><button class="btn" type="button" data-x="csvf">CSV · current directory filter</button><button class="btn" type="button" data-x="contacts">Contact register (CSV)</button></div>
+  <div class="mbody"><p>The Excel workbook has four sheets: Vendors (every field, status, shortlist category, fee, latest assessment score and performance summary), Assessments and Performance (each score by criterion), and Contacts. Exports include every field, contact and quality label currently shown, including your edits. The JSON file also carries performance evaluations, engagement periods and rating criteria. Treat the files as confidential: they contain personal contact details.</p>
+  <div class="chips"><button class="btn primary" type="button" data-x="xlsx">Excel workbook (.xlsx)</button><button class="btn" type="button" data-x="json">Full data (JSON)</button><button class="btn" type="button" data-x="csv">Spreadsheet (CSV)</button><button class="btn" type="button" data-x="csvf">CSV · current directory filter</button><button class="btn" type="button" data-x="contacts">Contact register (CSV)</button></div>
   <p class="count" id="xMsg"></p><textarea class="inp" id="xText" hidden readonly style="width:100%;min-height:140px" aria-label="Export text"></textarea></div>
   <footer><span></span><button class="btn" type="button" data-cancel>Close</button></footer></div></div>`);
 }
@@ -1467,8 +1478,8 @@ function evalForm(e, vid) {
     <label>Hiring category<select class="inp" id="ev_cat">${[""].concat(Object.values(CATS)).map(c => `<option ${e.category === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>
     <label>Evaluator *<input class="inp" id="ev_evaluator" value="${esc(e.evaluator || "")}" placeholder="Name and role"></label>
     <label>Review date<input class="inp" type="date" id="ev_date" value="${esc(e.reviewDate || new Date().toISOString().slice(0, 10))}"></label>
-    <div class="fh">Ratings · ${sc.min}–${sc.max} scale. Leave blank if there is no evidence; choose N/A if the criterion did not apply.</div>
-    ${crit.map(c => `<label title="${esc(c.desc || "")}">${esc(c.name)} <span class="src">weight ${c.weight}</span><select class="inp" id="ev_r_${esc(c.id)}" data-crit="${esc(c.id)}"><option value="">Not rated</option><option value="na" ${e.na && e.na[c.id] ? "selected" : ""}>N/A — did not apply</option>${opts.map(o => `<option value="${o}" ${e.ratings && +e.ratings[c.id] === o && !(e.na && e.na[c.id]) ? "selected" : ""}>${o} — ${esc((sc.labels[o] || "").split("—")[0].trim())}</option>`).join("")}</select></label>`).join("")}
+    <div class="fh">Scores · type a number from ${sc.min} to ${sc.max} for each criterion (halves allowed). Leave blank if there is no evidence; tick N/A if it did not apply.</div>
+    <div class="full"><p class="count" style="margin:0 0 6px">${opts.map(o => `${o} = ${esc((sc.labels[o] || "").split("—")[0].trim())}`).join(" · ")}</p>${crit.map(c => scoreInput("ev_r", c, (e.ratings || {})[c.id], (e.na || {})[c.id], sc)).join("")}</div>
     <label class="full">Supporting comments<textarea class="inp" id="ev_comments">${esc(e.comments || "")}</textarea></label>
     <label class="full">Strengths<textarea class="inp" id="ev_strengths">${esc(e.strengths || "")}</textarea></label>
     <label class="full">Improvement areas<textarea class="inp" id="ev_improvements">${esc(e.improvements || "")}</textarea></label>
@@ -1478,8 +1489,7 @@ function evalForm(e, vid) {
 }
 function readEval(form) {
   const val = id => ($("#" + id, form) || {}).value?.trim() ?? "";
-  const ratings = {}, na = {};
-  form.querySelectorAll("[data-crit]").forEach(s => { if (s.value === "na") na[s.dataset.crit] = true; else if (s.value) ratings[s.dataset.crit] = +s.value; });
+  const { scores: ratings, na } = readScores(form, perfCfg().scale);
   return { vendorId: val("ev_vendor"), year: +val("ev_year"), period: val("ev_period"), businessUnit: val("ev_bu"), category: val("ev_cat"), evaluator: val("ev_evaluator"), reviewDate: val("ev_date"), ratings, na, comments: val("ev_comments"), strengths: val("ev_strengths"), improvements: val("ev_improvements"), evidence: val("ev_evidence") };
 }
 function liveEval(form) {
@@ -1494,6 +1504,7 @@ async function submitEval(form) {
   if (old) e.vendorId = old.vendorId;
   if (!e.vendorId) { $("#evErr").textContent = "Choose the vendor this evaluation is for."; return; }
   if (!e.evaluator) { $("#evErr").textContent = "Enter the evaluator’s name so the record is auditable."; return; }
+  { const chk = readScores(form, (old && old.scaleSnapshot) || cfg.scale); if (chk.bad) { $("#evErr").textContent = chk.bad; return; } }
   const body = Object.assign({}, old || {}, e, {
     criteriaSnapshot: old ? old.criteriaSnapshot || cfg.criteria : cfg.profiles[form.dataset.profile || "recruit"].criteria.filter(c => c.active),
     profile: old ? old.profile || "recruit" : form.dataset.profile || "recruit",
@@ -1564,6 +1575,185 @@ async function submitCfg(form) {
   if (await Store.put("perf", "config", cfg)) { form.closest(".modal").remove(); render(); toast("Configuration saved"); }
 }
 
+/* ------------------------------------------------------- vendor assessment */
+/* A scorecard for selecting a vendor (before or at empanelment), separate
+   from the annual performance evaluation. Scores are typed in per criterion;
+   the latest assessment becomes the vendor's score in the register. */
+const DEFAULT_APROFILES = {
+  recruit: { name: "Recruitment agencies & RPO", criteria: [C("years", "Years in operation", "Stage 1 minimum: 8 years.", 10), C("recruiters", "Recruiter strength", "Stage 1 minimum: 10 recruiters on rolls.", 10), C("fin", "Financial stability & statutory documents", "Revenue, GST, PAN, entity type.", 10), C("spec", "Specialization fit", "Fit with our roles, levels and industries.", 15), C("clients", "Client portfolio", "Relevant, comparable clients served.", 10), C("delivery", "Delivery metrics", "Closure timeline, positions closed, joining ratio.", 15), C("refs", "Client references", "Quality of reference feedback.", 10), C("process", "Process, reporting & compliance", "Screening, tracking reports, data privacy, diversity support.", 10), C("commercial", "Commercial terms", "Fee, replacement guarantee, payment terms.", 10)] },
+  contract: { name: "Contract staffing & staff augmentation", criteria: [C("years", "Years in operation", "", 10), C("bench", "Talent pool & bench", "Ability to deploy at our volumes and locations.", 15), C("stat", "Statutory compliance setup", "PF, ESI, CLRA licences and audit record.", 20), C("payroll", "Payroll & invoicing capability", "", 15), C("clients", "Client portfolio", "", 10), C("refs", "Client references", "", 10), C("markup", "Mark-up & commercial terms", "", 20)] },
+  bgv: { name: "Background verification", criteria: [C("cov", "Check coverage", "Employment, education, address, criminal, global.", 20), C("tat", "Committed turnaround", "", 15), C("dp", "Data privacy & certifications", "DPDP readiness, ISO 27001, consent handling.", 20), C("int", "Integration & candidate portal", "", 15), C("refs", "Client references", "", 10), C("cost", "Pricing per check", "", 20)] },
+  medical: { name: "Pre-employment medical check-up", criteria: [C("centres", "Centre network", "Coverage of our hiring locations.", 20), C("accred", "Accreditation", "NABL / NABH and doctor certification.", 20), C("tat", "Report turnaround", "", 15), C("conf", "Confidentiality process", "", 15), C("cx", "Candidate experience", "", 10), C("cost", "Package pricing", "", 20)] },
+  jobboard: { name: "Job boards & candidate databases", criteria: [C("rel", "Database relevance for our roles", "", 25), C("reach", "Reach for niche & senior talent", "", 15), C("ux", "Recruiter tools & usability", "", 15), C("data", "Data compliance", "", 15), C("cost", "Licence pricing & flexibility", "", 30)] },
+  tatech: { name: "TA technology (ATS, AI sourcing, CRM)", criteria: [C("fit", "Functional fit", "", 25), C("int", "Integration with our HR stack", "", 15), C("sec", "Security, privacy & AI governance", "", 20), C("ux", "Ease of use", "", 10), C("refs", "References & maturity", "", 10), C("tco", "Total cost of ownership", "", 20)] },
+  assess: { name: "Assessment & interview services", criteria: [C("valid", "Validity & quality of content", "", 25), C("integ", "Proctoring & integrity", "", 15), C("cx", "Candidate experience", "", 15), C("int", "Integration", "", 10), C("refs", "References", "", 10), C("cost", "Pricing", "", 25)] },
+  campus: { name: "Campus, early-career & skilling partners", criteria: [C("talent", "Talent quality & relevant programmes", "", 30), C("access", "Access & placement-cell cooperation", "", 20), C("brand", "Brand fit", "", 15), C("logistics", "Logistics support", "", 15), C("cost", "Cost", "", 20)] },
+  generic: { name: "Other services", criteria: [C("fit", "Capability fit", "", 25), C("cov", "Coverage & capacity", "", 15), C("comp", "Compliance & data security", "", 20), C("refs", "References", "", 15), C("cost", "Commercials", "", 25)] },
+};
+function assessCfg() {
+  const c = Store.data.perf.assessConfig || {};
+  const profiles = {};
+  Object.entries(DEFAULT_APROFILES).forEach(([k, p]) => { profiles[k] = { name: p.name, criteria: (c.profiles && c.profiles[k] && c.profiles[k].criteria) || p.criteria }; });
+  return { profiles, scale: perfCfg().scale };
+}
+const assessOf = vid => Object.entries(Store.data.assessments).map(([id, a]) => Object.assign({ _id: id }, a)).filter(a => a.vendorId === vid).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.createdAt).localeCompare(String(a.createdAt)));
+function asScore(a) { const s = evalScore({ ratings: a.scores, na: a.na, criteriaSnapshot: a.criteriaSnapshot, scaleSnapshot: a.scaleSnapshot }); return s; }
+/* Latest assessment on a 1–5 footing, so it can stand in for the workbook score. */
+function latestAssessment(v) {
+  const a = assessOf(v.id)[0]; if (!a) return null;
+  const s = asScore(a); if (s.score === null) return null;
+  const sc = s.scale, five = 1 + (s.score - sc.min) / (sc.max - sc.min) * 4;
+  return { a, s, five: Math.round(five * 100) / 100 };
+}
+function scoreInput(prefix, c, val, na, sc) {
+  return `<div class="scrow"><label for="${prefix}_${esc(c.id)}"><b>${esc(c.name)}</b> <span class="src">weight ${esc(c.weight)}</span>${c.desc ? `<span class="al" style="display:block">${esc(c.desc)}</span>` : ""}</label>
+    <input class="inp num" type="number" inputmode="decimal" min="${sc.min}" max="${sc.max}" step="0.5" id="${prefix}_${esc(c.id)}" data-crit="${esc(c.id)}" value="${val === undefined || val === null || na ? "" : esc(val)}" placeholder="${sc.min}–${sc.max}" ${na ? "disabled" : ""} aria-label="${esc(c.name)} score">
+    <label class="na"><input type="checkbox" data-na="${esc(c.id)}" ${na ? "checked" : ""}> N/A</label></div>`;
+}
+function readScores(form, sc) {
+  const scores = {}, na = {}; let bad = "";
+  form.querySelectorAll("input[data-na]").forEach(cb => { if (cb.checked) na[cb.dataset.na] = true; });
+  form.querySelectorAll("input[data-crit]").forEach(i => {
+    const id = i.dataset.crit; if (na[id] || i.value === "") return;
+    const n = +i.value;
+    if (isNaN(n) || n < sc.min || n > sc.max) bad = `Scores must be between ${sc.min} and ${sc.max}.`;
+    else scores[id] = n;
+  });
+  return { scores, na, bad };
+}
+function assessForm(a, vid) {
+  const cfg = assessCfg(), isNew = !a;
+  const v = BY_ID[isNew ? vid : a.vendorId];
+  const pk = isNew ? profileKey(v) : (a.profile || "recruit");
+  const crit = isNew ? cfg.profiles[pk].criteria.filter(c => c.active !== false) : a.criteriaSnapshot;
+  const sc = isNew ? cfg.scale : a.scaleSnapshot;
+  a = a || { date: new Date().toISOString().slice(0, 10), scores: {}, na: {}, stage: "Stage 1 screening" };
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="asTitle"><form class="mbox" id="assessForm" data-id="${esc(a._id || "")}" data-vid="${esc(v ? v.id : "")}" data-profile="${esc(pk)}" novalidate>
+  <header><h2 id="asTitle" style="font-size:17px">${isNew ? "Assess" : "Edit assessment"} · ${esc(v ? v.name : "")} <span class="chip">${esc(cfg.profiles[pk] ? cfg.profiles[pk].name : pk)} criteria</span></h2><span class="count" id="asLive">Overall: not scored</span></header>
+  <div class="mbody"><div class="form">
+    <label>Assessment stage<select class="inp" id="as_stage">${["Stage 1 screening", "Stage 2 detailed assessment", "Re-assessment", "Empanelment review"].map(o => `<option ${a.stage === o ? "selected" : ""}>${o}</option>`).join("")}</select></label>
+    <label>Assessment date<input class="inp" type="date" id="as_date" value="${esc(a.date || "")}"></label>
+    <label>Assessor *<input class="inp" id="as_assessor" value="${esc(a.assessor || "")}" placeholder="Name and role"></label>
+    <div class="fh">Scores · type a number from ${sc.min} to ${sc.max} for each criterion (halves allowed). Leave blank if not assessed; tick N/A if it does not apply.</div>
+    <div class="full">${crit.map(c => scoreInput("as_s", c, (a.scores || {})[c.id], (a.na || {})[c.id], sc)).join("")}</div>
+    <div class="fh">Outcome</div>
+    <label>Recommendation<select class="inp" id="as_rec">${[["", "No recommendation"], ["PASS", "PASS"], ["HOLD", "HOLD"], ["FAIL", "FAIL"]].map(([k, l]) => `<option value="${k}" ${a.recommendation === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+    <label style="align-self:end"><span><input type="checkbox" id="as_apply" ${a.applied ? "checked" : ""}> Set this as the vendor’s Stage 1 status</span></label>
+    <label class="full">Assessment notes<textarea class="inp" id="as_notes">${esc(a.notes || "")}</textarea></label>
+    <label class="full">Evidence reviewed (documents, references, demos)<textarea class="inp" id="as_evidence">${esc(a.evidence || "")}</textarea></label>
+  </div><p class="count">The overall score is the weighted mean of the criteria you scored. It replaces the workbook score in the register and the ranking; the workbook score stays visible as history.</p><p class="count" id="asErr" role="alert"></p></div>
+  <footer><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">${isNew ? "Save assessment" : "Save changes"}</button></footer></form></div>`;
+}
+function liveAssess(form) {
+  const old = form.dataset.id ? Store.data.assessments[form.dataset.id] : null, cfg = assessCfg();
+  const sc = old ? old.scaleSnapshot : cfg.scale;
+  const { scores, na } = readScores(form, sc);
+  const s = asScore({ scores, na, criteriaSnapshot: old ? old.criteriaSnapshot : cfg.profiles[form.dataset.profile].criteria, scaleSnapshot: sc });
+  $("#asLive").textContent = s.score === null ? "Overall: not scored" : `Overall ${s.score.toFixed(2)} / ${sc.max} from ${s.rated} of ${s.applicable} criteria`;
+}
+async function submitAssess(form) {
+  const id = form.dataset.id, old = id ? Store.data.assessments[id] : null, cfg = assessCfg(), vid = old ? old.vendorId : form.dataset.vid;
+  const sc = old ? old.scaleSnapshot : cfg.scale;
+  const { scores, na, bad } = readScores(form, sc);
+  const assessor = $("#as_assessor", form).value.trim();
+  if (bad) { $("#asErr").textContent = bad; return; }
+  if (!assessor) { $("#asErr").textContent = "Enter the assessor’s name so the record is auditable."; return; }
+  if (!Object.keys(scores).length) { $("#asErr").textContent = "Score at least one criterion before saving."; return; }
+  const rec = $("#as_rec", form).value, apply = $("#as_apply", form).checked && !!rec;
+  const body = Object.assign({}, old || {}, {
+    vendorId: vid, stage: $("#as_stage", form).value, date: $("#as_date", form).value, assessor, scores, na,
+    recommendation: rec, applied: apply, notes: $("#as_notes", form).value.trim(), evidence: $("#as_evidence", form).value.trim(),
+    profile: old ? old.profile : form.dataset.profile, criteriaSnapshot: old ? old.criteriaSnapshot : cfg.profiles[form.dataset.profile].criteria.filter(c => c.active !== false), scaleSnapshot: sc,
+    createdAt: old ? old.createdAt : NOW_ISO(), createdBy: old ? old.createdBy : (Store.uid || "this browser"),
+  });
+  if (old) body.revisions = (old.revisions || []).concat([{ at: old.updatedAt, by: old.updatedBy, scores: old.scores, na: old.na, recommendation: old.recommendation }]).slice(-20);
+  delete body.updatedAt; delete body.updatedBy; delete body._id;
+  const newId = id || ("as-" + safeId(vid).slice(0, 60) + "-" + Date.now().toString(36));
+  if (!(await Store.put("assessments", newId, body))) return;
+  if (apply) {
+    const v = BY_ID[vid];
+    if (v && v.status.stage1 !== rec) {
+      const r = clone(v); delete r._edited; delete r._editedBy; delete r._approved;
+      const s = asScore(body);
+      r.status = { stage1: rec, reason: `Dashboard assessment ${body.date} by ${assessor}: ${s.score.toFixed(2)} / ${sc.max}. ${body.notes}`.trim(), src: `Assessment ${body.date}`, prev: `${v.status.stage1} (${v.status.src || "—"})` };
+      if ((rec === "HOLD" || rec === "FAIL") && slCat(r)) r.slCat = { v: null, basis: "edited", ref: `Removed: assessment set status ${rec}` };
+      await Store.putEdit(vid, { record: r });
+    }
+  }
+  form.closest(".modal").remove(); render(); openDrawer(vid, "assess"); toast(old ? "Assessment updated" : "Assessment saved");
+}
+function assessSection(v) {
+  const list = assessOf(v.id), la = latestAssessment(v), can = Store.canWrite;
+  return `<section class="sec" id="assessSec"><h4>Vendor assessment (scorecard)</h4>
+    <dl class="kv"><dt>Latest score</dt><dd>${la ? `<b class="num">${la.s.score.toFixed(2)}</b> / ${la.s.scale.max} ${qBadge("edited")} <span class="note">${esc(la.a.stage)} · ${esc(fmtDate(la.a.date))} · ${esc(la.a.assessor)}</span>${la.a.recommendation ? `<div>Recommendation: ${badge(la.a.recommendation)}${la.a.applied ? ' <span class="note">applied as Stage 1 status</span>' : ""}</div>` : ""}` : `<span class="q q-missing">Not assessed</span> <span class="note">No dashboard assessment yet.${has(v, "score") ? ` Workbook score: ${esc(fv(v, "score"))}.` : ""}</span>`}</dd></dl>
+    <div class="chips" style="margin:8px 0"><button class="btn sm primary" type="button" data-assess="${esc(v.id)}" ${can ? "" : "disabled"}>+ New assessment</button></div>
+    ${list.map(a => { const s = asScore(a); return `<div style="border-top:1px dashed var(--line);padding:8px 0">
+      <div class="line" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center"><b>${esc(fmtDate(a.date))}</b> <span class="chip">${esc(a.stage)}</span> ${s.score === null ? qBadge("missing") : `<b class="num">${s.score.toFixed(2)}</b> / ${s.scale.max}`} <span class="chip">${s.rated}/${s.applicable} scored</span> ${a.recommendation ? badge(a.recommendation) : ""}
+      <button class="copy" type="button" data-editassess="${esc(a._id)}" ${can ? "" : "disabled"}>Edit</button><button class="copy" type="button" data-delassess="${esc(a._id)}" ${can ? "" : "disabled"}>Delete</button></div>
+      <div class="count">Assessor: ${esc(a.assessor)}</div>
+      <details><summary class="count">Scores by criterion</summary><div class="parts" style="margin-top:6px">${s.rows.map(r => `<div class="p"><span>${esc(r.c.name)} <span class="src">w${r.c.weight}</span></span><span>${r.na ? "N/A" : r.r === null ? "—" : r.r}</span></div>`).join("")}</div>
+      ${a.notes ? `<p style="margin:6px 0"><b>Notes:</b> <span class="val">${esc(a.notes)}</span></p>` : ""}${a.evidence ? `<p style="margin:6px 0"><b>Evidence:</b> <span class="val">${esc(a.evidence)}</span></p>` : ""}
+      <div class="src">Entered ${fmtDate(a.createdAt)} by ${esc(who(a.createdBy))} · updated ${fmtDate(a.updatedAt)} by ${esc(who(a.updatedBy))}</div></details></div>`; }).join("")}
+  </section>`;
+}
+
+/* ------------------------------------------------------ fill missing details */
+const SKIP_MISSING = new Set(["score", "finalDecision", "comments"]);
+function missingFields(v) { return FIELD_GROUPS.flatMap(([g, fs]) => fs.filter(([k]) => !SKIP_MISSING.has(k) && !has(v, k)).map(([k, l]) => [g, k, l])); }
+function missingForm(vid, focus) {
+  const v = BY_ID[vid], miss = missingFields(v);
+  const long = new Set(["specialization", "industries", "majorClients", "activeClients", "domain", "contractTerm"]);
+  let lastG = "";
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mfTitle"><form class="mbox" id="missingForm" data-id="${esc(vid)}" novalidate>
+  <header><h2 id="mfTitle" style="font-size:17px">Fill missing details · ${esc(v.name)}</h2><span class="count">${miss.length} empty field${miss.length === 1 ? "" : "s"}</span></header>
+  <div class="mbody"><div class="form">${miss.map(([g, k, l]) => { const h = g !== lastG ? `<div class="fh">${esc(g)}</div>` : ""; lastG = g; return h + `<label class="${long.has(k) ? "full" : ""}">${esc(l)}${long.has(k) ? `<textarea class="inp" id="mf_${k}" data-mf="${k}"></textarea>` : `<input class="inp" id="mf_${k}" data-mf="${k}">`}</label>`; }).join("") || '<p class="count full">Every field has a value. Use Edit to change existing values.</p>'}
+    <div class="fh">Additional contact</div>
+    <label>Name<input class="inp" id="mf_cname"></label><label>Designation<input class="inp" id="mf_cdes"></label><label>Phone<input class="inp" id="mf_cphone"></label><label>Email<input class="inp" id="mf_cemail"></label>
+    <label class="full">Source of these details<input class="inp" id="mf_src" placeholder="e.g. Vendor call 14 Oct, proposal deck, vendor website"></label>
+  </div><p class="count">Only the boxes you fill are saved; the rest stay Missing. Saved values are labelled Edited with today’s date and the source you give.</p><p class="count" id="mfErr" role="alert"></p></div>
+  <footer><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">Save details</button></footer></form></div>`;
+}
+async function submitMissing(form) {
+  const v = BY_ID[form.dataset.id]; if (!v) return;
+  const src = $("#mf_src", form).value.trim();
+  const stamp = "Dashboard edit " + new Date().toLocaleDateString() + (src ? " · " + src : "");
+  const rec = clone(v); delete rec._edited; delete rec._editedBy; delete rec._approved;
+  let n = 0;
+  form.querySelectorAll("[data-mf]").forEach(i => { const val = i.value.trim(); if (val) { rec.fields[i.dataset.mf] = { v: val, q: "edited", src: [stamp] }; n++; } });
+  const c = { name: $("#mf_cname", form).value.trim(), designation: $("#mf_cdes", form).value.trim(), phone: $("#mf_cphone", form).value.trim(), email: $("#mf_cemail", form).value.trim() };
+  if (c.name || c.phone || c.email) { rec.extraContacts = (rec.extraContacts || []).concat([Object.assign(c, { src: stamp })]); n++; }
+  if (!n) { $("#mfErr").textContent = "Fill at least one box before saving."; return; }
+  if (!(rec.sources || []).includes("Dashboard edits")) (rec.sources = rec.sources || []).push("Dashboard edits");
+  if (await Store.putEdit(rec.id, { record: rec })) { form.closest(".modal").remove(); render(); openDrawer(rec.id); toast(`${n} detail${n === 1 ? "" : "s"} saved`); }
+}
+
+/* ------------------------------------------------------------ Excel export */
+async function exportXlsx() {
+  const msg = $("#xMsg");
+  if (!window.XLSX) { msg.textContent = "The spreadsheet library did not load. Use the CSV exports instead."; return; }
+  const sheet = rows => XLSX.utils.json_to_sheet(rows);
+  const vendors = VENDORS.map(v => { const la = latestAssessment(v), w = perfWindow(v.id), f = feeInfo(v); const o = {
+    Vendor: v.name, "Vendor ID": v.id, "Service category": SERVICES[svcKey(v)], "Stage 1 status": v.status.stage1, "Status reason": v.status.reason, "Status source": v.status.src || "",
+    "Shortlist category": slCat(v) ? SLCATS[slCat(v)].label : "", "Fee / pricing": f.text, "Fee basis": f.label,
+    "Latest assessment score": la ? +la.s.score.toFixed(2) : "", "Assessment scale max": la ? la.s.scale.max : "", "Assessment date": la ? la.a.date : "", "Assessor": la ? la.a.assessor : "", "Assessment recommendation": la ? la.a.recommendation : "",
+    "Workbook score": fv(v, "score"), "Performance summary": w.summary === null ? "Not evaluated" : +w.summary.toFixed(2), "Years evaluated": w.years.length ? `${w.done.length}/${w.years.length}` : "" };
+    FIELD_GROUPS.forEach(([, fs]) => fs.forEach(([k, l]) => { o[l] = fv(v, k); }));
+    o["Origin"] = v.origin; o["Last updated"] = v._edited || v.lastUpdated || ""; return o; });
+  const assess = []; VENDORS.forEach(v => assessOf(v.id).forEach(a => { const s = asScore(a); s.rows.forEach(r => assess.push({ Vendor: v.name, "Assessment date": a.date, Stage: a.stage, Assessor: a.assessor, Criterion: r.c.name, Weight: +r.c.weight, Score: r.na ? "N/A" : r.r === null ? "" : r.r, "Overall score": s.score === null ? "" : +s.score.toFixed(2), Recommendation: a.recommendation || "" })); }));
+  const perf = []; VENDORS.forEach(v => evalsOf(v.id).forEach(e => { const s = evalScore(e); s.rows.forEach(r => perf.push({ Vendor: v.name, Year: yearLabel(+e.year), Period: e.period, "Business unit": e.businessUnit || "", Evaluator: e.evaluator, Criterion: r.c.name, Weight: +r.c.weight, Score: r.na ? "N/A" : r.r === null ? "Not rated" : r.r, "Annual score": s.score === null ? "" : +s.score.toFixed(2) })); }));
+  const contacts = allContacts().map(r => ({ Vendor: r.v.name, "Contact type": r.kind, Name: r.name, Designation: r.designation, Phone: r.phone, Email: r.email, Source: r.src, Note: r.note || "" }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet(vendors), "Vendors");
+  XLSX.utils.book_append_sheet(wb, sheet(assess.length ? assess : [{ Note: "No assessments recorded yet" }]), "Assessments");
+  XLSX.utils.book_append_sheet(wb, sheet(perf.length ? perf : [{ Note: "No performance evaluations recorded yet" }]), "Performance");
+  XLSX.utils.book_append_sheet(wb, sheet(contacts), "Contacts");
+  const data = new Blob([XLSX.write(wb, { bookType: "xlsx", type: "array" })], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const filename = `ta-vendor-register-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  try { const dl = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null; if (dl) { await dl.save({ filename, data }); msg.textContent = "Saved."; return; } }
+  catch (e) { if (e && e.code === "cancelled") { msg.textContent = "Save cancelled."; return; } }
+  try { const a = document.createElement("a"); a.href = URL.createObjectURL(data); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = "Download started."; } catch (e) { msg.textContent = "The download was blocked in this view."; }
+}
+
 /* -------------------------------------------------------------- render */
 function render() {
   assemble();
@@ -1613,6 +1803,11 @@ document.addEventListener("click", async e => {
   if (d.readycat) { UI.readyCat = d.readycat; UI.readyAll = false; return render(); }
   if (d.st) { UI.stTab = d.st; return render(); }
   if (d.close !== undefined) return closeDrawer();
+  if (d.assess) { $("#layer").insertAdjacentHTML("beforeend", assessForm(null, d.assess)); return; }
+  if (d.editassess) { const a = Store.data.assessments[d.editassess]; if (a) $("#layer").insertAdjacentHTML("beforeend", assessForm(Object.assign({ _id: d.editassess }, a))); return; }
+  if (d.delassess) { t.outerHTML = `<span class="count">Delete this assessment?</span> <button class="copy" type="button" data-delassessok="${esc(d.delassess)}">Yes, delete</button> <button class="copy" type="button" data-delno>Keep</button>`; return; }
+  if (d.delassessok) { const vid = (Store.data.assessments[d.delassessok] || {}).vendorId; if (await Store.del("assessments", d.delassessok)) { render(); openDrawer(vid, "assess"); toast("Assessment deleted"); } return; }
+  if (d.fill) { $("#layer").insertAdjacentHTML("beforeend", missingForm(d.fill)); const f = d.focus && $("#mf_" + d.focus); (f || $("#missingForm input, #missingForm textarea")).focus(); return; }
   if (d.addeval) { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, d.addeval)); return; }
   if (d.editeval) { const ev = Store.data.evaluations[d.editeval]; if (ev) $("#layer").insertAdjacentHTML("beforeend", evalForm(Object.assign({ _id: d.editeval }, ev))); return; }
   if (d.deleval) { t.outerHTML = `<span class="count">Delete this evaluation?</span> <button class="copy" type="button" data-delevalok="${esc(d.deleval)}">Yes, delete</button> <button class="copy" type="button" data-delno>Keep</button>`; return; }
@@ -1635,6 +1830,7 @@ document.addEventListener("click", async e => {
   if (d.dismiss) return decide(d.dismiss, "dismissed");
   if (d.undo) return undoDecision(d.undo);
   if (d.cancel !== undefined) { t.closest(".modal").remove(); return; }
+  if (d.x === "xlsx") return exportXlsx();
   if (d.x) return doExport(d.x);
   if (d.open) return openDrawer(d.open, d.tab);
   if (t.id === "btnAdd") return openEdit(null);
@@ -1646,17 +1842,20 @@ document.addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches(".rank[data-open], tr[data-open]")) { e.preventDefault(); openDrawer(e.target.dataset.open, e.target.dataset.tab); }
 });
 document.addEventListener("submit", e => {
-  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm"].includes(f.id)) return;
+  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm", "assessForm", "missingForm"].includes(f.id)) return;
   e.preventDefault();
-  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees })[f.id](f);
+  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees, assessForm: submitAssess, missingForm: submitMissing })[f.id](f);
 });
 let qTimer;
 document.addEventListener("input", e => {
   const id = e.target.id;
+  const af = e.target.closest && e.target.closest("#assessForm"); if (af) { liveAssess(af); return; }
+  const evf = e.target.closest && e.target.closest("#evalForm"); if (evf) { liveEval(evf); return; }
   if (id === "fq" || id === "pq" || id === "cq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[{ fq: "q", pq: "pq", cq: "cq" }[id]] = e.target.value; render(); }, 160); }
 });
 document.addEventListener("change", e => {
   const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", cscope: "cscope", ckind: "ckind", pscope: "pscope", psvc: "psvc", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  if (e.target.dataset && e.target.dataset.na) { const inp = e.target.closest(".scrow").querySelector("input[data-crit]"); inp.disabled = e.target.checked; if (e.target.checked) inp.value = ""; const fm = e.target.closest("form"); if (fm.id === "assessForm") liveAssess(fm); else liveEval(fm); return; }
   if (e.target.dataset && e.target.dataset.move) { moveVendor(e.target.dataset.move, e.target.value); return; }
   const ef = e.target.closest("#evalForm");
   if (ef && e.target.id === "ev_vendor" && !ef.dataset.id) { const vid = e.target.value; ef.closest(".modal").remove(); $("#layer").insertAdjacentHTML("beforeend", evalForm(null, vid)); return; }
