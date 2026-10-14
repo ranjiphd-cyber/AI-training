@@ -152,18 +152,48 @@ INFERRED = {
 
 # Vendor type for the contact list (Base Data section 2).  Dashboard
 # classification from name/domain only -> always "Needs verification".
+# Service categories a TA team buys from.  Classification of contact-list
+# rows is by name/domain only, so it is always marked Needs verification.
+SERVICES = {
+    "recruit": "Recruitment agency (permanent & search)",
+    "contract": "Contract staffing & staff augmentation",
+    "rpo": "RPO & managed hiring",
+    "tatech": "TA technology (ATS, AI sourcing, CRM)",
+    "assess": "Assessment & interview services",
+    "jobboard": "Job boards & candidate databases",
+    "campus": "Campus & early-career partners",
+    "bgv": "Background verification",
+    "medical": "Pre-employment medical check-up",
+    "reloc": "Relocation & immigration",
+    "branding": "Employer branding & recruitment marketing",
+    "diversity": "Diversity & specialist talent networks",
+    "skilling": "Hire-train-deploy & skilling partners",
+    "engage": "Onboarding, gifting & candidate engagement",
+    "gig": "Interim, freelance & gig talent",
+    "outplace": "Outplacement & career transition",
+    "other": "Other HR services & HRMS",
+}
 TYPE_RULES = [
-    ("Campus / education", r"universit|institut|college|academy|\bnsb\b|jagsom|tapmi|great lakes|sies|career guidance|placement office|new horizon|cranes varsity|kalvium|guvi|42 learn|atlas skilltech|psit|emertxe|naukri campus|super set|grad partners|global academy"),
-    ("HR tech / platform", r"zing hr|phenom|zwayam|ukg|hackerearth|foundit|monster|qapita|benepik|trophykart|happyness|mera monitor|vonboard|zeko|qallify|suitable|bodhitva|hyre sure|myllynk|athmick|maki|spring works|growby|get work|mylynk|violetinfo|upgrad|house of cheer|go fluent|ets\b|aon\b"),
-    ("Background verification", r"id fy|idfy|on grid|gridlines|instaveritas|ikn chase|krya screening|tracert|antlegs"),
-    ("Relocation / other HR service", r"netexpat|net expat|lhh|sourcepro training|trump trainers|consortium gifts"),
+    ("campus", r"naukri campus|universit|institut|college|academy of|\bnsb\b|jagsom|tapmi|great lakes|sies|career guidance|placement office|psit|new horizon|atlas skilltech|super set|grad partners|get work"),
+    ("jobboard", r"monster|foundit|^naukri$|jobtokri"),
+    ("skilling", r"guvi|kalvium|cranes varsity|emertxe|42 learn|sourcepro training|trump trainers|upgrad"),
+    ("assess", r"hackerearth|^aon$|go fluent|^ets$|assesspeople"),
+    ("bgv", r"id fy|idfy|on grid|gridlines|instaveritas|ikn chase|krya screening|tracert|antlegs"),
+    ("engage", r"benepik|trophykart|house of cheer|happyness|consortium gifts"),
+    ("reloc", r"netexpat|net expat"),
+    ("outplace", r"^lhh$"),
+    ("gig", r"interim management"),
+    ("diversity", r"^avtar$|military corp|enable india"),
+    ("rpo", r"cielo|taggd|randstad source right"),
+    ("tatech", r"spring works|bodhitva|qallify|suitable|growby|zeko|violetinfo|vonboard|myllynk|phenom|zwayam|maki people|athmick"),
+    ("other", r"zing hr|^ukg$|qapita|mera monitor"),
 ]
 def guess_type(name):
-    n = name.lower()
+    n = name.lower().strip()
     for t, rx in TYPE_RULES:
         if re.search(rx, n):
             return t
-    return "Recruitment / staffing"
+    return "recruit"
 
 # ------------------------------------------------------------ record model
 vendors = OrderedDict()
@@ -172,7 +202,7 @@ issues = []          # workbook-level notes
 def new_vendor(vid, name):
     return {
         "id": vid, "name": name, "aliases": [], "origin": "source",
-        "vendorType": {"v": "Recruitment / staffing", "q": "verify", "src": [], "note": "Dashboard classification"},
+        "vendorType": {"v": "Recruitment agency (permanent & search)", "q": "verify", "src": [], "note": "Dashboard classification"},
         "fields": {}, "contacts": [], "clientRefs": [], "sources": [],
         "status": {"stage1": "Not assessed", "reason": "", "src": None},
         "modules": {}, "levelTags": [], "lists": [], "shortlist": None,
@@ -482,7 +512,7 @@ if "xebia" in vendors:
     flag(vendors["xebia"], "provided", "Final Decision column (Base Data r53): vendor supports contractual staffing, not permanent recruitment.")
 
 # type, categories, quality summary
-KW_PERM = re.compile(r"permanent|perm\b|executive search|exec(e|u)?cuite|headhunt|search firm|leadership (hiring|search)|recruitment|placement|lateral hiring|cxo|board|rpo", re.I)
+KW_PERM = re.compile(r"permanent|perm\b|\bfte\b|executive search|exec(e|u)?cuite|headhunt|search firm|leadership (hiring|search)|recruitment|placement|lateral hiring|cxo|board|rpo", re.I)
 KW_AUG = re.compile(r"contract|staff aug|staff augu|staffing|c2h|managed services|temp\b|payroll|sow\b|contingent|bench", re.I)
 KW_VOL = re.compile(r"bulk|volume|blue.?collar|mass|campus|generic hiring", re.I)
 
@@ -499,13 +529,16 @@ if "korn-ferry" in vendors:
     flag(vendors["korn-ferry"], "verify", "Spelled “Korn Fery” in the Shortlisted Vendors tab; shown as Korn Ferry.", "name")
 
 for v in vendors.values():
-    v["vendorType"]["v"] = guess_type(v["name"] + " " + " ".join(v["aliases"]))
+    key = next((guess_type(n) for n in [v["name"]] + v["aliases"] if guess_type(n) != "recruit"), "recruit")
+    v["vendorType"]["v"] = SERVICES[key]
     if v["status"]["stage1"] != "Not assessed" or v["shortlist"]:
-        if v["vendorType"]["v"] == "Recruitment / staffing":
+        if key == "recruit":
             v["vendorType"]["q"] = "provided"
             v["vendorType"]["note"] = "Assessed as a recruitment vendor in the workbook."
-    if v["id"] in ("netexpat", "consortium-gifts"):
-        v["vendorType"]["v"] = "Relocation / other HR service"
+    if v["id"] == "netexpat":
+        v["vendorType"]["v"] = SERVICES["reloc"]
+    if v["id"] == "consortium-gifts":
+        v["vendorType"]["v"] = SERVICES["engage"]
     cats = {}
     def add(cat, basis, ref):
         cats.setdefault(cat, []).append({"basis": basis, "ref": ref})
@@ -529,9 +562,12 @@ for v in vendors.values():
     if mp and v["id"] != "xebia": add("permanent", "derived", f"Keyword “{mp.group(0)}” in specialization/domain/comments")
     if ma: add("staffAug", "derived", f"Keyword “{ma.group(0)}” in specialization/domain/comments")
     if mv: add("volume", "derived", f"Keyword “{mv.group(0)}” in specialization/domain/comments")
-    if v["status"]["src"] and not mp and not ma and v["vendorType"]["v"] == "Recruitment / staffing" and v["id"] != "xebia":
+    if v["status"]["src"] and not mp and not ma and v["vendorType"]["v"] == SERVICES["recruit"] and v["id"] != "xebia":
         add("permanent", "derived", "Assessed recruitment vendor with no service model stated; permanent hiring assumed – verify")
     v["categories"] = cats
+    if v["vendorType"]["v"] == SERVICES["recruit"] and ("staffAug" in cats and "permanent" not in cats or v["id"] == "xebia"):
+        v["vendorType"]["v"] = SERVICES["contract"]
+        v["vendorType"]["note"] = "Contract staffing without a stated permanent-hiring service" + (" (Final Decision column, Base Data r53)." if v["id"] == "xebia" else ".")
     # SPOC from contacts when Base Data section 1 had none
     if not v["fields"].get("spocName") and v["contacts"]:
         c = v["contacts"][0]

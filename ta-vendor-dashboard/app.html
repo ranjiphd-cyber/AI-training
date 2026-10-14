@@ -242,7 +242,7 @@ textarea.inp { min-height: 64px; resize: vertical; }
 <header class="mast">
   <div>
     <h1>TA Vendor Register</h1>
-    <div class="sub">Talent Acquisition vendor directory, shortlist, assessment and annual performance record · prepared for Dr. Ranjith TP</div>
+    <div class="sub">Talent Acquisition vendor directory, shortlist, assessment and annual performance record · prepared by Dr. Ranjith T P</div>
   </div>
   <div class="acts">
     <span class="mode" id="modeChip">Loading storage…</span>
@@ -278,6 +278,22 @@ const WEB_VENDORS = [
   { id: "web-transearch", name: "TRANSEARCH India", hq: "Global network", india: "New Delhi, Mumbai, Bangalore, Chennai (as of 2012 report)", website: "https://huntscanlon.com/transearch-expands-india-team/", cats: ["executive", "leadership", "permanent"], spec: "Executive search", why: "Chennai office opened for the automotive and manufacturing corridor; office list is dated.", sources: ["https://www.recruiter.co.uk/news/2012/09/international-india-transearch-opens-chennai-office", "https://huntscanlon.com/transearch-expands-india-team/"], gap: "Office list dated 2012" },
   { id: "web-signium", name: "Signium India", hq: "Global network (40 offices, 25 countries per 2009 report)", india: "Mumbai (Goregaon East)", website: "https://www.signium.com", cats: ["executive", "leadership", "permanent"], spec: "Executive search", why: "Global search network with an India member firm.", sources: ["https://www.signium.com/?p=2940", "https://huntscanlon.com/signium-international-expands-in-india/"], gap: "Current India footprint not stated" },
 ];
+WEB_VENDORS.push(
+  { id: "web-naukri", svc: "jobboard", name: "Naukri.com (Info Edge)", hq: "Noida, India", india: "Pan-India", website: "https://www.naukri.com", spec: "Job postings and the Resdex resume database", why: "Described as India’s largest job portal, used by recruiters of every size. The workbook already lists Naukri’s campus team separately.", sources: ["https://www.naukri.com/blog/top-job-portals-in-india-to-post-jobs-and-hire-candidates/"] },
+  { id: "web-linkedin", svc: "jobboard", name: "LinkedIn Talent Solutions", hq: "Sunnyvale, USA (global)", india: "", website: "https://business.linkedin.com/talent-solutions", spec: "LinkedIn Recruiter, job slots and employer branding pages", why: "Professional network used for sourcing passive and senior candidates. Not covered by this session’s searches beyond the official site.", sources: ["https://business.linkedin.com/talent-solutions"], gap: "Details not verified in this research" },
+  { id: "web-iimjobs", svc: "jobboard", name: "iimjobs & hirist (Info Edge)", hq: "India", india: "", website: "https://www.iimjobs.com", spec: "iimjobs: mid-to-senior management roles; hirist: IT and tech roles", why: "Niche portals now owned by Info Edge; together they report 23,000 job postings and 1.8 million applications a month.", sources: ["https://www.peoplematters.in/news/mergers-acquisitions/info-edge-acquires-iimjobs-for-rs-8082-cr-21833", "https://www.naukri.com/blog/top-job-portals-in-india-to-post-jobs-and-hire-candidates/"] },
+  { id: "web-instahyre", svc: "jobboard", name: "Instahyre", hq: "India", india: "", website: "https://www.instahyre.com", spec: "Curated database of tech candidates", why: "Tech-focused hiring platform; smaller pool than general job boards and mainly India.", sources: ["https://cutshort.io/instahyre-alternatives", "https://us.fitgap.com/products/instahyre"] },
+  { id: "web-podai", svc: "tatech", name: "pod.ai", hq: "India", india: "", website: "https://pod.ai", spec: "AI campus-recruitment platform: drives, assessments, interview management", why: "Named by you. Third-party listings describe an AI platform linking colleges, students and employers for campus hiring.", sources: ["https://www.caplight.com/company/pod-ai", "https://www.fdaytalk.com/?p=50888"], gap: "Only third-party listings found" },
+  { id: "web-glider", svc: "tatech", name: "Glider AI", hq: "USA", india: "", website: "https://glider.ai", spec: "AI pre-screening, skill assessments, AI and live coding interviews, proctoring", why: "Named by you. Skills-validation platform used by enterprises, staffing firms and MSPs; integrates with SAP SuccessFactors.", sources: ["https://glider.ai/product/", "https://www.sap.com/norway/products/hcm/partners/glider-ai-inc-glider-ai-skills-validation-platform-for-sap-successfactors.html"] },
+  { id: "web-mettl", svc: "assess", name: "Mercer | Mettl", hq: "Gurugram, India (Mercer group)", india: "", website: "https://mettl.com", spec: "Pre-hire assessments: aptitude, personality, coding, proctored online tests", why: "Assessment platform acquired by Mercer in 2018; widely used for entry-level and lateral screening.", sources: ["https://indiaincgroup.com/mercer-acquires-gurugram-start-up-mettl-india-global-business/", "https://www.cielotalent.com/recruiting-technology-navigator/mettl/"] },
+  { id: "web-barraiser", svc: "assess", name: "BarRaiser", hq: "India", india: "", website: "https://www.barraiser.com", spec: "Interview-as-a-service with external expert interviewers", why: "Claims 400,000+ structured interviews for 500+ companies (company figure).", sources: ["https://blog.barraiser.com/interview-as-a-service"] },
+  { id: "web-incruiter", svc: "assess", name: "InCruiter", hq: "Bengaluru, India", india: "", website: "https://incruiter.com", spec: "Interview-as-a-service; pay-per-interview or credits", why: "Founded 2018; network of 3,000+ interviewers for technical and non-technical roles (third-party profile).", sources: ["https://incruiter.com/about-us", "https://app.dealroom.co/companies/incruiter"] },
+  { id: "web-authbridge", svc: "bgv", name: "AuthBridge", hq: "Gurugram, India", india: "", website: "https://authbridge.com", spec: "Pre-employment screening, education, address and criminal checks", why: "Founded 2005; says it serves 1,500+ companies. Ranked first of 12 providers in a 2026 desk comparison.", sources: ["https://authbridge.com/blog/top-7-background-verification-companies-in-india-2024", "https://content.hrone.cloud/?p=56763"] },
+  { id: "web-fadv", svc: "bgv", name: "First Advantage (India)", hq: "USA (global); India operations in Bengaluru", india: "Bengaluru", website: "https://fadv.com", spec: "Background checks, drug tests, continuous monitoring", why: "Global screening provider; noted for multinational screening.", sources: ["https://www.wisemonk.io/background-verification-companies-in-india"] },
+  { id: "web-hireright", svc: "bgv", name: "HireRight", hq: "USA (global)", india: "Offices in India", website: "https://www.hireright.com", spec: "Criminal, employment and education verification", why: "Global screening provider founded 1995 with Indian offices.", sources: ["https://www.wisemonk.io/background-verification-companies-in-india"] },
+  { id: "web-springverify", svc: "bgv", name: "SpringVerify", hq: "India", india: "", website: "https://springverify.com", spec: "Tech-enabled background verification", why: "Listed among the top Indian BGV providers alongside AuthBridge, IDfy and OnGrid (which are already in the workbook).", sources: ["https://content.hrone.cloud/?p=56763"], gap: "Only one comparison source" },
+  { id: "web-apollo-pehc", svc: "medical", name: "Apollo 24|7 – pre-employment health check", hq: "Chennai, India (Apollo group)", india: "Bengaluru centres listed", website: "https://www.apollo247.com", spec: "NABL-accredited pre-employment package; corporate bulk packages", why: "Lists a 94-test pre-employment package with reports in about 10–12 hours; corporate pricing varies by city.", sources: ["https://www.apollo247.com/lab-tests/pre-employment-health-check-up-l-madiwala-c-bangalore"], gap: "Only provider researched; add your current medical partner" },
+);
 const WEB_ENRICH = [
   { id: "en-korn-hq", vendor: "korn-ferry", field: "hq", value: "Global (Los Angeles, USA); India offices in Mumbai, Bengaluru and Delhi NCR", note: "Third-party directory and consultant profiles; office list not confirmed on an official Korn Ferry page.", sources: ["https://www.businessofgcc.com/gcc-partners/korn-ferry-india", "https://www.kornferry.com/jp/about-us/consultants/suchet-narain"] },
   { id: "en-korn-spec", vendor: "korn-ferry", field: "specialization", value: "Global executive search and leadership consulting; India practice includes automotive and aerospace leadership.", note: "From a Korn Ferry consultant profile.", sources: ["https://www.kornferry.com/about-us/consultants/manisha-malik"] },
@@ -309,11 +325,33 @@ const FIELD_GROUPS = [
   ["Company", [["hq", "Headquarters / location"], ["years", "Years in operation"], ["recruiters", "Recruiter strength"], ["headcount", "Total headcount"], ["entityType", "Entity type"], ["revenue", "Annual revenue"], ["gstPan", "GST & PAN"]]],
   ["Capability", [["domain", "Domain"], ["specialization", "Specialization"], ["industries", "Industries"], ["majorClients", "Major clients (last 2 yrs)"], ["activeClients", "Current active clients"]]],
   ["Delivery (vendor-reported)", [["profilesPerReq", "Profiles per requirement"], ["closureTimeline", "Average closure timeline"], ["positionsClosed12m", "Positions closed (12 months)"], ["joiningRatio", "Joining ratio"], ["wfo", "Work-from-office hiring"], ["nicheUrgent", "Niche / urgent hiring"], ["dedicatedRecruiters", "Dedicated skill recruiters"], ["trackingReports", "Daily/weekly tracking"], ["diversity", "Diversity hiring"]]],
+  ["Commercials", [["pricing", "Commercial model / pricing"], ["contractTerm", "Contract / SLA terms"]]],
   ["Workbook assessment", [["comments", "Comments"], ["score", "Score (1–5)"], ["finalDecision", "Final decision"]]],
 ];
 const FIELD_LABEL = Object.fromEntries(FIELD_GROUPS.flatMap(g => g[1]));
 const Q_LABEL = { provided: "Provided", verify: "Needs verification", conflict: "Conflicting", missing: "Missing", web: "Web-sourced", edited: "Edited" };
-const TYPES = ["Recruitment / staffing", "HR tech / platform", "Campus / education", "Background verification", "Relocation / other HR service"];
+/* Service categories a TA team buys from. The first three are recruitment
+   partners that can be shortlisted with a fee band; the rest are rated on
+   their own criteria sets. */
+const SERVICES = {
+  recruit: "Recruitment agency (permanent & search)", contract: "Contract staffing & staff augmentation", rpo: "RPO & managed hiring",
+  tatech: "TA technology (ATS, AI sourcing, CRM)", assess: "Assessment & interview services", jobboard: "Job boards & candidate databases",
+  campus: "Campus & early-career partners", bgv: "Background verification", medical: "Pre-employment medical check-up",
+  reloc: "Relocation & immigration", branding: "Employer branding & recruitment marketing", diversity: "Diversity & specialist talent networks",
+  skilling: "Hire-train-deploy & skilling partners", engage: "Onboarding, gifting & candidate engagement", gig: "Interim, freelance & gig talent",
+  outplace: "Outplacement & career transition", other: "Other HR services & HRMS",
+};
+const SERVICE_HINT = {
+  recruit: "Permanent placement, leadership and executive search", contract: "Contract staff, C2H, payroll and staff augmentation", rpo: "Outsourced or managed recruitment teams",
+  tatech: "ATS, AI sourcing and screening, CRM, scheduling, chatbots", assess: "Skill tests, psychometrics, interview-as-a-service", jobboard: "Job portals, resume databases, professional networks",
+  campus: "Colleges, campus-hiring platforms, placement cells", bgv: "Employment, education, address, criminal and ID checks", medical: "Pre-employment health check-ups and fitness certificates",
+  reloc: "Relocation, visas and immigration for joiners", branding: "Employer brand, careers site, job advertising", diversity: "Women returners, veterans, persons with disabilities",
+  skilling: "Train-then-hire and fresher bootcamps", engage: "Welcome kits, gifting, pre-joining engagement", gig: "Interim managers, freelancers, gig platforms",
+  outplace: "Career transition for exiting employees", other: "HRMS, payroll software and other HR services",
+};
+const TYPES = Object.values(SERVICES);
+const LEGACY_TYPE = { "Recruitment / staffing": SERVICES.recruit, "HR tech / platform": SERVICES.tatech, "Campus / education": SERVICES.campus, "Background verification": SERVICES.bgv, "Relocation / other HR service": SERVICES.other };
+const svcKey = v => { const l = v.vendorType && v.vendorType.v; return Object.keys(SERVICES).find(k => SERVICES[k] === (LEGACY_TYPE[l] || l)) || "other"; };
 const STATUSES = ["PASS", "HOLD", "FAIL", "Not assessed"];
 
 /* ------------------------------------------------------------ helpers */
@@ -405,13 +443,13 @@ function webVendorRecord(w) {
   const f = (v, q = "web", note) => v ? { v, q, src: ["Web research 14 Oct 2026"], note } : { v: "", q: "missing", src: [] };
   return {
     id: w.id, name: w.name, aliases: [], origin: "web",
-    vendorType: { v: "Recruitment / staffing", q: "web", note: "Web research" },
+    vendorType: { v: SERVICES[w.svc || "recruit"], q: "web", note: "Web research" },
     fields: { hq: f(w.hq + (w.india ? " · India: " + w.india : "")), website: f(w.website), specialization: f(w.spec), comments: f(w.why), spocName: f(""), spocEmail: f(""), spocPhone: f("") },
     contacts: [], clientRefs: [], sources: ["Web research 14 Oct 2026"], webSources: w.sources,
     status: { stage1: "Not assessed", reason: "Suggested from web research; not part of the workbook assessment.", src: null },
     modules: {}, levelTags: [], lists: [], shortlist: null,
     flags: [{ kind: "web", text: "Added from web research. Contact details are deliberately left blank; none were found or invented." }].concat(w.gap ? [{ kind: "verify", text: w.gap }] : []),
-    categories: Object.fromEntries(w.cats.map(c => [c, [{ basis: "web", ref: "Web research: " + w.spec }]])),
+    categories: Object.fromEntries((w.cats || []).map(c => [c, [{ basis: "web", ref: "Web research: " + w.spec }]])),
     fee: { v: "", q: "missing", note: "No fee information." }, lastUpdated: "2026-10-14",
   };
 }
@@ -432,9 +470,10 @@ function assemble() {
     if (seen.has(id) || e.deleted || !e.record) continue;
     out.push(Object.assign(clone(e.record), { _edited: e.updatedAt, _editedBy: e.updatedBy }));
   }
+  out.forEach(v => { if (v.vendorType && LEGACY_TYPE[v.vendorType.v]) v.vendorType = Object.assign({}, v.vendorType, { v: LEGACY_TYPE[v.vendorType.v] }); });
   VENDORS = out; BY_ID = Object.fromEntries(out.map(v => [v.id, v]));
 }
-const isRecruiter = v => (v.vendorType && v.vendorType.v) === "Recruitment / staffing";
+const isRecruiter = v => ["recruit", "contract", "rpo"].includes(svcKey(v));
 const deletedBase = () => RAW.vendors.filter(b => (Store.edits[safeId(b.id)] || {}).deleted);
 
 /* ------------------------------------------------------------- ranking */
@@ -497,6 +536,8 @@ function renderRail() {
     <div class="grp">Shortlist · one category each</div>
     <button data-go="shortlist" data-sltab="all" ${UI.view === "shortlist" && UI.slTab === "all" ? 'aria-current="true"' : ""}>All shortlisted <span class="ct">${VENDORS.filter(slCat).length}</span></button>
     ${Object.entries(SLCATS).map(([k, c]) => `<button data-go="shortlist" data-sltab="${k}" ${UI.view === "shortlist" && UI.slTab === k ? 'aria-current="true"' : ""}>${esc(c.label)} <span class="ct" title="shortlisted / listed in workbook · fee band">${VENDORS.filter(v => slCat(v) === k).length}/${VENDORS.filter(v => inList(v, k) || slCat(v) === k).length} · ${esc(bandText(k))}</span></button>`).join("")}
+    <div class="grp">Directory by service</div>
+    ${Object.entries(SERVICES).map(([k, l]) => `<button data-go="directory" data-type="${esc(l)}" ${UI.view === "directory" && UI.type === l && !UI.cat ? 'aria-current="true"' : ""} title="${esc(SERVICE_HINT[k])}">${esc(l.replace(/ \(.*\)$/, ""))} <span class="ct">${VENDORS.filter(v => svcKey(v) === k).length}</span></button>`).join("")}
     <div class="grp">Service model</div>
     ${["permanent", "staffAug"].map(k => `<button data-go="directory" data-cat="${k}" ${cur("directory", k)}>${CATS[k]} <span class="ct">${n(k)}</span></button>`).join("")}
     <div class="grp">Decisions</div>
@@ -552,7 +593,7 @@ function viewOverview() {
       ${bars(Object.entries(CATS).map(([k, l]) => [l, VENDORS.filter(v => v.categories[k]).length, "", k]), "goCat")}</section>
     <section class="panel"><h3>Service model <small>keyword-derived · verify</small></h3>
       ${bars([["Permanent placement", VENDORS.filter(v => v.categories.permanent).length, "", "permanent"], ["Staff augmentation", VENDORS.filter(v => v.categories.staffAug).length, "", "staffAug"], ["Both", VENDORS.filter(v => v.categories.permanent && v.categories.staffAug).length, "", "both"], ["Not stated", VENDORS.filter(v => !v.categories.permanent && !v.categories.staffAug).length, "na", "none"]], "goSvc")}</section>
-    <section class="panel"><h3>Organisation type <small>dashboard classification</small></h3>
+    <section class="panel"><h3>Service category <small>dashboard classification</small></h3>
       ${bars(countBy(VENDORS, v => v.vendorType.v).map(([l, n]) => [l, n]), "goType")}</section>
     <section class="panel"><h3>Headquarters <small>recruitment vendors</small></h3>
       ${bars(countBy(R, locBucket).map(([l, n]) => [l, n, l === "Missing" ? "na" : ""]), "goLoc")}</section>
@@ -586,6 +627,7 @@ const inList = (v, k) => !!(v.wbLists && v.wbLists[k] && v.wbLists[k].length);
 const canGo = (v, k) => k !== "juniorMid" || inList(v, "juniorMid") || v.origin === "added";
 const blocked = v => v.status.stage1 === "HOLD" || v.status.stage1 === "FAIL";
 function feeInfo(v) {
+  if (!isRecruiter(v)) return has(v, "pricing") ? { text: fv(v, "pricing"), q: v.fields.pricing.q, label: "Commercial model", note: "" } : { text: "", q: "missing", label: "Commercials not recorded", note: "Add the pricing model (per check, per licence, per test…) on the vendor’s profile." };
   if (v.fee && v.fee.v) return { text: v.fee.v, q: v.fee.q === "confirmed" ? "provided" : "verify", label: v.fee.q === "confirmed" ? "Confirmed by vendor" : "Estimate (vendor-specific)", note: v.fee.note };
   const c = slCat(v);
   if (c && feeBands()[c]) return { text: bandText(c), q: "verify", label: "Category band · estimate", note: `${SLCATS[c].label} band (${feeBands().note || "TA guidance"}). Not confirmed by the vendor.` };
@@ -598,7 +640,7 @@ function basisChip(v) {
   return `<span class="q q-${m[0]}" title="${esc(s.ref || "")}">${m[1]}</span>`;
 }
 function moveSelect(v) {
-  if (!Store.canWrite) return "";
+  if (!Store.canWrite || !isRecruiter(v)) return "";
   if (blocked(v)) return `<span class="al" title="HOLD and FAIL vendors cannot be shortlisted">Status ${esc(v.status.stage1)}: cannot be shortlisted</span>`;
   const cur = slCat(v) || "";
   return `<select class="inp sm-sel" data-move="${esc(v.id)}" aria-label="Shortlist category for ${esc(v.name)}">${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${cur === k ? "selected" : ""} ${k && !canGo(v, k) ? "disabled" : ""}>${esc(l)}${k && !canGo(v, k) ? " (not in workbook list)" : ""}</option>`).join("")}</select>`;
@@ -670,7 +712,7 @@ function viewShortlist() {
   ${tab === "all" ? `<section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">PASS vendors not shortlisted <small>${unassigned.length}</small></h3>
     ${unassigned.map((v, i) => rankRow(v, rank(v, "all"), i + 1)).join("") || '<div class="empty">Every PASS vendor is in a category.</div>'}</section>
   <section class="panel webmark"><h3>Web-suggested leadership firms <small>not shortlisted · no workbook evidence</small></h3>
-    <div class="chips">${VENDORS.filter(v => v.origin === "web").map(v => `<button class="btn sm" type="button" data-open="${esc(v.id)}">${esc(v.name)}</button>`).join("") || "None"}</div></section>` : ""}`;
+    <div class="chips">${VENDORS.filter(v => v.origin === "web" && svcKey(v) === "recruit").map(v => `<button class="btn sm" type="button" data-open="${esc(v.id)}">${esc(v.name)}</button>`).join("") || "None"}</div></section>` : ""}`;
 }
 function rankRow(v, r, pos) {
   const why = v.shortlist ? v.shortlist.why : v.status.reason;
@@ -827,8 +869,8 @@ function viewDirectory() {
   const title = UI.cat ? CATS[UI.cat] : "Vendor directory";
   const sortTh = (k, l) => `<th><button type="button" data-sort="${k}">${l}${UI.sort === k ? (UI.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   return `
-  <div class="vhead"><div><div class="eyebrow">${UI.cat ? "Hiring category view" : "Directory"}</div><h2>${esc(title)}</h2>
-  <p>${UI.cat ? esc(CAT_INFO[UI.cat]) + " These capability tags can overlap; the shortlist assigns each vendor to one category only." : "Every organisation in the workbook, merged across tabs. Search covers names, aliases, contacts, specialization, industries and recorded reasons."}</p></div>
+  <div class="vhead"><div><div class="eyebrow">${UI.cat ? "Hiring category view" : "Directory"}</div><h2>${esc(UI.type && UI.type !== "recruit" && UI.type !== "all" && !UI.cat ? UI.type : title)}</h2>
+  <p>${UI.type && SERVICE_HINT[Object.keys(SERVICES).find(k => SERVICES[k] === UI.type)] && !UI.cat ? esc(SERVICE_HINT[Object.keys(SERVICES).find(k => SERVICES[k] === UI.type)]) + ". Use Add Vendor to add one, and rate it under Annual evaluation with this category’s criteria." : UI.cat ? esc(CAT_INFO[UI.cat]) + " These capability tags can overlap; the shortlist assigns each vendor to one category only." : "Every organisation in the workbook, merged across tabs. Search covers names, aliases, contacts, specialization, industries and recorded reasons."}</p></div>
   <div class="legend"><span><span class="badge b-web">Violet</span> = added from web research</span></div></div>
   <div class="filters" role="search">
     <input class="inp" type="search" id="fq" placeholder="Search vendor, SPOC, email, phone, skill, industry…" value="${esc(UI.q)}" aria-label="Search vendors">
@@ -836,7 +878,7 @@ function viewDirectory() {
     <select class="inp" id="fcat" aria-label="Capability">${opt("", "Any capability", UI.cat)}${Object.entries(CATS).map(([k, l]) => opt(k, "Capability · " + l, UI.cat)).join("")}</select>
     <select class="inp" id="fsvc" aria-label="Service model">${opt("", "Any service model", UI.svc)}${opt("permanent", "Permanent placement", UI.svc)}${opt("staffAug", "Staff augmentation", UI.svc)}${opt("both", "Both models", UI.svc)}${opt("none", "Model not stated", UI.svc)}</select>
     <select class="inp" id="fst" aria-label="Status">${opt("", "Any status", UI.status)}${STATUSES.map(s => opt(s, s, UI.status)).join("")}</select>
-    <select class="inp" id="ftype" aria-label="Organisation type">${opt("recruit", "Recruitment / staffing only", UI.type)}${opt("all", "All organisation types", UI.type)}${TYPES.slice(1).map(t => opt(t, t, UI.type)).join("")}</select>
+    <select class="inp" id="ftype" aria-label="Service category">${opt("recruit", "Recruitment, contract staffing & RPO", UI.type)}${opt("all", "All service categories", UI.type)}${TYPES.map(t => opt(t, t, UI.type)).join("")}</select>
     <select class="inp" id="floc" aria-label="Location">${opt("", "Any location", UI.loc)}${[...new Set(VENDORS.map(locBucket))].sort().map(l => opt(l, l, UI.loc)).join("")}</select>
     <select class="inp" id="fspec" aria-label="Specialization">${opt("", "Any specialization", UI.spec)}${SPEC.map(s => opt(s[0], s[0], UI.spec)).join("")}</select>
     <select class="inp" id="fscore" aria-label="Minimum score">${opt("", "Any score", UI.minScore)}${[5, 4, 3].map(n => opt(String(n), `Score ≥ ${n}`, UI.minScore)).join("")}</select>
@@ -860,11 +902,11 @@ function row(v) {
     <td><input type="checkbox" data-cmp="${esc(v.id)}" ${UI.compare.includes(v.id) ? "checked" : ""} aria-label="Compare ${esc(v.name)}"></td>
     <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${originChip(v)}${slCat(v) ? `<span class="badge b-fit">${esc(SLCATS[slCat(v)].label)}</span>` : ""}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
     <td>${badge(v.status.stage1)}</td>
-    <td class="wrap">${catChips(v)}</td>
+    <td class="wrap">${isRecruiter(v) ? catChips(v) : `<span class="chip">${esc(SERVICES[svcKey(v)].replace(/ \(.*\)$/, ""))}</span>`}</td>
     <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">SPOC missing</span>'}<div class="al">${esc(email) || "no email"} · ${esc(phone) || "no phone"}</div></td>
     <td>${esc(locBucket(v))}</td>
     <td class="num">${esc(fv(v, "score")) || "—"}</td>
-    <td class="num">${r.excluded ? '<span class="al">FAIL</span>' : r.total}</td>
+    <td class="num">${!isRecruiter(v) ? '<span class="al">—</span>' : r.excluded ? '<span class="al">FAIL</span>' : r.total}</td>
     <td>${(() => { const w = perfWindow(v.id); return w.summary === null ? '<span class="al">Not evaluated</span>' : ratingBadge(w.summary); })()}</td>
     <td>${dq ? qBadge("conflict") : vf ? qBadge("verify") : ""}</td></tr>`;
 }
@@ -933,10 +975,11 @@ function viewResearch() {
   <div class="vhead"><div><div class="eyebrow">Web research · 14 Oct 2026</div><h2>Suggestions awaiting your decision</h2>
   <p>Everything on this page came from public web sources, not the workbook. New firms appear in violet across the dashboard. Field suggestions for existing vendors are not applied until you approve them; approved values carry a Web-sourced label and their links.</p></div></div>
   <div class="note-box web">No contact names, phone numbers or e-mail addresses were added from the web. Use <b>Edit</b> on a vendor to add contacts you have confirmed.</div>
-  <h3 style="margin:0 0 10px">Additional leadership / executive search firms <span class="count">(${WEB_VENDORS.length})</span></h3>
-  <div class="grid g2" style="margin-bottom:22px">${WEB_VENDORS.map(w => `<div class="sugg"><div class="top"><b>${esc(w.name)}</b><span>${btns(w.id)}</span></div>
+  ${Object.entries(WEB_VENDORS.reduce((m, w) => ((m[w.svc || "recruit"] = m[w.svc || "recruit"] || []).push(w), m), {})).map(([k, ws]) => `
+  <h3 style="margin:0 0 10px">${esc(k === "recruit" ? "Additional leadership / executive search firms" : SERVICES[k])} <span class="count">(${ws.length})</span></h3>
+  <div class="grid g2" style="margin-bottom:22px">${ws.map(w => `<div class="sugg"><div class="top"><b>${esc(w.name)}</b><span>${btns(w.id)}</span></div>
     <div class="count">${esc(w.spec)}</div><div>${esc(w.why)}</div><div class="count"><b>Global HQ:</b> ${esc(w.hq)}${w.india ? ` · <b>India:</b> ${esc(w.india)}` : ""}</div>${w.gap ? `<div>${qBadge("verify")} ${esc(w.gap)}</div>` : ""}${srcs(w.sources)}
-    ${dec(w.id) !== "dismissed" ? `<div><button class="btn sm ghost" type="button" data-open="${esc(w.id)}">Open profile</button></div>` : ""}</div>`).join("")}</div>
+    ${dec(w.id) !== "dismissed" ? `<div><button class="btn sm ghost" type="button" data-open="${esc(w.id)}">Open profile</button></div>` : ""}</div>`).join("")}</div>`).join("")}
   <h3 style="margin:0 0 10px">Missing details for shortlisted vendors <span class="count">(${WEB_ENRICH.length})</span></h3>
   <div class="grid g2">${WEB_ENRICH.map(s => { const v = BY_ID[s.vendor]; const cur = v ? fv(v, s.field) : ""; return `<div class="sugg"><div class="top"><b>${esc(v ? v.name : s.vendor)} · ${esc(FIELD_LABEL[s.field] || s.field)}</b><span>${btns(s.id)}</span></div>
     <div>${esc(s.value)}</div><div class="count">${esc(s.note)}${s.q ? " " + qBadge(s.q) : ""}</div><div class="count"><b>Currently:</b> ${cur ? esc(cur) : "Missing"}</div>${srcs(s.sources)}</div>`; }).join("")}</div>`;
@@ -981,10 +1024,10 @@ function drawerHTML(v) {
       ${r.gaps.length ? `<div class="gaps">${r.gaps.map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div>` : ""}</section>
     ${perfSection(v)}
     <section class="sec"><h4>Hiring categories</h4><dl class="kv">${Object.keys(CATS).map(k => `<dt>${esc(CATS[k])}</dt><dd>${v.categories[k] ? v.categories[k].map(b => `<div>${qBadge(b.basis === "workbook" ? "provided" : b.basis === "web" ? "web" : b.basis === "edited" ? "edited" : "verify")} ${esc(b.ref)}</div>`).join("") : '<span class="note">—</span>'}</dd>`).join("")}</dl></section>
-    ${FIELD_GROUPS.map(([g, fs]) => `<section class="sec"><h4>${esc(g)}</h4><dl class="kv">${fs.map(([k, l]) => (["companyEmail", "companyPhone", "website", "finalDecision"].includes(k) && !v.fields[k]) ? "" : fieldRow(v, k, l)).join("")}</dl>
+    ${FIELD_GROUPS.map(([g, fs]) => `<section class="sec"><h4>${esc(g)}</h4><dl class="kv">${fs.map(([k, l]) => (["companyEmail", "companyPhone", "website", "finalDecision", "contractTerm"].includes(k) && !v.fields[k]) || (k === "pricing" && isRecruiter(v) && !v.fields[k]) ? "" : fieldRow(v, k, l)).join("")}</dl>
       ${g === "Contacts" ? `<div style="margin-top:10px"><div class="eyebrow">All contacts for this vendor (${contactsOf(v).length})</div>${contactsOf(v).map(contactCard).join("") || '<p class="note">No contacts recorded.</p>'}</div>` : ""}</section>`).join("")}
     <section class="sec"><h4>Client references</h4>${(v.clientRefs || []).length ? v.clientRefs.map(c => `<dl class="kv"><dt>Client</dt><dd>${esc(c.company || "—")} ${qBadge(c.q)}</dd><dt>Reference person</dt><dd>${esc(c.person || "—")}${c.designation ? " · " + esc(c.designation) : ""}</dd><dt>Contact</dt><dd>${esc(c.contact || "—")} ${c.contact && c.q === "provided" ? `<button class="copy" type="button" data-copy="${esc(c.contact)}">Copy</button>` : ""}<div class="src">${esc(c.src)}</div></dd></dl>`).join("") : `${qBadge("missing")} <span class="note">No client reference recorded.</span>`}</section>
-    <section class="sec"><h4>Placement fee</h4><dl class="kv"><dt>Fee % of annual CTC</dt><dd>${(() => { const f = feeInfo(v); return `${f.text ? `<span class="val"><b>${esc(f.text)}</b></span> ` : ""}${qBadge(f.q)} <span class="note">${esc(f.label)}</span>${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}`; })()}</dd>
+    <section class="sec"><h4>${isRecruiter(v) ? "Placement fee" : "Commercials"}</h4><dl class="kv"><dt>${isRecruiter(v) ? "Fee % of annual CTC" : "Pricing"}</dt><dd>${(() => { const f = feeInfo(v); return `${f.text ? `<span class="val"><b>${esc(f.text)}</b></span> ` : ""}${qBadge(f.q)} <span class="note">${esc(f.label)}</span>${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}`; })()}</dd>
       ${v.fee && v.fee.v && slCat(v) ? `<dt>Category band</dt><dd>${esc(bandText(slCat(v)))} <span class="note">${esc(SLCATS[slCat(v)].label)}</span></dd>` : ""}</dl></section>
     <section class="sec"><h4>Data-quality notes</h4>${v.flags.length ? v.flags.map(f => `<div class="flag"><span>${qBadge({ duplicate: "verify", related: "verify", web: "web" }[f.kind] || f.kind)}</span><span>${esc(f.text)}</span></div>`).join("") : '<span class="note">No flags.</span>'}</section>
     <section class="sec"><h4>Sources</h4><div class="src">${esc((v.sources || []).join(" · ") || "—")}</div>${(v.webSources || []).map(u => `<div><a class="src" href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></div>`).join("")}
@@ -997,7 +1040,7 @@ function closeDrawer() { openId = null; $("#layer").innerHTML = ""; }
 /* ---------------------------------------------------------------- edit */
 function editForm(v) {
   const isNew = !v;
-  v = v || { id: "", name: "", aliases: [], origin: "added", vendorType: { v: "Recruitment / staffing", q: "edited" }, fields: {}, contacts: [], clientRefs: [], sources: [], status: { stage1: "Not assessed", reason: "", src: null }, modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, fee: { v: "", q: "missing", note: "" } };
+  v = v || { id: "", name: "", aliases: [], origin: "added", vendorType: { v: SERVICES.recruit, q: "edited" }, fields: {}, contacts: [], clientRefs: [], sources: [], status: { stage1: "Not assessed", reason: "", src: null }, modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, fee: { v: "", q: "missing", note: "" } };
   const inp = (id, val, ph = "") => `<input class="inp" id="${id}" value="${esc(val)}" placeholder="${esc(ph)}">`;
   const ta = (id, val) => `<textarea class="inp" id="${id}">${esc(val)}</textarea>`;
   const long = new Set(["specialization", "industries", "majorClients", "activeClients", "domain", "comments", "finalDecision"]);
@@ -1110,7 +1153,7 @@ function parseCSV(text) {
 function recordFromRow(o) {
   const ex = o.id && BY_ID[o.id] ? clone(BY_ID[o.id]) : null;
   const stamp = "Imported " + new Date().toLocaleDateString();
-  const rec = ex || { id: o.id || "added-" + (o.name || "vendor").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Math.random().toString(36).slice(2, 7), origin: "added", aliases: [], fields: {}, contacts: [], clientRefs: [], sources: [], modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, vendorType: { v: "Recruitment / staffing", q: "edited" }, status: { stage1: "Not assessed", reason: "", src: null }, fee: { v: "", q: "missing" }, lastUpdated: NOW_ISO() };
+  const rec = ex || { id: o.id || "added-" + (o.name || "vendor").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) + "-" + Math.random().toString(36).slice(2, 7), origin: "added", aliases: [], fields: {}, contacts: [], clientRefs: [], sources: [], modules: {}, levelTags: [], lists: [], shortlist: null, flags: [], categories: {}, vendorType: { v: SERVICES.recruit, q: "edited" }, status: { stage1: "Not assessed", reason: "", src: null }, fee: { v: "", q: "missing" }, lastUpdated: NOW_ISO() };
   delete rec._edited; delete rec._editedBy;
   if (o.name) rec.name = o.name;
   if (o.aliases) rec.aliases = o.aliases.split(";").map(s => s.trim()).filter(Boolean);
@@ -1187,8 +1230,30 @@ const DEFAULT_PERF = {
   window: 5, yearType: "calendar", fyStartMonth: 4,
   summary: { method: "mean", recency: [5, 4, 3, 2, 1] },
 };
+/* One criteria set per kind of vendor; a BGV firm is not judged on
+   candidate quality. Recruitment agencies and RPO share the original set. */
+const C = (id, name, desc, weight) => ({ id, name, desc, weight, active: true });
+const DEFAULT_PROFILES = {
+  recruit: { name: "Recruitment agencies & RPO", criteria: null },
+  contract: { name: "Contract staffing & staff augmentation", criteria: [C("fill", "Fulfilment rate", "Positions filled against demand raised.", 15), C("deploy", "Time to deploy", "Days from request to contractor starting.", 12), C("cq", "Contractor quality", "Manager feedback on deployed staff.", 12), C("attr", "Attrition & early exits", "Contractors leaving before assignment end.", 12), C("repl", "Replacement turnaround", "Days to replace an exit.", 8), C("payroll", "Payroll accuracy & timeliness", "Correct, on-time pay and invoicing.", 12), C("stat", "Statutory compliance", "PF, ESI, CLRA, minimum wages, audits.", 15), C("resp2", "Responsiveness", "Speed of issue resolution.", 6), C("markup", "Mark-up / cost competitiveness", "Mark-up relative to market and value.", 8)] },
+  bgv: { name: "Background verification", criteria: [C("tat", "Turnaround vs SLA", "Share of checks closed within the agreed TAT.", 20), C("acc", "Accuracy & discrepancy detection", "Correct findings; few reopened cases.", 20), C("cov", "Coverage", "Check types and geographies supported.", 10), C("dp", "Data privacy & DPDP compliance", "Consent, storage, deletion, audit trail.", 15), C("cx", "Candidate experience", "Ease of document upload and follow-ups.", 8), C("int", "Integration", "ATS / HRIS integration and status visibility.", 8), C("rep", "Reporting & escalation", "Clear reports and escalation handling.", 9), C("cost", "Cost per check", "Price relative to market.", 10)] },
+  medical: { name: "Pre-employment medical check-up", criteria: [C("centres", "Centre coverage & slots", "Centres near candidates; appointment availability.", 15), C("tat", "Appointment-to-report time", "Days from booking to fitness report.", 20), C("acc", "Report accuracy & clarity", "Clear fit / unfit outcome with remarks.", 20), C("cx", "Candidate experience", "Waiting time, hygiene, communication.", 15), C("conf", "Confidentiality & compliance", "Medical data handled under consent and law.", 15), C("cost", "Cost per check-up", "Package price relative to scope.", 15)] },
+  jobboard: { name: "Job boards & candidate databases", criteria: [C("rel", "Database relevance", "Share of relevant, current profiles for our roles.", 20), C("resp", "Response & application quality", "Quality of inbound applications and InMail replies.", 20), C("value", "Cost per hire / licence value", "Hires credited against spend.", 15), C("ux", "Search & usability", "Search filters, duplicates, recruiter workflow.", 10), C("reach", "Niche & senior reach", "Coverage of hard-to-find and senior talent.", 10), C("support", "Account support", "Account manager help, training, issue fixes.", 10), C("brand", "Employer-brand visibility", "Branding and job promotion options.", 5), C("data", "Reporting & data", "Usage and funnel reporting.", 10)] },
+  tatech: { name: "TA technology (ATS, AI sourcing, CRM)", criteria: [C("fit", "Functional fit", "Meets the use cases we bought it for.", 20), C("adopt", "Adoption & ease of use", "Recruiter and hiring-manager usage.", 15), C("up", "Uptime & reliability", "Availability and defect rate.", 10), C("int", "Integration", "ATS / HRIS / SSO / calendar integration.", 15), C("sec", "Data security & compliance", "Certifications, DPDP / GDPR, AI governance.", 15), C("support", "Vendor support & SLA", "Response and resolution times.", 10), C("impact", "Impact on TA metrics", "Measured effect on time to hire, quality, cost.", 10), C("tco", "Total cost of ownership", "Licence, implementation and running cost.", 5)] },
+  assess: { name: "Assessment & interview services", criteria: [C("valid", "Predictive quality", "Scores line up with interview and on-the-job outcomes.", 20), C("cx", "Candidate experience", "Drop-off rate and candidate feedback.", 15), C("integ", "Proctoring & integrity", "Detection of cheating and impersonation.", 15), C("tat", "Turnaround", "Time to scorecard or report.", 15), C("lib", "Coverage & customisation", "Test library, languages, custom tests.", 10), C("int", "Integration", "ATS integration and reporting.", 10), C("cost", "Cost per assessment / interview", "Price relative to value.", 15)] },
+  campus: { name: "Campus, early-career & skilling partners", criteria: [C("quality", "Candidate quality", "Pass rates in our selection process.", 25), C("join", "Offer acceptance & joining", "Accepted offers that convert to joiners.", 20), C("logistics", "Coordination & logistics", "Drive scheduling, venues, communication.", 15), C("brand", "Relationship & brand", "Visibility and goodwill on campus.", 15), C("time", "Timeliness", "Commitments met on schedule.", 10), C("cost", "Cost", "Fees and drive costs relative to hires.", 15)] },
+  generic: { name: "Other services", criteria: [C("quality", "Service quality", "Output meets the agreed standard.", 25), C("sla", "Timeliness / SLA adherence", "Deliverables on time.", 20), C("resp", "Responsiveness", "Speed and quality of communication.", 15), C("comp", "Compliance & data security", "Contractual, legal and data obligations met.", 15), C("cost", "Cost competitiveness", "Price relative to value.", 15), C("rep", "Reporting", "Accuracy and timeliness of reports.", 10)] },
+};
+const PROFILE_OF = { recruit: "recruit", rpo: "recruit", contract: "contract", bgv: "bgv", medical: "medical", jobboard: "jobboard", tatech: "tatech", assess: "assess", campus: "campus", skilling: "campus" };
+function profileKey(v) { return v ? (PROFILE_OF[svcKey(v)] || "generic") : "recruit"; }
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-function perfCfg() { const c = Store.data.perf.config; return c && c.criteria ? c : DEFAULT_PERF; }
+function perfCfg() {
+  const c = Store.data.perf.config, base = c && c.criteria ? c : DEFAULT_PERF;
+  const profiles = {};
+  Object.entries(DEFAULT_PROFILES).forEach(([k, p]) => { profiles[k] = { name: p.name, criteria: k === "recruit" ? base.criteria : p.criteria }; });
+  Object.entries(base.profiles || {}).forEach(([k, p]) => { if (p && p.criteria) profiles[k] = { name: (DEFAULT_PROFILES[k] || p).name, criteria: p.criteria }; });
+  return Object.assign({}, base, { profiles, criteria: profiles.recruit.criteria });
+}
 function currentPerfYear() { const c = perfCfg(), d = new Date(); return c.yearType === "fiscal" && d.getMonth() + 1 < c.fyStartMonth ? d.getFullYear() - 1 : d.getFullYear(); }
 function yearLabel(y) { const c = perfCfg(); if (c.yearType !== "fiscal" || c.fyStartMonth === 1) return String(y); return `FY${String(y).slice(2)}–${String(y + 1).slice(2)}`; }
 function periodLabel(y) { const c = perfCfg(); if (c.yearType !== "fiscal") return `Jan–Dec ${y}`; const s = c.fyStartMonth; return `${MONTHS[s - 1]} ${y} – ${MONTHS[(s + 10) % 12]} ${s === 1 ? y : y + 1}`; }
@@ -1278,8 +1343,9 @@ function viewPerformance() {
   const yrs = Array.from({ length: N }, (_, i) => (anyCur ? cur : cur - 1) - i);
   const q = (UI.pq || "").toLowerCase();
   const evs = allEvals();
-  let list = VENDORS.filter(v => isRecruiter(v) || evalsOf(v.id).length || Store.data.engagements[safeId(v.id)]).map(v => [v, perfWindow(v.id)]);
-  if (UI.pscope !== "all") list = list.filter(([v, w]) => w.evs.length || w.eng || v.status.stage1 === "PASS" || v.shortlist);
+  let list = VENDORS.map(v => [v, perfWindow(v.id)]);
+  if (UI.pscope !== "all") list = list.filter(([v, w]) => w.evs.length || w.eng || v.status.stage1 === "PASS" || v.shortlist || (!isRecruiter(v) && (v.origin !== "web" || v._approved)));
+  if (UI.psvc) list = list.filter(([v]) => svcKey(v) === UI.psvc);
   if (q) list = list.filter(([v]) => (v.name + " " + (v.aliases || []).join(" ")).toLowerCase().includes(q));
   if (UI.pcomp) list = list.filter(([, w]) => perfStatus(w) === UI.pcomp);
   if (UI.pyear) list = list.filter(([, w]) => w.evs.some(e => +e.year === +UI.pyear));
@@ -1294,7 +1360,7 @@ function viewPerformance() {
   const sel = (id, cur, opts) => `<select class="inp" id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur ?? "") === String(v) ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   return `
   <div class="vhead"><div><div class="eyebrow">Annual vendor performance</div><h2>Performance evaluation</h2>
-  <p>Ratings are entered by authorised users, one evaluation per vendor, year and business unit. Each vendor is judged over its most recent ${N} completed ${cfg.yearType === "fiscal" ? "fiscal" : "calendar"} years of Volvo engagement, or fewer if the engagement is shorter. Years without a rating show as Not evaluated and never count as zero.</p></div>
+  <p>Ratings are entered by authorised users, one evaluation per vendor, year and business unit. Each service category has its own criteria set (recruitment, contract staffing, background verification, medical, job boards, TA technology, assessments, campus, other). Each vendor is judged over its most recent ${N} completed ${cfg.yearType === "fiscal" ? "fiscal" : "calendar"} years of Volvo engagement, or fewer if the engagement is shorter. Years without a rating show as Not evaluated and never count as zero.</p></div>
   <div class="chips"><button class="btn" type="button" data-act="perfCfg">Criteria &amp; scale</button><button class="btn primary" type="button" data-act="addEval" ${Store.canWrite ? "" : "disabled"}>+ Add evaluation</button></div></div>
   ${!evs.length ? `<div class="note-box">No performance evaluations have been recorded yet, so every vendor shows <b>Not evaluated</b>. The workbook holds no Volvo performance data and none has been inferred. Start with <b>Add evaluation</b>, and set each vendor’s Volvo engagement start year from its profile so the evaluation window is right.</div>` : ""}
   <div class="tiles">
@@ -1311,13 +1377,14 @@ function viewPerformance() {
   </div>
   <div class="filters">
     <input class="inp" type="search" id="pq" placeholder="Search vendor…" value="${esc(UI.pq || "")}" aria-label="Search vendors">
-    ${sel("pscope", UI.pscope || "", [["", "PASS, shortlisted & evaluated vendors"], ["all", "All recruitment vendors"]])}
+    ${sel("pscope", UI.pscope || "", [["", "PASS, shortlisted, service partners & evaluated"], ["all", "Every organisation"]])}
+    ${sel("psvc", UI.psvc || "", [["", "Any service category"]].concat(Object.entries(SERVICES)))}
     ${sel("pcomp", UI.pcomp || "", [["", "Any completeness"]].concat(Object.entries(PERF_STATUS)))}
     ${sel("pyear", UI.pyear || "", [["", "Any evaluation year"]].concat(yrs.map(y => [y, "Evaluated in " + yearLabel(y)])))}
     ${sel("pband", UI.pband || "", [["", "Any summary rating"], ["Outstanding", "Outstanding"], ["Exceeds", "Exceeds"], ["Meets", "Meets"], ["Below", "Below"], ["Unsatisfactory", "Unsatisfactory"], ["Not evaluated", "Not evaluated"]])}
     <span class="count">${list.length} shown</span></div>
   <div class="tw"><table><thead><tr><th>Vendor</th><th>Evaluation window</th>${yrs.map(y => `<th class="num">${esc(yearLabel(y))}</th>`).join("")}<th>Trend</th><th>Summary (${N}-yr max)</th></tr></thead>
-  <tbody>${list.map(([v, w]) => `<tr data-open="${esc(v.id)}" data-tab="perf"><td class="wrap"><div class="nm">${esc(v.name)}</div>${badge(v.status.stage1)}</td>
+  <tbody>${list.map(([v, w]) => `<tr data-open="${esc(v.id)}" data-tab="perf"><td class="wrap"><div class="nm">${esc(v.name)}</div><div class="chips">${isRecruiter(v) ? badge(v.status.stage1) : ""}<span class="chip">${esc(SERVICES[svcKey(v)].replace(/ \(.*\)$/, ""))}</span></div></td>
     <td class="wrap"><div class="al">${esc(w.basis)}</div></td>
     ${yrs.map(y => { const p = w.perYear.find(q => q.y === y); if (!w.years.includes(y)) return `<td><span class="al" title="Outside the vendor’s evaluation window">—</span></td>`; return `<td>${p && p.score !== null ? `<span class="num"><b>${p.score.toFixed(2)}</b></span>${p.n > 1 ? `<div class="al">${p.n} evals</div>` : ""}` : '<span class="q q-missing">Not evaluated</span>'}</td>`; }).join("")}
     <td>${sparkline(w)}</td><td>${ratingBadge(w.summary)}<div class="al">${w.years.length ? `${w.done.length}/${w.years.length} years evaluated` : ""}</div></td></tr>`).join("") || `<tr><td colspan="${N + 4}" class="empty">No vendors match.</td></tr>`}</tbody></table></div>
@@ -1349,14 +1416,15 @@ function perfSection(v) {
 function evalForm(e, vid) {
   const cfg = perfCfg(), isNew = !e;
   e = e || { vendorId: vid || "", year: currentPerfYear() - (new Date().getMonth() < 3 ? 1 : 0), ratings: {}, na: {} };
-  const crit = isNew ? cfg.criteria.filter(c => c.active) : (e.criteriaSnapshot || cfg.criteria);
+  const pk = isNew ? profileKey(BY_ID[e.vendorId]) : (e.profile || "recruit");
+  const crit = isNew ? cfg.profiles[pk].criteria.filter(c => c.active) : (e.criteriaSnapshot || cfg.criteria);
   const sc = isNew ? cfg.scale : (e.scaleSnapshot || cfg.scale);
   const opts = [];
   for (let i = sc.max; i >= sc.min; i--) opts.push(i);
   const names = VENDORS.slice().sort((a, b) => a.name.localeCompare(b.name));
   const yrs = Array.from({ length: 8 }, (_, i) => currentPerfYear() + 1 - i);
-  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle"><form class="mbox" id="evalForm" data-id="${esc(e._id || "")}" novalidate>
-  <header><h2 id="evTitle" style="font-size:17px">${isNew ? "Add annual evaluation" : "Edit evaluation"}</h2><span class="count" id="evLive">Overall: not evaluated</span></header>
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="evTitle"><form class="mbox" id="evalForm" data-id="${esc(e._id || "")}" data-profile="${esc(pk)}" novalidate>
+  <header><h2 id="evTitle" style="font-size:17px">${isNew ? "Add annual evaluation" : "Edit evaluation"} <span class="chip">${esc(cfg.profiles[pk] ? cfg.profiles[pk].name : "Recruitment")} criteria</span></h2><span class="count" id="evLive">Overall: not evaluated</span></header>
   <div class="mbody"><div class="form">
     <label class="full">Vendor *<select class="inp" id="ev_vendor" ${isNew ? "" : "disabled"}>${!e.vendorId ? '<option value="">Choose a vendor…</option>' : ""}${names.map(v => `<option value="${esc(v.id)}" ${v.id === e.vendorId ? "selected" : ""}>${esc(v.name)}</option>`).join("")}</select></label>
     <label>Evaluation year *<select class="inp" id="ev_year">${yrs.map(y => `<option value="${y}" ${+e.year === y ? "selected" : ""}>${esc(yearLabel(y))}</option>`).join("")}</select></label>
@@ -1382,7 +1450,7 @@ function readEval(form) {
 }
 function liveEval(form) {
   const id = form.dataset.id, old = id ? Store.data.evaluations[id] : null, cfg = perfCfg();
-  const e = Object.assign(readEval(form), { criteriaSnapshot: old ? old.criteriaSnapshot : cfg.criteria.filter(c => c.active), scaleSnapshot: old ? old.scaleSnapshot : cfg.scale });
+  const e = Object.assign(readEval(form), { criteriaSnapshot: old ? old.criteriaSnapshot : cfg.profiles[form.dataset.profile || "recruit"].criteria.filter(c => c.active), scaleSnapshot: old ? old.scaleSnapshot : cfg.scale });
   const s = evalScore(e);
   $("#evLive").innerHTML = s.score === null ? "Overall: not evaluated" : `Overall ${s.score.toFixed(2)} from ${s.rated}/${s.applicable} rated criteria (weights ${s.weightUsed})`;
 }
@@ -1393,7 +1461,8 @@ async function submitEval(form) {
   if (!e.vendorId) { $("#evErr").textContent = "Choose the vendor this evaluation is for."; return; }
   if (!e.evaluator) { $("#evErr").textContent = "Enter the evaluator’s name so the record is auditable."; return; }
   const body = Object.assign({}, old || {}, e, {
-    criteriaSnapshot: old ? old.criteriaSnapshot || cfg.criteria : cfg.criteria.filter(c => c.active),
+    criteriaSnapshot: old ? old.criteriaSnapshot || cfg.criteria : cfg.profiles[form.dataset.profile || "recruit"].criteria.filter(c => c.active),
+    profile: old ? old.profile || "recruit" : form.dataset.profile || "recruit",
     scaleSnapshot: old ? old.scaleSnapshot || cfg.scale : cfg.scale,
     createdAt: old ? old.createdAt : NOW_ISO(), createdBy: old ? old.createdBy : (Store.uid || "this browser"),
   });
@@ -1420,14 +1489,18 @@ async function submitEng(form) {
   if (en && +en < +s) { $("#enErr").textContent = "The last year cannot be before the first year."; return; }
   if (await Store.put("engagements", vid, { startYear: +s, endYear: en ? +en : null, note: $("#en_note", form).value.trim() })) { form.closest(".modal").remove(); render(); openDrawer(vid, "perf"); toast("Engagement saved"); }
 }
-function cfgForm() {
+let CFG_DRAFT = null;
+function readCritTable(form) { return [...form.querySelectorAll("[data-crow]")].map(r => ({ id: r.dataset.crow, name: $(".cr_name", r).value.trim(), desc: $(".cr_desc", r).value.trim(), weight: Math.max(0, +$(".cr_w", r).value || 0), active: $(".cr_active", r).checked })).filter(c => c.name); }
+function cfgForm(keep) {
+  if (!keep) CFG_DRAFT = { profiles: clone(perfCfg().profiles), cur: CFG_DRAFT && CFG_DRAFT.cur || "recruit" };
   const c = clone(perfCfg()), can = Store.canWrite;
   return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cfTitle"><form class="mbox" id="cfgForm" novalidate>
   <header><h2 id="cfTitle" style="font-size:17px">Rating criteria, scale and summary method</h2><span class="count">${Store.data.perf.config ? `Last changed ${fmtDate(Store.data.perf.config.updatedAt)} by ${esc(who(Store.data.perf.config.updatedBy))}` : "Default configuration"}</span></header>
   <div class="mbody"><div class="form">
     <div class="fh">Criteria · weights are relative; the total does not need to be 100</div>
+    <label class="full">Criteria set<select class="inp" id="cf_profile">${Object.entries(CFG_DRAFT.profiles).map(([k, p]) => `<option value="${k}" ${k === CFG_DRAFT.cur ? "selected" : ""}>${esc(p.name)} · used for ${esc(Object.keys(SERVICES).filter(sk => (PROFILE_OF[sk] || "generic") === k).map(sk => SERVICES[sk].replace(/ \(.*\)$/, "")).join(", "))}</option>`).join("")}</select></label>
     <div class="full tw"><table id="critTable"><thead><tr><th>Active</th><th>Criterion</th><th>Definition</th><th>Weight</th><th></th></tr></thead><tbody>
-    ${c.criteria.map((k, i) => critRow(k, i)).join("")}</tbody></table></div>
+    ${CFG_DRAFT.profiles[CFG_DRAFT.cur].criteria.map((k, i) => critRow(k, i)).join("")}</tbody></table></div>
     <div class="full"><button class="btn sm" type="button" data-act="addCrit">+ Add criterion</button> <span class="count" id="wTotal"></span></div>
     <div class="fh">Rating scale</div>
     <label>Lowest rating<select class="inp" id="cf_min">${[0, 1].map(n => `<option ${c.scale.min === n ? "selected" : ""}>${n}</option>`).join("")}</select></label>
@@ -1446,12 +1519,14 @@ function cfgForm() {
 function critRow(k, i) { return `<tr data-crow="${esc(k.id)}"><td><input type="checkbox" class="cr_active" ${k.active ? "checked" : ""} aria-label="Active"></td><td><input class="inp cr_name" value="${esc(k.name)}" aria-label="Criterion name"></td><td><input class="inp cr_desc" value="${esc(k.desc || "")}" aria-label="Definition"></td><td><input class="inp cr_w num" type="number" min="0" max="100" step="1" value="${esc(k.weight)}" style="width:70px" aria-label="Weight"></td><td><button class="copy" type="button" data-rmcrit aria-label="Remove criterion">Remove</button></td></tr>`; }
 function scaleDefs(sc) { let h = ""; for (let i = sc.max; i >= sc.min; i--) h += `<label style="margin-bottom:6px">${i} means<input class="inp sc_def" data-pt="${i}" value="${esc(sc.labels[i] || "")}"></label>`; return h; }
 async function submitCfg(form) {
-  const crit = [...form.querySelectorAll("[data-crow]")].map(r => ({ id: r.dataset.crow, name: $(".cr_name", r).value.trim(), desc: $(".cr_desc", r).value.trim(), weight: Math.max(0, +$(".cr_w", r).value || 0), active: $(".cr_active", r).checked })).filter(c => c.name);
-  if (!crit.some(c => c.active && c.weight > 0)) { $("#cfErr").textContent = "Keep at least one active criterion with a weight above zero."; return; }
+  CFG_DRAFT.profiles[CFG_DRAFT.cur].criteria = readCritTable(form);
+  const bad = Object.values(CFG_DRAFT.profiles).find(p => !p.criteria.some(c => c.active && c.weight > 0));
+  if (bad) { $("#cfErr").textContent = `Keep at least one active criterion with a weight above zero in “${bad.name}”.`; return; }
+  const crit = CFG_DRAFT.profiles.recruit.criteria;
   const min = +$("#cf_min", form).value, max = +$("#cf_max", form).value, labels = {};
   form.querySelectorAll(".sc_def").forEach(i => { labels[i.dataset.pt] = i.value.trim(); });
   const rec = $("#cf_rec", form).value.split(",").map(x => +x.trim()).filter(x => x > 0);
-  const cfg = { criteria: crit, scale: { min, max, labels }, yearType: $("#cf_ytype", form).value, fyStartMonth: +$("#cf_fy", form).value, window: +$("#cf_win", form).value, summary: { method: $("#cf_method", form).value, recency: rec.length ? rec : [5, 4, 3, 2, 1] } };
+  const cfg = { criteria: crit, profiles: Object.fromEntries(Object.entries(CFG_DRAFT.profiles).map(([k, p]) => [k, { criteria: p.criteria }])), scale: { min, max, labels }, yearType: $("#cf_ytype", form).value, fyStartMonth: +$("#cf_fy", form).value, window: +$("#cf_win", form).value, summary: { method: $("#cf_method", form).value, recency: rec.length ? rec : [5, 4, 3, 2, 1] } };
   if (await Store.put("perf", "config", cfg)) { form.closest(".modal").remove(); render(); toast("Configuration saved"); }
 }
 
@@ -1476,7 +1551,7 @@ document.addEventListener("click", async e => {
   if (!t) return;
   const d = t.dataset;
   if (t.matches("input[data-cmp]")) { e.stopPropagation(); toggleCmp(d.cmp); return; }
-  if (d.go !== undefined) return go(d.go, d.cat ? { cat: d.cat } : d.sltab ? { slTab: d.sltab } : {});
+  if (d.go !== undefined) return go(d.go, d.cat ? { cat: d.cat } : d.sltab ? { slTab: d.sltab } : d.type ? { type: d.type } : {});
   if (d.act) {
     const a = d.arg;
     if (d.act === "go") return a ? go(a) : null;
@@ -1485,7 +1560,7 @@ document.addEventListener("click", async e => {
     if (d.act === "goCat") return go("directory", { cat: a, type: "all" });
     if (d.act === "goSl") return go("shortlist", { slTab: a });
     if (d.act === "goSvc") return go("directory", { svc: a, type: "all" });
-    if (d.act === "goType") return go("directory", { type: a === "Recruitment / staffing" ? "recruit" : a });
+    if (d.act === "goType") return go("directory", { type: a });
     if (d.act === "goLoc") return go("directory", { loc: a });
     if (d.act === "goSpec") return go("directory", { spec: a, type: "all" });
     if (d.act === "clearCmp") { UI.compare = []; return render(); }
@@ -1544,10 +1619,12 @@ document.addEventListener("input", e => {
   if (id === "fq" || id === "pq" || id === "cq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[{ fq: "q", pq: "pq", cq: "cq" }[id]] = e.target.value; render(); }, 160); }
 });
 document.addEventListener("change", e => {
-  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", cscope: "cscope", ckind: "ckind", pscope: "pscope", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", cscope: "cscope", ckind: "ckind", pscope: "pscope", psvc: "psvc", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
   if (e.target.dataset && e.target.dataset.move) { moveVendor(e.target.dataset.move, e.target.value); return; }
   const ef = e.target.closest("#evalForm");
+  if (ef && e.target.id === "ev_vendor" && !ef.dataset.id) { const vid = e.target.value; ef.closest(".modal").remove(); $("#layer").insertAdjacentHTML("beforeend", evalForm(null, vid)); return; }
   if (ef) { if (e.target.id === "ev_year") $("#ev_period").value = periodLabel(+e.target.value); liveEval(ef); return; }
+  if (e.target.id === "cf_profile") { const f = e.target.closest("form"); CFG_DRAFT.profiles[CFG_DRAFT.cur].criteria = readCritTable(f); CFG_DRAFT.cur = e.target.value; $("#critTable tbody").innerHTML = CFG_DRAFT.profiles[CFG_DRAFT.cur].criteria.map((k, i) => critRow(k, i)).join(""); return; }
   if (e.target.id === "cf_min" || e.target.id === "cf_max") { const old = {}; document.querySelectorAll(".sc_def").forEach(i => { old[i.dataset.pt] = i.value; }); $("#scaleDefs").innerHTML = scaleDefs({ min: +$("#cf_min").value, max: +$("#cf_max").value, labels: old }); return; }
   if (map[e.target.id]) { UI[map[e.target.id]] = e.target.value; if (e.target.id === "ftype") saveUI(); render(); }
   if (e.target.id === "fileIn" && e.target.files[0]) { importFile(e.target.files[0]); e.target.value = ""; }

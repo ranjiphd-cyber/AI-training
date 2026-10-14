@@ -1,6 +1,6 @@
 # TA Vendor Register
 
-Talent Acquisition vendor dashboard for Dr. Ranjith TP. It covers the vendor directory, the shortlist with transparent ranking, PASS / HOLD / FAIL decisions, data-quality flags, web-research suggestions and annual vendor performance evaluation.
+Talent Acquisition vendor dashboard prepared by Dr. Ranjith T P. It covers the vendor directory, the shortlist with transparent ranking, PASS / HOLD / FAIL decisions, data-quality flags, web-research suggestions and annual vendor performance evaluation.
 
 ## Files
 
@@ -32,6 +32,7 @@ Opened as a local file, the page saves edits and evaluations in that browser onl
 - Each shortlisted vendor sits in exactly one category: Executive / CXO, Leadership, Junior–mid or Volume. The workbook's CXO/Leadership shortlist tab decides where it covers a vendor; other PASS vendors get a proposed category marked "Proposed · confirm". HOLD and FAIL vendors cannot be shortlisted. The Junior–mid shortlist only takes vendors from the workbook's junior–mid list (Module C = yes or a Mid Level tag).
 - Under each category, every vendor the workbook lists for it (Executive search tab, Volume hiring tab, Shortlisted Vendors blocks, Modules B/C, level tags) is shown unranked, so no listed name is dropped.
 - Fee bands per category come from TA guidance (Executive 22–33%, Leadership 16–22%, Junior–mid 8.33–10%) and are editable. They show as estimates until a vendor-specific fee is entered. The workbook itself contains no fee data.
+- Vendors are grouped into 17 TA service categories (recruitment agencies, contract staffing, RPO, TA technology, assessment and interview services, job boards, campus, background verification, medical check-ups, relocation, employer branding, diversity networks, skilling, onboarding and gifting, interim/gig, outplacement, other HR services). Performance ratings use a criteria set suited to each category, editable under Criteria & scale.
 - A contact register lists every name, phone and e-mail in the workbook, splitting combined cells into one row per person.
 - Web research is never applied without approval. Firms added from the web are shown in violet and carry no contact details.
 - Performance ratings are entered only by users. A missing rating is excluded from scores, never counted as zero. The window is the most recent 5 completed years of Volvo engagement, or fewer if the engagement is shorter. Each evaluation keeps the criteria and weights that applied when it was entered.
