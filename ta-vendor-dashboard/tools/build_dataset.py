@@ -683,7 +683,29 @@ def _propose(v):
     why = "Staffing / IT recruitment profile" if STAFF_RX.search(t) or not LEAD_RX.search(t) else "Mixed profile"
     return {"v": "juniorMid", "basis": "proposed", "ref": why + (f"; Module C = {mods['C']['v']}" if mods.get("C") else "; modules not recorded")}
 
+# Year of establishment: the questionnaire asked "Years in operation" and
+# vendors answered either with a founding year or a number of years.
+REF_YEAR = int((WB_MODIFIED or "2026")[:4])
+def year_established(v):
+    f = v["fields"].get("years")
+    if not f or not f.get("v"):
+        return {"v": "", "q": "missing", "src": [], "note": "Years in operation not given."}
+    raw = f["v"]
+    if "PRECISION" in raw.upper():
+        return {"v": "", "q": "missing", "src": f["src"], "note": "Years cell repeats the company name."}
+    m = re.search(r"\b(19[5-9]\d|20[0-2]\d)\b", raw)
+    if m and not re.search(r"year", raw, re.I):
+        return {"v": m.group(1), "q": "provided" if f["q"] == "provided" else f["q"], "src": f["src"], "note": f"Answer to “Years in operation”: “{raw}”."}
+    n = re.search(r"(\d+(?:\.\d+)?)", raw)
+    if n and float(n.group(1)) < 120:
+        yrs = float(n.group(1))
+        return {"v": f"≈{REF_YEAR - int(round(yrs))}", "q": "verify", "src": f["src"], "note": f"Derived from “{raw}” years in operation, counted back from {REF_YEAR}. Confirm the actual year."}
+    return {"v": "", "q": "missing", "src": f["src"], "note": f"Years in operation given as “{raw}”; no year can be derived."}
+
 for v in vendors.values():
+    v["fields"]["yearEst"] = year_established(v)
+    hq = v["fields"].get("hq", {}).get("v", "")
+    v["fields"]["offices"] = {"v": "", "q": "missing", "src": [], "note": ("Workbook records only the headquarters: " + hq.replace("\n", " ")) if hq else "Not in the workbook."}
     v["contactRegister"] = contact_register(v)
     v["wbLists"] = workbook_lists(v)
     v["slCat"] = propose_category(v)

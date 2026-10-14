@@ -159,6 +159,8 @@ td .nm { font-weight: 600; color: var(--fg); }
 .scrow label { font-size: 13px; color: var(--fg); }
 .scrow .na { font-size: 12px; color: var(--muted); display: flex; gap: 4px; align-items: center; }
 .scrow input[type=number] { width: 92px; text-align: center; }
+.fc { min-width: 120px; }
+.cellform { display: grid; gap: 6px; min-width: 200px; }
 .wbl { border-top: 1px solid var(--line); }
 .wbl > summary { padding: 12px 16px; cursor: pointer; background: var(--sunk); }
 .sm-sel { font-size: 12px; padding: 4px 6px; max-width: 100%; }
@@ -301,16 +303,22 @@ WEB_VENDORS.push(
   { id: "web-apollo-pehc", svc: "medical", name: "Apollo 24|7 – pre-employment health check", hq: "Chennai, India (Apollo group)", india: "Bengaluru centres listed", website: "https://www.apollo247.com", spec: "NABL-accredited pre-employment package; corporate bulk packages", why: "Lists a 94-test pre-employment package with reports in about 10–12 hours; corporate pricing varies by city.", sources: ["https://www.apollo247.com/lab-tests/pre-employment-health-check-up-l-madiwala-c-bangalore"], gap: "Only provider researched; add your current medical partner" },
 );
 const WEB_ENRICH = [
-  { id: "en-korn-hq", vendor: "korn-ferry", field: "hq", value: "Global (Los Angeles, USA); India offices in Mumbai, Bengaluru and Delhi NCR", note: "Third-party directory and consultant profiles; office list not confirmed on an official Korn Ferry page.", sources: ["https://www.businessofgcc.com/gcc-partners/korn-ferry-india", "https://www.kornferry.com/jp/about-us/consultants/suchet-narain"] },
+  { id: "en-korn-hq", vendor: "korn-ferry", field: "offices", value: "Mumbai, Bengaluru, Delhi NCR (global firm headquartered in Los Angeles, USA)", note: "Third-party directory and consultant profiles; office list not confirmed on an official Korn Ferry page.", sources: ["https://www.businessofgcc.com/gcc-partners/korn-ferry-india", "https://www.kornferry.com/jp/about-us/consultants/suchet-narain"] },
   { id: "en-korn-spec", vendor: "korn-ferry", field: "specialization", value: "Global executive search and leadership consulting; India practice includes automotive and aerospace leadership.", note: "From a Korn Ferry consultant profile.", sources: ["https://www.kornferry.com/about-us/consultants/manisha-malik"] },
-  { id: "en-stanton-hq", vendor: "stanton-chase", field: "hq", value: "Global network; India offices in Mumbai, Chennai, Kolkata, Bangalore (UB City), Delhi and Ahmedabad", note: "Six India offices per an undated Stanton Chase announcement.", sources: ["https://www.stantonchase.com/insights/blog/stanton-chase-announces-new-leadership-team-in-india", "https://www.stantonchase.com/office/executive-search-firm-in-bangalore-india"] },
+  { id: "en-stanton-hq", vendor: "stanton-chase", field: "offices", value: "Mumbai, Chennai, Kolkata, Bengaluru (UB City), Delhi, Ahmedabad", note: "Six India offices per an undated Stanton Chase announcement.", sources: ["https://www.stantonchase.com/insights/blog/stanton-chase-announces-new-leadership-team-in-india", "https://www.stantonchase.com/office/executive-search-firm-in-bangalore-india"] },
   { id: "en-stanton-spec", vendor: "stanton-chase", field: "specialization", value: "CEO, CFO, COO, CHRO, Director, Plant Head and GM searches; Chennai office cites automotive and manufacturing strength.", note: "Self-reported on the Stanton Chase Chennai office page.", sources: ["https://www.stantonchase.com/office/executive-search-firm-in-chennai-india"] },
-  { id: "en-odgers-hq", vendor: "odgers", field: "hq", value: "Global (London, UK); India offices in Bengaluru (MG Road), Mumbai and Delhi", note: "From Odgers Berndtson India pages and announcements (2015–2022).", sources: ["https://www.odgers.com/about-us/locations/asia-pacific/india/", "https://www.odgers.com/en-in/insights/odgers-berndtson-india-moving-ahead-full-steam-important-leadership-announcements"] },
+  { id: "en-odgers-hq", vendor: "odgers", field: "offices", value: "Bengaluru (MG Road), Mumbai, Delhi (global firm headquartered in London, UK)", note: "From Odgers Berndtson India pages and announcements (2015–2022).", sources: ["https://www.odgers.com/about-us/locations/asia-pacific/india/", "https://www.odgers.com/en-in/insights/odgers-berndtson-india-moving-ahead-full-steam-important-leadership-announcements"] },
   { id: "en-odgers-spec", vendor: "odgers", field: "specialization", value: "Industrial practice covering Automotive OEM, Components, Discrete Manufacturing, Industrial Automation, Aerospace & Defence, Power & Renewables.", note: "From Odgers consultant profiles.", sources: ["https://odgersberndtson.com/nl-nl/mensen/vineeta-chopra"] },
-  { id: "en-corner-hq", vendor: "cornerstone", field: "hq", value: "Mumbai-led India operations since 2004; offices in Mumbai, Bangalore, Pune and Delhi/Gurgaon (sources differ)", note: "Office list conflicts between sources. Part of Cornerstone International Group.", sources: ["https://et-edge.com/conferences/hr/2024/mumbai/?p=3145", "https://m.indiamart.com/cornerstone-india/aboutus.html"], q: "conflict" },
+  { id: "en-corner-hq", vendor: "cornerstone", field: "offices", value: "Mumbai, Bengaluru, Pune, Delhi / Gurgaon (sources differ); India operations since 2004", note: "Office list conflicts between sources. Part of Cornerstone International Group.", sources: ["https://et-edge.com/conferences/hr/2024/mumbai/?p=3145", "https://m.indiamart.com/cornerstone-india/aboutus.html"], q: "conflict" },
   { id: "en-corner-spec", vendor: "cornerstone", field: "specialization", value: "CXO / C-suite search, board and independent-director search, leadership advisory; 1,500–2,000+ mandates claimed (sources differ).", note: "Mandate count conflicts between sources.", sources: ["https://et-edge.com/conferences/hr/2024/mumbai/?p=3145", "https://hrtoday.in/r-srinivasa-raghavan-appointed-as-partner-global-industrial-practice-group-at-cornerstone-international-group/"], q: "conflict" },
-  { id: "en-abc-years", vendor: "abc-consultants", field: "years", value: "Founded 1969 (Kolkata)", note: "From the ABC Consultants website.", sources: ["https://abcconsultants.in", "https://abcconsultants.in/new/services.html"] },
+  { id: "en-abc-years", vendor: "abc-consultants", field: "yearEst", value: "1969 (founded in Kolkata)", note: "From the ABC Consultants website.", sources: ["https://abcconsultants.in", "https://abcconsultants.in/new/services.html"] },
   { id: "en-abc-spec", vendor: "abc-consultants", field: "specialization", value: "Executive search and leadership hiring; sold its FlexAbility staffing business to AMS in 2022 to focus on leadership hiring.", note: "Headquarters is reported as Mumbai by one source and New Delhi by others.", sources: ["https://abcconsultants.in", "https://www.businessofgcc.com/gcc-partners/abc-consultants"] },
+  { id: "en-ciel-off", vendor: "ciel-hr", field: "offices", value: "80–92 offices across 37–51 Indian cities (figures vary by source); hubs in Bengaluru, Hyderabad, Pune, Chennai, Mumbai and NCR", note: "Web sources give the headquarters as Bengaluru and incorporation as 2015, which conflicts with the workbook (Chennai, 2010).", sources: ["https://www.businessofgcc.com/gcc-partners/ciel-hr-services", "https://www.greatplacetowork.in/great/company/ciel-hr-services-private-limited", "https://yourstory.com/companies/ciel-hr-services-private-limited"], q: "conflict" },
+  { id: "en-mp-off", vendor: "michael-page", field: "offices", value: "Bengaluru, Gurgaon, Mumbai (listed India offices)", note: "From the michaelpage.co.in site navigation; the full office list was not retrieved.", sources: ["https://www.michaelpage.co.in/jobs/india?page=37"] },
+  { id: "en-ema-off", vendor: "ema-partners", field: "offices", value: "Mumbai (HQ, BKC), Delhi / Gurgaon, Bengaluru, Chennai; plus Dubai and Singapore", note: "From EMA Partners India factsheets and listing profile (NSE-listed).", sources: ["https://www.valoremadvisors.com/assets/admin/fact_file/1779165746_EMA_Partners_India_Ltd._-_FY26_-_Factsheet_.pdf", "https://upstox.com/ipo-initial-public-offering/ema-partners-india-ipo"] },
+  { id: "en-sapphire-off", vendor: "sapphire", field: "offices", value: "Mumbai (Andheri East), New Delhi", note: "Third-party profiles; no Bengaluru office found.", sources: ["https://www.expertia.ai/sapphirehs", "https://pitchbook.com/profiles/company/60719-68"] },
+  { id: "en-rgf-off", vendor: "rgf-select", field: "offices", value: "Mumbai, Bengaluru, Delhi / Gurgaon, Chennai, Kolkata", note: "From the RGF India site (undated); Gurgaon appears in job postings.", sources: ["https://www.rgf-hragent.asia/en/india/leaders_network", "https://ptu.ac.in/wp-content/uploads/2025/12/Letter-RGF-Professional-Recruitment-India.pdf"] },
+  { id: "en-ww-off", vendor: "wenger-watson", field: "offices", value: "Bengaluru (no other office found)", note: "Web search found only a Bengaluru base; check wengerwatson.com for branches.", sources: ["https://cutshort.io/company/wenger-and-watson-inc-4jzcYmYd"], q: "verify" },
   { id: "en-leaders-edge", vendor: "leaders-edge", field: "comments", value: "Web search found no independent information for Leaders' Edge (leadersedge.company). Reputation unverified.", note: "Search returned only similarly named firms.", sources: [], q: "verify" },
 ];
 
@@ -328,7 +336,7 @@ const CAT_INFO = {
 };
 const FIELD_GROUPS = [
   ["Contacts", [["spocName", "SPOC name"], ["spocDesignation", "Designation"], ["spocPhone", "Phone"], ["spocEmail", "Email"], ["companyEmail", "Company email"], ["companyPhone", "Company phone"], ["website", "Website"]]],
-  ["Company", [["hq", "Headquarters / location"], ["years", "Years in operation"], ["recruiters", "Recruiter strength"], ["headcount", "Total headcount"], ["entityType", "Entity type"], ["revenue", "Annual revenue"], ["gstPan", "GST & PAN"]]],
+  ["Company", [["yearEst", "Year of establishment"], ["hq", "Headquarters / location"], ["offices", "Office locations"], ["years", "Years in operation (as answered)"], ["recruiters", "Recruiters on direct payroll"], ["headcount", "Total headcount"], ["entityType", "Entity type"], ["revenue", "Annual revenue"], ["gstPan", "GST & PAN"]]],
   ["Capability", [["domain", "Domain"], ["specialization", "Specialization"], ["industries", "Industries"], ["majorClients", "Major clients (last 2 yrs)"], ["activeClients", "Current active clients"]]],
   ["Delivery (vendor-reported)", [["profilesPerReq", "Profiles per requirement"], ["closureTimeline", "Average closure timeline"], ["positionsClosed12m", "Positions closed (12 months)"], ["joiningRatio", "Joining ratio"], ["wfo", "Work-from-office hiring"], ["nicheUrgent", "Niche / urgent hiring"], ["dedicatedRecruiters", "Dedicated skill recruiters"], ["trackingReports", "Daily/weekly tracking"], ["diversity", "Diversity hiring"]]],
   ["Commercials", [["pricing", "Commercial model / pricing"], ["contractTerm", "Contract / SLA terms"]]],
@@ -545,11 +553,11 @@ function rank(v, ctx) {
 function meter(r) { return `<div class="meter" aria-hidden="true">${r.parts.map(p => `<i style="width:${p.pts}%;background:${p.c}"></i>`).join("")}</div>`; }
 
 /* --------------------------------------------------------------- state */
-const UI = { view: "overview", slTab: "all", readyCat: "all", cq: "", cscope: "", ckind: "", slcat: "", pq: "", pscope: "", pcomp: "", pyear: "", pband: "", perf: "", evYear: "", q: "", cat: "", svc: "", status: "", type: "recruit", loc: "", origin: "", minScore: "", dq: "", sort: "name", dir: 1, ctx: "exec", stTab: "PASS", compare: [] };
+const UI = { fq2: "", fscope: "", fcat2: "", fgaps: false, view: "overview", slTab: "all", readyCat: "all", cq: "", cscope: "", ckind: "", slcat: "", pq: "", pscope: "", pcomp: "", pyear: "", pband: "", perf: "", evYear: "", q: "", cat: "", svc: "", status: "", type: "recruit", loc: "", origin: "", minScore: "", dq: "", sort: "name", dir: 1, ctx: "exec", stTab: "PASS", compare: [] };
 try { Object.assign(UI, JSON.parse(localStorage.getItem("taVR.ui.v1") || "{}"), { compare: [] }); } catch (e) {}
 function saveUI() { try { localStorage.setItem("taVR.ui.v1", JSON.stringify({ ctx: UI.ctx, type: UI.type, sort: UI.sort, dir: UI.dir })); } catch (e) {} }
 const hash = location.hash.replace("#", "");
-const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "deleted", "research"];
+const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "deleted", "research", "facts"];
 if (VIEWS.includes(hash)) UI.view = hash;
 else if (["executive", "leadership", "juniorMid", "volume"].includes(hash)) { UI.view = "shortlist"; UI.slTab = hash; }
 else if (CATS[hash]) { UI.view = "directory"; UI.cat = hash; }
@@ -568,6 +576,7 @@ function renderRail() {
     <div class="grp">Review</div>
     <button data-go="overview" ${cur("overview")}>Overview</button>
     <button data-go="directory" data-cat="" ${cur("directory", "")}>Vendor directory <span class="ct">${VENDORS.length}</span></button>
+    <button data-go="facts" ${cur("facts")}>Vendor fact sheet</button>
     <button data-go="contacts" ${cur("contacts")}>Contact register <span class="ct">${allContacts().length}</span></button>
     <div class="grp">Shortlist · one category each</div>
     <button data-go="shortlist" data-sltab="all" ${UI.view === "shortlist" && UI.slTab === "all" ? 'aria-current="true"' : ""}>All shortlisted <span class="ct">${VENDORS.filter(slCat).length}</span></button>
@@ -1752,15 +1761,64 @@ async function exportXlsx() {
   try { const a = document.createElement("a"); a.href = URL.createObjectURL(data); a.download = filename; document.body.appendChild(a); a.click(); a.remove(); msg.textContent = "Download started."; } catch (e) { msg.textContent = "The download was blocked in this view."; }
 }
 
+/* -------------------------------------------------------- vendor fact sheet */
+/* One row per vendor with the facts TA compares first. Every cell can be
+   edited in place; edits are labelled with date and source like any other. */
+const FACT_COLS = [["yearEst", "Year of establishment"], ["recruiters", "Recruiters on direct payroll"], ["revenue", "Annual revenue"], ["hq", "Headquarters"], ["offices", "Office locations"]];
+function factCell(v, k) {
+  const f = v.fields[k] || {};
+  const val = f.v ? `<span class="val">${esc(f.v)}</span>${f.q !== "provided" ? " " + qBadge(f.q) : ""}` : qBadge("missing");
+  return `<td class="wrap fc" data-stop>${val}${f.note && !f.v ? `<div class="al clip">${esc(f.note)}</div>` : ""}${Store.canWrite ? ` <button class="copy" type="button" data-celledit="${esc(v.id)}|${k}" aria-label="Edit ${esc(FIELD_LABEL[k] || k)} for ${esc(v.name)}">✎</button>` : ""}</td>`;
+}
+function feeCell(v) {
+  const f = feeInfo(v);
+  return `<td class="wrap fc" data-stop>${f.text ? `<b class="num">${esc(f.text)}</b>` : qBadge("missing")}<div class="al">${esc(f.label)}</div>${Store.canWrite && isRecruiter(v) ? ` <button class="copy" type="button" data-celledit="${esc(v.id)}|fee" aria-label="Edit consulting fee for ${esc(v.name)}">✎</button>` : ""}</td>`;
+}
+function viewFacts() {
+  const q = (UI.fq2 || "").toLowerCase();
+  let list = VENDORS.filter(v => UI.fscope === "all" ? true : UI.fscope === "recruit" ? isRecruiter(v) : slCat(v));
+  if (UI.fcat2) list = list.filter(v => slCat(v) === UI.fcat2);
+  if (UI.fgaps) list = list.filter(v => FACT_COLS.some(([k]) => !has(v, k)) || (isRecruiter(v) && !(v.fee && v.fee.v)));
+  if (q) list = list.filter(v => (v.name + " " + (v.aliases || []).join(" ") + " " + FACT_COLS.map(([k]) => fv(v, k)).join(" ")).toLowerCase().includes(q));
+  list.sort((a, b) => Object.keys(SLCATS).indexOf(slCat(a) || "z") - Object.keys(SLCATS).indexOf(slCat(b) || "z") || a.name.localeCompare(b.name));
+  const sel = (id, cur, opts) => `<select class="inp" id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur || "") === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const filled = k => list.filter(v => has(v, k)).length;
+  return `<div class="vhead"><div><div class="eyebrow">Vendor fact sheet</div><h2>Establishment, recruiters, revenue, offices and fees</h2>
+  <p>Click ✎ in any cell to add or correct a value. Year of establishment comes from the “Years in operation” answers; where a vendor gave a number of years, the year is counted back from 2026 and marked Needs verification. Office locations are not in the workbook; approved web findings and your entries fill them. Consulting fee shows the vendor’s own figure when entered, otherwise its category band as an estimate.</p></div></div>
+  <div class="filters"><input class="inp" type="search" id="fq2" placeholder="Search vendor or value…" value="${esc(UI.fq2 || "")}" aria-label="Search fact sheet">
+    ${sel("fscope", UI.fscope, [["", "Shortlisted vendors"], ["recruit", "All recruitment, contract & RPO vendors"], ["all", "Every organisation"]])}
+    ${sel("fcat2", UI.fcat2, [["", "Any shortlist category"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label])))}
+    <label class="count"><input type="checkbox" id="fgaps" ${UI.fgaps ? "checked" : ""}> Only rows with gaps</label>
+    <span class="count">${list.length} shown · filled: ${FACT_COLS.map(([k, l]) => `${l.split(" ")[0]} ${filled(k)}`).join(" · ")}</span></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Status</th><th>Shortlist category</th>${FACT_COLS.map(([, l]) => `<th>${esc(l)}</th>`).join("")}<th>Consulting fee %</th></tr></thead>
+  <tbody>${list.map(v => `<tr data-open="${esc(v.id)}"><td class="wrap"><div class="nm">${esc(v.name)}</div><span class="chip">${esc(SERVICES[svcKey(v)].replace(/ \\(.*\\)$/, ""))}</span></td><td>${badge(v.status.stage1)}</td>
+    <td class="wrap">${slCat(v) ? esc(SLCATS[slCat(v)].label) : '<span class="al">—</span>'}</td>${FACT_COLS.map(([k]) => factCell(v, k)).join("")}${feeCell(v)}</tr>`).join("") || '<tr><td colspan="9" class="empty">No vendors match.</td></tr>'}</tbody></table></div>`;
+}
+function cellForm(id, k) {
+  const v = BY_ID[id];
+  if (k === "fee") return `<form class="cellform" data-cell="${esc(id)}|fee"><input class="inp" id="cf_val" value="${esc(v.fee && v.fee.v || "")}" placeholder="e.g. 8.33%" aria-label="Consulting fee"><select class="inp" id="cf_q" aria-label="Fee status"><option value="confirmed" ${v.fee && v.fee.q === "confirmed" ? "selected" : ""}>Confirmed</option><option value="estimate" ${!v.fee || v.fee.q !== "confirmed" ? "selected" : ""}>Estimate</option></select><input class="inp" id="cf_src" placeholder="Source (e.g. signed proposal)" aria-label="Source"><span class="chips"><button class="btn sm primary" type="submit">Save</button><button class="btn sm" type="button" data-cellcancel>Cancel</button></span></form>`;
+  return `<form class="cellform" data-cell="${esc(id)}|${k}"><input class="inp" id="cf_val" value="${esc(fv(v, k))}" aria-label="${esc(FIELD_LABEL[k] || k)}"><input class="inp" id="cf_src" placeholder="Source (e.g. vendor call)" aria-label="Source"><span class="chips"><button class="btn sm primary" type="submit">Save</button><button class="btn sm" type="button" data-cellcancel>Cancel</button></span></form>`;
+}
+async function submitCell(form) {
+  const [id, k] = form.dataset.cell.split("|"), v = BY_ID[id]; if (!v) return;
+  const val = $("#cf_val", form).value.trim(), src = $("#cf_src", form).value.trim();
+  const stamp = "Dashboard edit " + new Date().toLocaleDateString() + (src ? " · " + src : "");
+  const rec = clone(v); delete rec._edited; delete rec._editedBy; delete rec._approved;
+  if (k === "fee") rec.fee = val ? { v: /%$/.test(val) || isNaN(+val) ? val : val + "%", q: $("#cf_q", form).value, note: stamp } : { v: "", q: "missing", note: "Cleared · " + stamp };
+  else { const cur = rec.fields[k]; rec.fields[k] = val ? { v: val, q: "edited", src: [stamp], note: cur && cur.v && cur.v !== val ? `Previously “${cur.v}”` : undefined } : { v: "", q: "missing", src: [stamp], note: "Cleared in dashboard" }; }
+  if (!(rec.sources || []).includes("Dashboard edits")) (rec.sources = rec.sources || []).push("Dashboard edits");
+  if (await Store.putEdit(id, { record: rec })) { render(); toast("Saved"); }
+}
+
 /* -------------------------------------------------------------- render */
 function render() {
   assemble();
   renderRail();
-  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, deleted: viewDeleted, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
+  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, facts: viewFacts, deleted: viewDeleted, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
   const focusId = document.activeElement && document.activeElement.id;
-  const pos = (focusId === "fq" || focusId === "pq" || focusId === "cq") ? document.activeElement.selectionStart : null;
+  const pos = (focusId === "fq" || focusId === "pq" || focusId === "cq" || focusId === "fq2") ? document.activeElement.selectionStart : null;
   $("#main").innerHTML = fn();
-  if ((focusId === "fq" || focusId === "pq" || focusId === "cq") && $("#" + focusId)) { const el = $("#" + focusId); el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
+  if ((focusId === "fq" || focusId === "pq" || focusId === "cq" || focusId === "fq2") && $("#" + focusId)) { const el = $("#" + focusId); el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
   if (openId && $("#layer .drawer") && BY_ID[openId] && !$("#layer .modal")) { const sc = $(".drawer .db").scrollTop; $("#layer").innerHTML = drawerHTML(BY_ID[openId]); $(".drawer .db").scrollTop = sc; }
   try { history.replaceState(null, "", "#" + (UI.view === "directory" && UI.cat ? UI.cat : UI.view)); } catch (e) {}
 }
@@ -1801,6 +1859,8 @@ document.addEventListener("click", async e => {
   if (d.readycat) { UI.readyCat = d.readycat; UI.readyAll = false; return render(); }
   if (d.st) { UI.stTab = d.st; return render(); }
   if (d.close !== undefined) return closeDrawer();
+  if (d.celledit) { const [id, k] = d.celledit.split("|"); const td = t.closest("td"); td.innerHTML = cellForm(id, k); const i = $("#cf_val", td); i.focus(); i.select(); return; }
+  if (d.cellcancel !== undefined) return render();
   if (d.assess) { $("#layer").insertAdjacentHTML("beforeend", assessForm(null, d.assess)); return; }
   if (d.editassess) { const a = Store.data.assessments[d.editassess]; if (a) $("#layer").insertAdjacentHTML("beforeend", assessForm(Object.assign({ _id: d.editassess }, a))); return; }
   if (d.delassess) { t.outerHTML = `<span class="count">Delete this assessment?</span> <button class="copy" type="button" data-delassessok="${esc(d.delassess)}">Yes, delete</button> <button class="copy" type="button" data-delno>Keep</button>`; return; }
@@ -1840,6 +1900,7 @@ document.addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches(".rank[data-open], tr[data-open]")) { e.preventDefault(); openDrawer(e.target.dataset.open, e.target.dataset.tab); }
 });
 document.addEventListener("submit", e => {
+  if (e.target.classList && e.target.classList.contains("cellform")) { e.preventDefault(); submitCell(e.target); return; }
   const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm", "assessForm", "missingForm"].includes(f.id)) return;
   e.preventDefault();
   ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees, assessForm: submitAssess, missingForm: submitMissing })[f.id](f);
@@ -1849,10 +1910,11 @@ document.addEventListener("input", e => {
   const id = e.target.id;
   const af = e.target.closest && e.target.closest("#assessForm"); if (af) { liveAssess(af); return; }
   const evf = e.target.closest && e.target.closest("#evalForm"); if (evf) { liveEval(evf); return; }
-  if (id === "fq" || id === "pq" || id === "cq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[{ fq: "q", pq: "pq", cq: "cq" }[id]] = e.target.value; render(); }, 160); }
+  if (id === "fq" || id === "pq" || id === "cq" || id === "fq2") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[{ fq: "q", pq: "pq", cq: "cq", fq2: "fq2" }[id]] = e.target.value; render(); }, 160); }
 });
 document.addEventListener("change", e => {
-  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", cscope: "cscope", ckind: "ckind", pscope: "pscope", psvc: "psvc", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", fscope: "fscope", fcat2: "fcat2", cscope: "cscope", ckind: "ckind", pscope: "pscope", psvc: "psvc", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  if (e.target.id === "fgaps") { UI.fgaps = e.target.checked; render(); return; }
   if (e.target.dataset && e.target.dataset.na) { const inp = e.target.closest(".scrow").querySelector("input[data-crit]"); inp.disabled = e.target.checked; if (e.target.checked) inp.value = ""; const fm = e.target.closest("form"); if (fm.id === "assessForm") liveAssess(fm); else liveEval(fm); return; }
   if (e.target.dataset && e.target.dataset.move) { moveVendor(e.target.dataset.move, e.target.value); return; }
   const ef = e.target.closest("#evalForm");
