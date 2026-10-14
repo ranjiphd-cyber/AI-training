@@ -154,6 +154,7 @@ td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; 
 tbody tr { cursor: pointer; }
 tbody tr:hover td { background: var(--sunk); }
 td .nm { font-weight: 600; color: var(--fg); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .wbl { border-top: 1px solid var(--line); }
 .wbl > summary { padding: 12px 16px; cursor: pointer; background: var(--sunk); }
 .sm-sel { font-size: 12px; padding: 4px 6px; max-width: 100%; }
@@ -474,7 +475,36 @@ function assemble() {
   VENDORS = out; BY_ID = Object.fromEntries(out.map(v => [v.id, v]));
 }
 const isRecruiter = v => ["recruit", "contract", "rpo"].includes(svcKey(v));
-const deletedBase = () => RAW.vendors.filter(b => (Store.edits[safeId(b.id)] || {}).deleted);
+/* Deleted vendors stay restorable: the delete marker keeps any edited
+   record, and evaluations are never removed with the vendor. */
+const deletedBase = () => {
+  const base = RAW.vendors.concat(WEB_VENDORS.map(webVendorRecord));
+  const ids = new Set(base.map(b => safeId(b.id)));
+  return base.filter(b => (Store.edits[safeId(b.id)] || {}).deleted).map(b => Object.assign({}, b, { _del: Store.edits[safeId(b.id)] }))
+    .concat(Object.entries(Store.edits).filter(([id, e]) => e.deleted && e.record && !ids.has(id)).map(([, e]) => Object.assign({}, e.record, { _del: e })));
+};
+async function deleteVendor(id) {
+  const v = BY_ID[id]; if (!v) return false;
+  const prev = Store.edits[safeId(id)];
+  const rec = prev && prev.record ? prev.record : v.origin === "added" ? (() => { const c = clone(v); delete c._edited; delete c._editedBy; return c; })() : undefined;
+  const body = { deleted: true, name: v.name, deletedAt: NOW_ISO() };
+  if (rec) body.record = rec;
+  return Store.putEdit(id, body);
+}
+async function restoreVendor(id) {
+  const e = Store.edits[safeId(id)];
+  return e && e.record ? Store.putEdit(id, { record: e.record }) : Store.dropEdit(id);
+}
+function viewDeleted() {
+  const del = deletedBase().sort((a, b) => String(b._del.deletedAt || b._del.updatedAt).localeCompare(String(a._del.deletedAt || a._del.updatedAt)));
+  return `<div class="vhead"><div><div class="eyebrow">Housekeeping</div><h2>Deleted vendors</h2>
+  <p>Deleting a vendor hides it from every list and count. Nothing is lost: restore brings back the vendor with any edits it had. Performance evaluations are kept either way.</p></div></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Service</th><th>Origin</th><th>Deleted</th><th>Evaluations kept</th><th></th></tr></thead><tbody>
+  ${del.map(v => `<tr style="cursor:default"><td class="wrap"><div class="nm">${esc(v.name)}</div></td><td class="al">${esc(SERVICES[svcKey(v)])}</td>
+    <td>${v.origin === "web" ? '<span class="badge b-web">Web-suggested</span>' : v.origin === "added" ? '<span class="badge b-fit">Added in dashboard</span>' : '<span class="chip">Workbook</span>'}</td>
+    <td class="al">${fmtDate(v._del.deletedAt || v._del.updatedAt)} by ${esc(who(v._del.updatedBy))}</td><td class="num">${evalsOf(v.id).length}</td>
+    <td><button class="btn sm" type="button" data-restore="${esc(v.id)}" ${Store.canWrite ? "" : "disabled"}>Restore</button></td></tr>`).join("") || '<tr><td colspan="6" class="empty">No deleted vendors.</td></tr>'}</tbody></table></div>`;
+}
 
 /* ------------------------------------------------------------- ranking */
 const CTX = { exec: ["A", "Executive / CXO"], lead: ["B", "Senior leadership"], mid: ["C", "Junior–mid level"], all: [null, "All levels"] };
@@ -513,7 +543,7 @@ const UI = { view: "overview", slTab: "all", readyCat: "all", cq: "", cscope: ""
 try { Object.assign(UI, JSON.parse(localStorage.getItem("taVR.ui.v1") || "{}"), { compare: [] }); } catch (e) {}
 function saveUI() { try { localStorage.setItem("taVR.ui.v1", JSON.stringify({ ctx: UI.ctx, type: UI.type, sort: UI.sort, dir: UI.dir })); } catch (e) {} }
 const hash = location.hash.replace("#", "");
-const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "research"];
+const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "deleted", "research"];
 if (VIEWS.includes(hash)) UI.view = hash;
 else if (["executive", "leadership", "juniorMid", "volume"].includes(hash)) { UI.view = "shortlist"; UI.slTab = hash; }
 else if (CATS[hash]) { UI.view = "directory"; UI.cat = hash; }
@@ -548,6 +578,7 @@ function renderRail() {
     <button data-go="compare" ${cur("compare")}>Compare <span class="ct">${UI.compare.length}/4</span></button>
     <div class="grp">Evidence</div>
     <button data-go="quality" ${cur("quality")}>Data quality</button>
+    <button data-go="deleted" ${cur("deleted")}>Deleted vendors <span class="ct">${deletedBase().length}</span></button>
     <button data-go="research" ${cur("research")}>Web research <span class="ct">${WEB_VENDORS.length + WEB_ENRICH.length}</span></button>`;
 }
 
@@ -889,8 +920,8 @@ function viewDirectory() {
     <span class="count num">${list.length} shown</span>
   </div>
   <div class="tw"><table>
-    <thead><tr><th><span class="sr" aria-label="Compare">⇄</span></th>${sortTh("name", "Vendor")}${sortTh("status", "Status")}<th>Categories</th><th>SPOC &amp; contact</th>${sortTh("loc", "Location")}${sortTh("score", "Score")}${sortTh("rank", "Rank pts")}${sortTh("perf", "Performance")}<th>Data</th></tr></thead>
-    <tbody>${list.map(v => row(v)).join("") || `<tr><td colspan="10" class="empty">No vendors match these filters.</td></tr>`}</tbody>
+    <thead><tr><th><span class="sr" aria-label="Compare">⇄</span></th>${sortTh("name", "Vendor")}${sortTh("status", "Status")}<th>Categories</th><th>SPOC &amp; contact</th>${sortTh("loc", "Location")}${sortTh("score", "Score")}${sortTh("rank", "Rank pts")}${sortTh("perf", "Performance")}<th>Data</th><th><span class="sr">Actions</span></th></tr></thead>
+    <tbody>${list.map(v => row(v)).join("") || `<tr><td colspan="11" class="empty">No vendors match these filters.</td></tr>`}</tbody>
   </table></div>`;
 }
 function row(v) {
@@ -908,7 +939,8 @@ function row(v) {
     <td class="num">${esc(fv(v, "score")) || "—"}</td>
     <td class="num">${!isRecruiter(v) ? '<span class="al">—</span>' : r.excluded ? '<span class="al">FAIL</span>' : r.total}</td>
     <td>${(() => { const w = perfWindow(v.id); return w.summary === null ? '<span class="al">Not evaluated</span>' : ratingBadge(w.summary); })()}</td>
-    <td>${dq ? qBadge("conflict") : vf ? qBadge("verify") : ""}</td></tr>`;
+    <td>${dq ? qBadge("conflict") : vf ? qBadge("verify") : ""}</td>
+    <td data-stop>${Store.canWrite ? `<button class="btn sm danger" type="button" data-rowdel="${esc(v.id)}" aria-label="Delete ${esc(v.name)}">Delete</button>` : ""}</td></tr>`;
 }
 
 /* ----------------------------------------------------------- shortlist */
@@ -960,7 +992,7 @@ function viewQuality() {
       <li>Rows in the contact list that are universities, HR-tech platforms or background-verification firms are classified by the dashboard from their names (Needs verification) and hidden from the default directory filter.</li></ul></section>
     <section class="panel"><h3>Field completeness <small>${R.length} recruitment / staffing vendors</small></h3>${bars(comp.map(([l, n]) => [l, n]), "go", "")}</section>
   </div>
-  ${del.length ? `<section class="panel" style="margin-top:14px"><h3>Deleted workbook records <small>${del.length}</small></h3><div class="chips">${del.map(b => `<span class="chip">${esc(b.name)} <button class="copy" type="button" data-restore="${esc(b.id)}" ${Store.canWrite ? "" : "disabled"}>Restore</button></span>`).join("")}</div></section>` : ""}
+  ${del.length ? `<div class="note-box" style="margin-top:14px">${del.length} vendor${del.length === 1 ? " is" : "s are"} deleted. <button class="btn sm" type="button" data-act="go" data-arg="deleted">Open Deleted vendors</button></div>` : ""}
   <h3 style="margin:20px 0 10px">Flagged items <span class="count">(${items.length})</span></h3>
   <div class="tw"><table><thead><tr><th>Type</th><th>Vendor</th><th>Detail</th></tr></thead><tbody>
   ${items.sort((a, b) => kinds.indexOf(a[1]) - kinds.indexOf(b[1])).map(([v, k, t]) => `<tr data-open="${esc(v.id)}"><td>${qBadge({ duplicate: "verify", related: "verify", web: "web", provided: "provided" }[k] || k)} <span class="al">${esc(k)}</span></td><td class="wrap nm">${esc(v.name)}</td><td class="wrap">${esc(t)}</td></tr>`).join("")}</tbody></table></div>`;
@@ -1534,7 +1566,7 @@ async function submitCfg(form) {
 function render() {
   assemble();
   renderRail();
-  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
+  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, deleted: viewDeleted, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
   const focusId = document.activeElement && document.activeElement.id;
   const pos = (focusId === "fq" || focusId === "pq" || focusId === "cq") ? document.activeElement.selectionStart : null;
   $("#main").innerHTML = fn();
@@ -1589,10 +1621,13 @@ document.addEventListener("click", async e => {
   if (d.edit) return openEdit(d.edit);
   if (d.cmpBtn) { toggleCmp(d.cmpBtn); return; }
   if (d.uncmp) { toggleCmp(d.uncmp); return; }
-  if (d.del) { $("#delZone").innerHTML = `<span class="count">Delete this record for everyone?</span> <button class="btn sm danger" type="button" data-delok="${esc(d.del)}">Delete</button> <button class="btn sm" type="button" data-delno>Keep</button>`; return; }
+  if (d.del) { $("#delZone").innerHTML = `<span class="count">Delete this vendor for everyone? You can restore it later.</span> <button class="btn sm danger" type="button" data-delok="${esc(d.del)}">Delete</button> <button class="btn sm" type="button" data-delno>Keep</button>`; return; }
   if (d.delno !== undefined) return openDrawer(openId, t.closest("#perfSec") ? "perf" : undefined);
-  if (d.delok) { const v = BY_ID[d.delok]; const ok = v.origin === "added" ? await Store.dropEdit(v.id) : await Store.putEdit(v.id, { deleted: true, name: v.name }); if (ok) { closeDrawer(); render(); toast("Deleted. Workbook records can be restored from Data quality."); } return; }
-  if (d.restore) { if (await Store.dropEdit(d.restore)) { render(); toast("Restored"); } return; }
+  if (d.delok) { if (await deleteVendor(d.delok)) { closeDrawer(); render(); toast("Vendor deleted. Restore it from Deleted vendors."); } return; }
+  if (d.rowdel) { const cell = t.closest("td"); cell.innerHTML = `<span class="al">Delete?</span> <button class="btn sm danger" type="button" data-rowdelok="${esc(d.rowdel)}">Yes</button> <button class="btn sm" type="button" data-rowdelno>No</button>`; return; }
+  if (d.rowdelno !== undefined) return render();
+  if (d.rowdelok) { if (await deleteVendor(d.rowdelok)) { UI.compare = UI.compare.filter(x => x !== d.rowdelok); render(); toast("Vendor deleted. Restore it from Deleted vendors."); } return; }
+  if (d.restore) { if (await restoreVendor(d.restore)) { render(); toast("Restored"); } return; }
   if (d.copy) { try { await navigator.clipboard.writeText(d.copy); toast("Copied"); } catch (err) { const r = document.createRange(); r.selectNodeContents(t.previousElementSibling || t); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected. Press Ctrl+C to copy."); } return; }
   if (d.approve) return decide(d.approve, "approved");
   if (d.dismiss) return decide(d.dismiss, "dismissed");
