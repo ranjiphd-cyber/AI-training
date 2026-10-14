@@ -74,7 +74,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 .rail button { text-align: left; border: 0; background: transparent; padding: 7px 10px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 8px; color: var(--muted); }
 .rail button:hover { background: var(--sunk); color: var(--fg); }
 .rail button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; }
-.rail .ct { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.rail .ct { font-family: var(--mono); font-size: 11px; color: var(--faint); white-space: nowrap; align-self: center; }
 main { padding-block: 22px 60px; padding-inline: 24px; min-width: 0; }
 .vhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 16px; }
 .vhead h2 { font-size: 22px; font-weight: 700; }
@@ -154,6 +154,7 @@ td { padding: 8px 10px; border-top: 1px solid var(--line); vertical-align: top; 
 tbody tr { cursor: pointer; }
 tbody tr:hover td { background: var(--sunk); }
 td .nm { font-weight: 600; color: var(--fg); }
+.sm-sel { font-size: 12px; padding: 4px 6px; max-width: 100%; }
 .sel { user-select: all; overflow-wrap: anywhere; }
 td .al { font-size: 11px; color: var(--faint); }
 td.wrap { max-width: 360px; }
@@ -467,16 +468,17 @@ function rank(v, ctx) {
 function meter(r) { return `<div class="meter" aria-hidden="true">${r.parts.map(p => `<i style="width:${p.pts}%;background:${p.c}"></i>`).join("")}</div>`; }
 
 /* --------------------------------------------------------------- state */
-const UI = { view: "overview", pq: "", pscope: "", pcomp: "", pyear: "", pband: "", perf: "", evYear: "", q: "", cat: "", svc: "", status: "", type: "recruit", loc: "", origin: "", minScore: "", dq: "", sort: "name", dir: 1, ctx: "exec", stTab: "PASS", compare: [] };
+const UI = { view: "overview", slTab: "all", readyCat: "all", cq: "", cscope: "", ckind: "", slcat: "", pq: "", pscope: "", pcomp: "", pyear: "", pband: "", perf: "", evYear: "", q: "", cat: "", svc: "", status: "", type: "recruit", loc: "", origin: "", minScore: "", dq: "", sort: "name", dir: 1, ctx: "exec", stTab: "PASS", compare: [] };
 try { Object.assign(UI, JSON.parse(localStorage.getItem("taVR.ui.v1") || "{}"), { compare: [] }); } catch (e) {}
 function saveUI() { try { localStorage.setItem("taVR.ui.v1", JSON.stringify({ ctx: UI.ctx, type: UI.type, sort: UI.sort, dir: UI.dir })); } catch (e) {} }
 const hash = location.hash.replace("#", "");
-const VIEWS = ["overview", "shortlist", "directory", "status", "performance", "compare", "quality", "research"];
+const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "research"];
 if (VIEWS.includes(hash)) UI.view = hash;
+else if (["executive", "leadership", "juniorMid", "volume"].includes(hash)) { UI.view = "shortlist"; UI.slTab = hash; }
 else if (CATS[hash]) { UI.view = "directory"; UI.cat = hash; }
 
 function go(view, patch) {
-  Object.assign(UI, { q: "", cat: "", svc: "", status: "", loc: "", spec: "", origin: "", minScore: "", dq: "", perf: "", evYear: "" }, patch || {}, { view });
+  Object.assign(UI, { q: "", cat: "", svc: "", status: "", loc: "", spec: "", origin: "", minScore: "", dq: "", perf: "", evYear: "", slcat: "" }, patch || {}, { view });
   render(); window.scrollTo(0, 0);
 }
 
@@ -488,10 +490,13 @@ function renderRail() {
   $("#rail").innerHTML = `
     <div class="grp">Review</div>
     <button data-go="overview" ${cur("overview")}>Overview</button>
-    <button data-go="shortlist" ${cur("shortlist")}>Shortlist &amp; ranking <span class="ct">${VENDORS.filter(v => v.shortlist).length}</span></button>
     <button data-go="directory" data-cat="" ${cur("directory", "")}>Vendor directory <span class="ct">${VENDORS.length}</span></button>
-    <div class="grp">Hiring category</div>
-    ${Object.entries(CATS).map(([k, l]) => `<button data-go="directory" data-cat="${k}" ${cur("directory", k)}>${l} <span class="ct">${n(k)}</span></button>`).join("")}
+    <button data-go="contacts" ${cur("contacts")}>Contact register <span class="ct">${allContacts().length}</span></button>
+    <div class="grp">Shortlist · one category each</div>
+    <button data-go="shortlist" data-sltab="all" ${UI.view === "shortlist" && UI.slTab === "all" ? 'aria-current="true"' : ""}>All shortlisted <span class="ct">${VENDORS.filter(slCat).length}</span></button>
+    ${Object.entries(SLCATS).map(([k, c]) => `<button data-go="shortlist" data-sltab="${k}" ${UI.view === "shortlist" && UI.slTab === k ? 'aria-current="true"' : ""}>${esc(c.label)} <span class="ct">${VENDORS.filter(v => slCat(v) === k).length} · ${esc(bandText(k))}</span></button>`).join("")}
+    <div class="grp">Service model</div>
+    ${["permanent", "staffAug"].map(k => `<button data-go="directory" data-cat="${k}" ${cur("directory", k)}>${CATS[k]} <span class="ct">${n(k)}</span></button>`).join("")}
     <div class="grp">Decisions</div>
     <button data-go="status" ${cur("status")}>PASS / HOLD / FAIL <span class="ct">${st("PASS")}/${st("HOLD")}/${st("FAIL")}</span></button>
     <div class="grp">Performance</div>
@@ -530,7 +535,8 @@ function viewOverview() {
     <button class="tile pass" data-act="goStatus" data-arg="PASS"><div class="k">Stage 1 PASS</div><div class="v">${st("PASS")}</div><div class="s">${VENDORS.filter(v => v.status.stage1 === "PASS" && /additional information/i.test(v.status.reason)).length} with info still pending</div></button>
     <button class="tile hold" data-act="goStatus" data-arg="HOLD"><div class="k">On HOLD</div><div class="v">${st("HOLD")}</div><div class="s">Not approved</div></button>
     <button class="tile fail" data-act="goStatus" data-arg="FAIL"><div class="k">FAIL (rejected)</div><div class="v">${st("FAIL")}</div><div class="s">Reasons recorded</div></button>
-    <button class="tile" data-act="go" data-arg="shortlist"><div class="k">CXO / leadership shortlist</div><div class="v">${VENDORS.filter(v => v.shortlist).length}</div><div class="s">${VENDORS.filter(v => v.shortlist && v.status.stage1 === "Not assessed").length} lack a Stage 1 assessment</div></button>
+    <button class="tile" data-act="go" data-arg="shortlist"><div class="k">Shortlisted (one category each)</div><div class="v">${VENDORS.filter(slCat).length}</div><div class="s">${Object.keys(SLCATS).map(k => VENDORS.filter(v => slCat(v) === k).length).join(" / ")} exec / lead / mid / vol</div></button>
+    <button class="tile" data-act="go" data-arg="contacts"><div class="k">Contacts on file</div><div class="v">${allContacts().length}</div><div class="s">names, phones, e-mails</div></button>
     <button class="tile web" data-act="go" data-arg="research"><div class="k">Web-suggested firms</div><div class="v">${web}</div><div class="s">Shown in violet; pending approval</div></button>
     <button class="tile" data-act="go" data-arg="performance"><div class="k">Performance evaluations</div><div class="v">${Object.keys(Store.data.evaluations).length}</div><div class="s">${new Set(Object.values(Store.data.evaluations).map(e => e.vendorId)).size} vendors evaluated · others Not evaluated</div></button>
     <button class="tile" data-act="go" data-arg="quality"><div class="k">Records with data issues</div><div class="v">${flagged}</div><div class="s">${noContact} recruiters lack phone and email</div></button>
@@ -538,7 +544,9 @@ function viewOverview() {
   <div class="grid g2">
     <section class="panel"><h3>Stage 1 status <small>Short Listed Vendor &amp; Rejected Vendors tabs</small></h3>
       ${bars(STATUSES.map(s => [s, st(s), statusKey(s).toLowerCase()]), "goStatus")}</section>
-    <section class="panel"><h3>Hiring category <small>a vendor can sit in several</small></h3>
+    <section class="panel"><h3>Shortlist by category <small>exclusive · fee band</small></h3>
+      ${bars(Object.entries(SLCATS).map(([k, c]) => [`${c.label} · ${bandText(k)}`, VENDORS.filter(v => slCat(v) === k).length, "", k]), "goSl")}</section>
+    <section class="panel"><h3>Hiring capability <small>tags can overlap</small></h3>
       ${bars(Object.entries(CATS).map(([k, l]) => [l, VENDORS.filter(v => v.categories[k]).length, "", k]), "goCat")}</section>
     <section class="panel"><h3>Service model <small>keyword-derived · verify</small></h3>
       ${bars([["Permanent placement", VENDORS.filter(v => v.categories.permanent).length, "", "permanent"], ["Staff augmentation", VENDORS.filter(v => v.categories.staffAug).length, "", "staffAug"], ["Both", VENDORS.filter(v => v.categories.permanent && v.categories.staffAug).length, "", "both"], ["Not stated", VENDORS.filter(v => !v.categories.permanent && !v.categories.staffAug).length, "na", "none"]], "goSvc")}</section>
@@ -551,38 +559,194 @@ function viewOverview() {
   </div>
   <section class="panel" style="margin-top:14px"><h3>Delivery evidence on file <small>PASS / HOLD / not-yet-assessed shortlisted vendors · vendor self-reported, Base Data tab</small></h3>
     <p class="count" style="margin-top:0">Of ${delivery.length} vendors still in contention, this many supplied each metric. Ratios that Excel stored as times (e.g. 05:07:00) are shown as 5:7 and marked Needs verification.</p>
-    ${bars([["Average closure timeline", dCount("closureTimeline")], ["Positions closed (12 months)", dCount("positionsClosed12m")], ["Joining ratio", dCount("joiningRatio")], ["Profiles per requirement", dCount("profilesPerReq")], ["Client reference supplied", delivery.filter(v => (v.clientRefs || []).some(r => r.q === "provided")).length], ["Placement fee %", delivery.filter(v => v.fee && v.fee.v).length, "na"]], "go", "")}
+    ${bars([["Average closure timeline", dCount("closureTimeline")], ["Positions closed (12 months)", dCount("positionsClosed12m")], ["Joining ratio", dCount("joiningRatio")], ["Profiles per requirement", dCount("profilesPerReq")], ["Client reference supplied", delivery.filter(v => (v.clientRefs || []).some(r => r.q === "provided")).length], ["Vendor-confirmed fee %", delivery.filter(v => v.fee && v.fee.v && v.fee.q === "confirmed").length, "na"]], "go", "")}
   </section>`;
 }
 
-/* Opening-screen table: who can be shortlisted now, with contacts. HOLD
-   and FAIL vendors are never listed here. */
+/* ------------------------------------------- exclusive shortlist categories */
+/* Each shortlisted vendor sits in exactly one category, because the fee
+   differs by category. Bands are TA guidance from Dr. Ranjith TP
+   (14 Oct 2026) and stay estimates until a vendor confirms its fee. */
+const SLCATS = {
+  executive: { label: "Executive / CXO", ctx: "exec", desc: "CXO-level hiring" },
+  leadership: { label: "Leadership", ctx: "lead", desc: "Senior Manager to VP / function head" },
+  juniorMid: { label: "Junior–mid level", ctx: "mid", desc: "Individual contributors to managers" },
+  volume: { label: "Volume / generic", ctx: "mid", desc: "Bulk, generic and blue-collar hiring" },
+};
+const DEFAULT_FEES = { executive: [22, 33], leadership: [16, 22], juniorMid: [8.33, 10], volume: null, note: "Category fee bands from Dr. Ranjith TP, 14 Oct 2026" };
+function feeBands() { const f = Store.data.perf.fees; return f && f.bands ? f.bands : DEFAULT_FEES; }
+function bandText(cat) { const b = feeBands()[cat]; return b && b.length === 2 ? `${b[0]}–${b[1]}%` : "Not set"; }
+const slCat = v => (v.slCat && v.slCat.v && SLCATS[v.slCat.v]) ? v.slCat.v : null;
+const blocked = v => v.status.stage1 === "HOLD" || v.status.stage1 === "FAIL";
+function feeInfo(v) {
+  if (v.fee && v.fee.v) return { text: v.fee.v, q: v.fee.q === "confirmed" ? "provided" : "verify", label: v.fee.q === "confirmed" ? "Confirmed by vendor" : "Estimate (vendor-specific)", note: v.fee.note };
+  const c = slCat(v);
+  if (c && feeBands()[c]) return { text: bandText(c), q: "verify", label: "Category band · estimate", note: `${SLCATS[c].label} band (${feeBands().note || "TA guidance"}). Not confirmed by the vendor.` };
+  if (c) return { text: "", q: "missing", label: "No band set for this category", note: "" };
+  return { text: "", q: "missing", label: "Missing", note: "Not shortlisted in a category, and no vendor fee recorded." };
+}
+function basisChip(v) {
+  const s = v.slCat; if (!s || !s.v) return "";
+  const m = { workbook: ["provided", "Workbook"], proposed: ["verify", "Proposed · confirm"], edited: ["edited", "Set by user"] }[s.basis] || ["verify", s.basis];
+  return `<span class="q q-${m[0]}" title="${esc(s.ref || "")}">${m[1]}</span>`;
+}
+function moveSelect(v) {
+  if (!Store.canWrite) return "";
+  if (blocked(v)) return `<span class="al" title="HOLD and FAIL vendors cannot be shortlisted">Status ${esc(v.status.stage1)}: cannot be shortlisted</span>`;
+  const cur = slCat(v) || "";
+  return `<select class="inp sm-sel" data-move="${esc(v.id)}" aria-label="Shortlist category for ${esc(v.name)}">${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${cur === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+}
+async function moveVendor(id, cat) {
+  const v = BY_ID[id]; if (!v) return;
+  if (cat && blocked(v)) { toast("HOLD and FAIL vendors cannot be shortlisted. Change the status first."); render(); return; }
+  const rec = clone(v); delete rec._edited; delete rec._editedBy; delete rec._approved;
+  const prev = v.slCat && v.slCat.v ? `${SLCATS[v.slCat.v] ? SLCATS[v.slCat.v].label : v.slCat.v} (${v.slCat.basis})` : "not shortlisted";
+  rec.slCat = cat ? { v: cat, basis: "edited", ref: `Set ${new Date().toLocaleDateString()}; previously ${prev}` } : { v: null, basis: "edited", ref: `Removed ${new Date().toLocaleDateString()}; previously ${prev}` };
+  if (!(rec.sources || []).includes("Dashboard edits")) (rec.sources = rec.sources || []).push("Dashboard edits");
+  if (await Store.putEdit(rec.id, { record: rec })) { render(); toast(cat ? `Moved to ${SLCATS[cat].label}` : "Removed from the shortlist"); }
+}
+function slCatTabs(cur, attr) {
+  const n = k => VENDORS.filter(v => slCat(v) === k).length;
+  return `<div class="ctx" role="group" aria-label="Shortlist category">${[["all", "All categories", VENDORS.filter(slCat).length]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label, n(k)])).map(([k, l, c]) => `<button type="button" ${attr}="${k}" aria-pressed="${cur === k}">${esc(l)} · ${c}</button>`).join("")}</div>`;
+}
+
+/* Opening-screen table: the exclusive shortlist with contacts and fee band. */
 function readyTable() {
   if (!RAW.vendors.length) return "";
-  const pool = VENDORS.filter(v => v.origin !== "web" && (v.shortlist || v.status.stage1 === "PASS") && v.status.stage1 !== "FAIL" && v.status.stage1 !== "HOLD")
-    .map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
-  const shown = UI.readyAll ? pool : pool.slice(0, 15);
-  const ctxBtns = Object.entries(CTX).map(([k, [, l]]) => `<button type="button" data-ctx="${k}" aria-pressed="${UI.ctx === k}">${l}</button>`).join("");
+  const tab = UI.readyCat || "all";
+  const pool = VENDORS.filter(v => slCat(v) && (tab === "all" || slCat(v) === tab))
+    .map(v => [v, rank(v, SLCATS[slCat(v)].ctx)]).sort((a, b) => Object.keys(SLCATS).indexOf(slCat(a[0])) - Object.keys(SLCATS).indexOf(slCat(b[0])) || b[1].total - a[1].total);
+  const shown = UI.readyAll ? pool : pool.slice(0, 20);
   const cell = (v, k) => has(v, k) ? `<span class="sel">${esc(fv(v, k))}</span>` : "";
   return `<section class="panel" style="padding:0;margin-bottom:14px">
     <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;align-items:flex-end;padding:14px 16px 10px">
-      <div><h3 style="margin:0">Shortlist-ready vendors <small>&nbsp;Stage 1 PASS or on the CXO / leadership shortlist · ${pool.length} vendors</small></h3>
-      <p class="count" style="margin:4px 0 0">Ranked by recommendation points for the chosen hiring level. HOLD and FAIL vendors are left out. Click a row for the full profile, assessment and client references.</p></div>
-      <div class="ctx" role="group" aria-label="Hiring level">${ctxBtns}</div></div>
+      <div><h3 style="margin:0">Shortlisted vendors by category <small>&nbsp;each vendor in one category only · ${VENDORS.filter(slCat).length} vendors</small></h3>
+      <p class="count" style="margin:4px 0 0">Fee bands: Executive ${bandText("executive")} · Leadership ${bandText("leadership")} · Junior–mid ${bandText("juniorMid")} · Volume ${bandText("volume")}. HOLD and FAIL vendors are never shortlisted. Click a row for the full profile and every contact.</p></div>
+      ${slCatTabs(tab, "data-readycat")}</div>
     <div class="tw" style="border:0;border-top:1px solid var(--line);border-radius:0 0 var(--r) var(--r)"><table>
-      <thead><tr><th>#</th><th>Vendor</th><th>Assessment</th><th>SPOC</th><th>Phone</th><th>Email</th><th>Location</th><th>Specialization</th><th class="num">Pts</th></tr></thead>
-      <tbody>${shown.map(([v, r], i) => `<tr data-open="${esc(v.id)}" tabindex="0">
-        <td class="num al">${i + 1}</td>
-        <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.shortlist ? `<div class="al">${esc(v.shortlist.tier)}</div>` : ""}</td>
+      <thead><tr><th>Category</th><th>Vendor</th><th>Assessment</th><th>SPOC</th><th>Phone</th><th>Email</th><th>Location</th><th>Fee band</th><th class="num">Pts</th></tr></thead>
+      <tbody>${shown.map(([v, r]) => `<tr data-open="${esc(v.id)}" tabindex="0">
+        <td class="wrap"><b>${esc(SLCATS[slCat(v)].label)}</b><div>${basisChip(v)}</div></td>
+        <td class="wrap"><div class="nm">${esc(v.name)}</div><div class="al">${esc(v.contactRegister ? v.contactRegister.length : 0)} contact${(v.contactRegister || []).length === 1 ? "" : "s"} on file</div></td>
         <td><div class="chips">${badge(v.status.stage1)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}</div>${/additional information/i.test(v.status.reason || "") ? '<div class="al">Info pending</div>' : ""}</td>
         <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">Missing</span>'}${has(v, "spocDesignation") ? `<div class="al">${esc(fv(v, "spocDesignation"))}</div>` : ""}</td>
         <td class="wrap">${cell(v, "spocPhone") || cell(v, "companyPhone") || '<span class="q q-missing">Missing</span>'}</td>
         <td class="wrap">${cell(v, "spocEmail") || cell(v, "companyEmail") || '<span class="q q-missing">Missing</span>'}</td>
-        <td>${esc(has(v, "hq") ? fv(v, "hq").split("\n")[0].slice(0, 40) : "Missing")}</td>
-        <td class="wrap"><div class="clip al" style="font-size:12px">${esc(fv(v, "specialization") || fv(v, "domain") || (v.shortlist ? v.shortlist.why : "")) || "—"}</div></td>
-        <td class="num"><b>${r.total}</b></td></tr>`).join("")}</tbody></table></div>
-    ${pool.length > 15 ? `<div style="padding:10px 16px"><button class="btn sm" type="button" data-act="readyAll">${UI.readyAll ? "Show top 15" : `Show all ${pool.length}`}</button> <button class="btn sm ghost" type="button" data-act="go" data-arg="shortlist">Ranking rationale</button></div>` : ""}
+        <td>${esc(has(v, "hq") ? fv(v, "hq").split("\\n")[0].slice(0, 40) : "Missing")}</td>
+        <td>${(() => { const f = feeInfo(v); return f.text ? `<b class="num">${esc(f.text)}</b><div class="al">${esc(f.label)}</div>` : qBadge("missing"); })()}</td>
+        <td class="num"><b>${r.total}</b></td></tr>`).join("") || `<tr><td colspan="9" class="empty">No vendors in this category yet.</td></tr>`}</tbody></table></div>
+    ${pool.length > 20 ? `<div style="padding:10px 16px"><button class="btn sm" type="button" data-act="readyAll">${UI.readyAll ? "Show first 20" : `Show all ${pool.length}`}</button> <button class="btn sm ghost" type="button" data-act="go" data-arg="shortlist">Manage the shortlist</button></div>` : ""}
   </section>`;
+}
+
+function viewShortlist() {
+  const tab = UI.slTab || "all";
+  const cats = tab === "all" ? Object.keys(SLCATS) : [tab];
+  const unassigned = VENDORS.filter(v => !slCat(v) && v.status.stage1 === "PASS");
+  const proposed = VENDORS.filter(v => slCat(v) && v.slCat.basis === "proposed").length;
+  return `
+  <div class="vhead"><div><div class="eyebrow">Shortlist · exclusive categories</div><h2>Shortlist by hiring category</h2>
+  <p>Every shortlisted vendor belongs to one category only, because each category carries its own fee band. The workbook’s CXO and Leadership shortlist tab decides the category where it covers a vendor. Other PASS vendors have a proposed category from their recorded specialization; confirm or move them with the selector on each row.</p></div>
+  <div class="chips"><button class="btn" type="button" data-act="feeCfg">Fee bands</button></div></div>
+  ${proposed ? `<div class="note-box warn">${proposed} placements are dashboard proposals (marked <span class="q q-verify">Proposed · confirm</span>). Choosing a category on a row records it as your decision.</div>` : ""}
+  <div style="margin-bottom:14px">${slCatTabs(tab, "data-sltab")}</div>
+  <details class="note-box"><summary><b>How vendors are ranked inside a category (max 100 points)</b></summary>
+    <ul class="list" style="margin-top:8px"><li>CXO-fit rating from the Shortlisted Vendors tab: Excellent 30, Very Good 20.</li><li>Stage 1: PASS 20, PASS with information pending 12.</li><li>The module that matches the category (A for Executive, B for Leadership, C for Junior–mid and Volume): yes = 18.</li><li>Base Data score (1–5) × 3.</li><li>Client reference supplied: 7.</li><li>Delivery metrics supplied (closure timeline, positions closed, joining ratio): up to 10.</li></ul>
+    <p>The points are a dashboard recommendation built from recorded evidence, not a workbook figure.</p></details>
+  ${cats.map(k => { const c = SLCATS[k]; const list = VENDORS.filter(v => slCat(v) === k).map(v => [v, rank(v, c.ctx)]).sort((a, b) => b[1].total - a[1].total);
+    return `<section class="panel" style="padding:0;margin-bottom:16px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;padding:14px 16px 4px;align-items:baseline">
+      <h3 style="margin:0">${esc(c.label)} <small>&nbsp;${esc(c.desc)} · ${list.length} vendor${list.length === 1 ? "" : "s"}</small></h3>
+      <span><span class="eyebrow">Fee band</span> <b class="num">${esc(bandText(k))}</b> <span class="al">of annual CTC · estimate</span></span></div>
+      ${list.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No vendors in this category. Move one here from another category or from the PASS pool below.</div>'}</section>`; }).join("")}
+  ${tab === "all" ? `<section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">PASS vendors not shortlisted <small>${unassigned.length}</small></h3>
+    ${unassigned.map((v, i) => rankRow(v, rank(v, "all"), i + 1)).join("") || '<div class="empty">Every PASS vendor is in a category.</div>'}</section>
+  <section class="panel webmark"><h3>Web-suggested leadership firms <small>not shortlisted · no workbook evidence</small></h3>
+    <div class="chips">${VENDORS.filter(v => v.origin === "web").map(v => `<button class="btn sm" type="button" data-open="${esc(v.id)}">${esc(v.name)}</button>`).join("") || "None"}</div></section>` : ""}`;
+}
+function rankRow(v, r, pos) {
+  const why = v.shortlist ? v.shortlist.why : v.status.reason;
+  const whySrc = v.shortlist ? v.shortlist.src : v.status.src;
+  const spec = fv(v, "specialization") || fv(v, "domain");
+  const clients = fv(v, "majorClients") || fv(v, "activeClients");
+  const f = feeInfo(v);
+  return `<div class="rank ${v.origin === "web" ? "webmark" : ""}" data-open="${esc(v.id)}" tabindex="0" role="button" aria-label="Open ${esc(v.name)}">
+    <div class="pos">${pos}</div>
+    <div style="min-width:0"><div class="title"><b>${esc(v.name)}</b>${badge(v.status.stage1)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}${basisChip(v)}</div>
+      <div class="why">${esc(why || "No rationale recorded.")} <span class="src">${esc(whySrc || "")}</span></div>
+      ${v.slCat && v.slCat.v ? `<div class="meta"><b>Category basis:</b> ${esc(v.slCat.ref || "")}</div>` : ""}
+      ${spec ? `<div class="meta clip"><b>Specialization:</b> ${esc(spec)}</div>` : ""}
+      ${clients ? `<div class="meta clip"><b>Clients:</b> ${esc(clients)}</div>` : ""}
+      <div class="meta"><b>SPOC:</b> ${has(v, "spocName") ? esc(fv(v, "spocName")) : "missing"} · ${esc(fv(v, "spocPhone") || fv(v, "companyPhone") || "no phone")} · ${esc(fv(v, "spocEmail") || fv(v, "companyEmail") || "no email")}</div>
+      <div class="gaps">${r.gaps.slice(0, 6).map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div></div>
+    <div class="side"><div class="eyebrow">Recommendation pts</div><div class="score">${r.total}<span class="count"> / 100</span></div>${meter(r)}
+      <div class="al" style="margin-top:6px">Fee: ${f.text ? `<b>${esc(f.text)}</b> (${esc(f.label)})` : "missing"}</div>
+      <div style="margin-top:6px" data-stop>${moveSelect(v)}</div></div></div>`;
+}
+function feeForm() {
+  const b = feeBands();
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="feTitle"><form class="mbox" id="feeForm" style="width:min(560px,100%)" novalidate>
+  <header><h2 id="feTitle" style="font-size:17px">Category fee bands</h2><span class="count">${Store.data.perf.fees ? `Changed ${fmtDate(Store.data.perf.fees.updatedAt)} by ${esc(who(Store.data.perf.fees.updatedBy))}` : esc(DEFAULT_FEES.note)}</span></header>
+  <div class="mbody"><div class="form">${Object.entries(SLCATS).map(([k, c]) => `<label>${esc(c.label)} · lowest %<input class="inp" type="number" step="0.01" min="0" max="100" id="fe_${k}_lo" value="${b[k] ? b[k][0] : ""}"></label><label>${esc(c.label)} · highest %<input class="inp" type="number" step="0.01" min="0" max="100" id="fe_${k}_hi" value="${b[k] ? b[k][1] : ""}"></label>`).join("")}
+  <label class="full">Source of these bands<input class="inp" id="fe_note" value="${esc(b.note || "")}"></label></div>
+  <p class="count">Bands show as estimates on every vendor in that category until a vendor-specific fee is entered on its profile. Leave both boxes blank for no band.</p><p class="count" id="feErr" role="alert"></p></div>
+  <footer><button class="btn ghost" type="button" data-act="resetFees" ${Store.canWrite ? "" : "disabled"}>Restore defaults</button><span class="chips"><button class="btn" type="button" data-cancel>Close</button><button class="btn primary" type="submit" ${Store.canWrite ? "" : "disabled"}>Save bands</button></span></footer></form></div>`;
+}
+async function submitFees(form) {
+  const bands = { note: $("#fe_note", form).value.trim() };
+  for (const k of Object.keys(SLCATS)) {
+    const lo = $(`#fe_${k}_lo`, form).value, hi = $(`#fe_${k}_hi`, form).value;
+    if (!lo && !hi) { bands[k] = null; continue; }
+    if (!lo || !hi || +lo > +hi) { $("#feErr").textContent = `Enter both a lowest and a highest fee for ${SLCATS[k].label}, with the lowest not above the highest.`; return; }
+    bands[k] = [+lo, +hi];
+  }
+  if (await Store.put("perf", "fees", { bands })) { form.closest(".modal").remove(); render(); toast("Fee bands saved"); }
+}
+
+/* --------------------------------------------------------- contact register */
+function contactsOf(v) {
+  const list = (v.contactRegister || []).map(c => Object.assign({}, c));
+  ["spocName", "spocPhone", "spocEmail"].forEach(k => {
+    const f = v.fields[k];
+    if (f && f.q === "edited" && f.v && !list.some(c => c.kind === "SPOC (edited)")) list.unshift({ kind: "SPOC (edited)", name: fv(v, "spocName"), designation: fv(v, "spocDesignation"), phone: fv(v, "spocPhone"), email: fv(v, "spocEmail"), src: (f.src || []).join(", "), note: "Entered in the dashboard." });
+  });
+  (v.extraContacts || []).forEach(c => list.push(Object.assign({ kind: "Added contact" }, c)));
+  if (!(v.contactRegister || []).length && !list.length && (has(v, "spocName") || has(v, "spocEmail") || has(v, "spocPhone")))
+    list.push({ kind: "SPOC", name: fv(v, "spocName"), designation: fv(v, "spocDesignation"), phone: fv(v, "spocPhone"), email: fv(v, "spocEmail"), src: (v.fields.spocName || v.fields.spocEmail || {}).src?.join(", ") || "" });
+  return list;
+}
+function contactCard(c) {
+  return `<div style="padding:6px 0;border-top:1px dashed var(--line)"><span class="chip">${esc(c.kind)}</span> <b>${esc(c.name || "Name not given")}</b>${c.designation ? " · " + esc(c.designation) : ""}
+    <div>${c.phone ? `<span class="sel">${esc(c.phone)}</span> <button class="copy" type="button" data-copy="${esc(c.phone)}">Copy</button>` : '<span class="al">no phone</span>'} · ${c.email ? `<span class="sel">${esc(c.email)}</span> <button class="copy" type="button" data-copy="${esc(c.email)}">Copy</button>` : '<span class="al">no email</span>'}</div>
+    ${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}<div class="src">${esc(c.src || "")}</div></div>`;
+}
+function allContacts() { return VENDORS.flatMap(v => contactsOf(v).map(c => Object.assign({ v }, c))); }
+function viewContacts() {
+  const q = (UI.cq || "").toLowerCase();
+  let rows = allContacts();
+  const kinds = [...new Set(rows.map(r => r.kind))];
+  if (UI.ckind) rows = rows.filter(r => r.kind === UI.ckind);
+  if (UI.cscope === "short") rows = rows.filter(r => slCat(r.v));
+  else if (UI.cscope && SLCATS[UI.cscope]) rows = rows.filter(r => slCat(r.v) === UI.cscope);
+  else if (UI.cscope === "recruit") rows = rows.filter(r => isRecruiter(r.v));
+  if (q) rows = rows.filter(r => [r.v.name, ...(r.v.aliases || []), r.name, r.designation, r.phone, r.email].join(" ").toLowerCase().includes(q));
+  rows.sort((a, b) => a.v.name.localeCompare(b.v.name));
+  const sel = (id, cur, opts) => `<select class="inp" id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}" ${String(cur || "") === v ? "selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
+  const total = allContacts();
+  return `<div class="vhead"><div><div class="eyebrow">Contact register</div><h2>All vendor contacts</h2>
+  <p>Every name, phone number and e-mail address in the workbook, ${total.length} entries across ${new Set(total.map(r => r.v.id)).size} organisations. Combined cells such as “Shilpa Rao/Supriya” are split into one row per person and flagged for checking. Client references are the vendors’ clients, not vendor staff.</p></div></div>
+  <div class="filters"><input class="inp" type="search" id="cq" placeholder="Search vendor, person, phone or e-mail…" value="${esc(UI.cq || "")}" aria-label="Search contacts">
+    ${sel("cscope", UI.cscope, [["", "All organisations"], ["recruit", "Recruitment / staffing only"], ["short", "Shortlisted vendors"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, "Shortlisted · " + c.label])))}
+    ${sel("ckind", UI.ckind, [["", "Any contact type"]].concat(kinds.map(k => [k, k])))}
+    <span class="count">${rows.length} shown</span></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Type</th><th>Name</th><th>Designation</th><th>Phone</th><th>Email</th><th>Source</th></tr></thead>
+  <tbody>${rows.map(r => `<tr data-open="${esc(r.v.id)}"><td class="wrap"><div class="nm">${esc(r.v.name)}</div><div class="chips">${badge(r.v.status.stage1)}${slCat(r.v) ? `<span class="chip">${esc(SLCATS[slCat(r.v)].label)}</span>` : ""}</div></td>
+    <td><span class="chip">${esc(r.kind)}</span></td><td class="wrap">${esc(r.name) || '<span class="al">Not given</span>'}</td><td class="wrap al">${esc(r.designation || "")}</td>
+    <td class="wrap"><span class="sel">${esc(r.phone || "")}</span></td><td class="wrap"><span class="sel">${esc(r.email || "")}</span></td><td class="src">${esc(r.src || "")}${r.note ? `<div class="al">${esc(r.note)}</div>` : ""}</td></tr>`).join("") || '<tr><td colspan="7" class="empty">No contacts match.</td></tr>'}</tbody></table></div>`;
+}
+function contactsCSV() {
+  const q = s => { s = String(s ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  return [["vendor", "vendorId", "status", "shortlistCategory", "feeBand", "contactType", "name", "designation", "phone", "email", "source", "note"].join(",")]
+    .concat(allContacts().map(r => [r.v.name, r.v.id, r.v.status.stage1, slCat(r.v) ? SLCATS[slCat(r.v)].label : "", feeInfo(r.v).text, r.kind, r.name, r.designation, r.phone, r.email, r.src, r.note].map(q).join(","))).join("\n");
 }
 
 /* ----------------------------------------------------------- directory */
@@ -590,6 +754,9 @@ function filtered() {
   const q = UI.q.trim().toLowerCase();
   let list = VENDORS.filter(v => {
     if (UI.cat && !v.categories[UI.cat]) return false;
+    if (UI.slcat === "any" && !slCat(v)) return false;
+    if (UI.slcat === "none" && slCat(v)) return false;
+    if (UI.slcat && SLCATS[UI.slcat] && slCat(v) !== UI.slcat) return false;
     if (UI.svc === "permanent" && !v.categories.permanent) return false;
     if (UI.svc === "staffAug" && !v.categories.staffAug) return false;
     if (UI.svc === "both" && !(v.categories.permanent && v.categories.staffAug)) return false;
@@ -637,11 +804,12 @@ function viewDirectory() {
   const sortTh = (k, l) => `<th><button type="button" data-sort="${k}">${l}${UI.sort === k ? (UI.dir > 0 ? " ↑" : " ↓") : ""}</button></th>`;
   return `
   <div class="vhead"><div><div class="eyebrow">${UI.cat ? "Hiring category view" : "Directory"}</div><h2>${esc(title)}</h2>
-  <p>${UI.cat ? esc(CAT_INFO[UI.cat]) : "Every organisation in the workbook, merged across tabs. Search covers names, aliases, contacts, specialization, industries and recorded reasons."}</p></div>
+  <p>${UI.cat ? esc(CAT_INFO[UI.cat]) + " These capability tags can overlap; the shortlist assigns each vendor to one category only." : "Every organisation in the workbook, merged across tabs. Search covers names, aliases, contacts, specialization, industries and recorded reasons."}</p></div>
   <div class="legend"><span><span class="badge b-web">Violet</span> = added from web research</span></div></div>
   <div class="filters" role="search">
     <input class="inp" type="search" id="fq" placeholder="Search vendor, SPOC, email, phone, skill, industry…" value="${esc(UI.q)}" aria-label="Search vendors">
-    <select class="inp" id="fcat" aria-label="Hiring category">${opt("", "All categories", UI.cat)}${Object.entries(CATS).map(([k, l]) => opt(k, l, UI.cat)).join("")}</select>
+    <select class="inp" id="fslcat" aria-label="Shortlist category">${opt("", "Any shortlist category", UI.slcat)}${opt("any", "Shortlisted (any category)", UI.slcat)}${Object.entries(SLCATS).map(([k, c]) => opt(k, "Shortlisted · " + c.label, UI.slcat)).join("")}${opt("none", "Not shortlisted", UI.slcat)}</select>
+    <select class="inp" id="fcat" aria-label="Capability">${opt("", "Any capability", UI.cat)}${Object.entries(CATS).map(([k, l]) => opt(k, "Capability · " + l, UI.cat)).join("")}</select>
     <select class="inp" id="fsvc" aria-label="Service model">${opt("", "Any service model", UI.svc)}${opt("permanent", "Permanent placement", UI.svc)}${opt("staffAug", "Staff augmentation", UI.svc)}${opt("both", "Both models", UI.svc)}${opt("none", "Model not stated", UI.svc)}</select>
     <select class="inp" id="fst" aria-label="Status">${opt("", "Any status", UI.status)}${STATUSES.map(s => opt(s, s, UI.status)).join("")}</select>
     <select class="inp" id="ftype" aria-label="Organisation type">${opt("recruit", "Recruitment / staffing only", UI.type)}${opt("all", "All organisation types", UI.type)}${TYPES.slice(1).map(t => opt(t, t, UI.type)).join("")}</select>
@@ -666,7 +834,7 @@ function row(v) {
   const email = fv(v, "spocEmail") || fv(v, "companyEmail"), phone = fv(v, "spocPhone") || fv(v, "companyPhone");
   return `<tr data-open="${esc(v.id)}" class="${v.origin === "web" ? "webrow" : ""}">
     <td><input type="checkbox" data-cmp="${esc(v.id)}" ${UI.compare.includes(v.id) ? "checked" : ""} aria-label="Compare ${esc(v.name)}"></td>
-    <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
+    <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${originChip(v)}${slCat(v) ? `<span class="badge b-fit">${esc(SLCATS[slCat(v)].label)}</span>` : ""}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
     <td>${badge(v.status.stage1)}</td>
     <td class="wrap">${catChips(v)}</td>
     <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">SPOC missing</span>'}<div class="al">${esc(email) || "no email"} · ${esc(phone) || "no phone"}</div></td>
@@ -678,39 +846,6 @@ function row(v) {
 }
 
 /* ----------------------------------------------------------- shortlist */
-function viewShortlist() {
-  const ctxBtns = Object.entries(CTX).map(([k, [, l]]) => `<button type="button" data-ctx="${k}" aria-pressed="${UI.ctx === k}">${l}</button>`).join("");
-  const sl = VENDORS.filter(v => v.shortlist).map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
-  const pool = VENDORS.filter(v => !v.shortlist && v.status.stage1 === "PASS" && (!CTX[UI.ctx][0] || (v.modules[CTX[UI.ctx][0]] || {}).v === "yes")).map(v => [v, rank(v, UI.ctx)]).sort((a, b) => b[1].total - a[1].total);
-  const web = VENDORS.filter(v => v.origin === "web");
-  return `
-  <div class="vhead"><div><div class="eyebrow">Shortlist &amp; ranking</div><h2>Who to call first</h2>
-  <p>The workbook’s own shortlist and Stage 1 decisions come first. The points total is a dashboard recommendation built only from recorded evidence; it is not a workbook figure. Gaps show what evidence is missing.</p></div>
-  <div><div class="eyebrow" style="margin-bottom:4px">Hiring context</div><div class="ctx" role="group" aria-label="Hiring context">${ctxBtns}</div></div></div>
-  <details class="note-box"><summary><b>How the points are built (max 100)</b></summary>
-    <ul class="list" style="margin-top:8px"><li>CXO-fit rating from the Shortlisted Vendors tab: Excellent 30, Very Good 20.</li><li>Stage 1: PASS 20, PASS with information pending 12, HOLD 5, not assessed 0. FAIL vendors are excluded.</li><li>Module for the chosen context (A Executive, B Senior leadership, C Junior–mid): yes = 18. “All levels” gives 6 per module.</li><li>Base Data score (1–5) × 3.</li><li>Client reference supplied (not “Pending”): 7.</li><li>Delivery metrics supplied (closure timeline, positions closed, joining ratio): up to 10.</li></ul></details>
-  <section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">CXO / leadership shortlist <small>Shortlisted Vendors tab · ${sl.length} firms</small></h3>
-    ${sl.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No shortlisted vendors.</div>'}</section>
-  <section class="panel" style="padding:0;margin-bottom:16px"><h3 style="padding:14px 16px 0">Stage 1 PASS pool for ${esc(CTX[UI.ctx][1].toLowerCase())} <small>${pool.length} vendors not on the CXO shortlist</small></h3>
-    ${pool.map(([v, r], i) => rankRow(v, r, i + 1)).join("") || '<div class="empty">No PASS vendors for this context.</div>'}</section>
-  <section class="panel webmark"><h3>Web-suggested leadership firms <small>not ranked · no workbook evidence</small></h3>
-    <div class="chips">${web.map(v => `<button class="btn sm" type="button" data-open="${esc(v.id)}">${esc(v.name)}</button>`).join("") || "None"}</div></section>`;
-}
-function rankRow(v, r, pos) {
-  const why = v.shortlist ? v.shortlist.why : v.status.reason;
-  const whySrc = v.shortlist ? v.shortlist.src : v.status.src;
-  const spec = fv(v, "specialization") || fv(v, "domain");
-  const clients = fv(v, "majorClients") || fv(v, "activeClients");
-  return `<div class="rank ${v.origin === "web" ? "webmark" : ""}" data-open="${esc(v.id)}" tabindex="0" role="button" aria-label="Open ${esc(v.name)}">
-    <div class="pos">${pos}</div>
-    <div style="min-width:0"><div class="title"><b>${esc(v.name)}</b>${badge(v.status.stage1)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}</div>
-      <div class="why">${esc(why || "No rationale recorded.")} <span class="src">${esc(whySrc || "")}</span></div>
-      ${spec ? `<div class="meta clip"><b>Specialization:</b> ${esc(spec)}</div>` : ""}
-      ${clients ? `<div class="meta clip"><b>Clients:</b> ${esc(clients)}</div>` : ""}
-      <div class="gaps">${r.gaps.slice(0, 6).map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div></div>
-    <div class="side"><div class="eyebrow">Recommendation pts</div><div class="score">${r.total}<span class="count"> / 100</span></div>${meter(r)}</div></div>`;
-}
-
 /* -------------------------------------------------------------- status */
 function viewStatus() {
   const list = VENDORS.filter(v => v.status.stage1 === UI.stTab).sort((a, b) => a.name.localeCompare(b.name));
@@ -731,7 +866,7 @@ function viewStatus() {
 function viewCompare() {
   const vs = UI.compare.map(id => BY_ID[id]).filter(Boolean);
   if (!vs.length) return `<div class="vhead"><div><div class="eyebrow">Compare</div><h2>Side-by-side comparison</h2><p>Tick up to four vendors in the directory, or use “Add to compare” on a vendor profile.</p></div></div><div class="panel empty">Nothing selected yet. <button class="btn sm" type="button" data-act="go" data-arg="shortlist">Open the shortlist</button></div>`;
-  const rowsDef = [["Status", v => badge(v.status.stage1) + `<div class="al">${esc(v.status.reason || "")}</div>`], ["CXO fit", v => v.shortlist ? `${esc(v.shortlist.fit)}<div class="al">${esc(v.shortlist.why)}</div>` : qBadge("missing")], ["Recommendation pts", v => { const r = rank(v, UI.ctx); return `<b class="num">${r.total}</b> / 100 (${esc(CTX[UI.ctx][1])})${meter(r)}`; }], ["Modules A/B/C", v => ["A", "B", "C"].map(m => (v.modules[m] || {}).v || "—").join(" / ")], ["Categories", catChips], ["Performance summary", v => { const w = perfWindow(v.id); return ratingBadge(w.summary) + `<div class="al">${w.years.length ? w.done.length + "/" + w.years.length + " years evaluated" : "No engagement recorded"}</div>${w.years.length ? sparkline(w) : ""}`; }], ["Placement fee", v => v.fee && v.fee.v ? `${esc(v.fee.v)} ${qBadge(v.fee.q)}` : qBadge("missing")]]
+  const rowsDef = [["Status", v => badge(v.status.stage1) + `<div class="al">${esc(v.status.reason || "")}</div>`], ["CXO fit", v => v.shortlist ? `${esc(v.shortlist.fit)}<div class="al">${esc(v.shortlist.why)}</div>` : qBadge("missing")], ["Recommendation pts", v => { const r = rank(v, UI.ctx); return `<b class="num">${r.total}</b> / 100 (${esc(CTX[UI.ctx][1])})${meter(r)}`; }], ["Modules A/B/C", v => ["A", "B", "C"].map(m => (v.modules[m] || {}).v || "—").join(" / ")], ["Categories", catChips], ["Performance summary", v => { const w = perfWindow(v.id); return ratingBadge(w.summary) + `<div class="al">${w.years.length ? w.done.length + "/" + w.years.length + " years evaluated" : "No engagement recorded"}</div>${w.years.length ? sparkline(w) : ""}`; }], ["Shortlist category", v => slCat(v) ? `<b>${esc(SLCATS[slCat(v)].label)}</b> ${basisChip(v)}` : '<span class="al">Not shortlisted</span>'], ["Placement fee", v => { const f = feeInfo(v); return f.text ? `<b>${esc(f.text)}</b> ${qBadge(f.q)}<div class="al">${esc(f.label)}</div>` : qBadge("missing"); }]]
     .concat(["spocName", "spocPhone", "spocEmail", "hq", "years", "recruiters", "revenue", "specialization", "industries", "majorClients", "profilesPerReq", "closureTimeline", "positionsClosed12m", "joiningRatio", "score"].map(k => [FIELD_LABEL[k], v => { const f = v.fields[k]; return f && f.v ? `<span class="val">${esc(f.v)}</span> ${f.q !== "provided" ? qBadge(f.q) : ""}` : qBadge("missing"); }]));
   return `<div class="vhead"><div><div class="eyebrow">Compare</div><h2>Side-by-side comparison</h2><p>Values as recorded, with quality labels. Delivery figures are vendor self-reported in the Base Data tab.</p></div><button class="btn" type="button" data-act="clearCmp">Clear selection</button></div>
   <div class="tw"><table class="cmp"><thead><tr><th>Field</th>${vs.map(v => `<th><button type="button" data-open="${esc(v.id)}">${esc(v.name)}</button> <button class="copy" type="button" data-uncmp="${esc(v.id)}" aria-label="Remove ${esc(v.name)}">✕</button></th>`).join("")}</tr></thead>
@@ -795,7 +930,7 @@ function fieldRow(v, k, label) {
     ${f.src && f.src.length ? `<div class="src">${esc(f.src.join(" · "))}</div>` : ""}</dd>`;
 }
 function drawerHTML(v) {
-  const r = rank(v, UI.ctx);
+  const r = rank(v, slCat(v) ? SLCATS[slCat(v)].ctx : UI.ctx);
   const conf = Store.canWrite;
   return `<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
   <div class="dh"><div class="row"><div style="min-width:0"><div class="eyebrow">${esc(v.vendorType.v)}${v.vendorType.q !== "provided" ? " · classification needs verification" : ""}</div><h2 id="dTitle">${esc(v.name)}</h2>
@@ -808,22 +943,24 @@ function drawerHTML(v) {
   <div class="db">
     <section class="sec"><h4>Status &amp; assessment</h4><dl class="kv">
       <dt>Stage 1 status</dt><dd><div class="line">${badge(v.status.stage1)} <span class="src">${esc(v.status.src || "no assessment record")}</span></div><div>${v.status.reason ? esc(v.status.reason) : '<span class="note">No reason recorded.</span>'}</div></dd>
-      <dt>CXO / leadership shortlist</dt><dd>${v.shortlist ? `<div class="line"><b>${esc(v.shortlist.fit)}</b> · ${esc(v.shortlist.tier)} <span class="src">${esc(v.shortlist.src)}</span></div><div>${esc(v.shortlist.why)}</div>` : '<span class="note">Not on the shortlist tab.</span>'}</dd>
+      <dt>Shortlist category</dt><dd>${slCat(v) ? `<div class="line"><b>${esc(SLCATS[slCat(v)].label)}</b> ${basisChip(v)} <span class="count">fee band ${esc(bandText(slCat(v)))}</span></div><div class="note">${esc(v.slCat.ref || "")}</div>` : `<span class="note">${v.slCat && v.slCat.ref ? esc(v.slCat.ref) : "Not shortlisted."}</span>`}<div style="margin-top:4px">${moveSelect(v)}</div></dd>
+      <dt>CXO / leadership shortlist tab</dt><dd>${v.shortlist ? `<div class="line"><b>${esc(v.shortlist.fit)}</b> · ${esc(v.shortlist.tier)} <span class="src">${esc(v.shortlist.src)}</span></div><div>${esc(v.shortlist.why)}</div>` : '<span class="note">Not on the shortlist tab.</span>'}</dd>
       <dt>Modules</dt><dd>${["A Executive/CXO", "B Senior leadership", "C Junior–mid"].map(l => { const m = v.modules[l[0]]; return `<div>${esc(l)}: <b>${m ? esc(m.v) : "—"}</b> ${m ? `<span class="src">${esc(m.src)}</span>` : ""}</div>`; }).join("")}</dd>
       ${(v.levelTags || []).length ? `<dt>Level tags</dt><dd>${v.levelTags.map(t => `<div>${esc(t.v)} <span class="src">${esc(t.src)}</span></div>`).join("")}</dd>` : ""}
       ${(v.lists || []).length ? `<dt>Listed in</dt><dd>${v.lists.map(t => `<div>${esc(t.v)} <span class="src">${esc(t.src)}</span></div>`).join("")}</dd>` : ""}
       ${v.unlabeledAE ? `<dt>Unlabeled flag (col AE)</dt><dd>Yes <span class="src">${esc(v.unlabeledAE.join(", "))}</span> ${qBadge("verify")}</dd>` : ""}
     </dl></section>
-    <section class="sec"><h4>Ranking rationale (recommendation · ${esc(CTX[UI.ctx][1])})</h4>
+    <section class="sec"><h4>Ranking rationale (recommendation · ${esc(CTX[slCat(v) ? SLCATS[slCat(v)].ctx : UI.ctx][1])})</h4>
       <div class="line"><span class="score">${r.total}</span><span class="count">/ 100 ${r.excluded ? "· excluded from ranking (FAIL)" : ""}</span></div>${meter(r)}
       <div class="parts" style="margin-top:8px">${r.parts.map(p => `<div class="p"><span><b>${esc(p.k)}</b> — ${esc(p.ev)}</span><span>${Math.round(p.pts * 10) / 10}/${p.max}</span></div>`).join("")}</div>
       ${r.gaps.length ? `<div class="gaps">${r.gaps.map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div>` : ""}</section>
     ${perfSection(v)}
     <section class="sec"><h4>Hiring categories</h4><dl class="kv">${Object.keys(CATS).map(k => `<dt>${esc(CATS[k])}</dt><dd>${v.categories[k] ? v.categories[k].map(b => `<div>${qBadge(b.basis === "workbook" ? "provided" : b.basis === "web" ? "web" : b.basis === "edited" ? "edited" : "verify")} ${esc(b.ref)}</div>`).join("") : '<span class="note">—</span>'}</dd>`).join("")}</dl></section>
     ${FIELD_GROUPS.map(([g, fs]) => `<section class="sec"><h4>${esc(g)}</h4><dl class="kv">${fs.map(([k, l]) => (["companyEmail", "companyPhone", "website", "finalDecision"].includes(k) && !v.fields[k]) ? "" : fieldRow(v, k, l)).join("")}</dl>
-      ${g === "Contacts" && (v.contacts || []).length ? `<div style="margin-top:10px"><div class="eyebrow">Contacts recorded in the contact list</div>${v.contacts.map(c => `<div style="padding:6px 0;border-top:1px dashed var(--line)"><b>${esc(c.name || "Name not given")}</b>${c.designation ? " · " + esc(c.designation) : ""}<div>${c.email ? `${esc(c.email)} <button class="copy" type="button" data-copy="${esc(c.email)}">Copy</button>` : ""} ${c.phone ? `${esc(c.phone)} <button class="copy" type="button" data-copy="${esc(c.phone)}">Copy</button>` : ""}</div>${c.raw ? `<div class="note">As written: ${esc(c.raw)}</div>` : ""}${c.note ? `<div class="note">${esc(c.note)}</div>` : ""}<div class="src">${esc(c.src)}</div></div>`).join("")}</div>` : ""}</section>`).join("")}
+      ${g === "Contacts" ? `<div style="margin-top:10px"><div class="eyebrow">All contacts for this vendor (${contactsOf(v).length})</div>${contactsOf(v).map(contactCard).join("") || '<p class="note">No contacts recorded.</p>'}</div>` : ""}</section>`).join("")}
     <section class="sec"><h4>Client references</h4>${(v.clientRefs || []).length ? v.clientRefs.map(c => `<dl class="kv"><dt>Client</dt><dd>${esc(c.company || "—")} ${qBadge(c.q)}</dd><dt>Reference person</dt><dd>${esc(c.person || "—")}${c.designation ? " · " + esc(c.designation) : ""}</dd><dt>Contact</dt><dd>${esc(c.contact || "—")} ${c.contact && c.q === "provided" ? `<button class="copy" type="button" data-copy="${esc(c.contact)}">Copy</button>` : ""}<div class="src">${esc(c.src)}</div></dd></dl>`).join("") : `${qBadge("missing")} <span class="note">No client reference recorded.</span>`}</section>
-    <section class="sec"><h4>Placement fee</h4><dl class="kv"><dt>Fee %</dt><dd>${v.fee && v.fee.v ? `<span class="val">${esc(v.fee.v)}</span> ${qBadge(v.fee.q === "confirmed" ? "provided" : v.fee.q === "estimate" ? "verify" : v.fee.q)} <span class="note">${esc(v.fee.q === "confirmed" ? "Confirmed" : v.fee.q === "estimate" ? "Estimate" : "")}</span>` : qBadge("missing")}${v.fee && v.fee.note ? `<div class="note">${esc(v.fee.note)}</div>` : ""}</dd></dl></section>
+    <section class="sec"><h4>Placement fee</h4><dl class="kv"><dt>Fee % of annual CTC</dt><dd>${(() => { const f = feeInfo(v); return `${f.text ? `<span class="val"><b>${esc(f.text)}</b></span> ` : ""}${qBadge(f.q)} <span class="note">${esc(f.label)}</span>${f.note ? `<div class="note">${esc(f.note)}</div>` : ""}`; })()}</dd>
+      ${v.fee && v.fee.v && slCat(v) ? `<dt>Category band</dt><dd>${esc(bandText(slCat(v)))} <span class="note">${esc(SLCATS[slCat(v)].label)}</span></dd>` : ""}</dl></section>
     <section class="sec"><h4>Data-quality notes</h4>${v.flags.length ? v.flags.map(f => `<div class="flag"><span>${qBadge({ duplicate: "verify", related: "verify", web: "web" }[f.kind] || f.kind)}</span><span>${esc(f.text)}</span></div>`).join("") : '<span class="note">No flags.</span>'}</section>
     <section class="sec"><h4>Sources</h4><div class="src">${esc((v.sources || []).join(" · ") || "—")}</div>${(v.webSources || []).map(u => `<div><a class="src" href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a></div>`).join("")}
       <div class="count" style="margin-top:6px">Workbook snapshot: ${fmtDate(v.lastUpdated)}${v._edited ? ` · last edited ${new Date(v._edited).toLocaleString()} by ${esc(who(v._editedBy))}` : ""}</div></section>
@@ -851,10 +988,12 @@ function editForm(v) {
     <label>CXO-fit rating<select class="inp" id="e_fit">${["", "Excellent", "Very Good", "Good"].map(s => `<option value="${s}" ${((v.shortlist && v.shortlist.fit) || "").trim() === s ? "selected" : ""}>${s || "Not shortlisted"}</option>`).join("")}</select></label>
     <label>Shortlist tier<select class="inp" id="e_tier">${["CXO / Senior Leadership", "Leadership Hiring"].map(s => `<option ${v.shortlist && v.shortlist.tier === s ? "selected" : ""}>${s}</option>`).join("")}</select></label>
     <label class="full">Why shortlisted${ta("e_why", v.shortlist ? v.shortlist.why : "")}</label>
-    <fieldset><legend>Hiring categories</legend><div class="checks">${Object.entries(CATS).map(([k, l]) => `<label><input type="checkbox" id="e_cat_${k}" ${v.categories[k] ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div></fieldset>
+    <label>Shortlist category (exclusive)<select class="inp" id="e_slcat" ${blocked(v) ? "disabled" : ""}>${[["", "Not shortlisted"]].concat(Object.entries(SLCATS).map(([k, c]) => [k, c.label + " · " + bandText(k)])).map(([k, l]) => `<option value="${k}" ${(slCat(v) || "") === k ? "selected" : ""}>${esc(l)}</option>`).join("")}</select></label>
+    <fieldset><legend>Hiring capability tags (can overlap)</legend><div class="checks">${Object.entries(CATS).map(([k, l]) => `<label><input type="checkbox" id="e_cat_${k}" ${v.categories[k] ? "checked" : ""}> ${esc(l)}</label>`).join("")}</div></fieldset>
     <fieldset><legend>Modules (Stage 1)</legend><div class="checks">${["A", "B", "C"].map(m => `<label>${m} <select class="inp" id="e_mod_${m}">${["", "yes", "no", "pending"].map(o => `<option value="${o}" ${(v.modules[m] || {}).v === o ? "selected" : ""}>${o || "—"}</option>`).join("")}</select></label>`).join("")}</div></fieldset>
     ${FIELD_GROUPS.map(([g, fs]) => `<div class="fh">${esc(g)}</div>${fs.map(([k, l]) => `<label class="${long.has(k) ? "full" : ""}">${esc(l)}${long.has(k) ? ta("e_f_" + k, fv(v, k)) : inp("e_f_" + k, fv(v, k))}</label>`).join("")}`).join("")}
-    <div class="fh">Placement fee</div>
+    <label class="full">Additional contacts, one per line: Name | Designation | Phone | Email<textarea class="inp" id="e_extra">${esc((v.extraContacts || []).map(c => [c.name, c.designation, c.phone, c.email].join(" | ")).join("\n"))}</textarea></label>
+    <div class="fh">Placement fee · vendor-specific (leave blank to use the category band)</div>
     <label>Fee % of annual CTC${inp("e_fee", v.fee ? v.fee.v : "", "e.g. 8.33%")}</label>
     <label>Fee status<select class="inp" id="e_feeq">${[["missing", "Missing"], ["confirmed", "Confirmed (contract / proposal)"], ["estimate", "Estimate"]].map(([k, l]) => `<option value="${k}" ${v.fee && v.fee.q === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
     <label class="full">Fee source / note${inp("e_feenote", v.fee ? v.fee.note : "")}</label>
@@ -888,6 +1027,10 @@ async function submitEdit(form) {
     if ((cur ? cur.v : "") === nv) return;
     rec.fields[k] = nv ? { v: nv, q: "edited", src: [stamp], note: cur && cur.v ? `Previously “${cur.v}” (${(cur.src || []).join(", ")})` : undefined } : { v: "", q: "missing", src: [stamp], note: "Cleared in dashboard" };
   }));
+  const sc = val("e_slcat");
+  if ((slCat(rec) || "") !== sc && !(st === "HOLD" || st === "FAIL")) rec.slCat = sc ? { v: sc, basis: "edited", ref: stamp } : { v: null, basis: "edited", ref: "Removed · " + stamp };
+  if (st === "HOLD" || st === "FAIL") { if (slCat(rec)) rec.slCat = { v: null, basis: "edited", ref: `Removed: status ${st} · ${stamp}` }; }
+  rec.extraContacts = val("e_extra").split("\n").map(l => l.split("|").map(x => x.trim())).filter(p => p.some(Boolean)).map(([name = "", designation = "", phone = "", email = ""]) => ({ name, designation, phone, email, src: stamp }));
   const fee = val("e_fee");
   rec.fee = { v: fee, q: fee ? (val("e_feeq") === "missing" ? "estimate" : val("e_feeq")) : "missing", note: val("e_feenote") || (fee ? stamp : "No fee recorded.") };
   const ref = { company: val("e_ref_company"), person: val("e_ref_person"), designation: val("e_ref_designation"), contact: val("e_ref_contact") };
@@ -923,9 +1066,9 @@ async function undoDecision(sid) {
 /* ------------------------------------------------------ import / export */
 const FLAT_KEYS = FIELD_GROUPS.flatMap(g => g[1].map(f => f[0]));
 function toCSV(list) {
-  const head = ["id", "name", "aliases", "origin", "vendorType", "stage1Status", "statusReason", "statusSource", "cxoFit", "shortlistTier", "shortlistWhy", "categories", "moduleA", "moduleB", "moduleC", ...FLAT_KEYS, "feePercent", "feeStatus", "feeNote", "clientRefCompany", "clientRefPerson", "clientRefDesignation", "clientRefContact", "flags", "sources", "lastUpdated"];
+  const head = ["id", "name", "aliases", "origin", "vendorType", "stage1Status", "statusReason", "statusSource", "cxoFit", "shortlistTier", "shortlistWhy", "shortlistCategory", "feeBandOrFee", "categories", "moduleA", "moduleB", "moduleC", ...FLAT_KEYS, "feePercent", "feeStatus", "feeNote", "clientRefCompany", "clientRefPerson", "clientRefDesignation", "clientRefContact", "flags", "sources", "lastUpdated"];
   const q = s => { s = String(s ?? ""); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const rows = list.map(v => { const c = (v.clientRefs || [])[0] || {}; return [v.id, v.name, (v.aliases || []).join("; "), v.origin, v.vendorType.v, v.status.stage1, v.status.reason, v.status.src, v.shortlist ? v.shortlist.fit : "", v.shortlist ? v.shortlist.tier : "", v.shortlist ? v.shortlist.why : "", Object.keys(v.categories).join("; "), ...["A", "B", "C"].map(m => (v.modules[m] || {}).v || ""), ...FLAT_KEYS.map(k => fv(v, k)), v.fee ? v.fee.v : "", v.fee ? v.fee.q : "", v.fee ? v.fee.note : "", c.company, c.person, c.designation, c.contact, v.flags.map(f => f.text).join(" | "), (v.sources || []).join("; "), v._edited || v.lastUpdated].map(q).join(","); });
+  const rows = list.map(v => { const c = (v.clientRefs || [])[0] || {}; return [v.id, v.name, (v.aliases || []).join("; "), v.origin, v.vendorType.v, v.status.stage1, v.status.reason, v.status.src, v.shortlist ? v.shortlist.fit : "", v.shortlist ? v.shortlist.tier : "", v.shortlist ? v.shortlist.why : "", slCat(v) || "", feeInfo(v).text, Object.keys(v.categories).join("; "), ...["A", "B", "C"].map(m => (v.modules[m] || {}).v || ""), ...FLAT_KEYS.map(k => fv(v, k)), v.fee ? v.fee.v : "", v.fee ? v.fee.q : "", v.fee ? v.fee.note : "", c.company, c.person, c.designation, c.contact, v.flags.map(f => f.text).join(" | "), (v.sources || []).join("; "), v._edited || v.lastUpdated].map(q).join(","); });
   return [head.join(","), ...rows].join("\n");
 }
 function parseCSV(text) {
@@ -950,6 +1093,7 @@ function recordFromRow(o) {
   if (o.stage1Status && STATUSES.includes(o.stage1Status.toUpperCase() === "NOT ASSESSED" ? "Not assessed" : o.stage1Status.toUpperCase())) rec.status = { stage1: o.stage1Status.toUpperCase() === "NOT ASSESSED" ? "Not assessed" : o.stage1Status.toUpperCase(), reason: o.statusReason || "", src: stamp };
   FLAT_KEYS.forEach(k => { if (o[k] !== undefined && o[k] !== fv(rec, k)) rec.fields[k] = o[k] ? { v: o[k], q: "edited", src: [stamp] } : { v: "", q: "missing", src: [stamp] }; });
   if (o.categories !== undefined) { const ks = o.categories.split(";").map(s => s.trim()).filter(k => CATS[k]); Object.keys(CATS).forEach(k => { if (ks.includes(k)) rec.categories[k] = rec.categories[k] || [{ basis: "edited", ref: stamp }]; else delete rec.categories[k]; }); }
+  if (o.shortlistCategory !== undefined && (SLCATS[o.shortlistCategory] || o.shortlistCategory === "") && (slCat(rec) || "") !== o.shortlistCategory && !blocked(rec)) rec.slCat = o.shortlistCategory ? { v: o.shortlistCategory, basis: "edited", ref: stamp } : { v: null, basis: "edited", ref: "Removed · " + stamp };
   if (o.feePercent !== undefined) rec.fee = { v: o.feePercent, q: o.feePercent ? (["confirmed", "estimate"].includes(o.feeStatus) ? o.feeStatus : "estimate") : "missing", note: o.feeNote || stamp };
   if (!rec.sources.includes(stamp)) rec.sources.push(stamp);
   return rec;
@@ -979,14 +1123,14 @@ async function importFile(file) {
 function exportMenu() {
   $("#layer").insertAdjacentHTML("beforeend", `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="xTitle"><div class="mbox" style="width:min(560px,100%)"><header><h2 id="xTitle" style="font-size:17px">Export vendors</h2></header>
   <div class="mbody"><p>Exports include every field, contact and quality label currently shown, including your edits. The JSON file also carries performance evaluations, engagement periods and rating criteria. Treat the files as confidential: they contain personal contact details.</p>
-  <div class="chips"><button class="btn primary" type="button" data-x="json">Full data (JSON)</button><button class="btn" type="button" data-x="csv">Spreadsheet (CSV)</button><button class="btn" type="button" data-x="csvf">CSV · current directory filter</button></div>
+  <div class="chips"><button class="btn primary" type="button" data-x="json">Full data (JSON)</button><button class="btn" type="button" data-x="csv">Spreadsheet (CSV)</button><button class="btn" type="button" data-x="csvf">CSV · current directory filter</button><button class="btn" type="button" data-x="contacts">Contact register (CSV)</button></div>
   <p class="count" id="xMsg"></p><textarea class="inp" id="xText" hidden readonly style="width:100%;min-height:140px" aria-label="Export text"></textarea></div>
   <footer><span></span><button class="btn" type="button" data-cancel>Close</button></footer></div></div>`);
 }
 async function doExport(kind) {
   const list = kind === "csvf" ? filtered() : VENDORS;
-  const data = kind === "json" ? JSON.stringify({ meta: Object.assign({}, META, { exportedAt: NOW_ISO() }), vendors: list.map(v => { const c = clone(v); return c; }), evaluations: Store.data.evaluations, engagements: Store.data.engagements, perfConfig: Store.data.perf.config || null }, null, 1) : toCSV(list);
-  const filename = `ta-vendor-register-${new Date().toISOString().slice(0, 10)}.${kind === "json" ? "json" : "csv"}`;
+  const data = kind === "contacts" ? contactsCSV() : kind === "json" ? JSON.stringify({ meta: Object.assign({}, META, { exportedAt: NOW_ISO() }), vendors: list.map(v => { const c = clone(v); return c; }), evaluations: Store.data.evaluations, engagements: Store.data.engagements, perfConfig: Store.data.perf.config || null }, null, 1) : toCSV(list);
+  const filename = `ta-vendor-${kind === "contacts" ? "contacts" : "register"}-${new Date().toISOString().slice(0, 10)}.${kind === "json" ? "json" : "csv"}`;
   const msg = $("#xMsg");
   try {
     const dl = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads") : null;
@@ -1290,35 +1434,39 @@ async function submitCfg(form) {
 function render() {
   assemble();
   renderRail();
-  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
+  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
   const focusId = document.activeElement && document.activeElement.id;
-  const pos = (focusId === "fq" || focusId === "pq") ? document.activeElement.selectionStart : null;
+  const pos = (focusId === "fq" || focusId === "pq" || focusId === "cq") ? document.activeElement.selectionStart : null;
   $("#main").innerHTML = fn();
-  if ((focusId === "fq" || focusId === "pq") && $("#" + focusId)) { const el = $("#" + focusId); el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
+  if ((focusId === "fq" || focusId === "pq" || focusId === "cq") && $("#" + focusId)) { const el = $("#" + focusId); el.focus(); try { el.setSelectionRange(pos, pos); } catch (e) {} }
   if (openId && $("#layer .drawer") && BY_ID[openId] && !$("#layer .modal")) { const sc = $(".drawer .db").scrollTop; $("#layer").innerHTML = drawerHTML(BY_ID[openId]); $(".drawer .db").scrollTop = sc; }
   try { history.replaceState(null, "", "#" + (UI.view === "directory" && UI.cat ? UI.cat : UI.view)); } catch (e) {}
 }
 
 /* -------------------------------------------------------------- events */
 document.addEventListener("click", async e => {
+  if (e.target.closest("[data-stop]") && !e.target.closest("button")) return;
   const t = e.target.closest("button, [data-open], [data-close], input[type=checkbox]");
   if (t && t.matches("input[type=checkbox]") && !t.dataset.cmp) return;
   if (!t) return;
   const d = t.dataset;
   if (t.matches("input[data-cmp]")) { e.stopPropagation(); toggleCmp(d.cmp); return; }
-  if (d.go !== undefined) return go(d.go, d.cat ? { cat: d.cat } : {});
+  if (d.go !== undefined) return go(d.go, d.cat ? { cat: d.cat } : d.sltab ? { slTab: d.sltab } : {});
   if (d.act) {
     const a = d.arg;
     if (d.act === "go") return a ? go(a) : null;
     if (d.act === "goDir") return go("directory", { type: "all" });
     if (d.act === "goStatus") { UI.stTab = a; return go("status"); }
     if (d.act === "goCat") return go("directory", { cat: a, type: "all" });
+    if (d.act === "goSl") return go("shortlist", { slTab: a });
     if (d.act === "goSvc") return go("directory", { svc: a, type: "all" });
     if (d.act === "goType") return go("directory", { type: a === "Recruitment / staffing" ? "recruit" : a });
     if (d.act === "goLoc") return go("directory", { loc: a });
     if (d.act === "goSpec") return go("directory", { spec: a, type: "all" });
     if (d.act === "clearCmp") { UI.compare = []; return render(); }
     if (d.act === "readyAll") { UI.readyAll = !UI.readyAll; return render(); }
+    if (d.act === "feeCfg") { $("#layer").insertAdjacentHTML("beforeend", feeForm()); return; }
+    if (d.act === "resetFees") { if (await Store.del("perf", "fees")) { t.closest(".modal").remove(); render(); toast("Default fee bands restored"); } return; }
     if (d.act === "perfCfg") { $("#layer").insertAdjacentHTML("beforeend", cfgForm()); return; }
     if (d.act === "addEval") { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, "")); return; }
     if (d.act === "perfBand") { UI.pband = a; return render(); }
@@ -1327,6 +1475,8 @@ document.addEventListener("click", async e => {
   }
   if (d.sort) { UI.dir = UI.sort === d.sort ? -UI.dir : 1; UI.sort = d.sort; saveUI(); return render(); }
   if (d.ctx) { UI.ctx = d.ctx; saveUI(); return render(); }
+  if (d.sltab) { UI.slTab = d.sltab; return render(); }
+  if (d.readycat) { UI.readyCat = d.readycat; UI.readyAll = false; return render(); }
   if (d.st) { UI.stTab = d.st; return render(); }
   if (d.close !== undefined) return closeDrawer();
   if (d.addeval) { $("#layer").insertAdjacentHTML("beforeend", evalForm(null, d.addeval)); return; }
@@ -1359,17 +1509,18 @@ document.addEventListener("keydown", e => {
   if ((e.key === "Enter" || e.key === " ") && e.target.matches(".rank[data-open], tr[data-open]")) { e.preventDefault(); openDrawer(e.target.dataset.open, e.target.dataset.tab); }
 });
 document.addEventListener("submit", e => {
-  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm"].includes(f.id)) return;
+  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm"].includes(f.id)) return;
   e.preventDefault();
-  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg })[f.id](f);
+  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees })[f.id](f);
 });
 let qTimer;
 document.addEventListener("input", e => {
   const id = e.target.id;
-  if (id === "fq" || id === "pq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[id === "fq" ? "q" : "pq"] = e.target.value; render(); }, 160); }
+  if (id === "fq" || id === "pq" || id === "cq") { clearTimeout(qTimer); qTimer = setTimeout(() => { UI[{ fq: "q", pq: "pq", cq: "cq" }[id]] = e.target.value; render(); }, 160); }
 });
 document.addEventListener("change", e => {
-  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", pscope: "pscope", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  const map = { fcat: "cat", fsvc: "svc", fst: "status", ftype: "type", floc: "loc", fspec: "spec", fscore: "minScore", forig: "origin", fdq: "dq", fperf: "perf", fevy: "evYear", fslcat: "slcat", cscope: "cscope", ckind: "ckind", pscope: "pscope", pcomp: "pcomp", pyear: "pyear", pband: "pband" };
+  if (e.target.dataset && e.target.dataset.move) { moveVendor(e.target.dataset.move, e.target.value); return; }
   const ef = e.target.closest("#evalForm");
   if (ef) { if (e.target.id === "ev_year") $("#ev_period").value = periodLabel(+e.target.value); liveEval(ef); return; }
   if (e.target.id === "cf_min" || e.target.id === "cf_max") { const old = {}; document.querySelectorAll(".sc_def").forEach(i => { old[i.dataset.pt] = i.value; }); $("#scaleDefs").innerHTML = scaleDefs({ min: +$("#cf_min").value, max: +$("#cf_max").value, labels: old }); return; }

@@ -29,6 +29,8 @@ Opened as a local file, the page saves edits and evaluations in that browser onl
 - Workbook values are kept as written. Conflicts between tabs are shown side by side and labelled **Conflicting**, not resolved.
 - Quality labels: Provided, Needs verification, Conflicting, Missing, Web-sourced, Edited, Not evaluated.
 - Hiring categories show their basis: from the workbook, derived from keywords, or ambiguous.
-- The workbook contains no placement-fee data, so fee fields start as Missing.
+- Each shortlisted vendor sits in exactly one category: Executive / CXO, Leadership, Junior–mid or Volume. The workbook's CXO/Leadership shortlist tab decides where it covers a vendor; other PASS vendors get a proposed category marked "Proposed · confirm". HOLD and FAIL vendors cannot be shortlisted.
+- Fee bands per category come from TA guidance (Executive 22–33%, Leadership 16–22%, Junior–mid 8.33–10%) and are editable. They show as estimates until a vendor-specific fee is entered. The workbook itself contains no fee data.
+- A contact register lists every name, phone and e-mail in the workbook, splitting combined cells into one row per person.
 - Web research is never applied without approval. Firms added from the web are shown in violet and carry no contact details.
 - Performance ratings are entered only by users. A missing rating is excluded from scores, never counted as zero. The window is the most recent 5 completed years of Volvo engagement, or fewer if the engagement is shorter. Each evaluation keeps the criteria and weights that applied when it was entered.

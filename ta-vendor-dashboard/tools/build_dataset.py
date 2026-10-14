@@ -542,6 +542,88 @@ for v in vendors.values():
             v["fields"][key] = {"v": "", "q": "missing", "src": []}
     v["lastUpdated"] = WB_MODIFIED
 
+# ------------------------------------------------ unified contact register
+def split_multi(s):
+    return [x.strip(" ,;") for x in re.split(r"\s*/\s*|\s*;\s*|,\s+(?=\+?\d)", s or "") if x.strip(" ,;")]
+
+def contact_register(v):
+    out, seen = [], set()
+    def add(kind, name, designation, phone, email, src, note=""):
+        key = (norm_cmp(name), (email or "").lower(), norm_cmp(phone))
+        if not any(key) or key in seen:
+            return
+        seen.add(key)
+        out.append({"kind": kind, "name": name, "designation": designation, "phone": phone, "email": email, "src": src, "note": note})
+    f = lambda k: v["fields"].get(k, {}).get("v", "")
+    fsrc = lambda k: ", ".join(v["fields"].get(k, {}).get("src", []))
+    names, phones, mails = split_multi(f("spocName")), split_multi(f("spocPhone")), emails_in(f("spocEmail"))
+    n = max(len(names), len(phones), len(mails), 1)
+    aligned = all(len(x) in (0, 1, n) for x in (names, phones, mails))
+    for i in range(n):
+        pick = lambda lst: lst[i] if len(lst) == n else (lst[0] if len(lst) == 1 and i == 0 else "")
+        add("SPOC", pick(names) if aligned else f("spocName") if i == 0 else "", f("spocDesignation") if i == 0 or len(names) <= 1 else "",
+            pick(phones) if aligned else f("spocPhone") if i == 0 else "", pick(mails) if aligned else (", ".join(mails) if i == 0 else ""),
+            fsrc("spocName") or fsrc("spocEmail"),
+            "" if aligned and n == 1 else "Split from a combined cell; check the pairing of names, phones and e-mails." if aligned else "Combined cell kept as written.")
+    for c in v["contacts"]:
+        cn, ce = split_multi(c["name"]), emails_in(c["email"])
+        if len(cn) > 1 and len(cn) == len(ce):
+            for nm, em in zip(cn, ce):
+                add("Contact list", nm, c.get("designation", ""), "", em, c["src"], "Split from a combined cell.")
+        else:
+            add("Contact list", c["name"], c.get("designation", ""), c.get("phone", ""), c["email"], c["src"], c.get("note", "") or (("As written: " + c["raw"]) if c.get("raw") else ""))
+    if f("companyEmail") or f("companyPhone"):
+        add("Company (general)", "", "", f("companyPhone"), f("companyEmail"), fsrc("companyEmail") or fsrc("companyPhone"))
+    for r in v["clientRefs"]:
+        if r["q"] == "missing":
+            continue
+        ce = emails_in(r["contact"])
+        ph = re.sub(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+", "", r["contact"]).strip(" /|,")
+        add("Client reference", r["person"], (r["designation"] + (" · " if r["designation"] and r["company"] else "") + r["company"]).strip(), ph, ", ".join(ce), r["src"],
+            "Reference given by the vendor, not a vendor employee." + (" Incomplete." if r["q"] == "verify" else ""))
+    for fl in v["flags"]:
+        if fl.get("field") == "email" and "links to a different address" in fl["text"]:
+            for e in emails_in(fl["text"].split("different address")[-1]):
+                add("Hidden link target", "", "", "", e, fl["text"].split(":")[0], "Address found only in a hyperlink behind another e-mail; verify before use.")
+    return out
+
+# ------------------------------------- exclusive shortlist category proposal
+LEAD_RX = re.compile(r"leadership|senior|executive search|headhunt|board|cxo|c-suite|mid to senior|middle & senior", re.I)
+STAFF_RX = re.compile(r"contract staffing|staff aug|staffing|c2h|managed services|msp|sow|workforce|blue.?collar|non-it|it & non|it and non", re.I)
+VOL_RX = re.compile(r"bulk|volume|workforce management|blue.?collar|campus|apprentice|temp staffing", re.I)
+def propose_category(v):
+    st = v["status"]["stage1"]
+    if st in ("FAIL", "HOLD"):
+        return None
+    sl = v["shortlist"]
+    if sl:
+        cat = "executive" if sl["tier"].startswith("CXO") else "leadership"
+        return {"v": cat, "basis": "workbook", "ref": f"{sl['tier']} shortlist ({sl['src']})"}
+    if st != "PASS":
+        return None
+    # Specialization is the vendor's own short service statement; domain and
+    # comments hold long narratives where "leadership" appears in passing.
+    t = v["fields"].get("specialization", {}).get("v", "") or v["fields"].get("domain", {}).get("v", "")
+    if len(t) > 400: t = t[:400]
+    tags = [x["v"].lower() for x in v["levelTags"]]
+    if any("mid" in x for x in tags):
+        return {"v": "juniorMid", "basis": "proposed", "ref": "Level tag “Mid Level” in the workbook" + (" (specialization mentions leadership: check)" if LEAD_RX.search(t) else "")}
+    if VOL_RX.search(t) and not LEAD_RX.search(t.replace("Executive Hiring", "")):
+        return {"v": "volume", "basis": "proposed", "ref": f"Specialization mentions “{VOL_RX.search(t).group(0)}”"}
+    if VOL_RX.search(t) and STAFF_RX.search(t):
+        return {"v": "volume", "basis": "proposed", "ref": f"Staffing-led specialization with “{VOL_RX.search(t).group(0)}”"}
+    if LEAD_RX.search(t) and not STAFF_RX.search(t):
+        return {"v": "leadership", "basis": "proposed", "ref": f"Specialization mentions “{LEAD_RX.search(t).group(0)}” with no staffing services"}
+    mods = v["modules"]
+    if mods.get("C", {}).get("v") == "no" and mods.get("B", {}).get("v") == "yes":
+        return {"v": "leadership", "basis": "proposed", "ref": "Module B = yes and Module C = no"}
+    why = "Staffing / IT recruitment profile" if STAFF_RX.search(t) or not LEAD_RX.search(t) else "Mixed profile"
+    return {"v": "juniorMid", "basis": "proposed", "ref": why + (f"; Module C = {mods['C']['v']}" if mods.get("C") else "; modules not recorded")}
+
+for v in vendors.values():
+    v["contactRegister"] = contact_register(v)
+    v["slCat"] = propose_category(v)
+
 out = {
     "meta": {
         "builtAt": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
