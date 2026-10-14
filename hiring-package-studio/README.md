@@ -4,6 +4,8 @@ A working tool for Talent Acquisition Partners. Use it to prepare, update and sh
 
 ## What it does
 
+- **Dashboard (opens first):** live tiles for business days to closure, the share of items confirmed, open hiring manager decisions, the hardest skill to hire, the first resume commitment, offer and start dates, and open actions. Charts show confirmation status by area, the candidate pipeline funnel (counts entered on the dashboard), the hiring timeline against the closure date, hiring difficulty by skill, and indicative pay ranges. Hover or focus any mark to see its value.
+- **Separate downloads:** **Minutes of Meeting**, **Market Intelligence Report** and **Interview & Hiring Plan** are standalone documents, each available as Word (.docx), HTML or formatted email text. The full hiring package is still available too.
 - **Inputs:** keep the job description, meeting notes, hiring manager emails, salary data and market reports with the requisition. Tag each input for the minutes, the market intelligence or the interview plan. Tagged inputs appear as read-only references in those sections.
 - **Package sections:** these follow the order of the email document.
   1. Overview: role, people, dates, information status and executive summary. The summary can be drafted from the package data.
