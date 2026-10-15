@@ -1,9 +1,14 @@
 # Hiring Package Studio
 
+Prepared by Dr. Ranjith TP.
+
 A working tool for Talent Acquisition Partners. Use it to prepare, update and share a hiring package with a hiring manager, from the first kickoff meeting to the hiring closure date.
 
 ## What it does
 
+- **Guided steps:** the dashboard opens on five steps: enter details, market research, tentative plan, submit, send to hiring manager. Each step shows its status and a button for the next action.
+- **Tentative plan as a Gantt chart:** every dated stage is a bar (a window) or a diamond (a single date) on a weekly grid, with today and the closure date marked. It appears on the dashboard and the Plan page, and as a week-by-week grid in the Tentative Hiring Plan document (Word, HTML and email).
+- **Submit:** the Submit button in the header checks the required details, builds the plan if needed, saves a numbered version, and asks Claude to research the market if that has not been done yet. Adding the research findings rebuilds the plan from the market difficulty.
 - **Dashboard (opens first):** live tiles for business days to closure, the share of items confirmed, open hiring manager decisions, the hardest skill to hire, the first resume commitment, offer and start dates, market research status, and open actions. Charts show confirmation status by area, the tentative hiring plan and timeline against the closure date, hiring difficulty by skill, and indicative pay ranges. Hover or focus any mark to see its value.
 - **Market research by Claude:** **Find market intelligence with Claude** saves a research brief built from the role, location, skills and the inputs tagged for market intelligence, then notifies the linked Claude Code session through the Claude Code Remote connector. Claude searches the web and writes sourced findings back to the page: availability and difficulty scores, pay ranges, market factors, alternative skills, typical notice period and sources with access dates. The TA Partner reviews the findings and selects **Add findings to the report**.
 - **Tentative hiring plan based on market intelligence:** **Build tentative plan** sets the lead time to the first resumes from the hardest-to-hire skill (Low 5, Moderate 7, High 10, Very high 15 business days), widens the interview windows for High or Very high difficulty, suggests the size of the first resume set, and uses the notice period to estimate the start date. The interview schedule lists each stage from a dropdown (first set of CVs, hiring manager CV feedback, TA screening, first-level and second-level interviews, HR interview, final decision, offer, onboarding) with a tentative date or date window. All dates are limited to 2026–2035.

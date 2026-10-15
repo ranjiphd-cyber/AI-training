@@ -30,6 +30,7 @@
   --ok:#6FCF9B; --ok-soft:#10301F; --tbc:#F2877C; --tbc-soft:#3A1512; --prop:#9DB8E6; --prop-soft:#14274A; --c-missing:#4F6080; --c-bar:#7FA3DA;
   color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{background:var(--paper);color:var(--ink);font-family:var(--font);font-size:14px;line-height:1.5}
 h1,h2,h3{text-wrap:balance;margin:0;color:var(--ink)}
 a{color:var(--prop)}
@@ -39,9 +40,10 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* App bar */
 .bar{background:var(--bar);color:var(--bar-ink);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
 .bar-in{max-width:1400px;margin:0 auto;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
-.brand{display:flex;align-items:baseline;gap:10px;margin-right:auto;min-width:0}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
 .brand b{font-size:16px;font-weight:700;letter-spacing:.01em}
-.brand span{color:var(--bar-muted);font-size:12px}
+.brandtx{display:flex;flex-direction:column;gap:1px;min-width:0}
+.byline{color:var(--bar-muted);font-size:12px;letter-spacing:.01em}
 .mark{width:10px;height:10px;background:var(--accent);display:inline-block;transform:translateY(-1px)}
 .bar select{background:#0B2147;color:var(--bar-ink);border:1px solid #2A4472;border-radius:var(--r);padding:6px 8px;max-width:340px;min-width:0}
 .bar .btn2{background:#0B2147;color:var(--bar-ink);border-color:#2A4472}
@@ -95,6 +97,7 @@ input[type=text],input[type=date],input[type=number],input[type=url],select,text
 textarea{resize:vertical;line-height:1.45}
 input.bad{border-color:var(--tbc);box-shadow:0 0 0 1px var(--tbc)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
+.fld .row>select.st{flex:0 0 auto}
 select.st{width:auto;flex:0 0 auto;font-size:12px;font-weight:600;border-radius:14px;padding:4px 8px}
 .st-confirmed{background:var(--ok-soft);color:var(--ok);border-color:transparent}
 .st-tbc,.st-pending,.st-open,.st-unverified{background:var(--tbc-soft);color:var(--tbc);border-color:transparent}
@@ -214,6 +217,49 @@ ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
 
 .research{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r);padding:12px 14px;background:var(--surface)}
 .kv.plan{grid-template-columns:minmax(110px,40%) minmax(0,1fr);margin-top:4px}
+.gantt{margin-top:8px;font-size:12px}
+.gr{display:grid;grid-template-columns:minmax(110px,26%) minmax(0,1fr) 92px;gap:10px;align-items:center;min-height:28px;border-top:1px solid var(--line)}
+.gr.gh{min-height:0;height:0;border-top:0}
+.gr.ga{border-top:0;min-height:22px}
+.gl{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gd{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;font-size:11.5px}
+.gt{position:relative;height:28px;min-width:0}
+.gr.gh .gt{height:0}
+.gx{position:absolute;left:0;right:0;top:0;height:0}
+.gw{position:absolute;top:0;width:1px;background:var(--line);height:var(--gh,400px)}
+.gw em{display:none}
+.gv{position:absolute;top:-6px;width:0;height:var(--gh,400px);border-left:2px solid var(--ink);z-index:1}
+.gv.close{border-left:2px dashed var(--accent)}
+.gv em{position:absolute;top:-14px;left:3px;font-size:10.5px;font-style:normal;white-space:nowrap;color:var(--ink);background:var(--surface);padding:0 2px}
+.gv.close em{color:var(--accent-ink)}
+.gb{position:absolute;top:8px;height:12px;border-radius:4px;min-width:6px;z-index:2}
+.gm{position:absolute;top:8px;width:12px;height:12px;transform:translateX(-50%) rotate(45deg);border-radius:2px;z-index:2}
+.gb.late,.gm.late{outline:2px solid var(--tbc);outline-offset:1px}
+.gb::after,.gm::after{content:"";position:absolute;inset:-8px}
+.gaxis{height:22px}
+.gaxis em{position:absolute;top:4px;transform:translateX(-50%);font-style:normal;color:var(--muted);font-size:10.5px;white-space:nowrap}
+.gmsw{transform:rotate(45deg);background:var(--prop);width:9px;height:9px}
+.todaysw{width:0;height:12px;border-left:2px solid var(--ink);border-radius:0}
+.btn-submit{background:var(--accent);color:#001433;font-weight:600}
+.modal{position:fixed;inset:0;background:rgba(0,10,28,.55);display:flex;align-items:center;justify-content:center;z-index:40;padding:16px}
+.modal-card{background:var(--surface);color:var(--ink);border-radius:10px;max-width:560px;width:100%;padding:20px 22px;box-shadow:0 20px 50px rgba(0,10,28,.35);max-height:calc(100% - 32px);overflow:auto}
+ul.checks{list-style:none;padding:0;margin:0 0 10px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+ul.checks li span{display:inline-block;width:18px;font-weight:700}
+ul.checks li.ok span{color:var(--ok)} ul.checks li.bad span{color:var(--tbc)} ul.checks li.warn span{color:var(--accent-ink)}
+.steps{list-style:none;margin:16px 0 0;padding:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.step{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:12px;background:var(--surface);min-width:0}
+.step.current{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}
+.step.done{background:var(--paper)}
+.sn{flex:0 0 26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12.5px;border:2px solid var(--line-strong);color:var(--muted);font-variant-numeric:tabular-nums}
+.step.done .sn{background:var(--ok);border-color:var(--ok);color:#fff}
+.step.current .sn{background:var(--accent);border-color:var(--accent);color:#001433}
+.sb{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sb b{font-size:13px}
+.sb>span{font-size:12px;color:var(--muted);line-height:1.35}
+.sbtn{align-self:flex-start;margin-top:6px;padding:5px 10px;font-size:12.5px;white-space:normal;text-align:left;max-width:100%}
+.slinks{display:flex;gap:2px;margin-top:2px}
+.slinks .btn3{padding:2px 6px;font-size:12px;color:var(--prop)}
+@media (max-width:1100px){.steps{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}}
 /* Toast */
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:9px 14px;border-radius:var(--r);font-size:13px;box-shadow:0 6px 20px rgba(0,20,51,.25);max-width:calc(100% - 32px);z-index:20}
 .ro input,.ro select,.ro textarea{pointer-events:none;opacity:.85}
@@ -233,7 +279,7 @@ ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
 
 <header class="bar">
   <div class="bar-in">
-    <div class="brand"><span class="mark" aria-hidden="true"></span><b>Hiring Package Studio</b><span id="brandSub">Kickoff to closure, in one record</span></div>
+    <div class="brand"><span class="mark" aria-hidden="true"></span><div class="brandtx"><b>Hiring Package Studio</b><span class="byline">Prepared by Dr. Ranjith TP</span></div></div>
     <label for="pkgSel" class="sr" hidden>Hiring package</label>
     <select id="pkgSel" aria-label="Open hiring package"></select>
     <span class="savestate" id="saveState" aria-live="polite">Not saved yet</span>
@@ -241,6 +287,7 @@ ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
       <button class="btn2" id="bNew" type="button">New package</button>
       <button class="btn2" id="bDup" type="button">Duplicate</button>
       <button class="btn2" id="bSnap" type="button">Save meeting snapshot</button>
+      <button class="btn btn-submit" id="bSubmit" type="button" data-act="openSubmit">Submit</button>
     </div>
   </div>
 </header>
@@ -253,6 +300,7 @@ ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
 <input type="file" id="inputFile" accept=".txt,.md,.csv,.json,.html,.htm,text/*" hidden>
 <div id="toast" class="toast" role="status" hidden></div>
 <div id="tip" class="tip" hidden><b></b><span></span></div>
+<div id="modal" class="modal" hidden><div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div id="modalBody"></div></div></div>
 
 <script>
 (function(){
@@ -423,11 +471,11 @@ function srcIdx(){return (pkg.market.sources||[]).map((s,i)=>({...s,_id:"S"+(i+1
 
 /* ---------- dashboard ---------- */
 function rDash(){
-  return head("Dashboard",esc(pkg.meta.role.v||"New hiring package"),"Live view of this requisition and its tentative hiring plan, built on market intelligence. Edit the key details here; everything else lives in the numbered sections. Download each document from the panel below.")
+  return head("Dashboard",esc(pkg.meta.role.v||"New hiring package"),"Work through the five steps below. Each step shows what to do next; the charts update as you go.")
   +`<div id="dashLive">${dashLive()}</div>`
-  +blk("Market research","",`<div data-research="full">${researchPanel(false)}</div>`)
-  +blk("Download documents","Word for attaching, HTML for the browser, or copy straight into an email",docCards())
-  +blk("Key details","edit here or in the sections",`<div class="grid">${field("meta.role","Role title")}${field("meta.location","Role location")}${field("meta.workArrangement","Work arrangement")}${field("meta.hiringManager","Hiring manager")}${field("meta.kickoffDate","Kickoff date",{type:"date"})}${field("meta.closureDate","Tentative closure date",{type:"date"})}${field("plan.offerDate","Tentative offer date",{type:"date"})}${field("plan.onboardingDate","Tentative onboarding date",{type:"date"})}${plainField("meta.infoStatus","Information status",{type:"select",opts:INFO})}</div>`)
+  +`<div id="keyDetails"></div>`+blk("Key details","step 1 · edit here or in the sections",`<div class="grid">${field("meta.role","Role title")}${field("meta.location","Role location")}${field("meta.workArrangement","Work arrangement")}${field("meta.hiringManager","Hiring manager")}${field("meta.kickoffDate","Kickoff date",{type:"date"})}${field("meta.closureDate","Tentative closure date",{type:"date"})}${field("plan.offerDate","Tentative offer date",{type:"date"})}${field("plan.onboardingDate","Tentative onboarding date",{type:"date"})}${plainField("meta.infoStatus","Information status",{type:"select",opts:INFO})}</div>`)
+  +blk("Market research","step 2",`<div data-research="full">${researchPanel(false)}</div>`)
+  +blk("Download documents","step 5 · Word for attaching, HTML for the browser, or copy straight into an email",docCards())
   +"";
 }
 function docCards(){
@@ -450,11 +498,10 @@ function dashLive(){
     +tile("Hardest skill",diffs.length?esc(diffs[0].sc.lvl):"—",diffs.length?esc(diffs[0].r.skill):"Score skills in Market",diffs.length&&diffs[0].sc.avg>=3?"tbc":"")
     +tile("First resumes",esc(pkg.plan.resumeCount.v||"—"),pkg.plan.resumeDate.v?"by "+fmtDate(pkg.plan.resumeDate.v)+(pkg.plan.resumeDate.s==="confirmed"?"":" (proposed)"):"date to confirm","")
     +tile("Offer / start",pkg.plan.offerDate.v?fmtDate(pkg.plan.offerDate.v).replace(/ \d{4}$/,""):"—",pkg.plan.onboardingDate.v?"start "+fmtDate(pkg.plan.onboardingDate.v):"start date to confirm","")
-    +tile("Market research",({none:"—",requested:"Requested","in-progress":"Running",ready:"Ready",added:"Added",failed:"Failed"})[researchState()],({none:"not requested",requested:"waiting for Claude","in-progress":"Claude is researching",ready:"review and add to report",added:"in the report",failed:"run it again"})[researchState()],researchState()==="ready"?"prop":researchState()==="added"?"ok":"")
     +tile("Open actions",openActs.length,overdue?`${overdue} overdue`:"none overdue",overdue?"tbc":"")
     +`</div>`;
-  return tiles+(t.critMissing.length?`<div class="callout warn"><b>Critical inputs to confirm:</b> ${t.critMissing.map(esc).join(" · ")}</div>`:"")
-    +`<div class="dgrid"><div class="card">${chartStatus(t)}</div><div class="card">${chartPlan()}</div><div class="card wide">${chartTimeline()}</div><div class="card">${chartDifficulty(diffs)}</div><div class="card">${chartComp()}</div></div>`;
+  return steps()+tiles+(t.critMissing.length?`<div class="callout warn"><b>Still to confirm with the hiring manager:</b> ${t.critMissing.map(esc).join(" · ")}. <span class="help" style="margin:0">Set a field's status to Confirmed once it is agreed.</span></div>`:"")
+    +`<div class="dgrid"><div class="card wide">${chartGantt()}</div><div class="card">${chartStatus(t)}</div><div class="card">${chartDifficulty(diffs)}</div><div class="card wide">${chartComp()}</div></div>`;
 }
 const pctStr=(v,max)=>Math.max(0,Math.min(100,v/max*100)).toFixed(2)+"%";
 function chartHead(title,sub){return `<div class="ch-h"><h3>${title}</h3>${sub?`<span>${sub}</span>`:""}</div>`}
@@ -573,11 +620,96 @@ function importResearch(){
   (r.alternatives||[]).forEach(a=>mk.alternatives.push({...LISTS["market.alternatives"].blank(),...pick(a,["alt","forSkill","gain","risk"]),hm:"pending"}));
   if(r.summary)pkg.text.marketSummary=pkg.text.marketSummary?pkg.text.marketSummary+"\n\n"+r.summary:r.summary;
   if(r.noticeWeeks&&!pkg.plan.noticeWeeks)pkg.plan.noticeWeeks=String(r.noticeWeeks);
-  mk.researchImportedAt=r.completedAt;scheduleSave();render();renderNotices();
-  toast("Findings added. Review them, then rebuild the tentative plan so it reflects the market difficulty.");
+  mk.researchImportedAt=r.completedAt;
+  const rebuilt=!pkg.plan.schedule.some(x=>x.s==="confirmed");if(rebuilt)buildTimeline(true);
+  scheduleSave();render();renderNotices();
+  toast(rebuilt?"Findings added and the tentative plan rebuilt from the market difficulty.":"Findings added. Some schedule dates are confirmed, so the plan was not rebuilt; select “Build tentative plan” to update the rest.");
 }
 const pick=(o,ks)=>{const out={};ks.forEach(k=>{if(o&&o[k]!=null&&o[k]!=="")out[k]=String(o[k])});return out};
 function renderResearchSpots(){document.querySelectorAll("[data-research]").forEach(el=>el.innerHTML=researchPanel(el.dataset.research==="compact"))}
+
+/* ---------- guided steps ---------- */
+function steps(){
+  const m=pkg.meta, rs=researchState(), planned=pkg.plan.schedule.some(r=>r.from);
+  const det=!!(m.role.v&&(m.location.v||m.hiringMarket.v)&&m.kickoffDate.v&&m.closureDate.v);
+  const S=[
+    {k:"details",t:"Enter details",done:det,sub:det?"Role, location and dates set":"Role, location, kickoff and closure dates",btn:[det?"Edit":"Enter details","stepDetails"]},
+    {k:"research",t:"Market research",done:rs==="added",sub:{none:"Claude searches the market for you",requested:"Waiting for Claude…","in-progress":"Claude is researching…",ready:"Findings ready to review",added:"Findings added to the report",failed:"Research did not complete"}[rs],
+      btn:rs==="ready"?["Add findings","importResearch"]:rs==="requested"||rs==="in-progress"?null:[rs==="failed"?"Try again":rs==="added"?"Run again":"Start research","requestResearch"]},
+    {k:"plan",t:"Tentative plan",done:planned,sub:planned?`${pkg.plan.schedule.filter(r=>r.from).length} stages dated`:"Gantt built from the market difficulty",btn:[planned?"Rebuild plan":"Build plan","stepBuild"]},
+    {k:"submit",t:"Submit",done:!!pkg.submitted,sub:pkg.submitted?`Version ${pkg.submitted.n} · ${fmtDate(pkg.submitted.at.slice(0,10))}`:"Saves a version for the record",btn:[pkg.submitted?"Resubmit":"Submit","openSubmit"]},
+    {k:"send",t:"Send to hiring manager",done:!!pkg.sentToHM,sub:pkg.sentToHM?"Sent "+fmtDate(pkg.sentToHM):"Download or copy the Tentative Hiring Plan",btn:pkg.sentToHM?["Undo",'unmarkSent']:["Mark as sent","markSent"]}
+  ];
+  const curI=S.findIndex(x=>!x.done);
+  return `<ol class="steps" aria-label="Progress">${S.map((x,i)=>{const st=x.done?"done":i===curI?"current":"todo";
+    return `<li class="step ${st}"${st==="current"?' aria-current="step"':""}><div class="sn" aria-hidden="true">${x.done?"✓":i+1}</div><div class="sb"><b>${x.t}</b><span>${esc(x.sub||"")}</span>${x.btn?`<button type="button" class="${st==="current"?"btn":"btn2"} sbtn" data-act="${x.btn[1]}">${x.btn[0]}</button>`:""}${x.k==="send"&&!x.done?`<span class="slinks"><button type="button" class="btn3" data-act="docx" data-kind="plan">Word</button><button type="button" class="btn3" data-act="copyDoc" data-kind="plan">Copy for email</button></span>`:""}</div></li>`}).join("")}</ol>`;
+}
+
+/* ---------- Gantt chart of the tentative plan ---------- */
+function ganttRows(){return pkg.plan.schedule.filter(r=>r.stage&&r.from).map(r=>({...r,to:r.to&&r.to>=r.from?r.to:r.from})).sort((a,b)=>a.from===b.from?a.to.localeCompare(b.to):a.from.localeCompare(b.from))}
+function shortD(iso){const [y,m,d]=iso.split("-").map(Number);return d+" "+MON[m-1]}
+function chartGantt(){
+  const rows=ganttRows(), b=marketBasis(), cl=pkg.meta.closureDate.v, today=todayISO();
+  const headTxt=chartHead("Tentative hiring plan",b.level?"Gantt · based on market difficulty: "+b.level:"Gantt · market not yet assessed")+`<p class="help" style="margin:6px 0 4px">${esc(pkg.plan.basisNote||b.note)}</p>`;
+  if(!rows.length)return headTxt+`<p class="help">No dated stages yet. Select “Build the tentative plan” or add stages with dates in the interview schedule.</p><div class="toolbar"><button class="btn" type="button" data-act="goBuild">Build the tentative plan</button></div>`;
+  const ds=[...rows.flatMap(r=>[r.from,r.to]),cl].filter(Boolean).sort();
+  const start=parseISO(ds[0]);start.setDate(start.getDate()-((start.getDay()+6)%7));// back to Monday
+  const end=parseISO(ds[ds.length-1]);end.setDate(end.getDate()+(7-((end.getDay()+6)%7)));// to next Monday
+  const span=end-start, X=iso=>(parseISO(iso)-start)/span*100, DAY=86400000/span*100;
+  const weeks=[];const w=new Date(start);while(w<end){weeks.push(toISO(w));w.setDate(w.getDate()+7)}
+  const every=Math.ceil(weeks.length/10);
+  const months=[];weeks.forEach((x,i)=>{const mo=x.slice(0,7);if(!months.length||months[months.length-1].mo!==mo)months.push({mo,i})});
+  const grid=`<div class="gx">${weeks.map((x,i)=>`<span class="gw" style="left:${X(x).toFixed(2)}%">${i%every?"":`<em>${shortD(x)}</em>`}</span>`).join("")}</div>`;
+  const lines=(today>=toISO(start)&&today<=toISO(end)?`<span class="gv today" style="left:${X(today).toFixed(2)}%"><em>Today</em></span>`:"")+(cl?`<span class="gv close" style="left:${(X(cl)+DAY).toFixed(2)}%"><em>Closure</em></span>`:"");
+  const body=rows.map(r=>{const one=r.from===r.to, l=X(r.from), wd=X(r.to)+DAY-l, late=cl&&r.from>cl&&r.stage!=="Tentative onboarding";
+    const cls=r.s==="confirmed"?"c-confirmed":r.s==="tbc"?"c-tbc":"c-proposed";
+    const tip=`${schedWhen(r)}|${r.stage}${r.detail?" · "+r.detail:""}${r.who?" · "+r.who:""} · ${ST_LABEL[r.s]||r.s}${late?" · after closure date":""}`;
+    return `<div class="gr"><span class="gl">${esc(r.stage)}</span><span class="gt">${one?`<span class="gm ${cls}${late?" late":""}" style="left:${(l+DAY/2).toFixed(2)}%" data-tip="${esc(tip)}" tabindex="0"></span>`:`<span class="gb ${cls}${late?" late":""}" style="left:${l.toFixed(2)}%;width:${wd.toFixed(2)}%" data-tip="${esc(tip)}" tabindex="0"></span>`}</span><span class="gd">${one?shortD(r.from):shortD(r.from)+"–"+shortD(r.to)}</span></div>`}).join("");
+  return headTxt+`<div class="gantt" style="--gh:${rows.length*29+6}px"><div class="gr gh"><span class="gl"></span><span class="gt">${grid}${lines}</span><span class="gd"></span></div>${body}<div class="gr ga"><span class="gl"></span><span class="gt gaxis">${weeks.map((x,i)=>i%every?"":`<em style="left:${X(x).toFixed(2)}%">${shortD(x)}</em>`).join("")}</span><span class="gd"></span></div></div>`
+   +`<div class="lg"><span><i class="sw c-proposed"></i>Proposed</span><span><i class="sw c-confirmed"></i>Confirmed</span><span><i class="sw c-tbc"></i>To confirm</span><span><i class="sw gmsw"></i>Single date</span><span><i class="sw vsw"></i>Closure date</span><span><i class="sw todaysw"></i>Today</span></div>`
+   +`<div class="toolbar"><button class="btn2" type="button" data-act="goBuild">Rebuild the tentative plan</button><button class="btn3" type="button" data-tab="plan">Edit dates</button></div>`;
+}
+function ganttBlock(){
+  const rows=ganttRows();if(!rows.length)return null;
+  const s0=parseISO(rows[0].from);s0.setDate(s0.getDate()-((s0.getDay()+6)%7));
+  const last=rows.reduce((m,r)=>r.to>m?r.to:m,rows[0].to);const e0=parseISO(last);
+  let weeks=Math.ceil(((e0-s0)/86400000+1)/7);const per=Math.max(1,Math.ceil(weeks/16));const n=Math.ceil(weeks/per);
+  const cols=[];for(let i=0;i<n;i++){const d=new Date(s0);d.setDate(d.getDate()+i*7*per);cols.push(toISO(d))}
+  const colEnd=i=>{const d=parseISO(cols[i]);d.setDate(d.getDate()+7*per-1);return toISO(d)};
+  return {t:"gantt",per,cols:cols.map(c=>{const [y,m,d]=c.split("-").map(Number);return d+"/"+m}),rows:rows.map(r=>({label:r.stage,when:schedWhen(r),status:r.s,cells:cols.map((c,i)=>r.from<=colEnd(i)&&r.to>=c?(r.from===r.to?2:1):0)}))};
+}
+/* ---------- submit ---------- */
+function submitChecks(){
+  const m=pkg.meta;
+  const must=[["Role title",!!m.role.v],["Role location or hiring market",!!(m.location.v||m.hiringMarket.v)],["Kickoff date",!!m.kickoffDate.v]];
+  const should=[["Hiring manager",!!m.hiringManager.v],["Tentative closure date",!!m.closureDate.v],["At least one primary skill (or a JD under Inputs)",pkg.skills.some(s=>s.tier==="primary"&&s.name)||pkg.inputs.some(x=>x.type==="Job description"&&x.content)],["Interviewers named",pkg.interviewers.some(i=>i.name)]];
+  return {must,should,ok:must.every(x=>x[1])};
+}
+function openSubmit(){
+  const c=submitChecks(), rs=researchState(), sub=pkg.submitted;
+  const li=([l,ok],hard)=>`<li class="${ok?"ok":hard?"bad":"warn"}"><span aria-hidden="true">${ok?"✓":hard?"✕":"!"}</span> ${esc(l)}${ok?"":hard?" (required)":" (recommended)"}</li>`;
+  $("#modalBody").innerHTML=`<div class="eyebrow">${sub?"Resubmit":"Submit"}</div><h2 id="modalTitle" style="font-size:18px;margin:2px 0 8px">Submit ${esc(pkg.meta.role.v||"this package")}</h2>
+   <p class="help" style="margin:0 0 10px">Submitting saves a numbered version of the package${pkg.plan.schedule.some(r=>r.from)?"":", builds the tentative plan"}${rs==="none"||rs==="failed"?", and asks Claude to research the market for this role":""}. When the research is added, the tentative plan is rebuilt from it so you can send it to the hiring manager.</p>
+   <ul class="checks">${c.must.map(x=>li(x,true)).join("")}${c.should.map(x=>li(x,false)).join("")}</ul>
+   ${sub?`<p class="help">Last submitted ${fmtDate(sub.at.slice(0,10))} (version ${sub.n}).</p>`:""}
+   <div class="toolbar"><button class="btn" type="button" data-act="submitYes"${c.ok?"":" disabled"}>${sub?"Resubmit":"Submit"}</button><button class="btn2" type="button" data-act="closeModal">Cancel</button>${c.ok?"":`<span class="help" style="margin:0">Fill in the required items first.</span>`}</div>`;
+  $("#modal").hidden=false;setTimeout(()=>{const b=$("#modal [data-act=submitYes]:not([disabled])")||$("#modal [data-act=closeModal]");b&&b.focus()},30);
+}
+async function doSubmit(){
+  const btn=$("#modal [data-act=submitYes]");if(btn)btn.disabled=true;
+  if(!pkg.plan.schedule.some(r=>r.from))buildTimeline(true);
+  const n=((pkg.submitted&&pkg.submitted.n)||0)+1;pkg.submitted={at:new Date().toISOString(),n};
+  if(pkg.meta.infoStatus==="draft")pkg.meta.infoStatus="kickoff";
+  dirty=true;editSeq++;await saveNow();await saveSnapshot("Submitted · version "+n);
+  const rs=researchState();let note="";
+  if(rs==="none"||rs==="failed"){await requestResearch();note=" Claude has been asked to research the market."}
+  else if(rs==="ready")note=" Claude's market research is ready to add.";
+  const P=pkg.plan.schedule.some(r=>r.from);
+  $("#modalBody").innerHTML=`<div class="eyebrow">Submitted</div><h2 id="modalTitle" style="font-size:18px;margin:2px 0 8px">Version ${n} submitted</h2><p style="margin:0 0 8px">Saved ${fmtDate(todayISO())}.${note}</p>
+   <p class="help" style="margin:0 0 10px">Next: ${rs==="none"||rs==="failed"||rs==="requested"||rs==="in-progress"?"when the research arrives, add it under Market intelligence. The tentative plan is then rebuilt from it. After that, ":""}send the Tentative Hiring Plan to the hiring manager.</p>
+   <div class="toolbar"><button class="btn" type="button" data-act="docx" data-kind="plan"${P?"":" disabled"}>Download Tentative Hiring Plan (Word)</button><button class="btn2" type="button" data-act="copyDoc" data-kind="plan"${P?"":" disabled"}>Copy plan for email</button><button class="btn3" type="button" data-act="closeModal">Close</button></div>`;
+  render();renderNotices();
+}
 
 /* ---------- confirmation tracker ---------- */
 const META_LABELS={role:"Role title",reqId:"Requisition ID",businessUnit:"Business unit / company",department:"Department / function",grade:"Grade / level",positions:"Number of positions",reportsTo:"Reports to",reasonForHire:"Reason for hire",location:"Location",workArrangement:"Work arrangement",relocation:"Relocation / visa support",hiringMarket:"Geographic hiring market",travel:"Travel",hiringManager:"Hiring manager",taPartner:"TA Partner",pcPartner:"P&C partner",decisionMaker:"Final decision maker",kickoffDate:"Kickoff date",closureDate:"Tentative closure date",closureDefinition:"Definition of closure"};
@@ -748,6 +880,7 @@ function rPlan(){
   +refPanel("plan")+blk("Interview stages","",listEditor("plan.stages",{add:"Add stage"}))
   +blk("First resume commitment","",`<div class="grid">${field("plan.resumeCount","Number of resumes",{type:"number"})}${field("plan.resumeDate","Committed date",{type:"date"})}${plainField("plan.daysToResumes","Business days from kickoff to first resumes",{type:"number",ph:"Auto from market: "+marketBasis().lead,hint:"Leave blank to use the market-based lead time."})}<div class="fld full"><label for="f_text_resumeNote">Conditions</label><textarea id="f_text_resumeNote" rows="2" data-path="text.resumeNote" placeholder="e.g. Depends on JD sign-off and the comp range confirmed by the date above.">${esc(pkg.text.resumeNote)}</textarea></div></div>`,`Five is the default first set. For a ${marketBasis().level||"not yet assessed"} market, ${RESUME_SUGGEST[marketBasis().level]||5} is a realistic first set.`)
   +blk("Tentative timeline","based on market intelligence",`<div class="callout" style="margin-top:0">${esc(marketBasis().note)}</div><div class="toolbar"><button class="btn" type="button" data-act="buildTimeline">Build tentative plan</button><span id="tlConfirm"></span><span class="help" style="margin:0">Uses the kickoff date (or today), the market-based lead time, the feedback turnaround and the notice period. Business days only; holidays are not excluded. Dates stay between 2026 and 2035.</span></div>`)
+  +`<div class="card" style="margin-top:14px">${chartGantt()}</div>`
   +blk("Interview schedule","tentative dates per stage",listEditor("plan.schedule",{add:"Add stage"})+schedCheck(),"Pick a stage from the list and set its tentative date. For interview rounds, add an end date to show the window.")
   +blk("Offer and onboarding","tentative dates",`<div class="grid">${field("plan.offerDate","Tentative offer date",{type:"date"})}${plainField("plan.noticeWeeks","Expected notice period (weeks)",{type:"number",hint:"Used to estimate the start date. Confirm typical notice periods for this market."})}${field("plan.onboardingDate","Tentative onboarding / start date",{type:"date"})}<div class="fld full"><label for="f_plan_onboardingNote">Onboarding notes</label><textarea id="f_plan_onboardingNote" rows="2" data-path="plan.onboardingNote" placeholder="Buddy, equipment, site access, first-week plan, pre-boarding contact.">${esc(pkg.plan.onboardingNote)}</textarea></div></div>${onbCheck()}`,"“Build proposed timeline” fills these in from the plan. Change them as soon as the real dates are known.")
   +blk("Milestones and decision points","",listEditor("plan.milestones",{add:"Add milestone"})+check)
@@ -821,7 +954,7 @@ function renderPkgSel(){
   const list=Object.values(packages).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""));
   if(pkg)list.forEach((p,i)=>{if(p.id===pkg.id)list[i]=pkg});
   $("#pkgSel").innerHTML=list.length?list.map(p=>`<option value="${esc(p.id)}"${pkg&&p.id===pkg.id?" selected":""}>${esc((p.meta&&p.meta.role&&p.meta.role.v)||"Untitled role")}${p.meta&&p.meta.reqId&&p.meta.reqId.v?" · "+esc(p.meta.reqId.v):""}</option>`).join(""):`<option>No packages yet</option>`;
-  $("#pkgSel").disabled=!list.length;["#bDup","#bSnap"].forEach(s=>$(s).disabled=!pkg||!S.canWrite);$("#bNew").disabled=!S.canWrite;
+  $("#pkgSel").disabled=!list.length;["#bDup","#bSnap","#bSubmit"].forEach(s=>$(s).disabled=!pkg||!S.canWrite);if(pkg)$("#bSubmit").textContent=pkg.submitted?`Resubmit (v${pkg.submitted.n})`:"Submit";$("#bNew").disabled=!S.canWrite;
 }
 function renderNotices(){
   let h="";
@@ -903,7 +1036,7 @@ async function deletePkg(){
   cur="overview";openPkg(next?next.id:null);toast("Package deleted")}
 
 /* ---------- proposed timeline ---------- */
-function buildTimeline(){
+function buildTimeline(silent){
   const B0=marketBasis();let k=pkg.meta.kickoffDate.v||todayISO();if(k<DMIN)k=DMIN;const lead=Math.max(1,parseInt(pkg.plan.daysToResumes,10)||B0.lead), X=B0.extra;
   if(pkg.plan.resumeCount.s!=="confirmed"&&B0.level)pkg.plan.resumeCount={v:String(RESUME_SUGGEST[B0.level]),s:"proposed"};
   const sla=Math.max(1,parseInt(String(pkg.plan.feedbackSla.v).match(/\d+/)?.[0]||"2",10));
@@ -944,7 +1077,7 @@ function buildTimeline(){
     else pkg.plan.onboardingDate={v:"",s:"tbc"}}
   const late=[...pkg.plan.milestones.map(x=>x.date),pkg.plan.offerDate.v,pkg.plan.onboardingDate.v].filter(Boolean).some(d=>d>DMAX);
   if(late){toast("Some dates fall after 2035. Choose an earlier kickoff date.");}
-  scheduleSave();render();if(late)return;toast(nw>0?"Tentative plan built, including offer and start dates. All dates are proposals until agreed.":"Proposed timeline built. Add the notice period to estimate the start date.");
+  scheduleSave();if(silent)return;render();if(late)return;toast(nw>0?"Tentative plan built, including offer and start dates. All dates are proposals until agreed.":"Proposed timeline built. Add the notice period to estimate the start date.");
 }
 
 /* ---------- executive summary draft ---------- */
@@ -1089,6 +1222,7 @@ function buildDoc(kind){
     B.push({t:"kv",rows:[["Number of resumes",fv(pkg.plan.resumeCount)],["Committed date",fd(pkg.plan.resumeDate)],["Conditions",pkg.text.resumeNote||"—"]]});
     S("Proposed interview schedule");
     B.push(pkg.plan.schedule.length?{t:"table",head:["Stage","Tentative date","Details","Interviewers / owner","Status"],rows:pkg.plan.schedule.slice().sort((a,b)=>(a.from||"9").localeCompare(b.from||"9")).map(s=>[txt(s.stage),schedWhen(s)||TBC,s.detail||"—",txt(s.who),stc(s.s)])}:{t:"p",text:`${TBC} Interview dates not yet agreed. The TA Partner will propose slots once interviewers are confirmed.`});
+    {const g=ganttBlock();if(g){S("Tentative plan (Gantt)");B.push(g);B.push({t:"note",text:`Each column is ${g.per===1?"a week":g.per+" weeks"} starting on the date shown (day/month). ■ = stage window, ◆ = single date. All dates are tentative until confirmed.`})}}
     S("Assessments");
     B.push({t:"table",head:["Assessment","Type","Used for","Rationale","Status"],rows:pkg.plan.assessments.filter(a=>a.name).map(a=>[a.name,txt(a.type),txt(a.purpose),txt(a.rationale),{text:label(ASSESS_ST,a.s),status:a.s==="confirmed"?"confirmed":a.s==="declined"?"declined":"proposed"}])});
     S("Offer and onboarding");
@@ -1133,6 +1267,8 @@ function toEmailHTML(B){
     case "sig":h+=`<p style="${P};margin-top:20px">${esc(b.text).replace(/\n/g,"<br>")}</p>`;break;
     case "note":h+=`<p style="${EF}font-size:12.5px;line-height:1.5;color:${b.warn?EC.tbc:EC.slate};background:${b.warn?EC.tbcb:EC.paper};border-left:3px solid ${b.warn?EC.tbc:EC.amber};padding:8px 10px;margin:8px 0 12px">${hiTBC(esc(b.text))}</p>`;break;
     case "foot":h+=`<p style="${EF}font-size:11px;color:${EC.slate};border-top:1px solid ${EC.line};padding-top:8px;margin-top:20px">${esc(b.text)}</p>`;break;
+    case "gantt":{const fill=s=>s==="confirmed"?EC.ok:s==="tbc"?EC.tbc:EC.pr;
+      h+=`<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 10px;border:1px solid ${EC.line};table-layout:fixed"><tr><th style="${EF}font-size:11px;color:#FFFFFF;background:${EC.navy};text-align:left;padding:5px 6px;width:30%">Stage</th>${b.cols.map(c=>`<th style="${EF}font-size:9.5px;font-weight:600;color:#FFFFFF;background:${EC.navy};padding:5px 1px;text-align:center">${esc(c)}</th>`).join("")}</tr>${b.rows.map(r=>`<tr><td style="${EF}font-size:11.5px;color:#1A202C;padding:5px 6px;border-top:1px solid ${EC.line}">${esc(r.label)}<br><span style="color:${EC.slate};font-size:10.5px">${esc(r.when)}</span></td>${r.cells.map(v=>`<td style="border-top:1px solid ${EC.line};border-left:1px solid ${EC.line};padding:0;text-align:center;${v===1?`background:${fill(r.status)};`:""}font-size:11px;color:${fill(r.status)}">${v===2?"◆":"&nbsp;"}</td>`).join("")}</tr>`).join("")}</table>`;break}
     case "kv":h+=`<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 12px">${b.rows.map(([k,v])=>`<tr><td style="${EF}font-size:12.5px;color:${EC.slate};padding:5px 12px 5px 0;border-bottom:1px solid ${EC.line};width:34%;vertical-align:top">${esc(k)}</td><td style="${EF}font-size:13px;color:#1A202C;padding:5px 0;border-bottom:1px solid ${EC.line};vertical-align:top">${cellHTML(v)}</td></tr>`).join("")}</table>`;break;
     case "table":h+=`<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 14px;border:1px solid ${EC.line}"><tr>${b.head.map(x=>`<th style="${EF}font-size:11.5px;font-weight:600;color:#FFFFFF;background:${EC.navy};text-align:left;padding:6px 8px;vertical-align:bottom">${esc(x)}</th>`).join("")}</tr>${b.rows.map((r,i)=>`<tr>${r.map(c=>`<td style="${EF}font-size:12.5px;line-height:1.45;color:#1A202C;padding:6px 8px;border-top:1px solid ${EC.line};vertical-align:top;background:${i%2?EC.paper:"#FFFFFF"}">${cellHTML(c)}</td>`).join("")}</tr>`).join("")}</table>`;break;
   }});
@@ -1144,6 +1280,7 @@ function toText(B){
     case "title":return b.text.toUpperCase();case "h1":return "\n"+b.text.toUpperCase()+"\n"+"-".repeat(Math.min(60,b.text.length));case "h2":return "\n"+b.text;
     case "kv":return b.rows.map(([k,v])=>`${k}: ${c(v)}`).join("\n");
     case "table":return b.rows.map(r=>"- "+r.map((x,i)=>`${b.head[i]}: ${c(x)}`).join(" | ")).join("\n");
+    case "gantt":return b.rows.map(r=>`- ${r.label}: ${r.when}`).join("\n");
     default:return b.text}}).join("\n\n").replace(/\n{3,}/g,"\n\n");
 }
 
@@ -1168,6 +1305,11 @@ function toDocx(B){
     case "sig":body+=para(runs(b.text),null,'<w:spacing w:before="240"/>');break;
     case "note":body+=para(runs(b.text,b.warn?'<w:color w:val="B42318"/>':'<w:color w:val="4A5568"/>'),"Note");break;
     case "foot":body+=para(runs(b.text),"Subtle",'<w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D9E1EA"/></w:pBdr><w:spacing w:before="240"/>');break;
+    case "gantt":{const n=b.cols.length, lw=1500, cw=Math.floor(3500/n), fill=s=>s==="confirmed"?"22704A":s==="tbc"?"B42318":"2B4C7E";
+      const hc=t=>`<w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="001433"/></w:tcPr>${para(runs(t,'<w:b/><w:color w:val="FFFFFF"/><w:sz w:val="13"/>'),"Cell",'<w:jc w:val="center"/>')}</w:tc>`;
+      const hdr=`<w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc><w:tcPr><w:tcW w:w="${lw}" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="001433"/></w:tcPr>${para(runs("Stage",'<w:b/><w:color w:val="FFFFFF"/>'),"Cell")}</w:tc>${b.cols.map(hc).join("")}</w:tr>`;
+      const rowsX=b.rows.map(r=>`<w:tr><w:trPr><w:cantSplit/></w:trPr><w:tc><w:tcPr><w:tcW w:w="${lw}" w:type="pct"/></w:tcPr>${para(runs(r.label,'<w:b/>')+`<w:r><w:br/></w:r>`+runs(r.when,'<w:color w:val="4A5568"/><w:sz w:val="14"/>'),"Cell")}</w:tc>${r.cells.map(v=>`<w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="pct"/>${v===1?`<w:shd w:val="clear" w:color="auto" w:fill="${fill(r.status)}"/>`:""}<w:vAlign w:val="center"/></w:tcPr>${para(v===2?runs("◆",`<w:color w:val="${fill(r.status)}"/>`):"","Cell",'<w:jc w:val="center"/>')}</w:tc>`).join("")}</w:tr>`).join("");
+      body+=tbl(hdr+rowsX,`<w:gridCol w:w="2900"/>`+b.cols.map(()=>`<w:gridCol w:w="${Math.floor(6700/n)}"/>`).join(""));break}
     case "kv":{const rowsX=b.rows.map(([k,v])=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${cellXML({text:k,url:null,status:null}.text,false,1700,true)}${cellXML(v,false,3300,false)}</w:tr>`).join("");body+=tbl(rowsX,'<w:gridCol w:w="3000"/><w:gridCol w:w="6600"/>');break}
     case "table":{const n=b.head.length,w=Math.floor(5000/n);const grid=b.head.map(()=>`<w:gridCol w:w="${Math.floor(9600/n)}"/>`).join("");
       const hdr=`<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${b.head.map(x=>cellXML(x,true,w)).join("")}</w:tr>`;
@@ -1249,7 +1391,7 @@ let prevT;function refreshPreview(){clearTimeout(prevT);prevT=setTimeout(()=>{co
 document.addEventListener("click",async ev=>{
   const tab=ev.target.closest("[data-tab]");if(tab){cur=tab.dataset.tab;lsSet("hps.v1.tab",cur);render();window.scrollTo({top:0});return}
   const b=ev.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
-  const need=["requestResearch","importResearch","addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
+  const need=["stepBuild","markSent","unmarkSent","openSubmit","submitYes","requestResearch","importResearch","addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
   if(need.includes(a)&&!S.canWrite){toast("You have view access only.");return}
   switch(a){
     case "add":{const list=getPath(pkg,b.dataset.list);list.push(LISTS[b.dataset.list].blank());scheduleSave();render();break}
@@ -1261,6 +1403,13 @@ document.addEventListener("click",async ev=>{
     case "buildYes":buildTimeline();break;
     case "clearConfirm":{const t=document.getElementById(b.dataset.target);if(t)t.innerHTML="";break}
     case "snap":saveSnapshot();break;
+    case "openSubmit":if(pkg)openSubmit();break;
+    case "stepDetails":{const el=$("#keyDetails");if(el){el.scrollIntoView({behavior:"smooth",block:"start"});const f=document.querySelector('#main [data-path="'+(!pkg.meta.role.v?"meta.role.v":!pkg.meta.location.v?"meta.location.v":!pkg.meta.kickoffDate.v?"meta.kickoffDate.v":"meta.closureDate.v")+'"]');f&&setTimeout(()=>f.focus({preventScroll:true}),350)}break}
+    case "stepBuild":{if(pkg.plan.schedule.some(r=>r.s==="confirmed")){cur="plan";lsSet("hps.v1.tab",cur);render();toast("Some dates are confirmed. Review them, then select Build tentative plan.");}else{buildTimeline(true);render();toast("Tentative plan built from the market difficulty.")}break}
+    case "markSent":pkg.sentToHM=todayISO();scheduleSave();render();toast("Marked as sent to the hiring manager.");break;
+    case "unmarkSent":delete pkg.sentToHM;scheduleSave();render();break;
+    case "submitYes":doSubmit();break;
+    case "closeModal":$("#modal").hidden=true;break;
     case "requestResearch":requestResearch();break;
     case "importResearch":importResearch();break;
     case "goBuild":cur="plan";lsSet("hps.v1.tab",cur);render();setTimeout(()=>{const b=document.querySelector('[data-act="buildTimeline"]');if(b){b.scrollIntoView({block:"center"});b.focus()}},50);break;
@@ -1301,6 +1450,8 @@ function showTip(el,x,y){const tp=$("#tip");const [v,l]=(el.dataset.tip||"").spl
 document.addEventListener("pointermove",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el)showTip(el,e.clientX,e.clientY);else $("#tip").hidden=true});
 document.addEventListener("focusin",e=>{const el=e.target.closest&&e.target.closest("[data-tip]");if(el){const r=el.getBoundingClientRect();showTip(el,r.left+r.width/2,r.top)}else $("#tip").hidden=true});
 document.addEventListener("scroll",()=>{$("#tip").hidden=true},{passive:true});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#modal").hidden)$("#modal").hidden=true});
+$("#modal").addEventListener("click",e=>{if(e.target.id==="modal")$("#modal").hidden=true});
 $("#bNew").addEventListener("click",()=>createPkg());
 $("#bDup").addEventListener("click",()=>pkg&&createPkg(pkg));
 $("#bSnap").addEventListener("click",()=>saveSnapshot());
