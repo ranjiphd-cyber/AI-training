@@ -378,7 +378,7 @@ function blankPackage(){
       {level:"Final decision maker",name:"",title:"",focus:"",s:"tbc"}
     ],
     decisions:[], questions:[], actions:[],
-    market:{availability:[],comp:[],factors:[],alternatives:[],sources:[],findings:[],context:[],supply:[],demand:[],mobility:[],recs:[],toConfirm:[]},
+    market:{availability:[],comp:[],factors:[],alternatives:[],sources:[],findings:[],context:[],supply:[],demand:[],mobility:[],recs:[],toConfirm:[],trends:[],cities:[],targets:[],stats:[]},
     plan:{
       resumeCount:F("5","proposed"), resumeDate:F("","proposed"), daysToResumes:"", feedbackSla:F("2 business days","proposed"),
       offerDate:F("","proposed"), onboardingDate:F("","proposed"), noticeWeeks:"", onboardingNote:"",
@@ -543,14 +543,15 @@ function chartDifficulty(diffs){
    +`<div class="axis5"><span></span><span class="ticks"><i>0</i><i>1</i><i>2</i><i>3</i><i>4</i><i>5</i></span></div>`;
 }
 function num(v){const s=String(v||"").trim().toLowerCase().replace(/[,\s]/g,"");if(!s)return NaN;const m=s.match(/^([\d.]+)(k|m|l|lakh|cr)?$/);if(!m)return NaN;const mult={k:1e3,m:1e6,l:1e5,lakh:1e5,cr:1e7}[m[2]]||1;return parseFloat(m[1])*mult}
+function fmtMoney(n,cur){if(isNaN(n))return "–";if(cur==="INR"){const l=n/1e5;return (l>=100?Math.round(l):Math.round(l*10)/10)+" L"}return fmtNum(n)}
 function fmtNum(n){return n>=1e6?(n/1e6).toFixed(n%1e6?1:0)+"M":n>=1e3?Math.round(n/1e3)+"k":String(Math.round(n))}
 function chartComp(){
   const rows=pkg.market.comp.map(r=>({r,lo:num(r.low),mid:num(r.mid),hi:num(r.high)})).filter(x=>!isNaN(x.lo)&&!isNaN(x.hi)&&x.hi>=x.lo);
   if(!rows.length)return chartHead("Indicative compensation","")+`<p class="help">Add sourced ranges (low and high) under Market intelligence to compare them here.</p>`;
-  const groups={};rows.forEach(x=>{const k=`${x.r.currency||"?"} · ${label(PERIOD,x.r.period).toLowerCase()} · ${x.r.basis.toLowerCase()}`;(groups[k]=groups[k]||[]).push(x)});
+  const groups={};rows.forEach(x=>{const k=`${x.r.currency==="INR"?"INR (₹ lakh)":x.r.currency||"?"} · ${label(PERIOD,x.r.period).toLowerCase()} · ${x.r.basis.toLowerCase()}`;(groups[k]=groups[k]||[]).push(x)});
   return chartHead("Indicative compensation","external ranges, not the approved band")+Object.entries(groups).map(([k,g])=>{
     const min=Math.min(...g.map(x=>x.lo)),max=Math.max(...g.map(x=>x.hi)),pad=(max-min)*0.08||max*0.1,a=Math.max(0,min-pad),b=max+pad,w=v=>((v-a)/(b-a)*100).toFixed(2)+"%";
-    return `<div class="cg"><div class="cgk">${esc(k)}</div>${g.map(x=>`<div class="br"><span class="brl">${esc([x.r.role,x.r.level,x.r.geo].filter(Boolean).join(" · ")||"Range")}</span><span class="brt"><span class="trk"><span class="rng" style="left:${w(x.lo)};width:calc(${w(x.hi)} - ${w(x.lo)})" data-tip="${esc(x.r.currency)} ${fmtNum(x.lo)} – ${isNaN(x.mid)?"":fmtNum(x.mid)+" – "}${fmtNum(x.hi)}|${esc(x.r.role||"Range")} · data ${esc(x.r.dataDate||"date not given")} · ${esc(label(EVIDENCE,x.r.evidence))}" tabindex="0"></span>${isNaN(x.mid)?"":`<span class="midk" style="left:${w(x.mid)}"></span>`}</span><b class="brv">${fmtNum(x.lo)}–${fmtNum(x.hi)}</b></span></div>`).join("")}</div>`}).join("")
+    return `<div class="cg"><div class="cgk">${esc(k)}</div>${g.map(x=>`<div class="br"><span class="brl">${esc([x.r.role,x.r.level,x.r.geo].filter(Boolean).join(" · ")||"Range")}</span><span class="brt"><span class="trk"><span class="rng" style="left:${w(x.lo)};width:calc(${w(x.hi)} - ${w(x.lo)})" data-tip="${x.r.currency==="INR"?"₹":esc(x.r.currency)+" "}${fmtMoney(x.lo,x.r.currency)} – ${isNaN(x.mid)?"":fmtMoney(x.mid,x.r.currency)+" – "}${fmtMoney(x.hi,x.r.currency)}|${esc(x.r.role||"Range")} · data ${esc(x.r.dataDate||"date not given")} · ${esc(label(EVIDENCE,x.r.evidence))}" tabindex="0"></span>${isNaN(x.mid)?"":`<span class="midk" style="left:${w(x.mid)}"></span>`}</span><b class="brv">${fmtMoney(x.lo,x.r.currency)}–${fmtMoney(x.hi,x.r.currency)}</b></span></div>`).join("")}</div>`}).join("")
    +`<div class="lg"><span><i class="sw c-navy"></i>Low to high</span><span><i class="sw midsw"></i>Median / mid</span></div>`;
 }
 function chartTimeline(){
@@ -571,6 +572,7 @@ function chartTimeline(){
 }
 
 /* ---------- market report lists ---------- */
+const TARGET_CATS=[["GCC","GCC (global capability centre)"],["Automotive","Automotive & mobility"],["Services","IT & engineering services"],["Startup","Start-up / boutique"]];
 const POINT_COLS=[{k:"text",l:"Finding (one sentence, factual)",type:"area",min:380},{k:"sources",l:"Sources (e.g. S1, S4)",min:120},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150}];
 const pointList=empty=>({cols:POINT_COLS,blank:()=>({text:"",sources:"",evidence:"unverified"}),empty});
 Object.assign(LISTS,{
@@ -579,17 +581,21 @@ Object.assign(LISTS,{
   "market.supply":pointList("No supply findings yet: where the talent sits, how deep the pool is, employability data (e.g. India Skills Report with CII)."),
   "market.demand":pointList("No demand findings yet: open roles, competing employers, sector hiring momentum."),
   "market.mobility":pointList("No mobility findings yet: notice periods, time to hire, attrition, counter-offers."),
+  "market.stats":{cols:[{k:"value",l:"Headline number",min:120},{k:"label",l:"What it measures",type:"area",min:300},{k:"sources",l:"Sources",min:100}],blank:()=>({value:"",label:"",sources:""}),empty:"No headline numbers yet. Add four to six sourced figures (e.g. 2,117 GCCs in India)."},
+  "market.trends":pointList("No trends yet: how demand, technology and pay for this skill are changing (e.g. Java version adoption, Spring Boot, AI)."),
+  "market.cities":{cols:[{k:"city",l:"City",min:120},{k:"pool",l:"Talent pool indicator",type:"area",min:240},{k:"growth",l:"Hiring growth % YoY (number)",min:110},{k:"momentum",l:"Hiring momentum (period, detail)",type:"area",min:200},{k:"notes",l:"Notes for sourcing",type:"area",min:200},{k:"sources",l:"Sources",min:100},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150}],blank:()=>({city:"",pool:"",growth:"",momentum:"",notes:"",sources:"",evidence:"unverified"}),empty:"No city data yet: compare talent availability across Indian cities."},
+  "market.targets":{cols:[{k:"company",l:"Company",min:170},{k:"category",l:"Category",type:"select",opts:TARGET_CATS,min:190},{k:"why",l:"Why target / relevant teams",type:"area",min:240},{k:"signal",l:"Hiring signal found",type:"area",min:220},{k:"sources",l:"Sources",min:100},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150}],blank:()=>({company:"",category:"GCC",why:"",signal:"",sources:"",evidence:"unverified"}),empty:"No target companies yet."},
   "market.recs":{cols:[{k:"text",l:"Recommendation",type:"area",min:420},{k:"sources",l:"Based on (sources)",min:130}],blank:()=>({text:"",sources:""}),empty:"No recommendations yet."},
   "market.toConfirm":{cols:[{k:"question",l:"Question for the TA Partner / hiring manager",type:"area",min:340},{k:"answer",l:"Answer",type:"area",min:240},{k:"s",l:"Status",type:"select",opts:Q_ST,cls:"st",min:120}],blank:()=>({question:"",answer:"",s:"open"}),empty:"No open data gaps."}
 });
-const MKT_LISTS=["availability","comp","factors","alternatives","findings","context","supply","demand","mobility","recs","toConfirm"];
+const MKT_LISTS=["availability","comp","factors","alternatives","findings","context","supply","demand","mobility","recs","toConfirm","trends","cities","targets","stats"];
 function marketGlance(){
   const mk=pkg.market, b=marketBasis();
   const pools=mk.availability.filter(r=>r.skill&&r.pool);
   const hard=mk.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc).sort((a,b)=>b.sc.avg-a.sc.avg)[0];
   const c=mk.comp.find(r=>r.mid&&r.currency&&r.geo&&!/national/i.test(r.geo))||mk.comp.find(r=>r.mid);
-  const money=r=>{const v=num(r.mid);if(isNaN(v))return r.mid;return r.currency==="INR"?`₹${(v/1e5).toFixed(1)} lakh`:`${r.currency} ${fmtNum(v)}`};
-  const rows=[...MKT_LISTS.filter(k=>k!=="recs"&&k!=="toConfirm"&&k!=="alternatives").flatMap(k=>mk[k]||[])].filter(r=>r.evidence);
+  const money=r=>{const v=num(r.mid);if(isNaN(v))return r.mid;return r.currency==="INR"?`₹${fmtMoney(v,"INR").replace(" L"," lakh")}`:`${r.currency} ${fmtNum(v)}`};
+  const rows=[...MKT_LISTS.filter(k=>!["recs","toConfirm","alternatives","targets","stats"].includes(k)).flatMap(k=>mk[k]||[])].filter(r=>r.evidence);
   const good=rows.filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&String(r.sources||"").trim()).length;
   const conf=!rows.length?TBC:good/rows.length>=0.7?"Medium–High: most findings are sourced; figures are third-party estimates":good/rows.length>=0.4?"Medium: a mix of sourced findings and TA judgement":"Low: mostly TA judgement; more sources needed";
   return [
@@ -603,26 +609,30 @@ function marketGlance(){
 }
 function rMarket(){
   const comp=pkg.market.comp;const old=comp.filter(r=>{const m=String(r.dataDate||"").match(/(\d{4})/);return m&&(new Date().getFullYear()-Number(m[1]))>=2});
-  const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors,...["findings","context","supply","demand","mobility"].flatMap(k=>pkg.market[k])].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
+  const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors,...["findings","context","supply","demand","mobility","trends","cities","targets"].flatMap(k=>pkg.market[k])].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
   const openQ=pkg.market.toConfirm.filter(q=>q.question&&q.s!=="answered").length;
   return head("Section 5 · Talent Market Intelligence Report","Talent market intelligence","Laid out like a talent-intelligence agency report: summary, scope, market context, supply, demand, pay, difficulty, mobility, alternatives, recommendations, data gaps and references. Every finding needs a source and an evidence type. Anything unknown goes to “Data gaps” for you to confirm.")
   +blk("Market research by Claude","",`<div data-research="full">${researchPanel(false)}</div>`)
-  +(openQ?`<div class="callout warn"><b>${openQ} question(s) need your confirmation</b> before this report goes to the hiring manager. See section 10, Data gaps.</div>`:"")
+  +(openQ?`<div class="callout warn"><b>${openQ} question(s) need your confirmation</b> before this report goes to the hiring manager. See section 13, Data gaps.</div>`:"")
   +refPanel("market")
-  +blk("1. Executive summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two to four sentences: how available the talent is, the main constraint, the pay picture, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div><h3 class="subh">Key findings</h3>${listEditor("market.findings",{add:"Add finding"})}<h3 class="subh">At a glance (calculated)</h3><dl class="kv">${marketGlance().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`)
+  +blk("1. Executive summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two to four sentences: how available the talent is, the main constraint, the pay picture, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div><h3 class="subh">Market in numbers (headline figures)</h3>${listEditor("market.stats",{add:"Add headline number"})}<h3 class="subh">Key findings</h3>${listEditor("market.findings",{add:"Add finding"})}<h3 class="subh">At a glance (calculated)</h3><dl class="kv">${marketGlance().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`)
   +blk("2. Scope and methodology","",`<div class="fld full"><textarea id="f_text_marketScope" rows="3" data-path="text.marketScope" placeholder="${esc(defaultScope())}">${esc(pkg.text.marketScope)}</textarea></div>`,"Leave blank to use the standard wording shown.")
   +blk("3. Market context","industry and hiring climate",listEditor("market.context",{add:"Add context point"}))
-  +blk("4. Talent supply","",listEditor("market.supply",{add:"Add supply point"})+`<h3 class="subh">Availability and difficulty by skill</h3>`+listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>Hiring difficulty index:</b> rate each factor from 1 (easy) to 5 (hard). The index is the average of the factors you scored: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4 and above Very high. Scores are professional judgement; put the evidence beside them.</div>`)
-  +blk("5. Talent demand and competition","",listEditor("market.demand",{add:"Add demand point"})+`<h3 class="subh">Other market factors</h3>`+listEditor("market.factors",{add:"Add factor"}))
-  +blk("6. Compensation benchmarks","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old.</div>`:"")+`<p class="help">Give currency, geography, period and basis on every row. Do not mix base salary and CTC in one comparison. The internal band comes from P&amp;C.</p>`)
-  +blk("7. Talent mobility","notice periods, time to hire, attrition",listEditor("market.mobility",{add:"Add mobility point"})+`<div class="grid">${plainField("plan.noticeWeeks","Typical notice period used for planning (weeks)",{type:"number",hint:"90 days ≈ 13 weeks."})}</div>`)
-  +blk("8. Alternative talent pools and adjacent skills","options for the hiring manager",listEditor("market.alternatives",{add:"Add option"}),"Options to accept, reject or discuss. They are not approved changes to the role.")
-  +blk("9. Recommendations and sourcing strategy","",listEditor("market.recs",{add:"Add recommendation"}))
-  +blk("10. Data gaps: items to confirm","",listEditor("market.toConfirm",{add:"Add question"}),"Claude lists here anything it could not verify. Answer each one or confirm it with the hiring manager, then set the status to Answered.")
+  +blk("4. Skill and market trends","how this skill area is changing",listEditor("market.trends",{add:"Add trend"}))
+  +blk("5. Talent supply","",listEditor("market.supply",{add:"Add supply point"})+`<h3 class="subh">Availability and difficulty by skill</h3>`+listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>Hiring difficulty index:</b> rate each factor from 1 (easy) to 5 (hard). The index is the average of the factors you scored: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4 and above Very high. Scores are professional judgement; put the evidence beside them.</div>`)
+  +blk("6. Talent availability by city","India",listEditor("market.cities",{add:"Add city"}))
+  +blk("7. Talent demand and competition","",listEditor("market.demand",{add:"Add demand point"})+`<h3 class="subh">Other market factors</h3>`+listEditor("market.factors",{add:"Add factor"}))
+  +blk("8. Target companies","where to source from: GCCs, automotive, services, start-ups",listEditor("market.targets",{add:"Add company"})+targetCounts(),"Check every company against Volvo Group's vendor, partner and non-solicitation commitments with P&C before approaching its employees.")
+  +blk("9. Compensation benchmarks","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old.</div>`:"")+`<p class="help">For INR you can type amounts in lakh (for example 16.4L) or in rupees; reports show lakh. Give currency, geography, period and basis on every row. Do not mix base salary and CTC in one comparison. The internal band comes from P&amp;C.</p>`)
+  +blk("10. Talent mobility","notice periods, time to hire, attrition",listEditor("market.mobility",{add:"Add mobility point"})+`<div class="grid">${plainField("plan.noticeWeeks","Typical notice period used for planning (weeks)",{type:"number",hint:"90 days ≈ 13 weeks."})}</div>`)
+  +blk("11. Alternative talent pools and adjacent skills","options for the hiring manager",listEditor("market.alternatives",{add:"Add option"}),"Options to accept, reject or discuss. They are not approved changes to the role.")
+  +blk("12. Recommendations and sourcing strategy","",listEditor("market.recs",{add:"Add recommendation"}))
+  +blk("13. Data gaps: items to confirm","",listEditor("market.toConfirm",{add:"Add question"}),"Claude lists here anything it could not verify. Answer each one or confirm it with the hiring manager, then set the status to Answered.")
   +(nosrc.length?`<div class="callout warn">${nosrc.length} finding(s) are marked Verified or Sourced estimate but have no source ID.</div>`:"")
-  +blk("11. References","source register",listEditor("market.sources",{add:"Add source"}),"Refer to sources by ID (S1, S2…) in the tables above. Removing a source renumbers the ones after it.")
+  +blk("14. References","source register",listEditor("market.sources",{add:"Add source"}),"Refer to sources by ID (S1, S2…) in the tables above. Removing a source renumbers the ones after it.")
   +blk("Your own research","links and source guide",researchLinks()+`<div class="callout"><b>Reliable places to look:</b><ul class="plain"><li>Industry bodies: NASSCOM Strategic Review, Zinnov–NASSCOM GCC Landscape, CII and the India Skills Report (with ETS/Wheebox, AICTE).</li><li>Hiring indices: Naukri JobSpeak (Info Edge), Xpheno active jobs, TeamLease Digital skills and salary primers.</li><li>Pay: Volvo Group Compensation &amp; Benefits surveys (via P&amp;C) first; then Payscale, Glassdoor, AmbitionBox as indicative only.</li></ul></div>`);
 }
+function targetCounts(){const c={};pkg.market.targets.forEach(t=>{if(t.company)c[t.category]=(c[t.category]||0)+1});return `<div class="legend">${TARGET_CATS.map(([k,l])=>`<span>${esc(l)}: <b>${c[k]||0}</b></span>`).join("")}</div>`}
 function defaultScope(){const m=pkg.meta;return `Role: ${m.role.v||TBC}. Geography: ${m.location.v||TBC}${m.hiringMarket.v?" ("+m.hiringMarket.v+")":""}. Research combines published industry reports, hiring indices, salary aggregators and job-board data found through web search, plus the TA Partner's inputs. Figures are dated and referenced; where no reliable source was found, the item is listed under Data gaps.`}
 
 /* ---------- section bars: submit, edit, generate report ---------- */
@@ -669,6 +679,85 @@ async function doSecSubmit(id){
   render();toast(`${c.name} submitted (version ${n}).`);
 }
 
+/* ---------- report charts (drawn as images for page, Word and email) ---------- */
+const CITY_LL={"bengaluru":[12.97,77.59],"bangalore":[12.97,77.59],"hyderabad":[17.39,78.49],"pune":[18.52,73.86],"chennai":[13.08,80.27],"delhi ncr":[28.61,77.21],"delhi":[28.61,77.21],"ncr":[28.61,77.21],"gurugram":[28.46,77.03],"gurgaon":[28.46,77.03],"noida":[28.54,77.39],"mumbai":[19.08,72.88],"kolkata":[22.57,88.36],"ahmedabad":[23.02,72.57],"kochi":[9.93,76.27],"coimbatore":[11.02,76.96],"thiruvananthapuram":[8.52,76.94],"jaipur":[26.91,75.79],"chandigarh":[30.73,76.78],"indore":[22.72,75.86],"mysuru":[12.30,76.64],"mysore":[12.30,76.64],"bhubaneswar":[20.30,85.82],"nagpur":[21.15,79.09],"vadodara":[22.31,73.18],"visakhapatnam":[17.69,83.22],"lucknow":[26.85,80.95]};
+const RC={navy:"#001433",ink:"#1A202C",slate:"#4A5568",grid:"#E2E8F0",line:"#CBD5E0",blue:"#2B4C7E",blue2:"#7FA3DA",red:"#B42318",green:"#22704A",amber:"#B7791F",paper:"#F7FAFC"};
+const RF='"Inter","Segoe UI","Helvetica Neue",Arial,sans-serif';
+function canv(w,h){const c=document.createElement("canvas");c.width=w;c.height=h;const x=c.getContext("2d");x.fillStyle="#FFFFFF";x.fillRect(0,0,w,h);x.textBaseline="middle";return [c,x]}
+function png(c,alt){const url=c.toDataURL("image/png");const b=atob(url.split(",")[1]);const u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return {t:"img",url,bytes:u,w:c.width,h:c.height,alt}}
+function chTitle(x,t,sub,W){x.fillStyle=RC.navy;x.font=`700 30px ${RF}`;x.textAlign="left";x.fillText(t,40,42);if(sub){x.fillStyle=RC.slate;x.font=`400 22px ${RF}`;x.fillText(sub,40,78)}x.fillStyle=RC.amber;x.fillRect(40,98,60,4)}
+function fit(x,s,max){if(x.measureText(s).width<=max)return s;while(s.length>1&&x.measureText(s+"…").width>max)s=s.slice(0,-1);return s+"…"}
+function wrap2(x,s,max){const w=String(s).split(/\s+/);let a="",i=0;for(;i<w.length;i++){const t=a?a+" "+w[i]:w[i];if(x.measureText(t).width>max&&a)break;a=t}const rest=w.slice(i).join(" ");return rest?[a,fit(x,rest,max)]:[a]}
+function label2(x,s,X,y,max,font){x.font=font;const L=wrap2(x,s,max);if(L.length===1)x.fillText(L[0],X,y);else{x.fillText(L[0],X,y-12);x.fillText(L[1],X,y+13)}}
+function rr(x,X,Y,w,h,r){r=Math.min(r,Math.abs(w)/2,h/2);x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();x.fill()}
+function barChartImg(items,o){
+  const W=1200,row=66,top=130,H=top+items.length*row+70,[c,x]=canv(W,H);chTitle(x,o.title,o.sub,W);
+  const L=430,R=W-170,min=Math.min(0,o.min!=null?o.min:Math.min(...items.map(i=>i.value))),max=Math.max(o.max!=null?o.max:0,...items.map(i=>i.value)),sx=v=>L+(v-min)/(max-min||1)*(R-L);
+  x.strokeStyle=RC.grid;x.lineWidth=2;x.font=`400 20px ${RF}`;x.fillStyle=RC.slate;x.textAlign="center";
+  (o.ticks||[]).forEach(t=>{x.beginPath();x.moveTo(sx(t),top-10);x.lineTo(sx(t),top+items.length*row);x.stroke();x.fillText(o.tickFmt?o.tickFmt(t):String(t),sx(t),top+items.length*row+24)});
+  if(min<0){x.strokeStyle=RC.slate;x.beginPath();x.moveTo(sx(0),top-10);x.lineTo(sx(0),top+items.length*row);x.stroke()}
+  items.forEach((it,i)=>{const y=top+i*row+row/2;x.textAlign="left";x.fillStyle=RC.ink;label2(x,it.label,40,y,L-70,`500 21px ${RF}`);
+    x.fillStyle=it.color||RC.blue;const a=sx(Math.min(0,it.value)),b=sx(Math.max(0,it.value));rr(x,a,y-14,Math.max(4,b-a),28,6);
+    x.fillStyle=RC.ink;x.font=`600 22px ${RF}`;x.textAlign="left";x.fillText(it.display||String(it.value),Math.max(b,sx(0))+14,y)});
+  if(o.note){x.fillStyle=RC.slate;x.font=`400 18px ${RF}`;x.textAlign="left";x.fillText(o.note,40,H-22)}
+  return png(c,o.title);
+}
+function rangeChartImg(items,o){
+  const W=1200,row=68,top=140,H=top+items.length*row+80,[c,x]=canv(W,H);chTitle(x,o.title,o.sub,W);
+  const L=470,R=W-190,lo=Math.min(...items.map(i=>i.lo)),hi=Math.max(...items.map(i=>i.hi));
+  const step=niceStep((hi-lo)/5),a=Math.floor(lo/step)*step,b=Math.ceil(hi/step)*step,sx=v=>L+(v-a)/(b-a||1)*(R-L);
+  x.strokeStyle=RC.grid;x.lineWidth=2;x.font=`400 20px ${RF}`;x.fillStyle=RC.slate;x.textAlign="center";
+  for(let t=a;t<=b+1e-9;t+=step){x.beginPath();x.moveTo(sx(t),top-14);x.lineTo(sx(t),top+items.length*row);x.stroke();x.fillText(o.fmt(t),sx(t),top+items.length*row+26)}
+  items.forEach((it,i)=>{const y=top+i*row+row/2;x.textAlign="left";x.fillStyle=RC.ink;x.font=`500 21px ${RF}`;if(it.sub){x.fillText(fit(x,it.label,L-70),40,y-12);x.fillStyle=RC.slate;x.font=`400 18px ${RF}`;x.fillText(fit(x,it.sub,L-70),40,y+13)}else label2(x,it.label,40,y,L-70,`500 21px ${RF}`);
+    x.fillStyle=it.color||RC.blue;rr(x,sx(it.lo),y-13,Math.max(6,sx(it.hi)-sx(it.lo)),26,13);
+    if(!isNaN(it.mid)){x.fillStyle=RC.navy;x.fillRect(sx(it.mid)-3,y-21,6,42);x.strokeStyle="#FFFFFF";x.lineWidth=2;x.strokeRect(sx(it.mid)-3,y-21,6,42)}
+    x.fillStyle=RC.ink;x.font=`600 21px ${RF}`;x.fillText(`${o.fmt(it.lo)}–${o.fmt(it.hi)}`,sx(it.hi)+14,y)});
+  x.font=`400 18px ${RF}`;x.fillStyle=RC.slate;x.textAlign="left";x.fillText(o.note||"",40,H-24);
+  return png(c,o.title);
+}
+function niceStep(r){const p=Math.pow(10,Math.floor(Math.log10(r||1)));const f=r/p;return (f<=1?1:f<=2?2:f<=5?5:10)*p}
+function geoMapImg(pts,o){
+  const W=1200,H=1000,[c,x]=canv(W,H);chTitle(x,o.title,o.sub,W);
+  const lon0=69,lon1=91,lat0=7,lat1=31,mx=56,my=130,mw=660,mh=mw*((lat1-lat0)/(lon1-lon0))/Math.cos(20*Math.PI/180)*0.92;
+  const px=lon=>mx+(lon-lon0)/(lon1-lon0)*mw, py=lat=>my+(lat1-lat)/(lat1-lat0)*mh;
+  x.fillStyle=RC.paper;x.fillRect(mx,my,mw,mh);x.strokeStyle=RC.grid;x.lineWidth=1.5;x.font=`400 16px ${RF}`;x.fillStyle=RC.slate;
+  for(let la=8;la<=30;la+=4){x.beginPath();x.moveTo(mx,py(la));x.lineTo(mx+mw,py(la));x.stroke();x.textAlign="right";x.fillText(la+"°N",mx-6,py(la))}
+  for(let lo=70;lo<=90;lo+=4){x.beginPath();x.moveTo(px(lo),my);x.lineTo(px(lo),my+mh);x.stroke();x.textAlign="center";x.fillText(lo+"°E",px(lo),my+mh+18)}
+  const mxv=Math.max(...pts.map(p=>Math.abs(p.value)),1);
+  const rad=p=>10+26*Math.sqrt(Math.abs(p.value)/mxv);
+  pts.slice().sort((a,b)=>Math.abs(b.value)-Math.abs(a.value)).forEach(p=>{const r=rad(p);x.globalAlpha=.78;x.fillStyle=p.value<0?RC.red:RC.blue;x.beginPath();x.arc(px(p.lon),py(p.lat),r,0,7);x.fill();x.globalAlpha=1;x.strokeStyle="#FFFFFF";x.lineWidth=3;x.stroke()});
+  const boxes=pts.map(p=>{const r=rad(p);return {x0:px(p.lon)-r,y0:py(p.lat)-r,x1:px(p.lon)+r,y1:py(p.lat)+r}});
+  const hit=(b)=>boxes.some(o=>!(b.x1<o.x0||b.x0>o.x1||b.y1<o.y0||b.y0>o.y1))||b.x0<mx||b.x1>mx+mw||b.y0<my||b.y1>my+mh;
+  pts.slice().sort((a,b)=>a.lat-b.lat).forEach(p=>{const r=rad(p),cx=px(p.lon),cy=py(p.lat);x.font=`600 20px ${RF}`;const tw=Math.max(x.measureText(p.name).width,x.measureText(p.label).width)+4,th=48;
+    const opts=[[cx+r+6,cy-th/2,"left"],[cx-r-6-tw,cy-th/2,"left"],[cx-tw/2,cy-r-6-th,"left"],[cx-tw/2,cy+r+6,"left"],[cx+r+6,cy-th-4,"left"],[cx+r+6,cy+4,"left"],[cx-r-6-tw,cy+4,"left"],[cx-r-6-tw,cy-th-4,"left"]];
+    let pick=opts.find(([X,Y])=>!hit({x0:X,y0:Y,x1:X+tw,y1:Y+th}))||opts[0];const [X,Y]=pick;boxes.push({x0:X,y0:Y,x1:X+tw,y1:Y+th});
+    x.textAlign="left";x.fillStyle=RC.ink;x.font=`600 20px ${RF}`;x.fillText(p.name,X+2,Y+13);x.font=`500 18px ${RF}`;x.fillStyle=RC.slate;x.fillText(p.label,X+2,Y+36)});
+  // ranking panel
+  const rx=760;x.fillStyle=RC.navy;x.font=`700 22px ${RF}`;x.textAlign="left";x.fillText(o.rankTitle||"Ranking",rx,my+10);
+  pts.slice().sort((a,b)=>b.value-a.value).forEach((p,i)=>{const y=my+56+i*46;x.fillStyle=i===0?RC.amber:RC.line;x.beginPath();x.arc(rx+14,y,14,0,7);x.fill();x.fillStyle="#FFFFFF";x.font=`700 16px ${RF}`;x.textAlign="center";x.fillText(String(i+1),rx+14,y);
+    x.textAlign="left";x.fillStyle=RC.ink;x.font=`500 21px ${RF}`;x.fillText(p.name,rx+40,y);x.textAlign="right";x.font=`700 21px ${RF}`;x.fillStyle=p.value<0?RC.red:RC.blue;x.fillText(p.label,W-40,y)});
+  x.textAlign="left";x.fillStyle=RC.slate;x.font=`400 17px ${RF}`;
+  (o.notes||[]).forEach((n,i)=>x.fillText(n,40,H-56+i*26));
+  return png(c,o.title);
+}
+function cityPoints(){return pkg.market.cities.filter(r=>r.city).map(r=>{const k=r.city.toLowerCase().replace(/[^a-z ]/g,"").trim();const ll=CITY_LL[k]||CITY_LL[k.split(" ")[0]];const v=parseFloat(String(r.growth).replace(/[^\d.\-]/g,""));return ll&&!isNaN(v)?{name:r.city,lat:ll[0],lon:ll[1],value:v,label:(v>0?"+":"")+v+"%"}:null}).filter(Boolean)}
+function marketCharts(){
+  const mk=pkg.market,out={};
+  try{
+    const pts=cityPoints();
+    if(pts.length>=2){const per=(mk.cities.find(r=>r.momentum)||{}).momentum||"";
+      const period=(String(per).match(/^([A-Z][a-z]{2,8}\s+\d{4})/)||[])[1];out.map=geoMapImg(pts,{title:"Talent market by city: hiring growth",sub:"White-collar hiring growth, year on year"+(period?", "+period:""),rankTitle:"Hiring growth (YoY)",notes:["Cities placed by latitude and longitude; no boundaries shown. Bubble size = hiring growth.","Source: see city table and References."]});}
+    const dif=mk.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc);
+    if(dif.length)out.diff=barChartImg(dif.sort((a,b)=>b.sc.avg-a.sc.avg).map(({r,sc})=>({label:r.skill,value:+sc.avg.toFixed(1),display:`${sc.avg.toFixed(1)} ${sc.lvl}`,color:sc.avg>=3?RC.red:sc.avg>=2?RC.blue:RC.green})),{title:"Hiring difficulty index by skill",sub:"Average of five factors · 1 = easy, 5 = hard",min:0,max:5,ticks:[0,1,2,3,4,5],note:"Red = High or Very high, blue = Moderate, green = Low."});
+    const comp=mk.comp.map(r=>({r,lo:num(r.low),mid:num(r.mid),hi:num(r.high)})).filter(x=>!isNaN(x.lo)&&!isNaN(x.hi)&&x.hi>=x.lo);
+    if(comp.length){const g={};comp.forEach(x=>{const k=x.r.currency+"|"+x.r.period;(g[k]=g[k]||[]).push(x)});const [k,rows]=Object.entries(g).sort((a,b)=>b[1].length-a[1].length)[0];const cur=k.split("|")[0];
+      out.comp=rangeChartImg(rows.map(x=>({label:x.r.role||"Range",sub:[x.r.level&&x.r.level!=="All experience"?x.r.level:"",x.r.geo,x.r.basis].filter(Boolean).join(" · "),lo:x.lo,mid:x.mid,hi:x.hi,color:/total|ctc/i.test(x.r.basis)?RC.amber:RC.blue})),{title:"Compensation benchmarks",sub:cur==="INR"?"₹ lakh per year · bar = low to high, marker = median / mid":`${cur} · bar = low to high, marker = median`,fmt:v=>cur==="INR"?String(Math.round(v/1e5*10)/10):fmtNum(v),note:"Blue = base salary, amber = total compensation (CTC). Indicative third-party data; see table for sources."});}
+    const cs=pts.length?pts.slice().sort((a,b)=>b.value-a.value):[];
+    if(cs.length>=2){const m=Math.max(...cs.map(p=>Math.abs(p.value)));out.cityBars=barChartImg(cs.map(p=>({label:p.name,value:p.value,display:p.label,color:p.value<0?RC.red:RC.blue})),{title:"Hiring growth by city",sub:"Year on year, same period as the map",ticks:[...new Set([0,Math.round(m/2),Math.round(m)])],tickFmt:t=>t+"%"})}
+  }catch(e){}
+  return out;
+}
+
 /* ---------- market-based plan basis ---------- */
 const LEAD={Low:5,Moderate:7,High:10,"Very high":15};
 const RESUME_SUGGEST={Low:5,Moderate:5,High:4,"Very high":3};
@@ -700,7 +789,7 @@ function researchPanel(compact){
   else if(st==="requested"||st==="in-progress")body=`<p style="margin:0"><span class="chip st-proposed">${st==="requested"?"Requested":"Researching"}</span> Requested ${when(r.requestedAt)}. Findings appear here when Claude finishes, usually within a few minutes.</p>`;
   else if(st==="failed")body=`<p style="margin:0"><span class="chip st-tbc">Not completed</span> ${esc(r.error||"Claude could not complete the research.")}</p>`;
   else{const n=k=>(r[k]||[]).length;
-    body=`<p style="margin:0 0 6px"><span class="chip ${st==="added"?"st-confirmed":"st-proposed"}">${st==="added"?"Added to report":"Findings ready"}</span> Completed ${when(r.completedAt)} · ${n("availability")} availability findings · ${n("comp")} pay ranges · ${n("factors")} market factors · ${n("alternatives")} alternative skills · ${n("sources")} sources</p>${r.summary&&!compact?`<p style="margin:0 0 6px">${esc(r.summary)}</p>`:""}${r.limitations&&!compact?`<p class="help" style="margin:0">Limitations: ${esc(r.limitations)}</p>`:""}`;}
+    body=`<p style="margin:0 0 6px"><span class="chip ${st==="added"?"st-confirmed":"st-proposed"}">${st==="added"?"Added to report":"Findings ready"}</span> Completed ${when(r.completedAt)} · ${n("findings")} key findings · ${n("trends")} trends · ${n("cities")} cities · ${n("targets")} target companies · ${n("comp")} pay ranges · ${n("toConfirm")} questions for you · ${n("sources")} references</p>${r.summary&&!compact?`<p style="margin:0 0 6px">${esc(r.summary)}</p>`:""}${r.limitations&&!compact?`<p class="help" style="margin:0">Limitations: ${esc(r.limitations)}</p>`:""}`;}
   const btns=`<div class="toolbar">${st==="ready"?`<button class="btn" type="button" data-act="importResearch">Add findings to the report</button>`:""}<button class="${st==="ready"?"btn2":"btn"}" type="button" data-act="requestResearch"${ready&&!researchBusy&&st!=="requested"&&st!=="in-progress"?"":" disabled"}>${st==="none"?"Find market intelligence with Claude":"Run the research again"}</button>${ready?"":`<span class="help" style="margin:0">Add the role title and location first.</span>`}</div>`;
   return `<div class="research">${compact?"":`<h3 style="font-size:14px;font-weight:600;margin-bottom:6px">Market research by Claude</h3>`}${body}${btns}<div id="researchMsg"></div></div>`;
 }
@@ -733,7 +822,9 @@ function importResearch(){
   add("availability",["skill","market","pool","poolEvidence","supply","competition","pay","location","niche","evidence"]);
   add("comp",["role","level","geo","currency","low","mid","high","period","basis","dataDate","evidence","limits"]);
   add("factors",["factor","effect","evidence"]);
-  ["findings","context","supply","demand","mobility"].forEach(k=>add(k,["text","evidence"]));
+  ["findings","context","supply","demand","mobility","trends"].forEach(k=>add(k,["text","evidence"]));
+  add("cities",["city","pool","growth","momentum","notes","evidence"]);add("stats",["value","label"]);
+  add("targets",["company","category","why","signal","evidence"]);
   add("recs",["text"]);
   (r.alternatives||[]).forEach(a=>mk.alternatives.push({...LISTS["market.alternatives"].blank(),...pick(a,["alt","forSkill","gain","risk"]),hm:"pending",by:"Claude"}));
   (r.toConfirm||[]).forEach(q=>mk.toConfirm.push({question:String(q.question||q),answer:"",s:"open",by:"Claude"}));
@@ -1304,19 +1395,27 @@ function buildDoc(kind){
     if(!has)B.push({t:"note",warn:true,text:`${TBC} Market research not yet completed. The TA Partner will add sourced findings.`});
     if(pkg.text.marketSummary)B.push({t:"p",text:pkg.text.marketSummary});
     const kf=pts(mk.findings);if(kf.length){B.push({t:"h3",text:"Key findings"});B.push({t:"bullets",items:kf})}
+    const CH=marketCharts();
+    {const st=mk.stats.filter(r=>r.value&&r.label);if(st.length){B.push({t:"h3",text:"Market in numbers"});B.push({t:"kpis",items:st.map(r=>({value:r.value,label:r.label,src:r.sources?"["+r.sources+"]":""}))})}}
     B.push({t:"h3",text:"At a glance"});B.push({t:"kv",rows:marketGlance()});
     S("Scope and methodology");
     B.push({t:"p",text:pkg.text.marketScope||defaultScope()});
     B.push({t:"note",text:"Evidence types: “Verified fact” is confirmed from a primary source. “Sourced estimate” is a figure from a cited third party. “TA judgement” is professional assessment. “Not yet verified” has no source yet. Numbers in [brackets] refer to the References section."});
     const sec=(title,list,extra)=>{const p=pts(list);if(!p.length&&!extra)return;S(title);if(p.length)B.push({t:"bullets",items:p});if(extra)extra()};
     sec("Market context",mk.context);
+    sec("Skill and market trends",mk.trends);
     sec("Talent supply",mk.supply,()=>{const rows=mk.availability.filter(r=>r.skill);if(rows.length)B.push({t:"table",head:["Skill / combination","Market","Talent pool","Evidence of pool","Evidence type","Sources"],rows:rows.map(r=>[r.skill,txt(r.market),r.pool||TBC,txt(r.poolEvidence),st2(r.evidence),r.sources||"—"])})});
+    {const cs=mk.cities.filter(r=>r.city);if(cs.length){S("Talent availability by city");if(CH.map)B.push(CH.map);B.push({t:"table",head:["City","Talent pool indicator","Hiring growth","Hiring momentum","Notes for sourcing","Sources"],rows:cs.map(r=>[r.city,txt(r.pool),r.growth!==""&&r.growth!=null?((+r.growth>0?"+":"")+r.growth+"%"):"—",txt(r.momentum),r.notes||"—",(r.sources||"—")+(r.evidence==="assumption"?" (TA judgement)":"")])})}}
     sec("Talent demand and competition",mk.demand,()=>{const f=mk.factors.filter(r=>r.factor);if(f.length)B.push({t:"table",head:["Market factor","Effect on availability, pay or speed","Evidence type","Sources"],rows:f.map(r=>[r.factor,txt(r.effect),st2(r.evidence),r.sources||"—"])})});
-    if(mk.comp.some(r=>r.role||r.low||r.mid||r.high)){S("Compensation benchmarks");
-      B.push({t:"table",head:["Benchmark","Level","Geography","Low – mid – high","Period / basis","Data date","Evidence","Sources","Limitations"],rows:mk.comp.filter(r=>r.role||r.low||r.mid||r.high).map(r=>[txt(r.role),txt(r.level),txt(r.geo),`${r.currency||"[currency?]"} ${r.low?fmtNum(num(r.low)):"–"} – ${r.mid?fmtNum(num(r.mid)):"–"} – ${r.high?fmtNum(num(r.high)):"–"}`,`${label(PERIOD,r.period)}, ${r.basis}`,r.dataDate||TBC,st2(r.evidence),r.sources||"—",r.limits||"—"])});
-      B.push({t:"note",text:"External, indicative ranges only (k = thousand, M = million). They are not the approved offer range, which P&C sets."})}
+    {const ts=mk.targets.filter(r=>r.company);if(ts.length){S("Target companies for sourcing");
+      B.push({t:"kpis",items:TARGET_CATS.map(([k,l])=>({value:String(ts.filter(r=>r.category===k).length),label:l,src:""}))});
+      B.push({t:"note",text:"A starting list for direct sourcing, grouped by category. Hiring signals come from public job postings and press coverage on the dates shown in the references; check each company against Volvo Group's vendor, partner and non-solicitation commitments with P&C before approaching its employees."});
+      TARGET_CATS.forEach(([k,l])=>{const g=ts.filter(r=>r.category===k);if(g.length){B.push({t:"h3",text:l});B.push({t:"table",head:["Company","Why target / relevant teams","Hiring signal","Sources"],rows:g.map(r=>[r.company,txt(r.why),r.signal||"—",(r.sources||"—")+(r.evidence==="unverified"?" (not yet verified)":"")])})}})}}
+    if(mk.comp.some(r=>r.role||r.low||r.mid||r.high)){S("Compensation benchmarks");if(CH.comp)B.push(CH.comp);
+      B.push({t:"table",head:["Benchmark","Level","Geography","Low – mid – high","Period / basis","Data date","Evidence","Sources","Limitations"],rows:mk.comp.filter(r=>r.role||r.low||r.mid||r.high).map(r=>[txt(r.role),txt(r.level),txt(r.geo),(r.currency==="INR"?`₹ ${r.low?fmtMoney(num(r.low),"INR").replace(" L",""):"–"} – ${r.mid?fmtMoney(num(r.mid),"INR").replace(" L",""):"–"} – ${r.high?fmtMoney(num(r.high),"INR").replace(" L",""):"–"} lakh`:`${r.currency||"[currency?]"} ${r.low?fmtNum(num(r.low)):"–"} – ${r.mid?fmtNum(num(r.mid)):"–"} – ${r.high?fmtNum(num(r.high)):"–"}`),`${label(PERIOD,r.period)}, ${r.basis}`,r.dataDate||TBC,st2(r.evidence),r.sources||"—",r.limits||"—"])});
+      B.push({t:"note",text:"External, indicative ranges only. INR figures are in lakh (1 lakh = ₹100,000) per year unless stated; other currencies use k = thousand. They are not the approved offer range, which P&C sets."})}
     const dif=mk.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc);
-    if(dif.length){S("Hiring difficulty index");
+    if(dif.length){S("Hiring difficulty index");if(CH.diff)B.push(CH.diff);
       B.push({t:"table",head:["Skill / combination","Supply scarcity","Competing demand","Pay pressure","Location","Niche / seniority","Index"],rows:dif.map(({r,sc})=>[r.skill,r.supply||"–",r.competition||"–",r.pay||"–",r.location||"–",r.niche||"–",{text:`${sc.lvl} ${sc.avg.toFixed(1)}`,status:sc.avg>=3?"tbc":sc.avg>=2?"proposed":"confirmed"}])});
       B.push({t:"note",text:"Each factor is scored 1 (easy) to 5 (hard) by the TA Partner from the evidence in this report. Index = average: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4+ Very high."})}
     sec("Talent mobility: notice periods, time to hire, attrition",mk.mobility);
@@ -1392,6 +1491,9 @@ function toEmailHTML(B){
     case "sig":h+=`<p style="${P};margin-top:20px">${esc(b.text).replace(/\n/g,"<br>")}</p>`;break;
     case "note":h+=`<p style="${EF}font-size:12.5px;line-height:1.5;color:${b.warn?EC.tbc:EC.slate};background:${b.warn?EC.tbcb:EC.paper};border-left:3px solid ${b.warn?EC.tbc:EC.amber};padding:8px 10px;margin:8px 0 12px">${hiTBC(esc(b.text))}</p>`;break;
     case "foot":h+=`<p style="${EF}font-size:11px;color:${EC.slate};border-top:1px solid ${EC.line};padding-top:8px;margin-top:20px">${esc(b.text)}</p>`;break;
+    case "img":h+=`<p style="margin:8px 0 14px;text-align:center"><img src="${b.url}" width="${Math.round(b.w/2)}" alt="${esc(b.alt||"Chart")}" style="max-width:100%;height:auto;border:1px solid ${EC.line}"></p>`;break;
+    case "kpis":{const per=b.items.length===4?4:3;const rowsK=[];for(let i=0;i<b.items.length;i+=per)rowsK.push(b.items.slice(i,i+per));
+      h+=`<table role="presentation" cellpadding="0" cellspacing="6" style="border-collapse:separate;width:100%;margin:4px 0 12px">${rowsK.map(r=>`<tr>${r.map(k=>`<td style="${EF}background:${EC.paper};border-top:3px solid ${EC.amber};padding:10px 12px;vertical-align:top;width:${Math.floor(100/per)}%"><div style="${EF}font-size:24px;font-weight:700;color:${EC.navy};line-height:1.15">${esc(k.value)}</div><div style="${EF}font-size:12px;color:#1A202C;margin-top:4px;line-height:1.35">${esc(k.label)}</div>${k.src?`<div style="${EF}font-size:11px;color:${EC.pr};margin-top:3px">${esc(k.src)}</div>`:""}</td>`).join("")}</tr>`).join("")}</table>`;break}
     case "gantt":{const fill=s=>s==="confirmed"?EC.ok:s==="tbc"?EC.tbc:EC.pr;
       h+=`<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 10px;border:1px solid ${EC.line};table-layout:fixed"><tr><th style="${EF}font-size:11px;color:#FFFFFF;background:${EC.navy};text-align:left;padding:5px 6px;width:30%">Stage</th>${b.cols.map(c=>`<th style="${EF}font-size:9.5px;font-weight:600;color:#FFFFFF;background:${EC.navy};padding:5px 1px;text-align:center">${esc(c)}</th>`).join("")}</tr>${b.rows.map(r=>`<tr><td style="${EF}font-size:11.5px;color:#1A202C;padding:5px 6px;border-top:1px solid ${EC.line}">${esc(r.label)}<br><span style="color:${EC.slate};font-size:10.5px">${esc(r.when)}</span></td>${r.cells.map(v=>`<td style="border-top:1px solid ${EC.line};border-left:1px solid ${EC.line};padding:0;text-align:center;${v===1?`background:${fill(r.status)};`:""}font-size:11px;color:${fill(r.status)}">${v===2?"◆":"&nbsp;"}</td>`).join("")}</tr>`).join("")}</table>`;break}
     case "kv":h+=`<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:6px 0 12px">${b.rows.map(([k,v])=>`<tr><td style="${EF}font-size:12.5px;color:${EC.slate};padding:5px 12px 5px 0;border-bottom:1px solid ${EC.line};width:34%;vertical-align:top">${esc(k)}</td><td style="${EF}font-size:13px;color:#1A202C;padding:5px 0;border-bottom:1px solid ${EC.line};vertical-align:top">${cellHTML(v)}</td></tr>`).join("")}</table>`;break;
@@ -1408,6 +1510,8 @@ function toText(B){
     case "kv":return b.rows.map(([k,v])=>`${k}: ${c(v)}`).join("\n");
     case "table":return b.rows.map(r=>"- "+r.map((x,i)=>`${b.head[i]}: ${c(x)}`).join(" | ")).join("\n");
     case "gantt":return b.rows.map(r=>`- ${r.label}: ${r.when}`).join("\n");
+    case "img":return `[Chart: ${b.alt}]`;
+    case "kpis":return b.items.map(k=>`${k.value} – ${k.label} ${k.src}`).join("\n");
     default:return b.text}}).join("\n\n").replace(/\n{3,}/g,"\n\n");
 }
 
@@ -1416,7 +1520,7 @@ const xe=s=>String(s==null?"":s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001
 function runs(text,rpr){const parts=String(text==null?"":text).split("\n");return parts.map((t,i)=>{const segs=t.split(/(\[To confirm\])/);return (i?`<w:r><w:br/></w:r>`:"")+segs.filter(s=>s!=="").map(s=>`<w:r><w:rPr>${s===TBC?'<w:b/><w:color w:val="B42318"/>':""}${rpr||""}</w:rPr><w:t xml:space="preserve">${xe(s)}</w:t></w:r>`).join("")}).join("")}
 function para(inner,style,ppr){return `<w:p><w:pPr>${style?`<w:pStyle w:val="${style}"/>`:""}${ppr||""}</w:pPr>${inner}</w:p>`}
 function toDocx(B){
-  const rels=[];let body="";
+  const rels=[],media=[];let body="";
   const link=(text,url)=>{const id="rIdL"+(rels.length+1);rels.push(`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="${xe(url)}" TargetMode="External"/>`);return `<w:hyperlink r:id="${id}"><w:r><w:rPr><w:color w:val="2B4C7E"/><w:u w:val="single"/></w:rPr><w:t xml:space="preserve">${xe(text)}</w:t></w:r></w:hyperlink>`};
   const cellXML=(c,hdr,w,shade)=>{let inner;
     if(c&&typeof c==="object"){if(c.status){const col=c.status==="confirmed"?"22704A":c.status==="proposed"?"2B4C7E":c.status==="declined"?"4A5568":"B42318";inner=para(runs(c.text,`<w:b/><w:color w:val="${col}"/>`),"Cell")}else if(c.url)inner=para(link(c.text,c.url),"Cell");else inner=para(runs(c.text),"Cell")}
@@ -1434,6 +1538,11 @@ function toDocx(B){
     case "sig":body+=para(runs(b.text),null,'<w:spacing w:before="240"/>');break;
     case "note":body+=para(runs(b.text,b.warn?'<w:color w:val="B42318"/>':'<w:color w:val="4A5568"/>'),"Note");break;
     case "foot":body+=para(runs(b.text),"Subtle",'<w:pBdr><w:top w:val="single" w:sz="4" w:space="4" w:color="D9E1EA"/></w:pBdr><w:spacing w:before="240"/>');break;
+    case "img":{const n=media.length+1, id="rIdImg"+n, cx=5760720, cy=Math.round(cx*b.h/b.w);media.push(["word/media/chart"+n+".png",b.bytes]);rels.push(`<Relationship Id="${id}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/chart${n}.png"/>`);
+      body+=`<w:p><w:pPr><w:jc w:val="center"/><w:spacing w:before="120" w:after="160"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="${n}" name="Chart ${n}" descr="${xe(b.alt||"Chart")}"/><wp:cNvGraphicFramePr><a:graphicFrameLocks noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="${n}" name="chart${n}.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="${id}"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;break}
+    case "kpis":{const per=b.items.length===4?4:3, w=Math.floor(5000/per);let rowsX="";for(let i=0;i<b.items.length;i+=per){const r=b.items.slice(i,i+per);while(r.length<per)r.push(null);
+        rowsX+=`<w:tr><w:trPr><w:cantSplit/></w:trPr>${r.map(k=>`<w:tc><w:tcPr><w:tcW w:w="${w}" w:type="pct"/>${k?'<w:shd w:val="clear" w:color="auto" w:fill="F7FAFC"/><w:tcBorders><w:top w:val="single" w:sz="18" w:color="B7791F"/></w:tcBorders>':""}</w:tcPr>${k?para(runs(k.value,'<w:b/><w:color w:val="001433"/><w:sz w:val="36"/>'),"Cell")+para(runs(k.label,'<w:sz w:val="17"/>'),"Cell")+(k.src?para(runs(k.src,'<w:color w:val="2B4C7E"/><w:sz w:val="15"/>'),"Cell"):""):para("","Cell")}</w:tc>`).join("")}</w:tr>`}
+      body+=tbl(rowsX,Array(per).fill(`<w:gridCol w:w="${Math.floor(9600/per)}"/>`).join(""));break}
     case "gantt":{const n=b.cols.length, lw=1500, cw=Math.floor(3500/n), fill=s=>s==="confirmed"?"22704A":s==="tbc"?"B42318":"2B4C7E";
       const hc=t=>`<w:tc><w:tcPr><w:tcW w:w="${cw}" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="001433"/></w:tcPr>${para(runs(t,'<w:b/><w:color w:val="FFFFFF"/><w:sz w:val="13"/>'),"Cell",'<w:jc w:val="center"/>')}</w:tc>`;
       const hdr=`<w:tr><w:trPr><w:tblHeader/></w:trPr><w:tc><w:tcPr><w:tcW w:w="${lw}" w:type="pct"/><w:shd w:val="clear" w:color="auto" w:fill="001433"/></w:tcPr>${para(runs("Stage",'<w:b/><w:color w:val="FFFFFF"/>'),"Cell")}</w:tc>${b.cols.map(hc).join("")}</w:tr>`;
@@ -1444,7 +1553,7 @@ function toDocx(B){
       const hdr=`<w:tr><w:trPr><w:tblHeader/><w:cantSplit/></w:trPr>${b.head.map(x=>cellXML(x,true,w)).join("")}</w:tr>`;
       const rowsX=b.rows.map((r,i)=>`<w:tr><w:trPr><w:cantSplit/></w:trPr>${r.map(c=>cellXML(c,false,w,i%2===1)).join("")}</w:tr>`).join("");body+=tbl(hdr+rowsX,grid);break}
   }});
-  const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+  const NS='xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
   const doc=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1000" w:right="1000" w:bottom="1000" w:left="1000" w:header="600" w:footer="600" w:gutter="0"/></w:sectPr></w:body></w:document>`;
   const sty=(id,name,ppr,rpr,extra)=>`<w:style w:type="paragraph" w:styleId="${id}"><w:name w:val="${name}"/><w:basedOn w:val="Normal"/>${extra||""}<w:pPr>${ppr}</w:pPr><w:rPr>${rpr}</w:rPr></w:style>`;
   const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles ${NS}><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Segoe UI" w:hAnsi="Segoe UI" w:cs="Segoe UI" w:eastAsia="Segoe UI"/><w:sz w:val="20"/><w:szCs w:val="20"/><w:color w:val="1A202C"/><w:lang w:val="en-GB"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>`
@@ -1457,19 +1566,19 @@ function toDocx(B){
     +sty("Cell","Table text",'<w:spacing w:after="0" w:line="252" w:lineRule="auto"/>','<w:sz w:val="17"/>')
     +sty("Spacer","Spacer",'<w:spacing w:after="80"/>','<w:sz w:val="8"/>')
     +`</w:styles>`;
-  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
+  const ct=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/><Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/><Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>`;
   const rootRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`;
   const docRels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdS" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>${rels.join("")}</Relationships>`;
   const now=new Date().toISOString().replace(/\.\d+Z$/,"Z");
   const core=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>${xe(B[0].text)}</dc:title><dc:creator>${xe(pkg.meta.taPartner.v||"Talent Acquisition")}</dc:creator><dcterms:created xsi:type="dcterms:W3CDTF">${now}</dcterms:created><dcterms:modified xsi:type="dcterms:W3CDTF">${now}</dcterms:modified></cp:coreProperties>`;
-  return zip([["[Content_Types].xml",ct],["_rels/.rels",rootRels],["docProps/core.xml",core],["word/document.xml",doc],["word/styles.xml",styles],["word/_rels/document.xml.rels",docRels]]);
+  return zip([["[Content_Types].xml",ct],["_rels/.rels",rootRels],["docProps/core.xml",core],["word/document.xml",doc],["word/styles.xml",styles],["word/_rels/document.xml.rels",docRels],...media]);
 }
 const CRC_T=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 function crc32(b){let c=0xFFFFFFFF;for(let i=0;i<b.length;i++)c=CRC_T[(c^b[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0}
 function zip(entries){
   const enc=new TextEncoder(),d=new Date();const time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
   const chunks=[],central=[];let off=0;
-  entries.forEach(([name,str])=>{const nb=enc.encode(name),data=enc.encode(str),crc=crc32(data);
+  entries.forEach(([name,str])=>{const nb=enc.encode(name),data=str instanceof Uint8Array?str:enc.encode(str),crc=crc32(data);
     const lh=new DataView(new ArrayBuffer(30));lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(6,0x0800,true);lh.setUint16(8,0,true);lh.setUint16(10,time,true);lh.setUint16(12,date,true);lh.setUint32(14,crc,true);lh.setUint32(18,data.length,true);lh.setUint32(22,data.length,true);lh.setUint16(26,nb.length,true);lh.setUint16(28,0,true);
     chunks.push(new Uint8Array(lh.buffer),nb,data);
     const ch=new DataView(new ArrayBuffer(46));ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(8,0x0800,true);ch.setUint16(10,0,true);ch.setUint16(12,time,true);ch.setUint16(14,date,true);ch.setUint32(16,crc,true);ch.setUint32(20,data.length,true);ch.setUint32(24,data.length,true);ch.setUint16(28,nb.length,true);ch.setUint16(30,0,true);ch.setUint16(32,0,true);ch.setUint16(34,0,true);ch.setUint16(36,0,true);ch.setUint32(38,0,true);ch.setUint32(42,off,true);
