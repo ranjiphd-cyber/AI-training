@@ -93,6 +93,7 @@ section.blk>h2 small{font-weight:400;color:var(--muted);font-size:12.5px}
 .fld .row>input,.fld .row>select,.fld .row>textarea{flex:1 1 auto;min-width:0}
 input[type=text],input[type=date],input[type=number],input[type=url],select,textarea{background:var(--field);border:1px solid var(--line-strong);border-radius:var(--r);padding:6px 8px;width:100%;min-width:0}
 textarea{resize:vertical;line-height:1.45}
+input.bad{border-color:var(--tbc);box-shadow:0 0 0 1px var(--tbc)}
 input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
 select.st{width:auto;flex:0 0 auto;font-size:12px;font-weight:600;border-radius:14px;padding:4px 8px}
 .st-confirmed{background:var(--ok-soft);color:var(--ok);border-color:transparent}
@@ -211,6 +212,8 @@ ul.plain{margin:6px 0 0;padding-left:18px} ul.plain li{margin:3px 0}
 .doccard .toolbar{margin-top:6px}
 @media (max-width:900px){.dgrid{grid-template-columns:minmax(0,1fr)}}
 
+.research{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r);padding:12px 14px;background:var(--surface)}
+.kv.plan{grid-template-columns:minmax(110px,40%) minmax(0,1fr);margin-top:4px}
 /* Toast */
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:9px 14px;border-radius:var(--r);font-size:13px;box-shadow:0 6px 20px rgba(0,20,51,.25);max-width:calc(100% - 32px);z-index:20}
 .ro input,.ro select,.ro textarea{pointer-events:none;opacity:.85}
@@ -276,6 +279,8 @@ const INFO=[["draft","Draft: before kickoff"],["kickoff","Kickoff held: awaiting
 const INPUT_TYPES=[["Job description","Job description"],["Kickoff notes","Kickoff / meeting notes"],["Hiring manager email","Hiring manager email or message"],["Org chart / team info","Org chart / team information"],["Market report","Market report or salary data"],["Competitor intel","Competitor or talent-mapping notes"],["Interview guide","Interview guide or scorecard"],["Policy","Policy or P&C guidance"],["Other","Other"]];
 const USES=[["minutes","Minutes"],["market","Market intelligence"],["plan","Interview & hiring plan"]];
 const TBC="[To confirm]";
+const DMIN="2026-01-01", DMAX="2035-12-31";
+const DATTR=`min="${"2026-01-01"}" max="${"2035-12-31"}"`;
 const LS_KEY="hps.v1.packages", LS_LAST="hps.v1.last", LS_VER="hps.v1.versions.";
 const MAX_VERSIONS=40;
 
@@ -319,7 +324,7 @@ function blankPackage(){
     decisions:[], questions:[], actions:[],
     market:{availability:[],comp:[],factors:[],alternatives:[],sources:[]},
     plan:{
-      resumeCount:F("5","proposed"), resumeDate:F("","proposed"), daysToResumes:"5", feedbackSla:F("2 business days","proposed"),
+      resumeCount:F("5","proposed"), resumeDate:F("","proposed"), daysToResumes:"", feedbackSla:F("2 business days","proposed"),
       offerDate:F("","proposed"), onboardingDate:F("","proposed"), noticeWeeks:"", onboardingNote:"",
       stages:[
         {name:"Resume screening",format:"TA review against the agreed scorecard",duration:"",focus:"Primary skills, location and eligibility, notice period, compensation expectations",owner:"TA Partner",criteria:"Meets all primary skills; no deal-breakers",s:"proposed"},
@@ -363,7 +368,6 @@ function blankPackage(){
       {action:"Run an interviewer briefing and scorecard calibration",due:"",status:"open",note:""},
       {action:"Submit the first resumes by the committed date",due:"",status:"open",note:""}
     ],
-    pipeline:{sourced:"",submitted:"",screened:"",l1:"",l2:"",offers:"",accepted:"",asOf:""},
     email:{kind:"full",recipient:"",subject:"",note:"",includeMeetings:true,includeMarket:true,includeSources:true}
   };
 }
@@ -414,17 +418,16 @@ function scoreOf(r){const ks=["supply","competition","pay","location","niche"];c
 function srcIdx(){return (pkg.market.sources||[]).map((s,i)=>({...s,_id:"S"+(i+1)}))}
 
 /* ---------- dashboard ---------- */
-const PIPE=[["sourced","Sourced"],["submitted","Submitted to HM"],["screened","Passed TA screen"],["l1","L1 interviewed"],["l2","L2 interviewed"],["offers","Offers made"],["accepted","Offers accepted"]];
 function rDash(){
-  const p=pkg.pipeline;
-  return head("Dashboard",esc(pkg.meta.role.v||"New hiring package"),"Live view of this requisition. Edit the key details and pipeline here; everything else lives in the numbered sections. Download each document from the panel below.")
+  return head("Dashboard",esc(pkg.meta.role.v||"New hiring package"),"Live view of this requisition and its tentative hiring plan, built on market intelligence. Edit the key details here; everything else lives in the numbered sections. Download each document from the panel below.")
   +`<div id="dashLive">${dashLive()}</div>`
+  +blk("Market research","",`<div data-research="full">${researchPanel(false)}</div>`)
   +blk("Download documents","Word for attaching, HTML for the browser, or copy straight into an email",docCards())
   +blk("Key details","edit here or in the sections",`<div class="grid">${field("meta.role","Role title")}${field("meta.location","Role location")}${field("meta.workArrangement","Work arrangement")}${field("meta.hiringManager","Hiring manager")}${field("meta.kickoffDate","Kickoff date",{type:"date"})}${field("meta.closureDate","Tentative closure date",{type:"date"})}${field("plan.offerDate","Tentative offer date",{type:"date"})}${field("plan.onboardingDate","Tentative onboarding date",{type:"date"})}${plainField("meta.infoStatus","Information status",{type:"select",opts:INFO})}</div>`)
-  +blk("Candidate pipeline","cumulative counts",`<div class="grid">${PIPE.map(([k,l])=>plainField("pipeline."+k,l,{type:"number"})).join("")}${plainField("pipeline.asOf","Counts as of",{type:"date"})}</div>`,"Enter how many candidates have reached each stage so far. The funnel above updates as you type.");
+  +"";
 }
 function docCards(){
-  const items=[["minutes","Minutes of Meeting","Meeting log, context, skills, preferences, success measures, interviewers, decisions, open questions, actions and items to confirm."],["market","Market Intelligence","Availability and difficulty per skill, compensation ranges, market factors, alternative skills and sources."],["plan","Hiring Plan","Interview stages, resume commitment, schedule, assessments, offer and onboarding dates, milestones, risks, decisions and TA actions."],["full","Full hiring package","All of the above in one document, with the executive summary and confirmation tracker."]];
+  const items=[["minutes","Minutes of Meeting","Meeting log, context, skills, preferences, success measures, interviewers, decisions, open questions, actions and items to confirm."],["market","Market Intelligence","Availability and difficulty per skill, compensation ranges, market factors, alternative skills and sources."],["plan","Tentative Hiring Plan","Built on market intelligence: plan basis, interview stages, resume commitment, schedule, assessments, offer and onboarding dates, milestones, risks, decisions and TA actions."],["full","Full hiring package","All of the above in one document, with the executive summary and confirmation tracker."]];
   return `<div class="doccards">${items.map(([k,t,d])=>`<div class="doccard"><div class="eyebrow">${k==="full"?"All sections":"Document"}</div><h3>${t}</h3><p>${d}</p><div class="toolbar"><button class="btn" type="button" data-act="docx" data-kind="${k}">Word</button><button class="btn2" type="button" data-act="html" data-kind="${k}">HTML</button><button class="btn2" type="button" data-act="copyDoc" data-kind="${k}">Copy for email</button><button class="btn3" type="button" data-act="preview" data-kind="${k}">Preview</button></div></div>`).join("")}</div>`;
 }
 function dashLive(){
@@ -443,10 +446,11 @@ function dashLive(){
     +tile("Hardest skill",diffs.length?esc(diffs[0].sc.lvl):"—",diffs.length?esc(diffs[0].r.skill):"Score skills in Market",diffs.length&&diffs[0].sc.avg>=3?"tbc":"")
     +tile("First resumes",esc(pkg.plan.resumeCount.v||"—"),pkg.plan.resumeDate.v?"by "+fmtDate(pkg.plan.resumeDate.v)+(pkg.plan.resumeDate.s==="confirmed"?"":" (proposed)"):"date to confirm","")
     +tile("Offer / start",pkg.plan.offerDate.v?fmtDate(pkg.plan.offerDate.v).replace(/ \d{4}$/,""):"—",pkg.plan.onboardingDate.v?"start "+fmtDate(pkg.plan.onboardingDate.v):"start date to confirm","")
+    +tile("Market research",({none:"—",requested:"Requested","in-progress":"Running",ready:"Ready",added:"Added",failed:"Failed"})[researchState()],({none:"not requested",requested:"waiting for Claude","in-progress":"Claude is researching",ready:"review and add to report",added:"in the report",failed:"run it again"})[researchState()],researchState()==="ready"?"prop":researchState()==="added"?"ok":"")
     +tile("Open actions",openActs.length,overdue?`${overdue} overdue`:"none overdue",overdue?"tbc":"")
     +`</div>`;
   return tiles+(t.critMissing.length?`<div class="callout warn"><b>Critical inputs to confirm:</b> ${t.critMissing.map(esc).join(" · ")}</div>`:"")
-    +`<div class="dgrid"><div class="card">${chartStatus(t)}</div><div class="card">${chartFunnel()}</div><div class="card wide">${chartTimeline()}</div><div class="card">${chartDifficulty(diffs)}</div><div class="card">${chartComp()}</div></div>`;
+    +`<div class="dgrid"><div class="card">${chartStatus(t)}</div><div class="card">${chartPlan()}</div><div class="card wide">${chartTimeline()}</div><div class="card">${chartDifficulty(diffs)}</div><div class="card">${chartComp()}</div></div>`;
 }
 const pctStr=(v,max)=>Math.max(0,Math.min(100,v/max*100)).toFixed(2)+"%";
 function chartHead(title,sub){return `<div class="ch-h"><h3>${title}</h3>${sub?`<span>${sub}</span>`:""}</div>`}
@@ -459,12 +463,15 @@ function chartStatus(t){
    +`<div class="minibars">${groupBy(t.items).map(([area,c])=>`<div class="mb"><span class="mbl">${esc(area)}</span><span class="mbt">${["confirmed","proposed","tbc","missing"].filter(k=>c[k]).map(k=>`<span class="seg c-${k}" style="width:${pctStr(c[k],c.n)}" data-tip="${c[k]} ${esc(ST_LABEL[k].toLowerCase())}|${esc(area)}" tabindex="0"></span>`).join("")}</span><span class="mbn">${c.confirmed}/${c.n}</span></div>`).join("")}</div>`;
 }
 function groupBy(items){const g={};items.forEach(i=>{const k=i.area;g[k]=g[k]||{n:0,confirmed:0,proposed:0,tbc:0,missing:0};g[k].n++;const s=i.status==="declined"?"confirmed":i.status;if(g[k][s]!=null)g[k][s]++});return Object.entries(g)}
-function chartFunnel(){
-  const p=pkg.pipeline, vals=PIPE.map(([k,l])=>[l,parseInt(p[k],10)||0]), max=Math.max(...vals.map(v=>v[1]));
-  if(!max)return chartHead("Candidate pipeline","")+`<p class="help">No candidates yet. Enter pipeline counts under <b>Candidate pipeline</b> below as the search progresses.</p>`;
-  return chartHead("Candidate pipeline",p.asOf?"as of "+fmtDate(p.asOf):"")
-   +`<div class="bars">${vals.map(([l,v],i)=>{const prev=i?vals[i-1][1]:0;const conv=i&&prev?Math.round(v/prev*100)+"% of previous":"";return `<div class="br"><span class="brl">${esc(l)}</span><span class="brt"><span class="trk">${v?`<span class="hbar c-navy" style="width:${pctStr(v,max)}" data-tip="${v} candidate(s)${conv?" · "+conv:""}|${esc(l)}" tabindex="0"></span>`:""}</span><b class="brv">${v}</b></span></div>`}).join("")}</div>`
-   +`<p class="help" style="margin:6px 0 0">Conversion from previous stage shows on hover. ${(()=>{const s=parseInt(p.submitted,10)||0,c=parseInt(pkg.plan.resumeCount.v,10)||0;return c?`Resume commitment: ${Math.min(s,c)} of ${c} submitted.`:""})()}</p>`;
+function chartPlan(){
+  const b=marketBasis(), P=pkg.plan, ms=P.milestones;
+  const find=re=>ms.find(x=>re.test(x.name)&&x.date);
+  const rows=[["First resumes",P.resumeDate.v?{d:P.resumeDate.v,s:P.resumeDate.s}:null,P.resumeCount.v?P.resumeCount.v+" resumes":""],["L1 interviews done",find(/L1 interviews/i),""],["Final selection",find(/final selection/i),""],["Tentative offer",P.offerDate.v?{d:P.offerDate.v,s:P.offerDate.s}:null,""],["Onboarding / start",P.onboardingDate.v?{d:P.onboardingDate.v,s:P.onboardingDate.s}:null,P.noticeWeeks?P.noticeWeeks+"-week notice assumed":""],["Closure",pkg.meta.closureDate.v?{d:pkg.meta.closureDate.v,s:pkg.meta.closureDate.s}:null,""]];
+  const has=rows.some(r=>r[1]);
+  return chartHead("Tentative hiring plan",b.level?"based on market difficulty: "+b.level:"market not yet assessed")
+   +`<p class="help" style="margin:6px 0 8px">${esc(b.note)}</p>`
+   +(has?`<dl class="kv plan">${rows.map(([l,x,n])=>`<dt>${l}</dt><dd>${x?`<b>${fmtDate(x.d||x.date)}</b> <span class="chip st-${(x.s==="confirmed"?"confirmed":x.s==="tbc"?"tbc":"proposed")}">${ST_LABEL[x.s]||"Proposed"}</span>`:`<span class="help" style="margin:0">${TBC}</span>`}${n?` <span class="help" style="margin:0">· ${esc(n)}</span>`:""}</dd>`).join("")}</dl>`:"")
+   +`<div class="toolbar"><button class="${has?"btn2":"btn"}" type="button" data-act="goBuild">${has?"Rebuild the tentative plan":"Build the tentative plan"}</button></div>`;
 }
 function chartDifficulty(diffs){
   if(!diffs.length)return chartHead("Hiring difficulty by skill","")+`<p class="help">Score skills under Market intelligence to see them here.</p>`;
@@ -489,16 +496,79 @@ function chartTimeline(){
   const extra=[];if(pkg.plan.offerDate.v&&!ms.some(x=>/offer date/i.test(x.name)))extra.push({name:"Tentative offer date",date:pkg.plan.offerDate.v,decision:false,s:pkg.plan.offerDate.s});
   if(pkg.plan.onboardingDate.v&&!ms.some(x=>/onboarding|start date/i.test(x.name)))extra.push({name:"Onboarding / start date",date:pkg.plan.onboardingDate.v,decision:false,s:pkg.plan.onboardingDate.s});
   const all=[...ms,...extra].sort((a,b)=>a.date<b.date?-1:1);
-  if(!all.length)return chartHead("Hiring timeline","")+`<p class="help">No dated milestones yet. Go to Interview &amp; hiring plan and select “Build proposed timeline”.</p>`;
+  if(!all.length)return chartHead("Tentative hiring timeline","")+`<p class="help">No dated milestones yet. Go to Interview &amp; hiring plan and select “Build proposed timeline”.</p>`;
   const ds=[...all.map(x=>x.date),k,cl].filter(Boolean).sort();const start=parseISO(ds[0]),end=parseISO(ds[ds.length-1]);start.setDate(start.getDate()-2);end.setDate(end.getDate()+4);
   const span=end-start, pos=iso=>((parseISO(iso)-start)/span*100).toFixed(2)+"%";
   const ticks=[];const d=new Date(start);d.setDate(d.getDate()+((8-d.getDay())%7||7));while(d<end){ticks.push(toISO(d));d.setDate(d.getDate()+7)}
   const tickEvery=Math.ceil(ticks.length/8);
   const lines=(today>=toISO(start)&&today<=toISO(end)?`<span class="vl today" style="left:${pos(today)}"><em>Today</em></span>`:"")+(cl?`<span class="vl close" style="left:${pos(cl)}"><em>Closure ${fmtDate(cl).replace(/ \d{4}$/,"")}</em></span>`:"");
-  return chartHead("Hiring timeline",`${fmtDate(all[0].date)} – ${fmtDate(all[all.length-1].date)} · ◆ decision point`)
+  return chartHead("Tentative hiring timeline",`${fmtDate(all[0].date)} – ${fmtDate(all[all.length-1].date)} · ◆ decision point`)
    +`<div class="tl"><div class="tll">${all.map(x=>`<div class="tlr">${esc(x.name)}</div>`).join("")}</div><div class="tlt"><div class="tlg" style="height:${18+all.length*30+22}px">${ticks.map((x,i)=>`<span class="tk" style="left:${pos(x)}">${i%tickEvery?"":`<em>${fmtDate(x).replace(/ \d{4}$/,"")}</em>`}</span>`).join("")}${lines}${all.map((x,i)=>{const late=cl&&x.date>cl&&!/onboarding|start date/i.test(x.name);return `<span class="dot${x.decision?" dec":""}${late?" late":""}${x.s==="confirmed"?" conf":""}" style="left:${pos(x.date)};top:${18+i*30+15}px" data-tip="${fmtDate(x.date)}|${esc(x.name)} · ${esc(ST_LABEL[x.s]||x.s||"")}${x.decision?" · decision point":""}${late?" · after closure date":""}" tabindex="0"></span>`}).join("")}</div></div></div>`
    +`<div class="lg"><span><i class="sw dotsw conf"></i>Confirmed</span><span><i class="sw dotsw"></i>Proposed / to confirm</span><span><i class="sw dotsw late"></i>After closure date</span><span><i class="sw vsw"></i>Closure date</span></div>`;
 }
+
+/* ---------- market-based plan basis ---------- */
+const LEAD={Low:5,Moderate:7,High:10,"Very high":15};
+const RESUME_SUGGEST={Low:5,Moderate:5,High:4,"Very high":3};
+function marketBasis(){
+  const prim=pkg.skills.filter(s=>s.tier==="primary"&&s.name).map(s=>s.name.toLowerCase());
+  const rows=pkg.market.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc).sort((a,b)=>b.sc.avg-a.sc.avg);
+  if(!rows.length)return {level:null,skill:"",lead:7,extra:0,note:"Market difficulty not yet assessed, so a moderate lead time (7 business days) is assumed. Run market research to tailor the plan."};
+  const top=rows[0], lvl=top.sc.lvl, lead=LEAD[lvl], extra=lvl==="High"?1:lvl==="Very high"?2:0;
+  const isPrim=prim.some(p=>top.r.skill.toLowerCase().includes(p)||p.includes(top.r.skill.toLowerCase()));
+  return {level:lvl,skill:top.r.skill,lead,extra,note:`Based on market intelligence: the hardest area to hire is ${top.r.skill}${isPrim?" (a primary skill)":""}, rated ${lvl} (${top.sc.avg.toFixed(1)} of 5). The plan allows ${lead} business days to the first resumes${extra?` and ${extra} extra day(s) in each interview window`:""}.`};
+}
+/* ---------- Claude market research ---------- */
+let researchMap={}, researchCfg=null, researchBusy=false;
+function researchBrief(){
+  const m=pkg.meta;
+  const inputs=pkg.inputs.filter(x=>x.uses&&x.uses.market&&x.content).map(x=>`[${x.type}${x.title?": "+x.title:""}]\n${x.content}`).join("\n\n").slice(0,8000);
+  return {role:m.role.v,businessUnit:m.businessUnit.v,department:m.department.v,grade:m.grade.v,positions:m.positions.v,location:m.location.v,workArrangement:m.workArrangement.v,hiringMarket:m.hiringMarket.v,relocation:m.relocation.v,
+    skills:pkg.skills.filter(s=>s.name).map(s=>({name:s.name,priority:label(TIERS,s.tier),level:s.level})),marketInputs:inputs};
+}
+function researchState(){const r=researchMap[pkg.id];if(!r)return "none";if(r.status==="done")return pkg.market.researchImportedAt===r.completedAt?"added":"ready";return r.status||"none"}
+function researchPanel(compact){
+  const r=researchMap[pkg.id], st=researchState(), ready=!!(pkg.meta.role.v&&(pkg.meta.location.v||pkg.meta.hiringMarket.v));
+  const when=x=>x?fmtDate(x.slice(0,10))+" "+x.slice(11,16)+" UTC":"";
+  let body;
+  if(st==="none")body=`<p class="help" style="margin:0">Claude searches the web for talent availability, pay ranges, market factors and alternative skills for this role and location, with a source and access date for every finding. You review the findings, then add them to the report.</p>`;
+  else if(st==="requested"||st==="in-progress")body=`<p style="margin:0"><span class="chip st-proposed">${st==="requested"?"Requested":"Researching"}</span> Requested ${when(r.requestedAt)}. Findings appear here when Claude finishes, usually within a few minutes.</p>`;
+  else if(st==="failed")body=`<p style="margin:0"><span class="chip st-tbc">Not completed</span> ${esc(r.error||"Claude could not complete the research.")}</p>`;
+  else{const n=k=>(r[k]||[]).length;
+    body=`<p style="margin:0 0 6px"><span class="chip ${st==="added"?"st-confirmed":"st-proposed"}">${st==="added"?"Added to report":"Findings ready"}</span> Completed ${when(r.completedAt)} · ${n("availability")} availability findings · ${n("comp")} pay ranges · ${n("factors")} market factors · ${n("alternatives")} alternative skills · ${n("sources")} sources</p>${r.summary&&!compact?`<p style="margin:0 0 6px">${esc(r.summary)}</p>`:""}${r.limitations&&!compact?`<p class="help" style="margin:0">Limitations: ${esc(r.limitations)}</p>`:""}`;}
+  const btns=`<div class="toolbar">${st==="ready"?`<button class="btn" type="button" data-act="importResearch">Add findings to the report</button>`:""}<button class="${st==="ready"?"btn2":"btn"}" type="button" data-act="requestResearch"${ready&&!researchBusy&&st!=="requested"&&st!=="in-progress"?"":" disabled"}>${st==="none"?"Find market intelligence with Claude":"Run the research again"}</button>${ready?"":`<span class="help" style="margin:0">Add the role title and location first.</span>`}</div>`;
+  return `<div class="research">${compact?"":`<h3 style="font-size:14px;font-weight:600;margin-bottom:6px">Market research by Claude</h3>`}${body}${btns}<div id="researchMsg"></div></div>`;
+}
+async function requestResearch(){
+  if(S.mode!=="db"){$("#researchMsg").innerHTML=`<div class="callout warn">Research requests need the published page with shared saving. In this copy, ask Claude in your session: “Run market research for ${esc(pkg.meta.role.v)} in ${esc(pkg.meta.location.v||pkg.meta.hiringMarket.v)}”.</div>`;return}
+  researchBusy=true;renderResearchSpots();await saveNow();
+  const req={pkgId:pkg.id,status:"requested",requestedAt:new Date().toISOString(),brief:researchBrief()};
+  try{await S.db.collection("research").doc(pkg.id).set(req)}catch(e){researchBusy=false;renderResearchSpots();toast("Could not save the request ("+(e.code||"error")+").");return}
+  researchMap[pkg.id]=req;
+  let msg="";
+  const mcp=window.claude&&window.claude.use?await window.claude.use("mcp"):null;
+  if(!researchCfg||!researchCfg.sessionId)msg=`Request saved. Claude has not been linked to this page yet, so ask Claude in your session: “Run the market research request for ${esc(pkg.meta.role.v)}”.`;
+  else if(!mcp)msg=`Request saved. This view cannot notify Claude, so ask Claude in your session: “Run the market research request for ${esc(pkg.meta.role.v)}”.`;
+  else{try{await mcp.callTool("Claude Code Remote","send_message",{session_id:researchCfg.sessionId,message:`Market research request from Hiring Package Studio. Package id: ${pkg.id}. Read the brief at research/${pkg.id} in ${researchCfg.artifactUrl||"the Hiring Package Studio artifact"}, research it, and write the findings back to that document.`});msg=""}
+    catch(e){const c=e&&e.code;msg=c==="server_not_connected"?"Request saved, but the Claude Code Remote connector is not connected. Add it in claude.ai Settings → Connectors, or ask Claude in your session to run the request.":c==="approval_required"||c==="not_in_manifest"?"Request saved. Allow this page to contact Claude when asked, then run the research again, or ask Claude in your session to run the request.":`Request saved, but Claude could not be notified (${esc(c||"error")}). Ask Claude in your session to run the market research request.`}}
+  researchBusy=false;renderResearchSpots();
+  if(msg){const el=$("#researchMsg");if(el)el.innerHTML=`<div class="callout warn">${msg}</div>`}else toast("Research requested. Findings appear on the Market intelligence page when ready.");
+}
+function importResearch(){
+  const r=researchMap[pkg.id];if(!r||r.status!=="done")return;
+  const mk=pkg.market, off=mk.sources.length, remap=s=>String(s||"").replace(/S(\d+)/g,(m,n)=>"S"+(Number(n)+off));
+  (r.sources||[]).forEach(s=>mk.sources.push({title:s.title||"",publisher:s.publisher||"",url:s.url||"",published:s.published||"",accessed:s.accessed||todayISO(),note:(s.note?s.note+" · ":"")+"Found by Claude"}));
+  (r.availability||[]).forEach(a=>mk.availability.push({...LISTS["market.availability"].blank(),...pick(a,["skill","market","pool","poolEvidence","supply","competition","pay","location","niche","evidence"]),sources:remap(a.sources)}));
+  (r.comp||[]).forEach(c=>mk.comp.push({...LISTS["market.comp"].blank(),...pick(c,["role","level","geo","currency","low","mid","high","period","basis","dataDate","evidence","limits"]),sources:remap(c.sources)}));
+  (r.factors||[]).forEach(f=>mk.factors.push({...LISTS["market.factors"].blank(),...pick(f,["factor","effect","evidence"]),sources:remap(f.sources)}));
+  (r.alternatives||[]).forEach(a=>mk.alternatives.push({...LISTS["market.alternatives"].blank(),...pick(a,["alt","forSkill","gain","risk"]),hm:"pending"}));
+  if(r.summary)pkg.text.marketSummary=pkg.text.marketSummary?pkg.text.marketSummary+"\n\n"+r.summary:r.summary;
+  if(r.noticeWeeks&&!pkg.plan.noticeWeeks)pkg.plan.noticeWeeks=String(r.noticeWeeks);
+  mk.researchImportedAt=r.completedAt;scheduleSave();render();renderNotices();
+  toast("Findings added. Review them, then rebuild the tentative plan so it reflects the market difficulty.");
+}
+const pick=(o,ks)=>{const out={};ks.forEach(k=>{if(o&&o[k]!=null&&o[k]!=="")out[k]=String(o[k])});return out};
+function renderResearchSpots(){document.querySelectorAll("[data-research]").forEach(el=>el.innerHTML=researchPanel(el.dataset.research==="compact"))}
 
 /* ---------- confirmation tracker ---------- */
 const META_LABELS={role:"Role title",reqId:"Requisition ID",businessUnit:"Business unit / company",department:"Department / function",grade:"Grade / level",positions:"Number of positions",reportsTo:"Reports to",reasonForHire:"Reason for hire",location:"Location",workArrangement:"Work arrangement",relocation:"Relocation / visa support",hiringMarket:"Geographic hiring market",travel:"Travel",hiringManager:"Hiring manager",taPartner:"TA Partner",pcPartner:"P&C partner",decisionMaker:"Final decision maker",kickoffDate:"Kickoff date",closureDate:"Tentative closure date",closureDefinition:"Definition of closure"};
@@ -537,14 +607,14 @@ function field(path,lab,o={}){
   let inp;
   if(o.type==="select")inp=`<select id="${id}" data-path="${path}.v">${opts(o.opts,f.v)}</select>`;
   else if(o.type==="area")inp=`<textarea id="${id}" rows="${o.rows||3}" data-path="${path}.v" placeholder="${esc(o.ph||"")}">${esc(f.v)}</textarea>`;
-  else inp=`<input id="${id}" type="${o.type||"text"}" data-path="${path}.v" value="${esc(f.v)}" placeholder="${esc(o.ph||"")}">`;
+  else inp=`<input id="${id}" type="${o.type||"text"}" data-path="${path}.v" value="${esc(f.v)}" placeholder="${esc(o.ph||"")}"${o.type==="date"?" "+DATTR:""}>`;
   return `<div class="fld${o.full?" full":""}"><label for="${id}">${esc(lab)}</label><div class="row">${inp}${statusSel(path+".s",f.s)}</div>${o.hint?`<div class="help" style="margin:0">${o.hint}</div>`:""}</div>`;
 }
 function plainField(path,lab,o={}){
   const v=getPath(pkg,path)||"";const id="f_"+path.replace(/\./g,"_");
   const inp=o.type==="area"?`<textarea id="${id}" rows="${o.rows||4}" data-path="${path}" placeholder="${esc(o.ph||"")}">${esc(v)}</textarea>`
     :o.type==="select"?`<select id="${id}" data-path="${path}">${opts(o.opts,v)}</select>`
-    :`<input id="${id}" type="${o.type||"text"}" data-path="${path}" value="${esc(v)}" placeholder="${esc(o.ph||"")}">`;
+    :`<input id="${id}" type="${o.type||"text"}" data-path="${path}" value="${esc(v)}" placeholder="${esc(o.ph||"")}"${o.type==="date"?" "+DATTR:""}>`;
   return `<div class="fld${o.full?" full":""}"><label for="${id}">${esc(lab)}</label>${inp}${o.hint?`<div class="help" style="margin:0">${o.hint}</div>`:""}</div>`;
 }
 function cell(path,r,c,i){
@@ -553,7 +623,7 @@ function cell(path,r,c,i){
     case "select":return `<select data-path="${p}"${c.cls?` class="st st-${esc(v)}"`:""} aria-label="${esc(c.l)}">${opts(c.opts,v)}</select>`;
     case "status":return statusSel(p,v);
     case "area":return `<textarea rows="2" data-path="${p}" aria-label="${esc(c.l)}">${esc(v)}</textarea>`;
-    case "date":return `<input type="date" data-path="${p}" value="${esc(v)}" aria-label="${esc(c.l)}">`;
+    case "date":return `<input type="date" data-path="${p}" value="${esc(v)}" aria-label="${esc(c.l)}" ${DATTR}>`;
     case "url":return `<input type="url" data-path="${p}" value="${esc(v)}" placeholder="https://" aria-label="${esc(c.l)}">`;
     case "check":return `<input type="checkbox" data-path="${p}"${v?" checked":""} aria-label="${esc(c.l)}">`;
     case "rowid":return `<b style="font-variant-numeric:tabular-nums">S${i+1}</b>`;
@@ -650,7 +720,7 @@ function rMarket(){
   const comp=pkg.market.comp;const old=comp.filter(r=>{const m=String(r.dataDate||"").match(/(\d{4})/);return m&&(new Date().getFullYear()-Number(m[1]))>=2});
   const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
   return head("Section 5 · Talent availability and market intelligence","Market intelligence","Record what you can source, and say so where you cannot. Every finding carries an evidence type and points to a source in the register at the bottom.")
-  +refPanel("market")+blk("Research starting points","",researchLinks()+`<div class="callout"><b>Where to look, in order of reliability for pay data:</b><ul class="plain"><li>Salary surveys held by Volvo Group Compensation &amp; Benefits (ask your P&amp;C partner). Use these for the internal range.</li><li>Official statistics and professional bodies, for example <a href="https://www.scb.se/en/" target="_blank" rel="noopener">Statistics Sweden (SCB)</a>, <a href="https://www.bls.gov/oes/" target="_blank" rel="noopener">US BLS OEWS</a>, <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noopener">Eurostat</a>, and engineering unions or associations in the market.</li><li>Talent-supply tools your team licenses (for example LinkedIn Talent Insights): profile counts, competing employers, talent flows.</li><li>Self-reported salary sites (Glassdoor, PayScale, Levels.fyi, AmbitionBox and similar). Treat these as indicative only and note sample size and date.</li></ul></div>`)
+  +blk("Market research by Claude","",`<div data-research="full">${researchPanel(false)}</div>`)+refPanel("market")+blk("Your own research","links and source guide",researchLinks()+`<div class="callout"><b>Where to look, in order of reliability for pay data:</b><ul class="plain"><li>Salary surveys held by Volvo Group Compensation &amp; Benefits (ask your P&amp;C partner). Use these for the internal range.</li><li>Official statistics and professional bodies, for example <a href="https://www.scb.se/en/" target="_blank" rel="noopener">Statistics Sweden (SCB)</a>, <a href="https://www.bls.gov/oes/" target="_blank" rel="noopener">US BLS OEWS</a>, <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noopener">Eurostat</a>, and engineering unions or associations in the market.</li><li>Talent-supply tools your team licenses (for example LinkedIn Talent Insights): profile counts, competing employers, talent flows.</li><li>Self-reported salary sites (Glassdoor, PayScale, Levels.fyi, AmbitionBox and similar). Treat these as indicative only and note sample size and date.</li></ul></div>`)
   +blk("Market summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two or three sentences: how available the talent is, the main constraint, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div>`)
   +blk("Availability and hiring difficulty","by skill or combination",listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>How difficulty is scored:</b> rate each factor from 1 (easy) to 5 (hard). The difficulty is the average of the factors you scored: below 2 is Low, 2 to 2.9 is Moderate, 3 to 3.9 is High, 4 and above is Very high. The scores are your judgement. Put the evidence behind them in the evidence column and the source register.</div>`)
   +blk("Indicative compensation","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old. Refresh them or explain why in the limitations column.</div>`:"")+`<p class="help">State currency, geography, period and basis on every row. Do not mix base salary and total compensation in one comparison. The internal band is confidential unless P&amp;C agrees to share it.</p>`)
@@ -667,8 +737,8 @@ function rPlan(){
   else if(!cl)check=`<div class="callout warn">Tentative closure date not set. Milestones cannot be checked against it.</div>`;
   return head("Section 6 · Recommended interview and hiring plan","Interview &amp; hiring plan","Stages, assessments and dates start as Proposed. Mark them Confirmed only once the hiring manager agrees.")
   +refPanel("plan")+blk("Interview stages","",listEditor("plan.stages",{add:"Add stage"}))
-  +blk("First resume commitment","",`<div class="grid">${field("plan.resumeCount","Number of resumes",{type:"number"})}${field("plan.resumeDate","Committed date",{type:"date"})}${plainField("plan.daysToResumes","Business days from kickoff (for the proposed timeline)",{type:"number"})}<div class="fld full"><label for="f_text_resumeNote">Conditions</label><textarea id="f_text_resumeNote" rows="2" data-path="text.resumeNote" placeholder="e.g. Depends on JD sign-off and the comp range confirmed by the date above.">${esc(pkg.text.resumeNote)}</textarea></div></div>`,"Five is a sensible default for the first set. Adjust it to the difficulty rating.")
-  +blk("Proposed timeline","",`<div class="toolbar"><button class="btn" type="button" data-act="buildTimeline">Build proposed timeline</button><span id="tlConfirm"></span><span class="help" style="margin:0">Uses the kickoff date (or today), the resume lead time and the feedback turnaround. Business days only; holidays are not excluded.</span></div>`)
+  +blk("First resume commitment","",`<div class="grid">${field("plan.resumeCount","Number of resumes",{type:"number"})}${field("plan.resumeDate","Committed date",{type:"date"})}${plainField("plan.daysToResumes","Business days from kickoff to first resumes",{type:"number",ph:"Auto from market: "+marketBasis().lead,hint:"Leave blank to use the market-based lead time."})}<div class="fld full"><label for="f_text_resumeNote">Conditions</label><textarea id="f_text_resumeNote" rows="2" data-path="text.resumeNote" placeholder="e.g. Depends on JD sign-off and the comp range confirmed by the date above.">${esc(pkg.text.resumeNote)}</textarea></div></div>`,`Five is the default first set. For a ${marketBasis().level||"not yet assessed"} market, ${RESUME_SUGGEST[marketBasis().level]||5} is a realistic first set.`)
+  +blk("Tentative timeline","based on market intelligence",`<div class="callout" style="margin-top:0">${esc(marketBasis().note)}</div><div class="toolbar"><button class="btn" type="button" data-act="buildTimeline">Build tentative plan</button><span id="tlConfirm"></span><span class="help" style="margin:0">Uses the kickoff date (or today), the market-based lead time, the feedback turnaround and the notice period. Business days only; holidays are not excluded. Dates stay between 2026 and 2035.</span></div>`)
   +blk("Interview schedule","",listEditor("plan.schedule",{add:"Add schedule row"}))
   +blk("Offer and onboarding","tentative dates",`<div class="grid">${field("plan.offerDate","Tentative offer date",{type:"date"})}${plainField("plan.noticeWeeks","Expected notice period (weeks)",{type:"number",hint:"Used to estimate the start date. Confirm typical notice periods for this market."})}${field("plan.onboardingDate","Tentative onboarding / start date",{type:"date"})}<div class="fld full"><label for="f_plan_onboardingNote">Onboarding notes</label><textarea id="f_plan_onboardingNote" rows="2" data-path="plan.onboardingNote" placeholder="Buddy, equipment, site access, first-week plan, pre-boarding contact.">${esc(pkg.plan.onboardingNote)}</textarea></div></div>${onbCheck()}`,"“Build proposed timeline” fills these in from the plan. Change them as soon as the real dates are known.")
   +blk("Milestones and decision points","",listEditor("plan.milestones",{add:"Add milestone"})+check)
@@ -706,7 +776,7 @@ function rInputs(){
   const card=(x,i)=>{const p="inputs."+i;return `<section class="blk" style="border-top:1px solid var(--line);margin-top:18px"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><h2 style="font-size:15px">${esc(x.title||x.type)}</h2><span class="help" style="margin:0">${esc(x.type)} · received ${fmtDate(x.date)||"—"} · ${x.content?x.content.length.toLocaleString()+" characters":"empty"}</span><button class="btn3" type="button" data-act="delInput" data-idx="${i}" style="margin-left:auto">Remove…</button><span id="di-${i}"></span></div>
   <div class="grid"><div class="fld"><label for="in_t_${i}">Type</label><select id="in_t_${i}" data-path="${p}.type">${opts(INPUT_TYPES,x.type)}</select></div>
   <div class="fld"><label for="in_ti_${i}">Title</label><input id="in_ti_${i}" type="text" data-path="${p}.title" value="${esc(x.title)}" placeholder="e.g. JD v2 from hiring manager"></div>
-  <div class="fld"><label for="in_d_${i}">Date received</label><input id="in_d_${i}" type="date" data-path="${p}.date" value="${esc(x.date)}"></div>
+  <div class="fld"><label for="in_d_${i}">Date received</label><input id="in_d_${i}" type="date" data-path="${p}.date" value="${esc(x.date)}" ${DATTR}></div>
   <div class="fld"><label for="in_s_${i}">From</label><input id="in_s_${i}" type="text" data-path="${p}.source" value="${esc(x.source)}" placeholder="Person or system"></div>
   <div class="fld full"><label for="in_l_${i}">Link (optional)</label><input id="in_l_${i}" type="url" data-path="${p}.link" value="${esc(x.link)}" placeholder="https://… e.g. the JD in your ATS or SharePoint"></div>
   <div class="fld full"><span style="font-size:12px;font-weight:500;color:var(--muted)">Use as input for</span><div class="toolbar" style="margin-top:2px">${USES.map(([k,l])=>`<label><input type="checkbox" data-path="${p}.uses.${k}"${x.uses&&x.uses[k]?" checked":""}> ${l}</label>`).join("")}</div></div>
@@ -749,6 +819,7 @@ function renderNotices(){
   if(S.mode==="db")h+=`<div class="notice"><p><b>Shared store.</b> Packages save automatically and everyone with edit access to this page sees the same versions.</p></div>`;
   else h+=`<div class="notice"><p><b>Saved in this browser only.</b> ${S.inViewer?"Shared saving is not available in this view.":"Open the published page to save to the shared store."} Use <i>Meeting snapshots → Export package</i> to keep a backup.</p></div>`;
   if(!S.canWrite)h+=`<div class="notice warn"><p>You can view these packages but not edit them. Ask the page owner for edit access.</p></div>`;
+  if(pkg&&researchState()==="ready")h+=`<div class="notice"><p><b>Claude's market research is ready</b> for ${esc(pkg.meta.role.v||"this package")}. Review it under Market intelligence and add it to the report.</p><button class="btn2" type="button" data-tab="market">Review findings</button></div>`;
   if(remotePending)h+=`<div class="notice warn"><p>Someone else saved a newer version of this package while you were editing.</p><button class="btn2" type="button" data-act="loadRemote">Load their version</button><button class="btn3" type="button" data-act="keepMine">Keep mine (overwrites theirs on next save)</button></div>`;
   if(S.mode==="db"&&!localDraftsOffered){const loc=lsGet(LS_KEY);const n=loc?Object.keys(loc).filter(k=>!packages[k]).length:0;if(n)h+=`<div class="notice"><p>${n} package(s) were saved in this browser before shared saving was available.</p><button class="btn2" type="button" data-act="migrate">Copy them to the shared store</button><button class="btn3" type="button" data-act="dismissMigrate">Not now</button></div>`}
   $("#notices").innerHTML=h;
@@ -824,12 +895,13 @@ async function deletePkg(){
 
 /* ---------- proposed timeline ---------- */
 function buildTimeline(){
-  const k=pkg.meta.kickoffDate.v||todayISO();const lead=Math.max(1,parseInt(pkg.plan.daysToResumes,10)||5);
+  const B0=marketBasis();let k=pkg.meta.kickoffDate.v||todayISO();if(k<DMIN)k=DMIN;const lead=Math.max(1,parseInt(pkg.plan.daysToResumes,10)||B0.lead), X=B0.extra;
+  if(pkg.plan.resumeCount.s!=="confirmed"&&B0.level)pkg.plan.resumeCount={v:String(RESUME_SUGGEST[B0.level]),s:"proposed"};
   const sla=Math.max(1,parseInt(String(pkg.plan.feedbackSla.v).match(/\d+/)?.[0]||"2",10));
-  const r=addBD(k,lead), fb=addBD(r,sla), l1s=addBD(fb,1), l1e=addBD(l1s,4), sh=addBD(l1e,sla), l2s=addBD(sh,1), l2e=addBD(l2s,3), fd=addBD(l2e,sla), ref=addBD(fd,2), off=addBD(ref,1), acc=addBD(off,3);
+  const r=addBD(k,lead), fb=addBD(r,sla), l1s=addBD(fb,1), l1e=addBD(l1s,4+X), sh=addBD(l1e,sla), l2s=addBD(sh,1), l2e=addBD(l2s,3+X), fd=addBD(l2e,sla), ref=addBD(fd,2), off=addBD(ref,1), acc=addBD(off,3);
   const L1=pkg.interviewers.find(i=>/L1/i.test(i.level)),L2=pkg.interviewers.find(i=>/L2/i.test(i.level)),PC=pkg.interviewers.find(i=>/P&C/i.test(i.level));
   const nm=(x,d)=>x&&x.name?x.name:d;
-  pkg.plan.resumeDate.v=pkg.plan.resumeDate.v||r;
+  if(pkg.plan.resumeDate.s!=="confirmed")pkg.plan.resumeDate={v:r,s:"proposed"};pkg.plan.basisNote=B0.note;
   pkg.plan.milestones=[
     {name:"Kickoff held; package shared with hiring manager",owner:"TA Partner",date:addBD(k,1),dependency:"Kickoff notes",decision:false,s:"proposed"},
     {name:"JD and comp range confirmed; sourcing live",owner:"TA Partner, P&C",date:addBD(k,2),dependency:"HM sign-off on JD; P&C range",decision:true,s:"proposed"},
@@ -854,7 +926,9 @@ function buildTimeline(){
   if(pkg.plan.onboardingDate.s!=="confirmed"){if(nw>0){const d=parseISO(acc);d.setDate(d.getDate()+Math.round(nw*7));while(d.getDay()!==1)d.setDate(d.getDate()+1);pkg.plan.onboardingDate={v:toISO(d),s:"proposed"};
       pkg.plan.milestones.push({name:"Onboarding / start date",owner:"Hiring manager, TA Partner",date:toISO(d),dependency:`Notice period (${nw} weeks)`,decision:false,s:"proposed"})}
     else pkg.plan.onboardingDate={v:"",s:"tbc"}}
-  scheduleSave();render();toast(nw>0?"Proposed timeline built, including offer and start dates. All dates are proposals until agreed.":"Proposed timeline built. Add the notice period to estimate the start date.");
+  const late=[...pkg.plan.milestones.map(x=>x.date),pkg.plan.offerDate.v,pkg.plan.onboardingDate.v].filter(Boolean).some(d=>d>DMAX);
+  if(late){toast("Some dates fall after 2035. Choose an earlier kickoff date.");}
+  scheduleSave();render();if(late)return;toast(nw>0?"Tentative plan built, including offer and start dates. All dates are proposals until agreed.":"Proposed timeline built. Add the notice period to estimate the start date.");
 }
 
 /* ---------- executive summary draft ---------- */
@@ -877,14 +951,14 @@ const DOCS={
   full:{name:"Full hiring package",short:"Hiring package",file:"hiring-package"},
   minutes:{name:"Minutes of Meeting",short:"Minutes of Meeting",file:"minutes-of-meeting"},
   market:{name:"Market Intelligence Report",short:"Market Intelligence Report",file:"market-intelligence"},
-  plan:{name:"Interview & Hiring Plan",short:"Interview & Hiring Plan",file:"hiring-plan"}
+  plan:{name:"Tentative Hiring Plan",short:"Tentative Hiring Plan",file:"tentative-hiring-plan"}
 };
 function defaultSubject(kind){kind=kind||pkg.email.kind||"full";return `${DOCS[kind].short} for review: ${pkg.meta.role.v||"[Role]"}${pkg.meta.location.v?" · "+pkg.meta.location.v:""}${pkg.meta.reqId.v?" · "+pkg.meta.reqId.v:""}`}
 function defaultNote(kind){kind=kind||pkg.email.kind||"full";return {
   full:"Thank you for the kickoff. Below is the hiring package: what we agreed, what still needs confirming, the market picture and the proposed plan. Please review the decisions I need from you and reply with any corrections.",
   minutes:"Thank you for the meeting. Below are the minutes: what we agreed, the open questions and the action items. Please reply with any corrections, especially for items marked [To confirm].",
   market:"Below is the talent availability and market intelligence for this role. Figures are indicative and sourced as listed. The alternative skills are options for your decision, not changes to the role.",
-  plan:"Below is the proposed interview and hiring plan, including the resume commitment, interview schedule, tentative offer and onboarding dates, and the decisions I need from you. Dates are proposals until we agree them."}[kind]}
+  plan:"Below is the tentative hiring plan for this role, built on the market intelligence we gathered. It covers the interview stages, the first resume commitment, the interview schedule, tentative offer and onboarding dates, and the decisions I need from you. All dates are proposals until we agree them."}[kind]}
 const ST_LABEL={confirmed:"Confirmed",tbc:"To confirm",proposed:"Proposed",missing:"Missing",declined:"Declined",recommended:"Recommended"};
 function fd(f){return f&&f.v?fmtDate(f.v)+(f.s==="confirmed"?"":f.s==="proposed"?" (proposed)":" "+TBC):TBC}
 function st2(ev){return {text:label(EVIDENCE,ev),status:ev==="verified"?"confirmed":ev==="estimate"?"proposed":ev==="assumption"?"declined":"tbc"}}
@@ -987,7 +1061,12 @@ function buildDoc(kind){
   /* ---- plan ---- */
   const plan=()=>{
     const S=kind==="plan"?H1:H2;
-    if(kind!=="plan")H1("Recommended interview and hiring plan");
+    if(kind!=="plan")H1("Recommended interview and hiring plan (tentative)");
+    S("Basis of this plan");
+    B.push({t:"p",text:(pkg.plan.basisNote||marketBasis().note)+" All dates are tentative until the hiring manager confirms them."});
+    if(kind==="plan"){const dif=pkg.market.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc);
+      if(dif.length)B.push({t:"table",head:["Skill / combination","Market","Difficulty","Evidence type"],rows:dif.map(({r,sc})=>[r.skill,txt(r.market),`${sc.lvl} (${sc.avg.toFixed(1)}/5)`,st2(r.evidence)])});
+      if(pkg.text.marketSummary)B.push({t:"note",text:"Market summary: "+pkg.text.marketSummary});}
     S("Interview stages");
     B.push({t:"table",head:["Stage","Format / length","Focus areas","Interviewer / owner","Evaluation criteria","Status"],rows:pkg.plan.stages.filter(s=>s.name).map(s=>[s.name,[s.format,s.duration].filter(Boolean).join(" · ")||"—",txt(s.focus),txt(s.owner),txt(s.criteria),stc(s.s)])});
     S("First resume commitment");
@@ -1131,11 +1210,14 @@ function copyRich(html,text){
 
 /* ---------- events ---------- */
 $("#main").addEventListener("input",onEdit);$("#main").addEventListener("change",onEdit);
+$("#main").addEventListener("focusout",e=>{const el=e.target;if(el.type==="date"&&el.classList.contains("bad")){el.value=getPath(pkg,el.dataset.path)||"";el.classList.remove("bad");el.setCustomValidity("");toast("Dates must be between 1 Jan 2026 and 31 Dec 2035.")}});
 function onEdit(ev){
   const el=ev.target;const p=el.dataset&&el.dataset.path;if(!p||!pkg||!S.canWrite)return;
   if(ev.type==="input"&&(el.tagName==="SELECT"||el.type==="checkbox"))return;
   if(ev.type==="change"&&(el.tagName==="TEXTAREA"||(el.tagName==="INPUT"&&el.type!=="checkbox"&&el.type!=="date")))return;
-  const v=el.type==="checkbox"?el.checked:el.value;setPath(pkg,p,v);
+  const v=el.type==="checkbox"?el.checked:el.value;
+  if(el.type==="date"){if(v&&(v<DMIN||v>DMAX)){el.classList.add("bad");el.setCustomValidity("Choose a date between 2026 and 2035.");return}el.classList.remove("bad");el.setCustomValidity("")}
+  setPath(pkg,p,v);
   if(el.classList.contains("st")){el.className="st st-"+v}
   const m=p.match(/^market\.availability\.(\d+)\./);if(m){const d=document.getElementById("diff-"+m[1]);if(d)d.innerHTML=diffHTML(pkg.market.availability[+m[1]])}
   if(p==="meta.role.v"){renderPkgSel()}
@@ -1150,7 +1232,7 @@ let prevT;function refreshPreview(){clearTimeout(prevT);prevT=setTimeout(()=>{co
 document.addEventListener("click",async ev=>{
   const tab=ev.target.closest("[data-tab]");if(tab){cur=tab.dataset.tab;lsSet("hps.v1.tab",cur);render();window.scrollTo({top:0});return}
   const b=ev.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
-  const need=["addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
+  const need=["requestResearch","importResearch","addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
   if(need.includes(a)&&!S.canWrite){toast("You have view access only.");return}
   switch(a){
     case "add":{const list=getPath(pkg,b.dataset.list);list.push(LISTS[b.dataset.list].blank());scheduleSave();render();break}
@@ -1162,6 +1244,9 @@ document.addEventListener("click",async ev=>{
     case "buildYes":buildTimeline();break;
     case "clearConfirm":{const t=document.getElementById(b.dataset.target);if(t)t.innerHTML="";break}
     case "snap":saveSnapshot();break;
+    case "requestResearch":requestResearch();break;
+    case "importResearch":importResearch();break;
+    case "goBuild":cur="plan";lsSet("hps.v1.tab",cur);render();setTimeout(()=>{const b=document.querySelector('[data-act="buildTimeline"]');if(b){b.scrollIntoView({block:"center"});b.focus()}},50);break;
     case "addInput":{const t=$("#newInputType");pkg.inputs.push(newInput(t?t.value:"Other",""));scheduleSave();render();const ta=document.getElementById("in_c_"+(pkg.inputs.length-1));if(ta){ta.focus();ta.scrollIntoView({block:"center"})}break}
     case "delInput":{const i=+b.dataset.idx;$("#di-"+i).innerHTML=`<span class="inline-confirm">Remove this input? <button class="btn danger" type="button" data-act="delInputYes" data-idx="${i}">Remove</button><button class="btn3" type="button" data-act="clearConfirm" data-target="di-${i}">Cancel</button></span>`;break}
     case "delInputYes":pkg.inputs.splice(+b.dataset.idx,1);scheduleSave();render();break;
@@ -1213,6 +1298,7 @@ function bootLocal(){
   pkg=pick?normalize(packages[pick]):null;if(!RENDER[cur])cur="overview";renderNotices();render();setSave(pkg?"Saved in this browser":"");
 }
 bootLocal();
+if(location.protocol==="file:")window.__hpsTest={setResearch:(r)=>{researchMap[pkg.id]=r;renderResearchSpots();renderNotices()}};
 if(S.inViewer){
   window.claude.use("downloads").then(d=>S.dl=d,()=>{});
   Promise.all([window.claude.use("db"),window.claude.use("user")]).then(async([db,user])=>{
@@ -1220,6 +1306,9 @@ if(S.inViewer){
     if(user){try{const c=await user.can("data.write");if(c===false)S.canWrite=false}catch(e){}}
     if(!db){renderNotices();render();return}
     S.db=db;S.mode="db";packages={};let first=true;
+    db.doc("config/research").onSnapshot(d=>{researchCfg=d.exists?d.data():null},()=>{});
+    db.collection("research").onSnapshot(snap=>{const prev=pkg?researchState():null;researchMap={};snap.docs.forEach(d=>researchMap[d.id]=d.data());
+      if(pkg){const now=researchState();renderResearchSpots();if(now!==prev){renderNotices();if(cur==="dash")refreshDash();if(now==="ready")toast("Claude's market research is ready to review.")}}},()=>{});
     db.collection("packages").onSnapshot(snap=>{
       snap.docChanges().forEach(ch=>{const id=ch.doc.id;
         if(ch.type==="removed"){delete packages[id];if(pkg&&pkg.id===id&&!first){pkg=null;toast("This package was deleted by someone else.")}return}
