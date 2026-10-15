@@ -278,6 +278,7 @@ const BASIS=[["Base salary","Base salary"],["Total cash","Total cash"],["Total c
 const INFO=[["draft","Draft: before kickoff"],["kickoff","Kickoff held: awaiting confirmation"],["partial","Partially confirmed"],["confirmed","Confirmed with hiring manager"]];
 const INPUT_TYPES=[["Job description","Job description"],["Kickoff notes","Kickoff / meeting notes"],["Hiring manager email","Hiring manager email or message"],["Org chart / team info","Org chart / team information"],["Market report","Market report or salary data"],["Competitor intel","Competitor or talent-mapping notes"],["Interview guide","Interview guide or scorecard"],["Policy","Policy or P&C guidance"],["Other","Other"]];
 const USES=[["minutes","Minutes"],["market","Market intelligence"],["plan","Interview & hiring plan"]];
+const SCHED_STAGES=[["","Choose a stage"],["First set of CVs to hiring manager","First set of CVs to hiring manager"],["Hiring manager CV feedback","Hiring manager CV feedback"],["TA screening calls","TA screening calls"],["First-level (L1) interviews","First-level (L1) interviews"],["Second-level (L2) interviews","Second-level (L2) interviews"],["HR interview","HR interview"],["Final selection decision","Final selection decision"],["Tentative offer","Tentative offer"],["Tentative onboarding","Tentative onboarding"],["Other","Other"]];
 const TBC="[To confirm]";
 const DMIN="2026-01-01", DMAX="2035-12-31";
 const DATTR=`min="${"2026-01-01"}" max="${"2035-12-31"}"`;
@@ -374,6 +375,9 @@ function blankPackage(){
 function fillDefaults(t,d){for(const k in d){if(t[k]===undefined)t[k]=clone(d[k]);else if(d[k]&&typeof d[k]==="object"&&!Array.isArray(d[k])&&t[k]&&typeof t[k]==="object"&&!Array.isArray(t[k]))fillDefaults(t[k],d[k])}return t}
 function normalize(p){const b=blankPackage();const out=fillDefaults(clone(p),b);out.id=p.id||b.id;
   if(out.text.jd&&!out.inputs.some(i=>i.type==="Job description")){out.inputs.unshift(newInput("Job description",out.text.jd));out.text.jd=""}
+  const MAP={"L1 interviews":"First-level (L1) interviews","L2 interviews":"Second-level (L2) interviews","Values and culture conversation":"HR interview"};
+  out.plan.schedule=(out.plan.schedule||[]).map(r=>{if(r.from!==undefined)return r;const st=MAP[r.stage]||r.stage||"";const known=SCHED_STAGES.some(x=>x[0]===st);
+    return {stage:known?st:"Other",from:"",to:"",detail:[known?"":r.stage,r.date,r.slots].filter(Boolean).join(" · "),who:r.who||"",s:r.s||"proposed"}});
   return out}
 function newInput(type,content){return {id:uid(),type:type||"Job description",title:"",date:todayISO(),source:"",link:"",content:content||"",uses:{minutes:true,market:true,plan:true}}}
 
@@ -393,7 +397,7 @@ const LISTS={
   "market.alternatives":{cols:[{k:"alt",l:"Alternative or transferable skill",type:"area",min:240},{k:"forSkill",l:"Instead of / alongside",min:160},{k:"gain",l:"Expected effect on pool or speed",type:"area",min:200},{k:"risk",l:"Risk and how to close the gap",type:"area",min:220},{k:"hm",l:"Hiring manager",type:"select",opts:HM_ALT,cls:"st",min:130}],blank:()=>({alt:"",forSkill:"",gain:"",risk:"",hm:"pending"}),empty:"No alternatives proposed yet."},
   "market.sources":{cols:[{k:"_id",l:"ID",type:"rowid",min:40},{k:"title",l:"Title",min:220},{k:"publisher",l:"Publisher",min:140},{k:"url",l:"Link",type:"url",min:220},{k:"published",l:"Published / data date",min:120},{k:"accessed",l:"Accessed",type:"date",min:140},{k:"note",l:"Note",min:160}],blank:()=>({title:"",publisher:"",url:"",published:"",accessed:todayISO(),note:""}),empty:"No sources yet. Every market figure should point to a source here."},
   "plan.stages":{cols:[{k:"name",l:"Stage",min:180},{k:"format",l:"Format",min:160},{k:"duration",l:"Length",min:90},{k:"focus",l:"Focus areas",type:"area",min:240},{k:"owner",l:"Interviewer / owner",min:170},{k:"criteria",l:"Evaluation criteria",type:"area",min:240},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({name:"",format:"",duration:"",focus:"",owner:"",criteria:"",s:"proposed"}),empty:"No stages yet."},
-  "plan.schedule":{cols:[{k:"stage",l:"Stage",min:200},{k:"date",l:"Date or window",min:180},{k:"slots",l:"Slots / time",min:140},{k:"who",l:"Interviewers",min:180},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({stage:"",date:"",slots:"",who:"",s:"proposed"}),empty:"No schedule yet. Use “Build proposed timeline” above, or add rows."},
+  "plan.schedule":{cols:[{k:"stage",l:"Stage",type:"select",opts:SCHED_STAGES,min:230},{k:"from",l:"Tentative date (from)",type:"date",min:150},{k:"to",l:"Until (for a window)",type:"date",min:150},{k:"detail",l:"Details (e.g. 5 CVs, 60 min)",min:170},{k:"who",l:"Interviewers / owner",min:170},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({stage:"",from:"",to:"",detail:"",who:"",s:"proposed"}),empty:"No schedule yet. Use “Build tentative plan” above, or add stages."},
   "plan.assessments":{cols:[{k:"name",l:"Assessment",min:180},{k:"type",l:"Type",min:150},{k:"purpose",l:"Used for",min:150},{k:"rationale",l:"Rationale",type:"area",min:300},{k:"s",l:"Status",type:"select",opts:ASSESS_ST,cls:"st",min:130}],blank:()=>({name:"",type:"",purpose:"",rationale:"",s:"recommended"}),empty:"No assessments."},
   "plan.milestones":{cols:[{k:"name",l:"Milestone",min:220},{k:"owner",l:"Owner",min:140},{k:"date",l:"Date",type:"date",min:140},{k:"dependency",l:"Depends on",min:180},{k:"decision",l:"Decision point",type:"check",min:80},{k:"s",l:"Status",type:"status",min:120}],blank:()=>({name:"",owner:"",date:"",dependency:"",decision:false,s:"proposed"}),empty:"No milestones yet. Use “Build proposed timeline” above."},
   "plan.risks":{cols:[{k:"risk",l:"Risk to timeline",type:"area",min:240},{k:"likelihood",l:"Likelihood",type:"select",opts:LMH,min:100},{k:"impact",l:"Impact",type:"select",opts:LMH,min:100},{k:"mitigation",l:"Mitigation",type:"area",min:280},{k:"owner",l:"Owner",min:140}],blank:()=>({risk:"",likelihood:"",impact:"",mitigation:"",owner:""}),empty:"No risks recorded."},
@@ -467,10 +471,12 @@ function chartPlan(){
   const b=marketBasis(), P=pkg.plan, ms=P.milestones;
   const find=re=>ms.find(x=>re.test(x.name)&&x.date);
   const rows=[["First resumes",P.resumeDate.v?{d:P.resumeDate.v,s:P.resumeDate.s}:null,P.resumeCount.v?P.resumeCount.v+" resumes":""],["L1 interviews done",find(/L1 interviews/i),""],["Final selection",find(/final selection/i),""],["Tentative offer",P.offerDate.v?{d:P.offerDate.v,s:P.offerDate.s}:null,""],["Onboarding / start",P.onboardingDate.v?{d:P.onboardingDate.v,s:P.onboardingDate.s}:null,P.noticeWeeks?P.noticeWeeks+"-week notice assumed":""],["Closure",pkg.meta.closureDate.v?{d:pkg.meta.closureDate.v,s:pkg.meta.closureDate.s}:null,""]];
+  const sch=P.schedule.filter(r=>r.stage&&r.from).slice().sort((a,b)=>a.from.localeCompare(b.from));
+  if(sch.length){rows.length=0;sch.forEach(r=>rows.push([r.stage,{d:r.from,to:r.to,s:r.s},r.detail]));rows.push(["Closure",pkg.meta.closureDate.v?{d:pkg.meta.closureDate.v,s:pkg.meta.closureDate.s}:null,""])}
   const has=rows.some(r=>r[1]);
   return chartHead("Tentative hiring plan",b.level?"based on market difficulty: "+b.level:"market not yet assessed")
    +`<p class="help" style="margin:6px 0 8px">${esc(b.note)}</p>`
-   +(has?`<dl class="kv plan">${rows.map(([l,x,n])=>`<dt>${l}</dt><dd>${x?`<b>${fmtDate(x.d||x.date)}</b> <span class="chip st-${(x.s==="confirmed"?"confirmed":x.s==="tbc"?"tbc":"proposed")}">${ST_LABEL[x.s]||"Proposed"}</span>`:`<span class="help" style="margin:0">${TBC}</span>`}${n?` <span class="help" style="margin:0">· ${esc(n)}</span>`:""}</dd>`).join("")}</dl>`:"")
+   +(has?`<dl class="kv plan">${rows.map(([l,x,n])=>`<dt>${l}</dt><dd>${x?`<b>${fmtDate(x.d||x.date)}${x.to&&x.to!==x.d?" – "+fmtDate(x.to):""}</b> <span class="chip st-${(x.s==="confirmed"?"confirmed":x.s==="tbc"?"tbc":"proposed")}">${ST_LABEL[x.s]||"Proposed"}</span>`:`<span class="help" style="margin:0">${TBC}</span>`}${n?` <span class="help" style="margin:0">· ${esc(n)}</span>`:""}</dd>`).join("")}</dl>`:"")
    +`<div class="toolbar"><button class="${has?"btn2":"btn"}" type="button" data-act="goBuild">${has?"Rebuild the tentative plan":"Build the tentative plan"}</button></div>`;
 }
 function chartDifficulty(diffs){
@@ -510,6 +516,9 @@ function chartTimeline(){
 /* ---------- market-based plan basis ---------- */
 const LEAD={Low:5,Moderate:7,High:10,"Very high":15};
 const RESUME_SUGGEST={Low:5,Moderate:5,High:4,"Very high":3};
+function schedWhen(r){return r.from?(r.to&&r.to!==r.from?`${fmtDate(r.from)} – ${fmtDate(r.to)}`:fmtDate(r.from)):""}
+function schedCheck(){const bad=pkg.plan.schedule.filter(r=>r.from&&r.to&&r.to<r.from).map(r=>r.stage);const cl=pkg.meta.closureDate.v;const late=pkg.plan.schedule.filter(r=>r.from&&cl&&r.from>cl&&r.stage!=="Tentative onboarding").map(r=>r.stage);
+  return (bad.length?`<div class="callout warn">End date is before the start date for: ${bad.map(esc).join(", ")}.</div>`:"")+(late.length?`<div class="callout warn">After the tentative closure date (${fmtDate(cl)}): ${late.map(esc).join(", ")}.</div>`:"")}
 function marketBasis(){
   const prim=pkg.skills.filter(s=>s.tier==="primary"&&s.name).map(s=>s.name.toLowerCase());
   const rows=pkg.market.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc).sort((a,b)=>b.sc.avg-a.sc.avg);
@@ -586,7 +595,7 @@ function tracker(){
   pkg.success.forEach(r=>r.measure&&push("Success measures",r.measure,r.s,r.timeframe));
   pkg.interviewers.forEach(r=>push("Interviewers",r.level||"Interviewer",r.name?r.s:"missing",r.name));
   pkg.plan.stages.forEach(r=>r.name&&push("Interview stages",r.name,r.s,r.owner));
-  pkg.plan.schedule.forEach(r=>r.stage&&push("Schedule",r.stage,r.s,r.date));
+  pkg.plan.schedule.forEach(r=>r.stage&&push("Interview schedule",r.stage,r.from?r.s:"missing",schedWhen(r)));
   pkg.plan.milestones.forEach(r=>r.name&&push("Milestones",r.name,r.s,fmtDate(r.date)));
   pkg.plan.assessments.forEach(r=>r.name&&push("Assessments",r.name,r.s==="confirmed"?"confirmed":r.s==="declined"?"declined":"proposed",""));
   pkg.market.alternatives.forEach(r=>r.alt&&push("Alternative skills",r.alt,r.hm==="accept"?"confirmed":r.hm==="reject"?"declined":"tbc",label(HM_ALT,r.hm)));
@@ -739,7 +748,7 @@ function rPlan(){
   +refPanel("plan")+blk("Interview stages","",listEditor("plan.stages",{add:"Add stage"}))
   +blk("First resume commitment","",`<div class="grid">${field("plan.resumeCount","Number of resumes",{type:"number"})}${field("plan.resumeDate","Committed date",{type:"date"})}${plainField("plan.daysToResumes","Business days from kickoff to first resumes",{type:"number",ph:"Auto from market: "+marketBasis().lead,hint:"Leave blank to use the market-based lead time."})}<div class="fld full"><label for="f_text_resumeNote">Conditions</label><textarea id="f_text_resumeNote" rows="2" data-path="text.resumeNote" placeholder="e.g. Depends on JD sign-off and the comp range confirmed by the date above.">${esc(pkg.text.resumeNote)}</textarea></div></div>`,`Five is the default first set. For a ${marketBasis().level||"not yet assessed"} market, ${RESUME_SUGGEST[marketBasis().level]||5} is a realistic first set.`)
   +blk("Tentative timeline","based on market intelligence",`<div class="callout" style="margin-top:0">${esc(marketBasis().note)}</div><div class="toolbar"><button class="btn" type="button" data-act="buildTimeline">Build tentative plan</button><span id="tlConfirm"></span><span class="help" style="margin:0">Uses the kickoff date (or today), the market-based lead time, the feedback turnaround and the notice period. Business days only; holidays are not excluded. Dates stay between 2026 and 2035.</span></div>`)
-  +blk("Interview schedule","",listEditor("plan.schedule",{add:"Add schedule row"}))
+  +blk("Interview schedule","tentative dates per stage",listEditor("plan.schedule",{add:"Add stage"})+schedCheck(),"Pick a stage from the list and set its tentative date. For interview rounds, add an end date to show the window.")
   +blk("Offer and onboarding","tentative dates",`<div class="grid">${field("plan.offerDate","Tentative offer date",{type:"date"})}${plainField("plan.noticeWeeks","Expected notice period (weeks)",{type:"number",hint:"Used to estimate the start date. Confirm typical notice periods for this market."})}${field("plan.onboardingDate","Tentative onboarding / start date",{type:"date"})}<div class="fld full"><label for="f_plan_onboardingNote">Onboarding notes</label><textarea id="f_plan_onboardingNote" rows="2" data-path="plan.onboardingNote" placeholder="Buddy, equipment, site access, first-week plan, pre-boarding contact.">${esc(pkg.plan.onboardingNote)}</textarea></div></div>${onbCheck()}`,"“Build proposed timeline” fills these in from the plan. Change them as soon as the real dates are known.")
   +blk("Milestones and decision points","",listEditor("plan.milestones",{add:"Add milestone"})+check)
   +blk("Assessments","recommendations unless confirmed",listEditor("plan.assessments",{add:"Add assessment"}))
@@ -898,7 +907,7 @@ function buildTimeline(){
   const B0=marketBasis();let k=pkg.meta.kickoffDate.v||todayISO();if(k<DMIN)k=DMIN;const lead=Math.max(1,parseInt(pkg.plan.daysToResumes,10)||B0.lead), X=B0.extra;
   if(pkg.plan.resumeCount.s!=="confirmed"&&B0.level)pkg.plan.resumeCount={v:String(RESUME_SUGGEST[B0.level]),s:"proposed"};
   const sla=Math.max(1,parseInt(String(pkg.plan.feedbackSla.v).match(/\d+/)?.[0]||"2",10));
-  const r=addBD(k,lead), fb=addBD(r,sla), l1s=addBD(fb,1), l1e=addBD(l1s,4+X), sh=addBD(l1e,sla), l2s=addBD(sh,1), l2e=addBD(l2s,3+X), fd=addBD(l2e,sla), ref=addBD(fd,2), off=addBD(ref,1), acc=addBD(off,3);
+  const r=addBD(k,lead), fb=addBD(r,sla), l1s=addBD(fb,1), l1e=addBD(l1s,4+X), sh=addBD(l1e,sla), l2s=addBD(sh,1), l2e=addBD(l2s,3+X), hrS=addBD(l2s,1), hrE=addBD(l2e,1), fd=addBD(hrE,sla), ref=addBD(fd,2), off=addBD(ref,1), acc=addBD(off,3);
   const L1=pkg.interviewers.find(i=>/L1/i.test(i.level)),L2=pkg.interviewers.find(i=>/L2/i.test(i.level)),PC=pkg.interviewers.find(i=>/P&C/i.test(i.level));
   const nm=(x,d)=>x&&x.name?x.name:d;
   if(pkg.plan.resumeDate.s!=="confirmed")pkg.plan.resumeDate={v:r,s:"proposed"};pkg.plan.basisNote=B0.note;
@@ -909,21 +918,28 @@ function buildTimeline(){
     {name:"Hiring manager resume feedback",owner:"Hiring manager",date:fb,dependency:"Resumes submitted",decision:true,s:"proposed"},
     {name:"L1 interviews completed",owner:nm(L1,"L1 interviewer"),date:l1e,dependency:"Interviewer availability",decision:false,s:"proposed"},
     {name:"Shortlist for L2 agreed",owner:"Hiring manager",date:sh,dependency:"L1 scorecards",decision:true,s:"proposed"},
-    {name:"L2 and values interviews completed",owner:nm(L2,"Hiring manager")+", "+nm(PC,"P&C partner"),date:l2e,dependency:"Shortlist",decision:false,s:"proposed"},
+    {name:"L2 interviews completed",owner:nm(L2,"Hiring manager"),date:l2e,dependency:"Shortlist",decision:false,s:"proposed"},
+    {name:"HR interviews completed",owner:nm(PC,"P&C partner"),date:hrE,dependency:"L2 interviews",decision:false,s:"proposed"},
     {name:"Final selection decision",owner:nm(pkg.interviewers.find(i=>/decision/i.test(i.level)),"Final decision maker"),date:fd,dependency:"All scorecards",decision:true,s:"proposed"},
     {name:"References and offer approval",owner:"TA Partner, P&C",date:ref,dependency:"Selection decision",decision:false,s:"proposed"},
     {name:"Tentative offer date",owner:"TA Partner",date:off,dependency:"Approvals",decision:false,s:"proposed"},
     {name:"Offer accepted (hiring closure)",owner:"Candidate",date:acc,dependency:"Offer",decision:true,s:"proposed"}
   ];
+  const cvN=pkg.plan.resumeCount.v||"5";
   pkg.plan.schedule=[
-    {stage:"TA screening calls",date:`${fmtDate(addBD(k,2))} – ${fmtDate(r)}`,slots:"30 min",who:"TA Partner",s:"proposed"},
-    {stage:"L1 interviews",date:`${fmtDate(l1s)} – ${fmtDate(l1e)}`,slots:"[Slots to confirm]",who:nm(L1,TBC),s:"proposed"},
-    {stage:"L2 interviews",date:`${fmtDate(l2s)} – ${fmtDate(l2e)}`,slots:"[Slots to confirm]",who:nm(L2,TBC),s:"proposed"},
-    {stage:"Values and culture conversation",date:`${fmtDate(l2s)} – ${fmtDate(l2e)}`,slots:"[Slots to confirm]",who:nm(PC,TBC),s:"proposed"}
+    {stage:"First set of CVs to hiring manager",from:r,to:"",detail:`${cvN} CVs`,who:"TA Partner",s:"proposed"},
+    {stage:"Hiring manager CV feedback",from:fb,to:"",detail:"Shortlist for L1",who:nm(pkg.interviewers.find(i=>/decision/i.test(i.level)),"Hiring manager"),s:"proposed"},
+    {stage:"TA screening calls",from:addBD(k,2),to:r,detail:"30 min each",who:"TA Partner",s:"proposed"},
+    {stage:"First-level (L1) interviews",from:l1s,to:l1e,detail:"60 min · slots to confirm",who:nm(L1,TBC),s:"proposed"},
+    {stage:"Second-level (L2) interviews",from:l2s,to:l2e,detail:"60 min · slots to confirm",who:nm(L2,TBC),s:"proposed"},
+    {stage:"HR interview",from:hrS,to:hrE,detail:"30–45 min · values and culture",who:nm(PC,TBC),s:"proposed"},
+    {stage:"Final selection decision",from:fd,to:"",detail:"",who:nm(pkg.interviewers.find(i=>/decision/i.test(i.level)),"Final decision maker"),s:"proposed"},
+    {stage:"Tentative offer",from:off,to:"",detail:"After references and approvals",who:"TA Partner, P&C",s:"proposed"}
   ];
   if(pkg.plan.offerDate.s!=="confirmed")pkg.plan.offerDate={v:off,s:"proposed"};
   const nw=parseFloat(pkg.plan.noticeWeeks);
   if(pkg.plan.onboardingDate.s!=="confirmed"){if(nw>0){const d=parseISO(acc);d.setDate(d.getDate()+Math.round(nw*7));while(d.getDay()!==1)d.setDate(d.getDate()+1);pkg.plan.onboardingDate={v:toISO(d),s:"proposed"};
+      pkg.plan.schedule.push({stage:"Tentative onboarding",from:toISO(d),to:"",detail:`After ${nw}-week notice`,who:"Hiring manager, TA Partner",s:"proposed"});
       pkg.plan.milestones.push({name:"Onboarding / start date",owner:"Hiring manager, TA Partner",date:toISO(d),dependency:`Notice period (${nw} weeks)`,decision:false,s:"proposed"})}
     else pkg.plan.onboardingDate={v:"",s:"tbc"}}
   const late=[...pkg.plan.milestones.map(x=>x.date),pkg.plan.offerDate.v,pkg.plan.onboardingDate.v].filter(Boolean).some(d=>d>DMAX);
@@ -1072,7 +1088,7 @@ function buildDoc(kind){
     S("First resume commitment");
     B.push({t:"kv",rows:[["Number of resumes",fv(pkg.plan.resumeCount)],["Committed date",fd(pkg.plan.resumeDate)],["Conditions",pkg.text.resumeNote||"—"]]});
     S("Proposed interview schedule");
-    B.push(pkg.plan.schedule.length?{t:"table",head:["Stage","Date or window","Slots / time","Interviewers","Status"],rows:pkg.plan.schedule.map(s=>[txt(s.stage),txt(s.date),txt(s.slots),txt(s.who),stc(s.s)])}:{t:"p",text:`${TBC} Interview dates not yet agreed. The TA Partner will propose slots once interviewers are confirmed.`});
+    B.push(pkg.plan.schedule.length?{t:"table",head:["Stage","Tentative date","Details","Interviewers / owner","Status"],rows:pkg.plan.schedule.slice().sort((a,b)=>(a.from||"9").localeCompare(b.from||"9")).map(s=>[txt(s.stage),schedWhen(s)||TBC,s.detail||"—",txt(s.who),stc(s.s)])}:{t:"p",text:`${TBC} Interview dates not yet agreed. The TA Partner will propose slots once interviewers are confirmed.`});
     S("Assessments");
     B.push({t:"table",head:["Assessment","Type","Used for","Rationale","Status"],rows:pkg.plan.assessments.filter(a=>a.name).map(a=>[a.name,txt(a.type),txt(a.purpose),txt(a.rationale),{text:label(ASSESS_ST,a.s),status:a.s==="confirmed"?"confirmed":a.s==="declined"?"declined":"proposed"}])});
     S("Offer and onboarding");
@@ -1224,6 +1240,7 @@ function onEdit(ev){
   if(/\.s$|\.status$|\.hm$/.test(p)||p.startsWith("email.include"))renderRail();
   if(cur==="email"&&p.startsWith("email."))refreshPreview();
   if(cur==="dash")refreshDash();
+  if(/^plan\.schedule\.\d+\.(from|to)$/.test(p)){clearTimeout(window.__sc);window.__sc=setTimeout(()=>{if(cur==="plan")render()},600)}
   scheduleSave();
 }
 let dashT;function refreshDash(){clearTimeout(dashT);dashT=setTimeout(()=>{const el=$("#dashLive");if(el)el.innerHTML=dashLive()},200)}
