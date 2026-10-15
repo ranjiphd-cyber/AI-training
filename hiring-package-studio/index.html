@@ -260,6 +260,13 @@ ul.checks li.ok span{color:var(--ok)} ul.checks li.bad span{color:var(--tbc)} ul
 .slinks{display:flex;gap:2px;margin-top:2px}
 .slinks .btn3{padding:2px 6px;font-size:12px;color:var(--prop)}
 @media (max-width:1100px){.steps{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}}
+.subh{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:16px 0 4px;font-weight:600}
+.secbar{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom,0px));z-index:5;margin-top:24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;background:var(--surface);border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,20,51,.14)}
+.secst{display:flex;gap:8px;align-items:center;margin-right:auto;min-width:0;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r);overflow:hidden}
+.seg button{background:var(--surface);border:0;padding:7px 12px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--line-strong)}
+.seg button.on{background:var(--btn);color:var(--btn-ink)}
 /* Toast */
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--btn);color:var(--btn-ink);padding:9px 14px;border-radius:var(--r);font-size:13px;box-shadow:0 6px 20px rgba(0,20,51,.25);max-width:calc(100% - 32px);z-index:20}
 .ro input,.ro select,.ro textarea{pointer-events:none;opacity:.85}
@@ -362,7 +369,7 @@ function blankPackage(){
       hiringManager:F(), taPartner:F(), pcPartner:F(), decisionMaker:F(), kickoffDate:F(), closureDate:F(),
       closureDefinition:F("Offer accepted by the selected candidate","proposed"), prepDate:todayISO(), infoStatus:"draft"
     },
-    text:{exec:"",context:"",jd:"",selection:"",decisionRights:"",marketSummary:"",resumeNote:""},
+    text:{exec:"",context:"",jd:"",selection:"",decisionRights:"",marketSummary:"",marketScope:"",resumeNote:""},
     inputs:[], meetings:[], skills:[], prefs:[], success:[],
     interviewers:[
       {level:"L1 interviewer",name:"",title:"",focus:"",s:"tbc"},
@@ -371,7 +378,7 @@ function blankPackage(){
       {level:"Final decision maker",name:"",title:"",focus:"",s:"tbc"}
     ],
     decisions:[], questions:[], actions:[],
-    market:{availability:[],comp:[],factors:[],alternatives:[],sources:[]},
+    market:{availability:[],comp:[],factors:[],alternatives:[],sources:[],findings:[],context:[],supply:[],demand:[],mobility:[],recs:[],toConfirm:[]},
     plan:{
       resumeCount:F("5","proposed"), resumeDate:F("","proposed"), daysToResumes:"", feedbackSla:F("2 business days","proposed"),
       offerDate:F("","proposed"), onboardingDate:F("","proposed"), noticeWeeks:"", onboardingNote:"",
@@ -423,6 +430,8 @@ function blankPackage(){
 function fillDefaults(t,d){for(const k in d){if(t[k]===undefined)t[k]=clone(d[k]);else if(d[k]&&typeof d[k]==="object"&&!Array.isArray(d[k])&&t[k]&&typeof t[k]==="object"&&!Array.isArray(t[k]))fillDefaults(t[k],d[k])}return t}
 function normalize(p){const b=blankPackage();const out=fillDefaults(clone(p),b);out.id=p.id||b.id;
   if(out.text.jd&&!out.inputs.some(i=>i.type==="Job description")){out.inputs.unshift(newInput("Job description",out.text.jd));out.text.jd=""}
+  {const mk=out.market;if(mk.researchImportedAt&&!mk.sources.some(x=>x.by)&&!mk.availability.some(x=>x.by)){const cs=new Set();mk.sources.forEach((x,i)=>{if(/Found by Claude/.test(x.note||"")){x.by="Claude";x.note=x.note.replace(/\s*·?\s*Found by Claude/,"");cs.add("S"+(i+1))}});
+    if(cs.size)["availability","comp","factors","alternatives"].forEach(k=>mk[k].forEach(x=>{const ids=String(x.sources||"").match(/S\d+/g)||[];if(k==="alternatives"||ids.every(id=>cs.has(id)))x.by="Claude"}))}}
   const MAP={"L1 interviews":"First-level (L1) interviews","L2 interviews":"Second-level (L2) interviews","Values and culture conversation":"HR interview"};
   out.plan.schedule=(out.plan.schedule||[]).map(r=>{if(r.from!==undefined)return r;const st=MAP[r.stage]||r.stage||"";const known=SCHED_STAGES.some(x=>x[0]===st);
     return {stage:known?st:"Other",from:"",to:"",detail:[known?"":r.stage,r.date,r.slots].filter(Boolean).join(" · "),who:r.who||"",s:r.s||"proposed"}});
@@ -454,6 +463,7 @@ const LISTS={
 };
 
 /* ---------- state ---------- */
+
 const S={mode:"local",db:null,user:null,canWrite:true,inViewer:!!(window.claude&&window.claude.use),dl:null};
 let packages={}, pkg=null, cur=lsGetRaw("hps.v1.tab")||"dash";
 let dirty=false, editSeq=0, saveTimer=null, writeChain=Promise.resolve(), myRevs=new Set(), remotePending=null;
@@ -479,7 +489,7 @@ function rDash(){
   +"";
 }
 function docCards(){
-  const items=[["minutes","Minutes of Meeting","Meeting log, context, skills, preferences, success measures, interviewers, decisions, open questions, actions and items to confirm."],["market","Market Intelligence","Availability and difficulty per skill, compensation ranges, market factors, alternative skills and sources."],["plan","Tentative Hiring Plan","Built on market intelligence: plan basis, interview stages, resume commitment, schedule, assessments, offer and onboarding dates, milestones, risks, decisions and TA actions."],["full","Full hiring package","All of the above in one document, with the executive summary and confirmation tracker."]];
+  const items=[["minutes","Minutes of Meeting","Meeting log, context, skills, preferences, success measures, interviewers, decisions, open questions, actions and items to confirm."],["market","Talent Market Intelligence","Agency-style report: summary, market context, supply, demand, pay, difficulty index, mobility, alternatives, recommendations, data gaps and references."],["plan","Tentative Hiring Plan","Built on market intelligence: plan basis, interview stages, resume commitment, schedule, assessments, offer and onboarding dates, milestones, risks, decisions and TA actions."],["full","Full hiring package","All of the above in one document, with the executive summary and confirmation tracker."]];
   return `<div class="doccards">${items.map(([k,t,d])=>`<div class="doccard"><div class="eyebrow">${k==="full"?"All sections":"Document"}</div><h3>${t}</h3><p>${d}</p><div class="toolbar"><button class="btn" type="button" data-act="docx" data-kind="${k}">Word</button><button class="btn2" type="button" data-act="html" data-kind="${k}">HTML</button><button class="btn2" type="button" data-act="copyDoc" data-kind="${k}">Copy for email</button><button class="btn3" type="button" data-act="preview" data-kind="${k}">Preview</button></div></div>`).join("")}</div>`;
 }
 function dashLive(){
@@ -560,6 +570,105 @@ function chartTimeline(){
    +`<div class="lg"><span><i class="sw dotsw conf"></i>Confirmed</span><span><i class="sw dotsw"></i>Proposed / to confirm</span><span><i class="sw dotsw late"></i>After closure date</span><span><i class="sw vsw"></i>Closure date</span></div>`;
 }
 
+/* ---------- market report lists ---------- */
+const POINT_COLS=[{k:"text",l:"Finding (one sentence, factual)",type:"area",min:380},{k:"sources",l:"Sources (e.g. S1, S4)",min:120},{k:"evidence",l:"Evidence type",type:"select",opts:EVIDENCE,cls:"st",min:150}];
+const pointList=empty=>({cols:POINT_COLS,blank:()=>({text:"",sources:"",evidence:"unverified"}),empty});
+Object.assign(LISTS,{
+  "market.findings":pointList("No key findings yet. Add three to five headline findings, each with its source."),
+  "market.context":pointList("No market context yet: industry size and growth, hiring trends, GCC activity (e.g. NASSCOM, Zinnov, Naukri JobSpeak)."),
+  "market.supply":pointList("No supply findings yet: where the talent sits, how deep the pool is, employability data (e.g. India Skills Report with CII)."),
+  "market.demand":pointList("No demand findings yet: open roles, competing employers, sector hiring momentum."),
+  "market.mobility":pointList("No mobility findings yet: notice periods, time to hire, attrition, counter-offers."),
+  "market.recs":{cols:[{k:"text",l:"Recommendation",type:"area",min:420},{k:"sources",l:"Based on (sources)",min:130}],blank:()=>({text:"",sources:""}),empty:"No recommendations yet."},
+  "market.toConfirm":{cols:[{k:"question",l:"Question for the TA Partner / hiring manager",type:"area",min:340},{k:"answer",l:"Answer",type:"area",min:240},{k:"s",l:"Status",type:"select",opts:Q_ST,cls:"st",min:120}],blank:()=>({question:"",answer:"",s:"open"}),empty:"No open data gaps."}
+});
+const MKT_LISTS=["availability","comp","factors","alternatives","findings","context","supply","demand","mobility","recs","toConfirm"];
+function marketGlance(){
+  const mk=pkg.market, b=marketBasis();
+  const pools=mk.availability.filter(r=>r.skill&&r.pool);
+  const hard=mk.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc).sort((a,b)=>b.sc.avg-a.sc.avg)[0];
+  const c=mk.comp.find(r=>r.mid&&r.currency&&r.geo&&!/national/i.test(r.geo))||mk.comp.find(r=>r.mid);
+  const money=r=>{const v=num(r.mid);if(isNaN(v))return r.mid;return r.currency==="INR"?`₹${(v/1e5).toFixed(1)} lakh`:`${r.currency} ${fmtNum(v)}`};
+  const rows=[...MKT_LISTS.filter(k=>k!=="recs"&&k!=="toConfirm"&&k!=="alternatives").flatMap(k=>mk[k]||[])].filter(r=>r.evidence);
+  const good=rows.filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&String(r.sources||"").trim()).length;
+  const conf=!rows.length?TBC:good/rows.length>=0.7?"Medium–High: most findings are sourced; figures are third-party estimates":good/rows.length>=0.4?"Medium: a mix of sourced findings and TA judgement":"Low: mostly TA judgement; more sources needed";
+  return [
+    ["Talent availability",pools.length?[...new Set(pools.map(r=>r.pool))].join(" / ")+" (by skill; see section 4)":TBC],
+    ["Hiring difficulty",hard?`${hard.sc.lvl} (${hard.sc.avg.toFixed(1)} of 5) for ${hard.r.skill}`:TBC],
+    ["Indicative pay",c?`${money(c)} ${label(PERIOD,c.period).toLowerCase()} ${c.basis.toLowerCase()} (${[c.role,c.geo].filter(Boolean).join(", ")})${c.sources?" ["+c.sources+"]":""}`:TBC],
+    ["Typical notice period",pkg.plan.noticeWeeks?`${pkg.plan.noticeWeeks} weeks (planning assumption)`:TBC],
+    ["Time to first CVs (plan)",`${b.lead} business days${b.level?"":" (market not yet assessed)"}`],
+    ["Evidence confidence",conf]
+  ];
+}
+function rMarket(){
+  const comp=pkg.market.comp;const old=comp.filter(r=>{const m=String(r.dataDate||"").match(/(\d{4})/);return m&&(new Date().getFullYear()-Number(m[1]))>=2});
+  const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors,...["findings","context","supply","demand","mobility"].flatMap(k=>pkg.market[k])].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
+  const openQ=pkg.market.toConfirm.filter(q=>q.question&&q.s!=="answered").length;
+  return head("Section 5 · Talent Market Intelligence Report","Talent market intelligence","Laid out like a talent-intelligence agency report: summary, scope, market context, supply, demand, pay, difficulty, mobility, alternatives, recommendations, data gaps and references. Every finding needs a source and an evidence type. Anything unknown goes to “Data gaps” for you to confirm.")
+  +blk("Market research by Claude","",`<div data-research="full">${researchPanel(false)}</div>`)
+  +(openQ?`<div class="callout warn"><b>${openQ} question(s) need your confirmation</b> before this report goes to the hiring manager. See section 10, Data gaps.</div>`:"")
+  +refPanel("market")
+  +blk("1. Executive summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two to four sentences: how available the talent is, the main constraint, the pay picture, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div><h3 class="subh">Key findings</h3>${listEditor("market.findings",{add:"Add finding"})}<h3 class="subh">At a glance (calculated)</h3><dl class="kv">${marketGlance().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`)
+  +blk("2. Scope and methodology","",`<div class="fld full"><textarea id="f_text_marketScope" rows="3" data-path="text.marketScope" placeholder="${esc(defaultScope())}">${esc(pkg.text.marketScope)}</textarea></div>`,"Leave blank to use the standard wording shown.")
+  +blk("3. Market context","industry and hiring climate",listEditor("market.context",{add:"Add context point"}))
+  +blk("4. Talent supply","",listEditor("market.supply",{add:"Add supply point"})+`<h3 class="subh">Availability and difficulty by skill</h3>`+listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>Hiring difficulty index:</b> rate each factor from 1 (easy) to 5 (hard). The index is the average of the factors you scored: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4 and above Very high. Scores are professional judgement; put the evidence beside them.</div>`)
+  +blk("5. Talent demand and competition","",listEditor("market.demand",{add:"Add demand point"})+`<h3 class="subh">Other market factors</h3>`+listEditor("market.factors",{add:"Add factor"}))
+  +blk("6. Compensation benchmarks","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old.</div>`:"")+`<p class="help">Give currency, geography, period and basis on every row. Do not mix base salary and CTC in one comparison. The internal band comes from P&amp;C.</p>`)
+  +blk("7. Talent mobility","notice periods, time to hire, attrition",listEditor("market.mobility",{add:"Add mobility point"})+`<div class="grid">${plainField("plan.noticeWeeks","Typical notice period used for planning (weeks)",{type:"number",hint:"90 days ≈ 13 weeks."})}</div>`)
+  +blk("8. Alternative talent pools and adjacent skills","options for the hiring manager",listEditor("market.alternatives",{add:"Add option"}),"Options to accept, reject or discuss. They are not approved changes to the role.")
+  +blk("9. Recommendations and sourcing strategy","",listEditor("market.recs",{add:"Add recommendation"}))
+  +blk("10. Data gaps: items to confirm","",listEditor("market.toConfirm",{add:"Add question"}),"Claude lists here anything it could not verify. Answer each one or confirm it with the hiring manager, then set the status to Answered.")
+  +(nosrc.length?`<div class="callout warn">${nosrc.length} finding(s) are marked Verified or Sourced estimate but have no source ID.</div>`:"")
+  +blk("11. References","source register",listEditor("market.sources",{add:"Add source"}),"Refer to sources by ID (S1, S2…) in the tables above. Removing a source renumbers the ones after it.")
+  +blk("Your own research","links and source guide",researchLinks()+`<div class="callout"><b>Reliable places to look:</b><ul class="plain"><li>Industry bodies: NASSCOM Strategic Review, Zinnov–NASSCOM GCC Landscape, CII and the India Skills Report (with ETS/Wheebox, AICTE).</li><li>Hiring indices: Naukri JobSpeak (Info Edge), Xpheno active jobs, TeamLease Digital skills and salary primers.</li><li>Pay: Volvo Group Compensation &amp; Benefits surveys (via P&amp;C) first; then Payscale, Glassdoor, AmbitionBox as indicative only.</li></ul></div>`);
+}
+function defaultScope(){const m=pkg.meta;return `Role: ${m.role.v||TBC}. Geography: ${m.location.v||TBC}${m.hiringMarket.v?" ("+m.hiringMarket.v+")":""}. Research combines published industry reports, hiring indices, salary aggregators and job-board data found through web search, plus the TA Partner's inputs. Figures are dated and referenced; where no reliable source was found, the item is listed under Data gaps.`}
+
+/* ---------- section bars: submit, edit, generate report ---------- */
+const SEC={kickoff:{kind:"minutes",name:"Minutes of Meeting",submit:"Submit minutes"},market:{kind:"market",name:"Talent Market Intelligence Report",submit:"Submit for research"},plan:{kind:"plan",name:"Tentative Hiring Plan",submit:"Submit plan"}};
+const viewMode={};
+function secBar(id){
+  const c=SEC[id], sub=(pkg.sections||{})[c.kind], mode=viewMode[id]||"edit";
+  return `<div class="secbar" role="toolbar" aria-label="${esc(c.name)} actions"><div class="secst"><span class="chip ${sub?"st-confirmed":"st-proposed"}">${sub?`Submitted v${sub.n}`:"Draft"}</span><span class="help" style="margin:0">${sub?"on "+fmtDate(sub.at.slice(0,10)):esc(c.name)}</span></div>
+   <div class="seg" role="group" aria-label="View"><button type="button" class="${mode==="edit"?"on":""}" data-act="secEdit" data-sec="${id}" aria-pressed="${mode==="edit"}">Edit</button><button type="button" class="${mode==="report"?"on":""}" data-act="secReport" data-sec="${id}" aria-pressed="${mode==="report"}">Generate report</button></div>
+   <button type="button" class="btn" data-act="secSubmit" data-sec="${id}">${sub&&id!=="market"?c.submit.replace("Submit","Resubmit"):c.submit}</button></div>`;
+}
+function reportView(id){
+  const k=SEC[id].kind;
+  return head("Report preview",esc(DOCS[k].name),"This is the document the hiring manager will receive. Select Edit to change anything; the report updates automatically.")
+   +`<div class="toolbar"><button class="btn" type="button" data-act="docx" data-kind="${k}">Download Word</button><button class="btn2" type="button" data-act="html" data-kind="${k}">Download HTML</button><button class="btn2" type="button" data-act="copyDoc" data-kind="${k}">Copy for email</button></div>`
+   +`<div class="docframe"><div class="docpad">${toEmailHTML(buildDoc(k))}</div></div>`;
+}
+function secChecks(id){
+  const m=pkg.meta;
+  if(id==="kickoff")return {must:[["Role title",!!m.role.v],["At least one meeting recorded with a date",pkg.meetings.some(x=>x.date)]],should:[["Skills captured",pkg.skills.some(s=>s.name)],["Interviewers named",pkg.interviewers.some(i=>i.name)],["Decisions or action items recorded",pkg.decisions.some(d=>d.decision)||pkg.actions.some(a=>a.action)]]};
+  if(id==="market")return {must:[["Role title",!!m.role.v],["Role location or hiring market",!!(m.location.v||m.hiringMarket.v)]],should:[["Job description or notes tagged for market intelligence",pkg.inputs.some(x=>x.uses&&x.uses.market&&x.content)],["Skills captured (or in the JD)",pkg.skills.some(s=>s.name)||pkg.inputs.some(x=>x.type==="Job description")],["Work arrangement",!!m.workArrangement.v]]};
+  return {must:[["Role title",!!m.role.v],["Kickoff date",!!m.kickoffDate.v]],should:[["Tentative closure date",!!m.closureDate.v],["Market research added",researchState()==="added"],["Interviewers named",pkg.interviewers.some(i=>i.name)]]};
+}
+function openSecSubmit(id){
+  const c=SEC[id], ch=secChecks(id), ok=ch.must.every(x=>x[1]), rs=researchState();
+  const li=([l,v],hard)=>`<li class="${v?"ok":hard?"bad":"warn"}"><span aria-hidden="true">${v?"✓":hard?"✕":"!"}</span> ${esc(l)}${v?"":hard?" (required)":" (recommended)"}</li>`;
+  const what={kickoff:"Saves a numbered version of the minutes and shows the Minutes of Meeting report, ready to download or email.",
+    market:"Saves a numbered version of the details and asks Claude to research the market for this role. The findings come back with sources for you to review and add.",
+    plan:`Saves a numbered version of the plan${pkg.plan.schedule.some(r=>r.from)?"":", builds the tentative plan from the market difficulty,"} and shows the Tentative Hiring Plan report.`}[id];
+  $("#modalBody").innerHTML=`<div class="eyebrow">${esc(c.name)}</div><h2 id="modalTitle" style="font-size:18px;margin:2px 0 8px">${esc(c.submit)}</h2><p class="help" style="margin:0 0 10px">${what}</p>
+   <ul class="checks">${ch.must.map(x=>li(x,true)).join("")}${ch.should.map(x=>li(x,false)).join("")}</ul>
+   ${id==="market"&&(rs==="added"||rs==="ready")?`<label style="display:flex;gap:6px;align-items:center;font-size:13px;margin-bottom:8px"><input type="checkbox" id="reResearch"> Ask Claude to refresh the research (replaces Claude's earlier findings when added)</label>`:""}
+   <div class="toolbar"><button class="btn" type="button" data-act="secSubmitYes" data-sec="${id}"${ok?"":" disabled"}>${esc(c.submit)}</button><button class="btn2" type="button" data-act="closeModal">Cancel</button>${ok?"":`<span class="help" style="margin:0">Fill in the required items first.</span>`}</div>`;
+  $("#modal").hidden=false;setTimeout(()=>{const b=$("#modal [data-act=secSubmitYes]:not([disabled])")||$("#modal [data-act=closeModal]");b&&b.focus()},30);
+}
+async function doSecSubmit(id){
+  const c=SEC[id];const re=$("#reResearch");const refresh=re?re.checked:true;
+  $("#modal").hidden=true;
+  if(id==="plan"&&!pkg.plan.schedule.some(r=>r.from))buildTimeline(true);
+  pkg.sections=pkg.sections||{};const n=((pkg.sections[c.kind]&&pkg.sections[c.kind].n)||0)+1;pkg.sections[c.kind]={at:new Date().toISOString(),n};
+  dirty=true;editSeq++;await saveNow();await saveSnapshot(`${c.name} submitted · v${n}`);
+  if(id==="market"){const rs=researchState();if(rs==="none"||rs==="failed"||refresh)await requestResearch();viewMode[id]="edit"}
+  else viewMode[id]="report";
+  render();toast(`${c.name} submitted (version ${n}).`);
+}
+
 /* ---------- market-based plan basis ---------- */
 const LEAD={Low:5,Moderate:7,High:10,"Very high":15};
 const RESUME_SUGGEST={Low:5,Moderate:5,High:4,"Very high":3};
@@ -612,18 +721,30 @@ async function requestResearch(){
 }
 function importResearch(){
   const r=researchMap[pkg.id];if(!r||r.status!=="done")return;
-  const mk=pkg.market, off=mk.sources.length, remap=s=>String(s||"").replace(/S(\d+)/g,(m,n)=>"S"+(Number(n)+off));
-  (r.sources||[]).forEach(s=>mk.sources.push({title:s.title||"",publisher:s.publisher||"",url:s.url||"",published:s.published||"",accessed:s.accessed||todayISO(),note:(s.note?s.note+" · ":"")+"Found by Claude"}));
-  (r.availability||[]).forEach(a=>mk.availability.push({...LISTS["market.availability"].blank(),...pick(a,["skill","market","pool","poolEvidence","supply","competition","pay","location","niche","evidence"]),sources:remap(a.sources)}));
-  (r.comp||[]).forEach(c=>mk.comp.push({...LISTS["market.comp"].blank(),...pick(c,["role","level","geo","currency","low","mid","high","period","basis","dataDate","evidence","limits"]),sources:remap(c.sources)}));
-  (r.factors||[]).forEach(f=>mk.factors.push({...LISTS["market.factors"].blank(),...pick(f,["factor","effect","evidence"]),sources:remap(f.sources)}));
-  (r.alternatives||[]).forEach(a=>mk.alternatives.push({...LISTS["market.alternatives"].blank(),...pick(a,["alt","forSkill","gain","risk"]),hm:"pending"}));
-  if(r.summary)pkg.text.marketSummary=pkg.text.marketSummary?pkg.text.marketSummary+"\n\n"+r.summary:r.summary;
+  const mk=pkg.market;
+  // replace Claude's earlier findings, keep the TA Partner's own rows
+  const userSrc=mk.sources.filter(s=>s.by!=="Claude");const idMap={};mk.sources.forEach((s,i)=>{if(s.by!=="Claude")idMap["S"+(i+1)]="S"+(userSrc.indexOf(s)+1)});
+  const fixRefs=v=>String(v||"").replace(/S(\d+)/g,m=>idMap[m]||"");
+  MKT_LISTS.forEach(k=>{mk[k]=(mk[k]||[]).filter(x=>x.by!=="Claude");mk[k].forEach(x=>{if(x.sources)x.sources=fixRefs(x.sources).replace(/(,\s*)+/g,", ").replace(/^,\s*|,\s*$/g,"")})});
+  mk.sources=userSrc;
+  const off=mk.sources.length, remap=s=>String(s||"").replace(/S(\d+)/g,(m,n)=>"S"+(Number(n)+off));
+  (r.sources||[]).forEach(s=>mk.sources.push({title:s.title||"",publisher:s.publisher||"",url:s.url||"",published:s.published||"",accessed:s.accessed||todayISO(),note:s.note||"",by:"Claude"}));
+  const add=(k,fields)=>(r[k]||[]).forEach(a=>mk[k].push({...LISTS["market."+k].blank(),...pick(a,fields),...(a.sources!==undefined?{sources:remap(a.sources)}:{}),by:"Claude"}));
+  add("availability",["skill","market","pool","poolEvidence","supply","competition","pay","location","niche","evidence"]);
+  add("comp",["role","level","geo","currency","low","mid","high","period","basis","dataDate","evidence","limits"]);
+  add("factors",["factor","effect","evidence"]);
+  ["findings","context","supply","demand","mobility"].forEach(k=>add(k,["text","evidence"]));
+  add("recs",["text"]);
+  (r.alternatives||[]).forEach(a=>mk.alternatives.push({...LISTS["market.alternatives"].blank(),...pick(a,["alt","forSkill","gain","risk"]),hm:"pending",by:"Claude"}));
+  (r.toConfirm||[]).forEach(q=>mk.toConfirm.push({question:String(q.question||q),answer:"",s:"open",by:"Claude"}));
+  if(r.summary)pkg.text.marketSummary=r.summary;
+  if(r.scope)pkg.text.marketScope=r.scope;
+  if(r.limitations)mk.researchLimitations=r.limitations;
   if(r.noticeWeeks&&!pkg.plan.noticeWeeks)pkg.plan.noticeWeeks=String(r.noticeWeeks);
   mk.researchImportedAt=r.completedAt;
   const rebuilt=!pkg.plan.schedule.some(x=>x.s==="confirmed");if(rebuilt)buildTimeline(true);
   scheduleSave();render();renderNotices();
-  toast(rebuilt?"Findings added and the tentative plan rebuilt from the market difficulty.":"Findings added. Some schedule dates are confirmed, so the plan was not rebuilt; select “Build tentative plan” to update the rest.");
+  toast((rebuilt?"Findings added and the tentative plan rebuilt from the market difficulty.":"Findings added. Some schedule dates are confirmed, so the plan was not rebuilt.")+(mk.toConfirm.some(q=>q.s!=="answered")?" Check the Data gaps list.":""));
 }
 const pick=(o,ks)=>{const out={};ks.forEach(k=>{if(o&&o[k]!=null&&o[k]!=="")out[k]=String(o[k])});return out};
 function renderResearchSpots(){document.querySelectorAll("[data-research]").forEach(el=>el.innerHTML=researchPanel(el.dataset.research==="compact"))}
@@ -857,20 +978,6 @@ function researchLinks(){
   skills.slice(0,4).forEach(s=>links.push([`LinkedIn jobs: ${s}${loc?" · "+loc:""}`,`https://www.linkedin.com/jobs/search/?keywords=${q(s)}${loc?"&location="+q(loc):""}`]));
   return `<div class="linklist">${links.map(([t,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join("")}</div><p class="help" style="margin-top:6px">Live posting counts change daily. When you record one as evidence, note the date and the exact search used.</p>`;
 }
-function rMarket(){
-  const comp=pkg.market.comp;const old=comp.filter(r=>{const m=String(r.dataDate||"").match(/(\d{4})/);return m&&(new Date().getFullYear()-Number(m[1]))>=2});
-  const nosrc=[...pkg.market.availability,...comp,...pkg.market.factors].filter(r=>(r.evidence==="verified"||r.evidence==="estimate")&&!String(r.sources||"").trim());
-  return head("Section 5 · Talent availability and market intelligence","Market intelligence","Record what you can source, and say so where you cannot. Every finding carries an evidence type and points to a source in the register at the bottom.")
-  +blk("Market research by Claude","",`<div data-research="full">${researchPanel(false)}</div>`)+refPanel("market")+blk("Your own research","links and source guide",researchLinks()+`<div class="callout"><b>Where to look, in order of reliability for pay data:</b><ul class="plain"><li>Salary surveys held by Volvo Group Compensation &amp; Benefits (ask your P&amp;C partner). Use these for the internal range.</li><li>Official statistics and professional bodies, for example <a href="https://www.scb.se/en/" target="_blank" rel="noopener">Statistics Sweden (SCB)</a>, <a href="https://www.bls.gov/oes/" target="_blank" rel="noopener">US BLS OEWS</a>, <a href="https://ec.europa.eu/eurostat" target="_blank" rel="noopener">Eurostat</a>, and engineering unions or associations in the market.</li><li>Talent-supply tools your team licenses (for example LinkedIn Talent Insights): profile counts, competing employers, talent flows.</li><li>Self-reported salary sites (Glassdoor, PayScale, Levels.fyi, AmbitionBox and similar). Treat these as indicative only and note sample size and date.</li></ul></div>`)
-  +blk("Market summary","",`<div class="fld full"><textarea id="f_text_marketSummary" rows="4" data-path="text.marketSummary" placeholder="Two or three sentences: how available the talent is, the main constraint, and what would speed things up.">${esc(pkg.text.marketSummary)}</textarea></div>`)
-  +blk("Availability and hiring difficulty","by skill or combination",listEditor("market.availability",{add:"Add skill or combination"})+`<div class="callout"><b>How difficulty is scored:</b> rate each factor from 1 (easy) to 5 (hard). The difficulty is the average of the factors you scored: below 2 is Low, 2 to 2.9 is Moderate, 3 to 3.9 is High, 4 and above is Very high. The scores are your judgement. Put the evidence behind them in the evidence column and the source register.</div>`)
-  +blk("Indicative compensation","",listEditor("market.comp",{add:"Add range"})+(old.length?`<div class="callout warn">${old.length} range(s) use data two or more years old. Refresh them or explain why in the limitations column.</div>`:"")+`<p class="help">State currency, geography, period and basis on every row. Do not mix base salary and total compensation in one comparison. The internal band is confidential unless P&amp;C agrees to share it.</p>`)
-  +blk("Market factors","",listEditor("market.factors",{add:"Add factor"}),"For example: competing employers hiring for the same skills, notice-period norms, demand from electrification or software programs, local labour-market conditions.")
-  +blk("Alternative and transferable skills","options for the hiring manager",listEditor("market.alternatives",{add:"Add option"}),"These are options to accept, reject or discuss. They are not approved changes to the role until the hiring manager decides.")
-  +(nosrc.length?`<div class="callout warn">${nosrc.length} finding(s) are marked Verified or Sourced estimate but have no source ID.</div>`:"")
-  +blk("Source register","",listEditor("market.sources",{add:"Add source"}),"Refer to sources by ID (S1, S2…) in the tables above. Deleting a source renumbers the ones after it, so check your references.");
-}
-
 function rPlan(){
   const ms=pkg.plan.milestones.filter(m=>m.date).sort((a,b)=>a.date<b.date?-1:1);const cl=pkg.meta.closureDate.v;
   let check="";
@@ -946,7 +1053,8 @@ function render(){
   renderRail();renderPkgSel();
   if(!pkg){$("#main").innerHTML=`<div class="sheet">${head("Start here","No hiring package yet","Create one package per requisition. Start by adding the job description and any notes under Inputs, fill in the package during the kickoff, update it at every follow-up meeting, and email it to the hiring manager from the Email document section.")}<div class="toolbar"><button class="btn" type="button" data-act="newPkg">Create a hiring package</button><button class="btn2" type="button" data-act="importJson">Import a package (.json)</button></div></div>`;return}
   const active=document.activeElement, ap=active&&active.dataset?active.dataset.path:null, sel=ap&&"selectionStart" in active?[active.selectionStart,active.selectionEnd]:null;
-  $("#main").innerHTML=`<div class="sheet${S.canWrite?"":" ro"}">${RENDER[cur]()}</div>`;
+  const inner=SEC[cur]?((viewMode[cur]==="report"?reportView(cur):RENDER[cur]())+secBar(cur)):RENDER[cur]();
+  $("#main").innerHTML=`<div class="sheet${S.canWrite?"":" ro"}${SEC[cur]&&viewMode[cur]==="report"?" reportmode":""}">${inner}</div>`;
   if(cur==="history")loadVersions();
   if(ap){const el=document.querySelector(`[data-path="${CSS.escape(ap)}"]`);if(el){el.focus({preventScroll:true});if(sel&&el.setSelectionRange){try{el.setSelectionRange(sel[0],sel[1])}catch(e){}}}}
 }
@@ -1099,7 +1207,7 @@ function draftExec(){
 const DOCS={
   full:{name:"Full hiring package",short:"Hiring package",file:"hiring-package"},
   minutes:{name:"Minutes of Meeting",short:"Minutes of Meeting",file:"minutes-of-meeting"},
-  market:{name:"Market Intelligence Report",short:"Market Intelligence Report",file:"market-intelligence"},
+  market:{name:"Talent Market Intelligence Report",short:"Talent Market Intelligence Report",file:"talent-market-intelligence"},
   plan:{name:"Tentative Hiring Plan",short:"Tentative Hiring Plan",file:"tentative-hiring-plan"}
 };
 function defaultSubject(kind){kind=kind||pkg.email.kind||"full";return `${DOCS[kind].short} for review: ${pkg.meta.role.v||"[Role]"}${pkg.meta.location.v?" · "+pkg.meta.location.v:""}${pkg.meta.reqId.v?" · "+pkg.meta.reqId.v:""}`}
@@ -1187,25 +1295,40 @@ function buildDoc(kind){
   };
   /* ---- market ---- */
   const market=()=>{
-    const mk=pkg.market, S=kind==="market"?H1:H2;
-    if(kind!=="market")H1("Talent availability and market intelligence");
+    const mk=pkg.market, S=kind==="market"?H1:H2, ref=r=>String(r.sources||"").trim()?` [${String(r.sources).trim()}]`:"";
+    const pts=list=>list.filter(r=>r.text).map(r=>r.text+ref(r)+(r.evidence==="assumption"?" (TA judgement)":r.evidence==="unverified"?" (not yet verified)":""));
+    if(kind!=="market")H1("Talent market intelligence");
     if(kind==="full"&&!e.includeMarket){B.push({t:"p",text:"Market intelligence is shared separately."});return}
-    const has=mk.availability.length||mk.comp.length||mk.factors.length||mk.alternatives.length||pkg.text.marketSummary;
-    if(kind==="market")S("Summary");
+    const has=MKT_LISTS.some(k=>(mk[k]||[]).length)||pkg.text.marketSummary;
+    S("Executive summary");
     if(!has)B.push({t:"note",warn:true,text:`${TBC} Market research not yet completed. The TA Partner will add sourced findings.`});
     if(pkg.text.marketSummary)B.push({t:"p",text:pkg.text.marketSummary});
-    if(mk.availability.some(r=>r.skill)){S("Availability and hiring difficulty");
-      B.push({t:"table",head:["Skill / combination","Market","Pool","Evidence of pool","Difficulty","Evidence type","Sources"],rows:mk.availability.filter(r=>r.skill).map(r=>{const sc=scoreOf(r);return [r.skill,txt(r.market),r.pool||TBC,txt(r.poolEvidence),sc?`${sc.lvl} (${sc.avg.toFixed(1)}/5)`:TBC,st2(r.evidence),r.sources||"—"]})});
-      B.push({t:"note",text:"Difficulty method: the TA Partner scores supply scarcity, competing demand, pay pressure, location constraint and niche/seniority from 1 (easy) to 5 (hard). Difficulty is the average: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4+ Very high. Scores are professional judgement supported by the evidence listed."});}
-    if(mk.comp.some(r=>r.role||r.low||r.mid||r.high)){S("Indicative compensation");
-      B.push({t:"table",head:["Benchmark","Level","Geography","Range (low – mid – high)","Period / basis","Data date","Evidence type","Sources","Limitations"],rows:mk.comp.filter(r=>r.role||r.low||r.mid||r.high).map(r=>[txt(r.role),txt(r.level),txt(r.geo),`${r.currency||"[currency?]"} ${r.low||"–"} – ${r.mid||"–"} – ${r.high||"–"}`,`${label(PERIOD,r.period)}, ${r.basis}`,r.dataDate||TBC,st2(r.evidence),r.sources||"—",r.limits||"—"])});
-      B.push({t:"note",text:"These are external, indicative ranges. They are not the approved offer range, which P&C sets."});}
-    if(mk.factors.some(r=>r.factor)){S("Market factors");B.push({t:"table",head:["Factor","Effect on availability, pay or speed","Evidence type","Sources"],rows:mk.factors.filter(r=>r.factor).map(r=>[r.factor,txt(r.effect),st2(r.evidence),r.sources||"—"])})}
-    if(mk.alternatives.some(r=>r.alt)){S("Alternative and transferable skills: options for your decision");B.push({t:"note",text:"These options are not approved changes to the role. Please accept, reject or flag each one for discussion."});
-      B.push({t:"table",head:["Option","Instead of / alongside","Expected effect","Risk and how to close the gap","Your decision"],rows:mk.alternatives.filter(r=>r.alt).map(r=>[r.alt,txt(r.forSkill),txt(r.gain),txt(r.risk),{text:label(HM_ALT,r.hm),status:r.hm==="accept"?"confirmed":r.hm==="reject"?"declined":"tbc"}])})}
-    if(kind==="market"||e.includeSources){S("Sources");const ss=srcIdx().filter(s=>s.title||s.url);
-      B.push(ss.length?{t:"table",head:["ID","Source","Publisher","Data date","Accessed"],rows:ss.map(s=>[s._id,{text:s.title||s.url,url:s.url},txt(s.publisher),s.published||"—",fmtDate(s.accessed)||TBC])}:{t:"p",text:"No sources recorded yet. Findings without a source should be read as unverified."})}
-    if(kind==="market"){S("Limitations");B.push({t:"p",text:"Market data changes quickly and differs by source, method and sample. Ranges are indicative and dated as shown. Talent-pool figures reflect the searches and dates recorded. Where no reliable source was found, the finding is marked as not yet verified or as an internal assumption."})}
+    const kf=pts(mk.findings);if(kf.length){B.push({t:"h3",text:"Key findings"});B.push({t:"bullets",items:kf})}
+    B.push({t:"h3",text:"At a glance"});B.push({t:"kv",rows:marketGlance()});
+    S("Scope and methodology");
+    B.push({t:"p",text:pkg.text.marketScope||defaultScope()});
+    B.push({t:"note",text:"Evidence types: “Verified fact” is confirmed from a primary source. “Sourced estimate” is a figure from a cited third party. “TA judgement” is professional assessment. “Not yet verified” has no source yet. Numbers in [brackets] refer to the References section."});
+    const sec=(title,list,extra)=>{const p=pts(list);if(!p.length&&!extra)return;S(title);if(p.length)B.push({t:"bullets",items:p});if(extra)extra()};
+    sec("Market context",mk.context);
+    sec("Talent supply",mk.supply,()=>{const rows=mk.availability.filter(r=>r.skill);if(rows.length)B.push({t:"table",head:["Skill / combination","Market","Talent pool","Evidence of pool","Evidence type","Sources"],rows:rows.map(r=>[r.skill,txt(r.market),r.pool||TBC,txt(r.poolEvidence),st2(r.evidence),r.sources||"—"])})});
+    sec("Talent demand and competition",mk.demand,()=>{const f=mk.factors.filter(r=>r.factor);if(f.length)B.push({t:"table",head:["Market factor","Effect on availability, pay or speed","Evidence type","Sources"],rows:f.map(r=>[r.factor,txt(r.effect),st2(r.evidence),r.sources||"—"])})});
+    if(mk.comp.some(r=>r.role||r.low||r.mid||r.high)){S("Compensation benchmarks");
+      B.push({t:"table",head:["Benchmark","Level","Geography","Low – mid – high","Period / basis","Data date","Evidence","Sources","Limitations"],rows:mk.comp.filter(r=>r.role||r.low||r.mid||r.high).map(r=>[txt(r.role),txt(r.level),txt(r.geo),`${r.currency||"[currency?]"} ${r.low?fmtNum(num(r.low)):"–"} – ${r.mid?fmtNum(num(r.mid)):"–"} – ${r.high?fmtNum(num(r.high)):"–"}`,`${label(PERIOD,r.period)}, ${r.basis}`,r.dataDate||TBC,st2(r.evidence),r.sources||"—",r.limits||"—"])});
+      B.push({t:"note",text:"External, indicative ranges only (k = thousand, M = million). They are not the approved offer range, which P&C sets."})}
+    const dif=mk.availability.filter(r=>r.skill).map(r=>({r,sc:scoreOf(r)})).filter(x=>x.sc);
+    if(dif.length){S("Hiring difficulty index");
+      B.push({t:"table",head:["Skill / combination","Supply scarcity","Competing demand","Pay pressure","Location","Niche / seniority","Index"],rows:dif.map(({r,sc})=>[r.skill,r.supply||"–",r.competition||"–",r.pay||"–",r.location||"–",r.niche||"–",{text:`${sc.lvl} ${sc.avg.toFixed(1)}`,status:sc.avg>=3?"tbc":sc.avg>=2?"proposed":"confirmed"}])});
+      B.push({t:"note",text:"Each factor is scored 1 (easy) to 5 (hard) by the TA Partner from the evidence in this report. Index = average: below 2 Low, 2–2.9 Moderate, 3–3.9 High, 4+ Very high."})}
+    sec("Talent mobility: notice periods, time to hire, attrition",mk.mobility);
+    if(mk.alternatives.some(r=>r.alt)){S("Alternative talent pools and adjacent skills");B.push({t:"note",text:"Options for the hiring manager to accept, reject or discuss. They are not approved changes to the role."});
+      B.push({t:"table",head:["Option","Instead of / alongside","Expected effect","Risk and how to close the gap","Decision"],rows:mk.alternatives.filter(r=>r.alt).map(r=>[r.alt,txt(r.forSkill),txt(r.gain),txt(r.risk),{text:label(HM_ALT,r.hm),status:r.hm==="accept"?"confirmed":r.hm==="reject"?"declined":"tbc"}])})}
+    const recs=mk.recs.filter(r=>r.text).map(r=>r.text+ref(r));if(recs.length){S("Recommendations and sourcing strategy");B.push({t:"bullets",items:recs})}
+    const tc=mk.toConfirm.filter(q=>q.question);
+    S("Data gaps: items to confirm");
+    B.push(tc.length?{t:"table",head:["Question","Answer","Status"],rows:tc.map(q=>[q.question,q.answer||TBC,stc(q.s==="answered"?"confirmed":"tbc")])}:{t:"p",text:"No open data gaps."});
+    if(kind==="market"||e.includeSources){S("References");const ss=srcIdx().filter(s=>s.title||s.url);
+      B.push(ss.length?{t:"table",head:["ID","Reference","Data date","Accessed"],rows:ss.map(s=>[s._id,{text:`${s.publisher?s.publisher+". ":""}${s.title||s.url}`,url:s.url},s.published||"—",fmtDate(s.accessed)||TBC])}:{t:"p",text:"No references recorded yet. Findings without a reference should be read as unverified."})}
+    if(kind==="market"&&pkg.market.researchLimitations){S("Limitations");B.push({t:"p",text:pkg.market.researchLimitations})}
   };
   /* ---- plan ---- */
   const plan=()=>{
@@ -1263,6 +1386,8 @@ function toEmailHTML(B){
     case "sub":h+=`<p style="${EF}font-size:12px;color:${EC.slate};margin:0 0 16px;letter-spacing:.02em">${esc(b.text)}</p>`;break;
     case "h1":h+=`<h2 style="${EF}font-size:17px;color:${EC.navy};margin:26px 0 8px;padding-bottom:5px;border-bottom:2px solid ${EC.amber}">${esc(b.text)}</h2>`;break;
     case "h2":h+=`<h3 style="${EF}font-size:14px;color:${EC.navy};margin:16px 0 6px">${esc(b.text)}</h3>`;break;
+    case "h3":h+=`<p style="${EF}font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:${EC.slate};margin:12px 0 4px">${esc(b.text)}</p>`;break;
+    case "bullets":h+=`<ul style="${EF}margin:4px 0 12px;padding-left:20px">${b.items.map(x=>`<li style="${EF}font-size:13.5px;line-height:1.5;color:#1A202C;margin:0 0 5px">${hiTBC(esc(x)).replace(/\[(S\d+(?:,\s*S\d+)*)\]/g,`<span style="color:${EC.pr};font-weight:600">[$1]</span>`)}</li>`).join("")}</ul>`;break;
     case "p":h+=String(b.text).split(/\n{2,}/).map(par=>`<p style="${P}">${hiTBC(esc(par)).replace(/\n/g,"<br>")}</p>`).join("");break;
     case "sig":h+=`<p style="${P};margin-top:20px">${esc(b.text).replace(/\n/g,"<br>")}</p>`;break;
     case "note":h+=`<p style="${EF}font-size:12.5px;line-height:1.5;color:${b.warn?EC.tbc:EC.slate};background:${b.warn?EC.tbcb:EC.paper};border-left:3px solid ${b.warn?EC.tbc:EC.amber};padding:8px 10px;margin:8px 0 12px">${hiTBC(esc(b.text))}</p>`;break;
@@ -1277,6 +1402,8 @@ function toEmailHTML(B){
 function toText(B){
   const c=x=>x&&typeof x==="object"?(x.url?`${x.text} (${x.url})`:x.text):String(x==null?"":x);
   return B.map(b=>{switch(b.t){
+    case "h3":return b.text.toUpperCase();
+    case "bullets":return b.items.map(x=>"• "+x).join("\n");
     case "title":return b.text.toUpperCase();case "h1":return "\n"+b.text.toUpperCase()+"\n"+"-".repeat(Math.min(60,b.text.length));case "h2":return "\n"+b.text;
     case "kv":return b.rows.map(([k,v])=>`${k}: ${c(v)}`).join("\n");
     case "table":return b.rows.map(r=>"- "+r.map((x,i)=>`${b.head[i]}: ${c(x)}`).join(" | ")).join("\n");
@@ -1301,6 +1428,8 @@ function toDocx(B){
     case "sub":body+=para(runs(b.text),"Subtle");break;
     case "h1":body+=para(runs(b.text),"Heading1");break;
     case "h2":body+=para(runs(b.text),"Heading2");break;
+    case "h3":body+=para(runs(b.text,'<w:b/><w:caps/><w:color w:val="4A5568"/><w:sz w:val="17"/>'),null,'<w:keepNext/><w:spacing w:before="160" w:after="60"/>');break;
+    case "bullets":b.items.forEach(x=>body+=para(runs("•\t"+x),null,'<w:tabs><w:tab w:val="left" w:pos="300"/></w:tabs><w:ind w:left="300" w:hanging="300"/><w:spacing w:after="80"/>'));break;
     case "p":String(b.text).split(/\n{2,}/).forEach(p=>body+=para(runs(p)));break;
     case "sig":body+=para(runs(b.text),null,'<w:spacing w:before="240"/>');break;
     case "note":body+=para(runs(b.text,b.warn?'<w:color w:val="B42318"/>':'<w:color w:val="4A5568"/>'),"Note");break;
@@ -1391,7 +1520,7 @@ let prevT;function refreshPreview(){clearTimeout(prevT);prevT=setTimeout(()=>{co
 document.addEventListener("click",async ev=>{
   const tab=ev.target.closest("[data-tab]");if(tab){cur=tab.dataset.tab;lsSet("hps.v1.tab",cur);render();window.scrollTo({top:0});return}
   const b=ev.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;
-  const need=["stepBuild","markSent","unmarkSent","openSubmit","submitYes","requestResearch","importResearch","addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
+  const need=["secSubmit","secSubmitYes","stepBuild","markSent","unmarkSent","openSubmit","submitYes","requestResearch","importResearch","addInput","delInputYes","loadInputFile","add","del","newMeeting","draftExec","buildTimeline","snap","del-pkg","restoreVer","migrate","newPkg"];
   if(need.includes(a)&&!S.canWrite){toast("You have view access only.");return}
   switch(a){
     case "add":{const list=getPath(pkg,b.dataset.list);list.push(LISTS[b.dataset.list].blank());scheduleSave();render();break}
@@ -1404,6 +1533,10 @@ document.addEventListener("click",async ev=>{
     case "clearConfirm":{const t=document.getElementById(b.dataset.target);if(t)t.innerHTML="";break}
     case "snap":saveSnapshot();break;
     case "openSubmit":if(pkg)openSubmit();break;
+    case "secEdit":viewMode[b.dataset.sec]="edit";render();break;
+    case "secReport":viewMode[b.dataset.sec]="report";render();window.scrollTo({top:0});break;
+    case "secSubmit":openSecSubmit(b.dataset.sec);break;
+    case "secSubmitYes":doSecSubmit(b.dataset.sec);break;
     case "stepDetails":{const el=$("#keyDetails");if(el){el.scrollIntoView({behavior:"smooth",block:"start"});const f=document.querySelector('#main [data-path="'+(!pkg.meta.role.v?"meta.role.v":!pkg.meta.location.v?"meta.location.v":!pkg.meta.kickoffDate.v?"meta.kickoffDate.v":"meta.closureDate.v")+'"]');f&&setTimeout(()=>f.focus({preventScroll:true}),350)}break}
     case "stepBuild":{if(pkg.plan.schedule.some(r=>r.s==="confirmed")){cur="plan";lsSet("hps.v1.tab",cur);render();toast("Some dates are confirmed. Review them, then select Build tentative plan.");}else{buildTimeline(true);render();toast("Tentative plan built from the market difficulty.")}break}
     case "markSent":pkg.sentToHM=todayISO();scheduleSave();render();toast("Marked as sent to the hiring manager.");break;
