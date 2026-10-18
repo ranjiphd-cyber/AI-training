@@ -151,6 +151,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 function packStateFor(id) {
   const e = clone(emp(id)), m = metrics(id), mine = x => x.emp === id;
   e.ratings = [null, null, null]; e.flags = []; // rating history (D-29) and internal notes stay with the TA Head
+  const tl = teamLead(e.team); if (tl && tl.id !== id) e.leadName = tl.name; // reporting line only
   const pick = obj => (obj && obj[id] != null ? { [id]: clone(obj[id]) } : {});
   const s = {
     mode: 'member', rules: clone(state.rules), teams: clone(state.teams), roles: clone(state.roles), areaTargets: clone(state.areaTargets), areaPPO: clone(state.areaPPO || {}),

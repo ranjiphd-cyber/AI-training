@@ -37,7 +37,8 @@ function boot() {
   try { const t = localStorage.getItem('ta-pdms-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) { /* ignore */ }
   document.getElementById('period-label').textContent = '· ' + PERIOD.label + ' · data cut-off ' + D.nice(PERIOD.cutoff);
   const rs = document.getElementById('role-sel');
-  rs.innerHTML = Object.entries(ROLES).filter(([k]) => k !== 'member').map(([k, r]) => `<option value="${k}">${r.label}</option>`).join('');
+  // The TA Head can open anyone's dashboard ("A person's dashboard") exactly as that person sees it.
+  rs.innerHTML = [['head', 'TA Head (everyone)'], ['member', "A person's dashboard"], ['importer', ROLES.importer.label], ['admin', ROLES.admin.label]].map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
   rs.onchange = () => { ui.role = rs.value; ui.page = ROLES[ui.role].pages.find(p => p[0] !== '|'); render(); };
   document.getElementById('emp-sel').onchange = ev => { ui.emp = ev.target.value; render(); };
   document.getElementById('theme-btn').onclick = () => {
@@ -62,7 +63,7 @@ function render(pushHash = true) {
   document.getElementById('nav').style.display = '';
   // Only the TA Head (to preview what others see) and the demo can switch views; a member file is fixed to its owner.
   if (session.kind === 'member') { ui.role = 'member'; ui.emp = session.empId; }
-  else if (ui.role === 'member') ui.role = 'head';
+  else if (!ROLES[ui.role] || ['employee', 'tl'].includes(ui.role)) ui.role = 'head';
   rw.style.display = session.kind === 'member' ? 'none' : '';
   sb.innerHTML = session.kind === 'head' ? `<span class="small">🔒 ${esc(session.email)}</span> <button type="button" onclick="signOut()">Lock</button>`
     : session.kind === 'member' ? `<span class="small">${esc(currentUserLabel())}${session.dirty ? ' · unsaved changes' : ''}</span> <button type="button" onclick="exportResponses()">Export my responses</button> <button type="button" onclick="signOut()">Close</button>`
@@ -71,11 +72,11 @@ function render(pushHash = true) {
   if (!role.pages.includes(ui.page)) ui.page = role.pages.find(p => p[0] !== '|');
   // person selector for employee and team-lead roles
   const wrap = document.getElementById('emp-sel-wrap'), es = document.getElementById('emp-sel');
-  const people = ui.role === 'tl' ? state.employees.filter(e => isLead(e)) : ui.role === 'employee' ? state.employees.filter(e => !isLead(e)) : [];
+  const people = ui.role === 'member' && session.kind !== 'member' ? sortedEmployees() : [];
   wrap.style.display = people.length ? '' : 'none';
   if (people.length) {
     if (!people.find(p => p.id === ui.emp)) ui.emp = people[0].id;
-    es.innerHTML = people.map(p => `<option value="${p.id}" ${p.id === ui.emp ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
+    es.innerHTML = people.map(p => `<option value="${p.id}" ${p.id === ui.emp ? 'selected' : ''}>${esc(p.name)} — ${esc(roleOf(p).name)}${isFormer(p) ? ' (former)' : ''}</option>`).join('');
   }
   document.getElementById('role-sel').value = ui.role;
   document.getElementById('mode-label').textContent = session.kind === 'head' ? (ui.role === 'head' ? 'TA Head · encrypted workspace' : 'Preview as ' + ROLES[ui.role].label) : session.kind === 'member' ? 'My performance file' : 'Demo · fictional data';
@@ -93,12 +94,20 @@ function render(pushHash = true) {
     document.getElementById('main').innerHTML = emptyWorkspace();
   } else {
     let html;
-    try { html = VIEWS[ui.page](); } catch (err) { console.error(err); html = `<div class="card"><h2>Something went wrong</h2><p class="muted">${esc(err.message)}</p></div>`; }
+    try { html = previewBanner() + VIEWS[ui.page](); } catch (err) { console.error(err); html = `<div class="card"><h2>Something went wrong</h2><p class="muted">${esc(err.message)}</p></div>`; }
     document.getElementById('main').innerHTML = html;
   }
   if (pushHash && location.hash.slice(1) !== ui.page) { try { history.replaceState(null, '', '#' + ui.page); } catch (e) { /* sandboxed */ } }
   document.title = PAGE_TITLES[ui.page] + ' · TA Performance Dashboard';
   saveUI();
+}
+// Open one person's dashboard as they see it (TA Head preview), or return to the overall view.
+function previewAs(id) { ui.role = 'member'; ui.emp = id; ui.page = 'me'; render(); window.scrollTo(0, 0); }
+function backToHead() { const id = ui.emp; ui.role = 'head'; ui.page = 'member'; ui.member = id; render(); window.scrollTo(0, 0); }
+function previewBanner() {
+  if (!session || session.kind === 'member' || ui.role !== 'member') return '';
+  const e = emp(ui.emp); if (!e) return '';
+  return `<div class="alert" role="status" style="background:var(--teal-soft)"><span>👁 You are viewing <b>${esc(e.name)}</b>'s dashboard exactly as they see it in their personal file. Confidential items (rating history, promotion, notes) are hidden here, as they are for them.</span><button class="btn sm pri" onclick="backToHead()">Back to TA Head view</button></div>`;
 }
 function go(page, extra = {}) { Object.assign(ui, extra); ui.page = page; render(); window.scrollTo(0, 0); }
 

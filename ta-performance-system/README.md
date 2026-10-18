@@ -12,7 +12,7 @@ A working dashboard for the India Talent Acquisition team. It covers continuous 
 
 | Who | How they get in | What they see |
 |---|---|---|
-| **TA Head** | Sign in with **ranjith.tp@volvo.com** and a passphrase (set on first use) | Overall view of all teams and people; adds, edits and removes people; sets targets; imports data; creates personal files |
+| **TA Head** | Sign in with **ranjith.tp@volvo.com** and a passphrase (set on first use) | **Everyone's data and every dashboard**: team overview, each person's full record (Member View), comparison, heatmap, annual review, talent and promotion, reports. **See their dashboard** (or *View as → A person's dashboard*) opens any person's dashboard exactly as they see it. Adds, edits and removes people; sets targets; imports data; creates personal files |
 | **Team members and leads** | Open their **personal file** with its passphrase (both sent by the TA Head) | **Only their own performance**: their file contains no other person's data. Team leads also see their team's totals, without member names |
 
 - The TA Head workspace is **encrypted (AES-256)** in the browser and in backups. Without the passphrase it cannot be read. The passphrase cannot be recovered, so keep it safe and export encrypted backups regularly.
