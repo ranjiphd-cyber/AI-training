@@ -491,7 +491,8 @@
     h += '<div class="grid g2">';
     h += card('How your data is stored', '',
       '<ul style="margin:0 0 0 18px;padding:0" class="small"><li>Data is saved automatically in <strong>this browser on this device</strong> (IndexedDB, with a localStorage copy when it fits). Current method: <strong>' + esc(S.backend) + '</strong>' + (S.lastSavedAt ? '; last saved ' + TA.fmtDateTime(S.lastSavedAt) : '') + '.</li>' +
-      '<li>It is <strong>not</strong> synced to the cloud, shared with other users or other browsers, or backed up automatically outside this browser.</li>' +
+      (TA.Sync.active() ? '<li><strong>Account copy (claude.ai):</strong> because this page is open as a claude.ai Artifact, a copy is also saved in this artifact\'s database, in your private per-user area tied to your signed-in Claude account. The platform keeps that area private to you; other people you share the artifact with cannot read it. Status: ' + esc(TA.Sync.detail) + ' Recovery points stay in this browser only.</li>'
+        : '<li>It is <strong>not</strong> synced to the cloud, shared with other users or other browsers, or backed up automatically outside this browser. ' + esc(TA.Sync.detail) + '</li>') +
       '<li>Clearing browser data, using a private window, or opening the file from a different folder or browser shows a different (or empty) store.</li>' +
       '<li>Data is not encrypted at rest by this app; anyone with access to this browser profile can open it.</li>' +
       '<li>There is no login, authentication or multi-user access. The dashboard is designed for a single owner.</li>' +
@@ -508,7 +509,7 @@
     h += card('Import records (CSV)', 'Preview, map fields and review potential duplicates before anything is saved.', importView());
     h += '<div style="height:14px"></div><div class="grid g2">';
     h += card('Profile', '', '<div class="form-grid"><div class="field"><label for="m-owner">Owner</label><input type="text" id="m-owner" data-meta="owner" value="' + esc(m.owner) + '"></div><div class="field"><label for="m-role">Role</label><input type="text" id="m-role" data-meta="role" value="' + esc(m.role) + '"></div><div class="field"><label for="m-org">Organisation</label><input type="text" id="m-org" data-meta="org" value="' + esc(m.org) + '"></div><div class="field"><label for="m-cur">Currency</label><input type="text" id="m-cur" value="INR" readonly></div></div><div class="btn-row" style="margin-top:10px"><button class="btn primary" data-act="save-meta">Save profile</button></div>');
-    h += card('Integrations & limitations', '', '<ul class="list"><li><span>AI insight service</span>' + badge('Not connected', 'neutral') + '</li><li><span>Applicant tracking / HRIS / payroll</span>' + badge('Not connected (out of scope)', 'neutral') + '</li><li><span>Authentication / multi-user access</span>' + badge('Not implemented', 'neutral') + '</li><li><span>Cloud storage / sync</span>' + badge('Not implemented', 'neutral') + '</li><li><span>Email / calendar</span>' + badge('Not connected', 'neutral') + '</li></ul>' +
+    h += card('Integrations & limitations', '', '<ul class="list"><li><span>AI insight service</span>' + badge('Not connected', 'neutral') + '</li><li><span>Applicant tracking / HRIS / payroll</span>' + badge('Not connected (out of scope)', 'neutral') + '</li><li><span>Authentication / multi-user access</span>' + badge('Not implemented', 'neutral') + '</li><li><span>Account copy (claude.ai artifact database, private to you)</span>' + badge(TA.Sync.active() ? (TA.Sync.status === 'error' ? 'Not saved' : 'Active') : 'Not available in this view', TA.Sync.status === 'error' ? 'bad' : (TA.Sync.active() ? 'good' : 'neutral')) + '</li><li><span>Email / calendar</span>' + badge('Not connected', 'neutral') + '</li></ul>' +
       '<h4 style="margin-top:14px">Reset</h4><p class="small muted">A recovery point is created first.</p><div class="btn-row"><button class="btn danger" data-act="reset-seed">Reset to initial reference data</button></div>');
     h += '</div>';
     return h;
@@ -692,6 +693,7 @@
     sel.innerHTML = S.list('periods').map(x => '<option value="' + x.id + '"' + (p && x.id === p.id ? ' selected' : '') + '>' + esc(x.label) + '</option>').join('');
     const fr = TA.freshness(p);
     document.getElementById('freshness').innerHTML = (p ? esc(TA.fmtDate(p.start)) + ' – ' + esc(TA.fmtDate(p.end)) + ' · ' + esc(fr.label) + ' · ' : '') + 'Last update ' + esc(TA.fmtDateTime(S.state.meta.updatedAt));
+    const ss = document.getElementById('sync-status'); if (ss) ss.textContent = TA.Sync.label();
     document.getElementById('save-status').textContent = S.saveError ? 'Save problem – see Settings' : (S.lastSavedAt ? 'Saved in this browser ' + new Date(S.lastSavedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'Not saved yet');
   }
   const RENDER = { overview: secOverview, metrics: secMetrics, trends: secTrends, team: secTeam, projects: secProjects, leadership: secLeadership, feedback: secFeedback, value: secValue, quality: secQuality, reports: secReports, settings: secSettings };
@@ -768,7 +770,7 @@
       case 'snap-download': { const s = S.state.snapshots.find(x => x.id === id); TA.download(new Blob([JSON.stringify(s, null, 2)], { type: 'application/json' }), 'snapshot-' + s.ts.slice(0, 10) + '.json'); break; }
       case 'snap-restore': if (await TA.confirmDialog('Restore snapshot?', 'Current data will be replaced by the snapshot. A recovery point is created first.', 'Restore', true)) { S.restoreSnapshot(id); TA.toast('Snapshot restored'); } break;
       case 'snap-delete': if (await TA.confirmDialog('Delete snapshot?', 'This snapshot will be removed.', 'Delete', true)) S.deleteSnapshot(id); break;
-      case 'backup': TA.download(new Blob([JSON.stringify(S.backupObject(), null, 2)], { type: 'application/json' }), 'ta-dashboard-backup-' + TA.todayIso() + '.json'); S.markBackup(); TA.toast('Backup downloaded'); break;
+      case 'backup': if (await TA.download(new Blob([JSON.stringify(S.backupObject(), null, 2)], { type: 'application/json' }), 'ta-dashboard-backup-' + TA.todayIso() + '.json')) { S.markBackup(); TA.toast('Backup downloaded'); } break;
       case 'restore-confirm': S.restoreBackup(ui.restoreSt.obj); ui.restoreSt = null; TA.toast('Backup restored'); break;
       case 'restore-cancel': ui.restoreSt = null; render(); break;
       case 'recover': if (await TA.confirmDialog('Restore recovery point?', 'Current data will be replaced. Another recovery point is created first.', 'Restore', true)) { S.restoreRecovery(id); TA.toast('Recovery point restored'); } break;
@@ -872,7 +874,8 @@
     try {
       status.textContent = 'Generating ' + fmt.toUpperCase() + '…';
       const name = await TA.Exports[fmt](rp);
-      status.textContent = 'Downloaded ' + name + ' (' + TA.fmtDateTime(new Date().toISOString()) + ').';
+      if (!name) { status.textContent = fmt.toUpperCase() + ' not saved.'; return; }
+      status.textContent = 'Generated ' + name + ' (' + TA.fmtDateTime(new Date().toISOString()) + ').';
       S.log('*', null, 'export ' + fmt.toUpperCase() + ' – ' + TA.periodLabel(rp.periodId) + (rp.includeConfidential ? ' (including confidential details)' : ' (confidential details excluded)'), []);
       S.touch();
     } catch (err) { console.error(err); status.textContent = 'Export failed: ' + err.message; }
@@ -886,7 +889,7 @@
     try { const s = localStorage.getItem('ta-dash.section'); if (s && RENDER[s]) ui.section = s; } catch (e) { /* ignore */ }
     let busy = false;
     S.onChange((evt) => {
-      if (evt.saved) { renderTop(); return; }
+      if (evt.saved) { renderTop(); TA.Sync.schedule(); return; }
       if (busy) return; busy = true;
       if (evt.entity === 'actions' && pendingConvert) { const ins = S.get('insights', pendingConvert); pendingConvert = null; if (ins) S.update('insights', ins.id, { status: 'Converted to action' }); }
       if (evt.entity !== 'insights' && TA.syncInsights()) S.scheduleSave();
@@ -900,7 +903,8 @@
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') S.flush(); });
     window.addEventListener('beforeunload', () => S.flush());
     render();
-    if (info.seeded) TA.toast('Loaded initial reference data. Data is stored in this browser only – download backups regularly.');
+    if (info.seeded) TA.toast('Loaded initial reference data. Download backups regularly from Settings / Backup.');
+    TA.Sync.init(info.seeded).then(() => render());
     S.scheduleSave();
     window.TA_READY = true;
   }

@@ -28,13 +28,12 @@ Anything not supplied is shown as **Not provided**, including definitions, popul
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.
-- It is not synced, shared, encrypted or backed up anywhere else.
-- If you clear browser data, use a private window, or open the file from another folder or browser, you will see a different (or empty) store.
-- There is no login, authentication, multi-user access, cloud storage or external integration.
-- The AI insight service is a labelled placeholder. Insights come from transparent, documented rules.
-- No API credentials are stored or used.
+- **When opened as a claude.ai Artifact**, a copy is also saved in the artifact's database, in the signed-in viewer's private per-user area (`data/users/<id>/`). The platform keeps that area private to that person, the artifact owner included. On another device or browser, the dashboard loads that account copy. Recovery points are not copied.
+- Outside claude.ai (opening `index.html` directly) there is no account copy, sync or cloud storage.
+- There is no separate login, multi-user editing or external integration. The AI insight service is a labelled placeholder; insights come from transparent, documented rules. No API credentials are stored or used.
 - Use **Settings / Backup → Download backup (JSON)** regularly, and **Restore from backup** to recover.
-- A recovery point is created automatically before any restore, import or reset (the last five are kept, in this browser only).
+- A recovery point is created automatically before any restore, import, reset or account-copy load (the last five are kept, in this browser only).
+- Inside claude.ai, files are offered through the viewer's save prompt; elsewhere they download normally.
 
 ## Exports
 

@@ -289,8 +289,7 @@
       { x: X0 + half + 0.3, y: 1.25, w: half, h: 5.4, fontFace: FONT, color: '0F1B2D', valign: 'top', fit: 'shrink' });
     const name = fileBase(m, 'pptx');
     const blob = await pres.write({ outputType: 'blob' });
-    TA.download(blob, name);
-    return name;
+    return (await TA.download(blob, name)) ? name : null;
   }
 
   /* ---------- DOCX ---------- */
@@ -338,8 +337,7 @@
     });
     const blob = await D.Packer.toBlob(doc);
     const name = fileBase(m, 'docx');
-    TA.download(blob, name);
-    return name;
+    return (await TA.download(blob, name)) ? name : null;
   }
 
   /* ---------- PDF ---------- */
@@ -428,8 +426,7 @@
       doc.text('Page ' + i + ' of ' + n, PW - M, PH - 28, { align: 'right' });
     }
     const name = fileBase(m, 'pdf');
-    TA.download(doc.output('blob'), name);
-    return name;
+    return (await TA.download(doc.output('blob'), name)) ? name : null;
   }
 
   TA.narrativeDraft = narrativeDraft;

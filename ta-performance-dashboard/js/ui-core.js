@@ -388,11 +388,27 @@
   }
 
   /* ---------- Downloads ---------- */
-  function download(blob, filename) {
+  /* Inside a claude.ai Artifact, files go through the viewer's save prompt (downloads capability);
+     elsewhere a normal browser download is used. */
+  async function download(blob, filename) {
+    let dl = null;
+    if (window.claude && typeof window.claude.use === 'function') { try { dl = await window.claude.use('downloads'); } catch (e) { dl = null; } }
+    if (dl) {
+      try { await dl.save({ filename, data: blob }); toast('Saved ' + filename); }
+      catch (e) {
+        const code = e && e.code;
+        if (code === 'declined') toast('Download cancelled');
+        else if (code === 'rate_limited') toast('A save prompt is already open – try again in a moment');
+        else toast('Download not available here (' + (code || 'error') + ')');
+        return false;
+      }
+      return true;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = filename;
     document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    return true;
   }
   function csvEscape(v) { const s = v === null || v === undefined ? '' : String(v); return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
   function toCSV(entity, rows) {

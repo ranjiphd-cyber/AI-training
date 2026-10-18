@@ -253,6 +253,14 @@
       this.log('*', null, 'restore backup exported ' + (obj.exportedAt || 'unknown'), []);
       this.touch(); this.emit({ entity: '*' });
     },
+    adopt(st, reason) {
+      // Replaces the working state with a copy loaded from elsewhere (the account copy); a recovery point is kept first.
+      this.recoveryPoint(reason);
+      const keep = this.state.recovery;
+      this.state = normalise(clone(st));
+      this.state.recovery = keep;
+      this.scheduleSave(); this.emit({ entity: '*' });
+    },
     resetToSeed() {
       this.recoveryPoint('Before reset to seed data');
       const keep = this.state.recovery;
