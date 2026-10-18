@@ -1,0 +1,4 @@
+Recruiter Employee ID,Candidate ID,Requisition ID,Business Area,Hiring Category,SG Level,Gender,Requisition Created Date,Offer Release Date,Expected Joining Date,Actual Joining Date,Joining Status,Source,Vendor Name,Exception Flag,Exception Reason
+E1002,C-90001,R-5501,DTO,Lateral SG1-SG4,SG3,Female,2026-08-03,2026-09-10,2026-10-12,2026-10-12,Joined,Direct,,,
+E1002,C-90002,R-5502,DTO,Lateral SG5-SG8,SG6,Male,2026-07-20,2026-09-15,2026-11-02,,Pending,Vendor,Example Vendor Pvt Ltd,,
+E1002,C-90003,R-5503,DTO,SG9 and above,SG10,Female,2026-06-01,2026-09-22,2026-11-20,,Pending,Referral,,Y,Hiring-manager delay
