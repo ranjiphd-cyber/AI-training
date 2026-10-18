@@ -2253,7 +2253,7 @@ const IMPORT_DATASETS = {
     ['type', 'Role', true, ['role type', 'role', 'ic/tl', 'type']], ['level', 'Job Level', false, ['job level', 'level', 'grade']],
     ['also', 'Also Supports (teams, ; separated)', false, ['also supports', 'also supports teams', 'secondary team', 'secondary teams']],
     ['status', 'Status (Active / Former)', false, ['status', 'employment status']], ['end', 'Leaving Date', false, ['leaving date', 'end date', 'exit date', 'last working day']],
-    ['flags', 'Notes to Confirm', false, ['notes to confirm', 'to confirm', 'notes']],
+    ['flags', 'Notes to Confirm (separate with |)', false, ['notes to confirm', 'to confirm', 'notes']],
     ['since', 'Date In Current Level', false, ['date in current level', 'in level since', 'level since']],
     ['start', 'Start Date (if mid-year)', false, ['start date', 'joining date', 'doj']],
     ['r1', 'Rating Year-1', false, ['rating year-1', 'rating y-1', 'rating ' + (PERIOD.year - 1), 'last year rating']],
@@ -2448,12 +2448,12 @@ function validateProfile(rec, seen) {
   n.type = rk ? rk[0] : null; if (!n.type) E('Unknown role "' + v.type + '" (use ' + Object.values(state.roles).map(r => r.name).join(', ') + ' or add the role in Team Setup)');
   n.alsoTeams = String(v.also || '').split(/[;|]/).map(x => x.trim()).filter(Boolean).map(x => { const f = findTeam(x); if (!f) W('Unknown supported team "' + x + '" — ignored'); return f && f[0]; }).filter(x => x && x !== n.team);
   n.status = /former|left|exit/i.test(v.status || '') ? 'Former' : 'Active';
-  n.flags = String(v.flags || '').split(/[;|]/).map(x => x.trim()).filter(Boolean);
-  n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : JOB_LEVELS[0]);
+  n.flags = String(v.flags || '').split('|').map(x => x.trim()).filter(Boolean);
+  n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : (emp(v.id) ? emp(v.id).level : ''));
   if (v.level && !JOB_LEVELS.includes(n.level)) W('Job level not in list — kept as entered (D-30)');
   for (const k of ['since', 'start', 'end']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
-  n.ratings = ['r1', 'r2', 'r3'].map(k => { if (!v[k]) return null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
+  n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
   n.id = v.id; n.name = v.name;
 }
 function validateRating(rec, seen) {
@@ -2565,7 +2565,7 @@ function impPublish() {
     }
   } else if (im.dataset === 'profile') {
     for (const r of recs) { const n = r.norm, e = emp(n.id);
-      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || PERIOD.start, start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings };
+      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || (e ? e.since : null), start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings };
       if (e) { updated.push({ id: e.id, prev: JSON.parse(JSON.stringify(e)) }); Object.assign(e, data); } else { addEmployee(Object.assign({ id: n.id }, data)); added.push(n.id); } }
   } else if (im.dataset === 'ratings') {
     for (const r of recs) { const n = r.norm; const h = state.assessments[n.emp] = state.assessments[n.emp] || [];
