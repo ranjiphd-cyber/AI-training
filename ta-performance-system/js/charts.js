@@ -8,37 +8,43 @@ const fmt = (x, d = 1) => x == null || isNaN(x) ? '—' : (Math.round(x * 10 ** 
 function niceMax(v) { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); const n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
 
 /* Offers per 10-day cycle (bars) against the cycle target (dashed step line). */
-function cadenceChart(cycles, { title = 'Offers per 10-working-day cycle vs target', last = 14 } = {}) {
+function cadenceChart(cycles, { title = null, last = 14 } = {}) {
+  const P = pointsBasis();
+  title = title || (P ? 'Weighted points per 10-working-day cycle vs points target' : 'Offers per 10-working-day cycle vs target');
+  if (P && title.includes('offers per')) title = title.replace(/offers per/i, 'Points per').replace('combined target', 'combined points target').replace('vs target', 'vs points target');
   if (!cycles.length) return emptyChart(title);
-  const cs = cycles.slice(-last);
+  // In points mode the bars show weighted points and the line the points target; offers stay in the tooltip.
+  const cs = cycles.slice(-last).map(c => P ? Object.assign({}, c, { val: c.points, tgt: c.pointsTarget }) : Object.assign({}, c, { val: c.offers, tgt: c.target }));
   const W = 640, H = 220, L = 34, R = 10, T = 14, B = 34;
-  const max = niceMax(Math.max(...cs.map(c => Math.max(c.offers, c.target))) * 1.1);
+  const max = niceMax(Math.max(...cs.map(c => Math.max(c.val, c.tgt))) * 1.1);
   const bw = (W - L - R) / cs.length;
   const y = v => T + (H - T - B) * (1 - v / max);
   let g = '';
   for (let i = 0; i <= 4; i++) { const v = max * i / 4; g += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${fmt(v, 0)}</text>`; }
   let bars = '', tline = '';
   cs.forEach((c, i) => {
-    const x = L + i * bw + bw * .18, w = bw * .64, h = Math.max(0, y(0) - y(c.offers));
-    const miss = c.closed && c.offers < c.target;
-    const tip = `Cycle ${c.n} (${D.nice(c.from)} – ${D.nice(c.to)})${c.closed ? '' : ' · partial, not scored'}<br>Offers ${c.offers} · Target ${fmt(c.target)} · Points ${fmt(c.points)}<br>${c.closed ? (miss ? '✕ Below target' : '✓ Target met') : '○ Operational only'}`;
-    bars += `<rect class="${c.closed ? 'bar' : 'bar partial'}" x="${x}" y="${y(c.offers)}" width="${w}" height="${h}" rx="3" data-tip="${esc(tip)}"/>`;
-    if (miss) bars += `<text class="ax miss" x="${x + w / 2}" y="${y(c.offers) - 4}" text-anchor="middle">✕</text>`;
+    const x = L + i * bw + bw * .18, w = bw * .64, h = Math.max(0, y(0) - y(c.val));
+    const miss = c.closed && c.val < c.tgt;
+    const tip = `Cycle ${c.n} (${D.nice(c.from)} – ${D.nice(c.to)})${c.closed ? '' : ' · partial, not scored'}<br>Points ${fmt(c.points)} · points target ${fmt(c.pointsTarget)}<br>Offers ${c.offers} · offer target ${fmt(c.target)}<br>${c.closed ? (miss ? '✕ Below target' : '✓ Target met') : '○ Operational only'}`;
+    bars += `<rect class="${c.closed ? 'bar' : 'bar partial'}" x="${x}" y="${y(c.val)}" width="${w}" height="${h}" rx="3" data-tip="${esc(tip)}"/>`;
+    if (miss) bars += `<text class="ax miss" x="${x + w / 2}" y="${y(c.val) - 4}" text-anchor="middle">✕</text>`;
     bars += `<text class="ax" x="${x + w / 2}" y="${H - B + 14}" text-anchor="middle">${c.n}</text>`;
-    tline += `${i ? 'L' : 'M'}${L + i * bw} ${y(c.target)} L${L + (i + 1) * bw} ${y(c.target)} `;
+    tline += `${i ? 'L' : 'M'}${L + i * bw} ${y(c.tgt)} L${L + (i + 1) * bw} ${y(c.tgt)} `;
   });
   return chartWrap(title, `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}">${g}<line class="axis" x1="${L}" x2="${W - R}" y1="${y(0)}" y2="${y(0)}"/>${bars}<path class="target" d="${tline}"/><text class="ax" x="${(W + L) / 2}" y="${H - 4}" text-anchor="middle">Cycle number</text></svg>`,
-    [['bar', 'Offers (closed cycle)'], ['bar partial', 'Partial cycle (not scored)'], ['target', 'Target']]);
+    [['bar', P ? 'Weighted points (closed cycle)' : 'Offers (closed cycle)'], ['bar partial', 'Partial cycle (not scored)'], ['target', P ? 'Points target' : 'Target']]);
 }
 
 /* YTD cumulative actual vs expected. */
-function cumulativeChart(cycles, title = 'Year to date: cumulative offers vs expected') {
+function cumulativeChart(cycles, title = null) {
+  const P = pointsBasis();
+  title = title ? title.replace(/offers vs expected/, P ? 'points vs points target' : 'offers vs expected') : (P ? 'Year to date: cumulative points vs points target' : 'Year to date: cumulative offers vs expected');
   if (!cycles.length) return emptyChart(title);
   let a = 0, t = 0;
-  const pts = cycles.map(c => { a += c.offers; t += c.target; return { n: c.n, a, t, to: c.to }; });
+  const pts = cycles.map(c => { a += P ? c.points : c.offers; t += P ? c.pointsTarget : c.target; return { n: c.n, a: r1(a), t, to: c.to }; });
   return lineChart([
-    { name: 'Actual offers', cls: 's1', values: pts.map(p => p.a) },
-    { name: 'Expected offers', cls: 's2 dashed', values: pts.map(p => r1(p.t)), marker: 'sq' },
+    { name: P ? 'Weighted points' : 'Actual offers', cls: 's1', values: pts.map(p => p.a) },
+    { name: P ? 'Points target' : 'Expected offers', cls: 's2 dashed', values: pts.map(p => r1(p.t)), marker: 'sq' },
   ], pts.map(p => p.n), { title, xLabel: 'Cycle number', tipLabel: i => `Cycle ${pts[i].n} (to ${D.nice(pts[i].to)})` });
 }
 

@@ -74,8 +74,11 @@ const SG_REQUIRED = ['Lateral SG1-SG4', 'Lateral SG5-SG8', 'SG9 and above'];
 const DEFAULT_RULES = {
   version: 'R-2026.1-draft',
   pointsTable: 'S53',
-  offerFormula: 'O1',
-  gate: { g: 0.7, c: 0.6 },
+  // TA Head decision (18 Oct 2026): assess on weighted points, not offer counts.
+  // Points target = offer target × pointsPerOffer; Offer Delivery & Complexity = 40 × points ÷ points target (capped at 40).
+  offerFormula: 'P',
+  pointsPerOffer: 2,
+  gate: { g: 0, c: 0.6 },
   tlModel: 'TL-A',
   tlTargetShare: 0.5,
   jrBands: [[90, 15], [85, 13], [80, 11], [75, 8], [0, 5]],
@@ -85,7 +88,7 @@ const DEFAULT_RULES = {
   repeatMissN: 2, stalledDays: 45, belowTargetBy: 1, gapThreshold: 1, jrException: 85,
   // Decision status per rule (D-numbers from SYSTEM_DESIGN.md §8)
   status: {
-    pointsTable: ['pending', 'D-01'], offerFormula: ['pending', 'D-02'], gate: ['pending', 'D-03'],
+    pointsTable: ['pending', 'D-01'], offerFormula: ['approved', 'TA Head 18 Oct 2026'], pointsPerOffer: ['approved', 'TA Head 18 Oct 2026'], gate: ['pending', 'D-03 (off)'],
     tlModel: ['pending', 'D-21'], tlTargetShare: ['pending', 'D-20'], jrBands: ['pending', 'D-05'],
     ctBands: ['brd', 'BRD §5.6'], vendorBands: ['brd', 'BRD §5.7'], vendorExcluded: ['pending', 'D-11'],
     repeatMissN: ['pending', 'D-16'], stalledDays: ['pending', 'D-17'], belowTargetBy: ['pending', 'D-18'],

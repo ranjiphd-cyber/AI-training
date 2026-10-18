@@ -341,7 +341,25 @@ Rule tables with version, effective date, status (**Approved / Pending approval*
 
 The BRD acceptance tests (SG10 woman = 3.5; NATS woman = 1.5; AICTE woman = 2.0) are consistent with **both** tables, so they cannot settle the conflict. **D-01** must choose the authoritative table. The prototype lets the administrator switch between them and labels every affected score *Provisional*.
 
-**Score formula — NOT DEFINED in the BRD.** The BRD lists outputs (expected, actual, volume attainment %, weighted points, weighted contribution index, women bonus, hiring mix, trends) [BRD §5.4] and recommends a configurable volume gate [BRD §5.4, §20.2], but gives no formula. The options below are presented for decision (**D-02, D-03, D-04**); none is recommended as policy until tested on historical data in Phase 1.
+**Decision recorded (TA Head, 18 Oct 2026): assess on weighted points, not offer counts.**
+
+| Item | Rule |
+|---|---|
+| Points target | Offer target × **2 points per offer** (workspace default; an area can have its own value where its hiring mix differs) |
+| Offer Delivery & Complexity (40) | 40 × weighted points ÷ points target, capped at 40 |
+| 10-day cadence, status, exceptions, comparison | Weighted points against the points target; offer counts are shown as context only |
+| Volume gate | Off (an offer-count floor no longer drives the score; can be re-enabled, D-03) |
+| Example | DTO target 5 offers → 10 points per 10 working days. Five SG5–SG8 offers (2 points each) = 10 points = 40/40. Five SG1–SG4 offers (1 point each) = 5 points = 20/40 |
+
+Consequences to confirm:
+- **BRD acceptance tests AT-01 and AT-02 no longer hold as written.** "5 standard offers in 10 days = 100% cadence" becomes 50% under a points target. They are restated in §10.2.
+- **Fairness across hiring mixes.** Areas dominated by 1-point hires (NATS, GET/PGET, PMIS, SG1–SG4) average well under 2 points per offer, so recruiters there need more offers to reach the target. Set an area-specific points-per-offer value (Team Setup → Business areas & targets) where this is not intended (**D-51**).
+- **The hiring-point table conflict (D-01) now directly moves scores**, for example ExcelHER at 2 vs 1 base and Lateral SG5–SG8 at 2 vs 1.5.
+- **Summary scorecards need weighted points.** Where only offer counts exist, enter points per person or import offer-level data.
+
+The options below were the alternatives considered before this decision; they remain selectable in Rules & Settings for comparison.
+
+**Score formula — options considered.** The BRD lists outputs (expected, actual, volume attainment %, weighted points, weighted contribution index, women bonus, hiring mix, trends) [BRD §5.4] and recommends a configurable volume gate [BRD §5.4, §20.2], but gives no formula. The options below are presented for decision (**D-02, D-03, D-04**); none is recommended as policy until tested on historical data in Phase 1.
 
 | Option | Formula (illustrative) | Strength | Risk |
 |---|---|---|---|
@@ -696,7 +714,7 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-01a | Category precedence | §5.3 | An offer may fit two categories (e.g. ExcelHER at SG5; FTC at SG9; PhD intern) — which rule applies? | (a) Programme category wins · (b) higher points win · (c) SG band wins for all lateral-type offers | TA Head |
 | D-01b | ExcelHER bonus | §5.3 / A3 | If ExcelHER is a women-only programme, the +0.5 always applies (2.5 or 1.5 per offer). Intended? | Confirm intended points per ExcelHER offer | TA Head |
 | D-01c | "SG9 and above" scope | §5.3 | Applies to lateral only, or any category at SG9+? | Lateral only · Any category | TA Head |
-| D-02 | Offer Delivery & Complexity formula (40) | §5.4, §20.2 | No formula given | O1 points attainment · O2 volume + complexity split · O3 banded (see §4.2) | TA Head |
+| D-02 | Offer Delivery & Complexity formula (40) | §5.4, §20.2 | **Decided 18 Oct 2026:** points vs points target (offer target × 2), linear, capped at 40. Confirm the linear scale and cap | — | TA Head |
 | D-03 | Volume gate | §5.4, §20.2 | Gate threshold and cap undefined; over-achievement treatment (cap at 100% or allow above?) undefined | Gate g and cap c values; cap ≤ 40 always? | TA Head |
 | D-04 | "Weighted contribution index" | §5.4 | Named, not defined | Points ÷ expected offers · points ÷ actual offers · other | TA Head |
 | D-05 | Joining ratio bands and exception threshold | §5.5, §10.3, §20.2 | "Indicative", pending historical calibration; boundary handling (89.95%); exception threshold not stated | Half-open intervals; threshold 85% or 80% | TA Head |
@@ -749,10 +767,11 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-42 | "TTI" | Expand acronym (scope now confirmed as GTP/GTO/GTT) | TA Head |
 | D-44 | TTI business areas | Request lists "GTP, GTP, GTT"; GTO assumed for the duplicate | TA Head |
 | D-45 | Summary-scorecard data | Where only YTD totals per recruiter exist (no offer-level data), the 40-point offer score cannot be calculated; joining ratio becomes joiners ÷ offers (not maturity-adjusted) | Load offer-level ATS data (recommended) · accept TA Head override with reason | TA Head |
-| D-46 | Annual recruiter targets | Recruiter scorecards carry an annual target (e.g. 85, 114, 57) alongside the BRD's 10-day cadence; unclear whether it counts offers or joiners, and whether attainment is pro-rated | Joiners (as scorecard attainment) · offers · both; pro-rated to date vs full-year | TA Head |
+| D-46 | Annual recruiter targets | **Resolved 18 Oct 2026:** the annual target is an offer target, converted to points (× 2). Remaining: confirm pro-rating to the scorecard date | Pro-rated (current) · full-year | TA Head |
 | D-47 | Support / operations roles | BRD scorecard is recruiter-only; Global SF support and operations roles have no hiring deliverables | Projects + competency only (/30, current) · role-specific service KPIs | TA Head |
 | D-48 | Target share by role | Sourcers and other roles: share of business-area target not defined | 100% (current placeholder) · role-specific | TA Head |
 | D-49 | Members supporting several teams | Someone may serve more than one team (e.g. TTI and VCE) | Count in primary team goal only (current) · split by share of effort | TA Head |
+| D-51 | Points per offer by area | Global ×2 assumption disadvantages areas with mostly 1-point hires (NATS, GET/PGET, PMIS) | Keep ×2 everywhere · set area values from historical points per offer | TA Head |
 | D-50 | Former team members | People who left mid-year | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
 | D-43 | Offer definition | Count offers released, or accepted? Re-issued offers to the same candidate? | TA Head |
 
@@ -781,8 +800,8 @@ Aligned to the BRD's five phases [BRD §19], with a decision phase added first.
 
 | # | Given | When | Then | Depends on |
 |---|---|---|---|---|
-| AT-01 | DTO recruiter, 10 eligible working days, target 5 | 5 standard offers released | Cadence = 100%, status "On track" | — |
-| AT-02 | GTT recruiter, target 4 | 4 offers in 10 working days | Target met | — |
+| AT-01 | DTO recruiter, 10 eligible working days, target 5 | 5 standard offers released | BRD: cadence 100%. **Superseded by points rule (18 Oct 2026):** 5 points vs 10-point target = 50%, score 20/40 | Points decision |
+| AT-02 | GTT recruiter, target 4 | 4 offers in 10 working days | BRD: target met. **Under points rule:** met only if the offers total ≥ 8 points | Points decision |
 | AT-03 | SG10 offer, woman | Points calculated | 3.5 (3 + 0.5) | — |
 | AT-04 | NATS hire, woman | Points calculated | 1.5 | — |
 | AT-05 | AICTE Professor, woman | Points calculated | 2.0; no +0.5 | — |
@@ -810,7 +829,9 @@ Aligned to the BRD's five phases [BRD §19], with a decision phase added first.
 | AT-22 | Volume attainment below gate → Offer score capped at approved cap | D-02, D-03 |
 | AT-23 | Joining ratio 89.95% → band per approved boundary rule | D-05 |
 | AT-24 | Average cycle time 55.4 days → band per approved rounding rule | D-07 |
-| AT-25 | DTO TL target = 2.5 offers / 10 working days | D-20 |
+| AT-25 | DTO TL target = 2.5 offers = 5 points / 10 working days | D-20 |
+| AT-26 | DTO recruiter, 5 Lateral SG5–SG8 offers (men) in a 10-day cycle | Points 10 vs target 10 → 100%, score 40/40 (holds under §5.3 table; 7.5 points and 30/40 under A3) | D-01 |
+| AT-27 | Summary scorecard with offer target 85 and 190 points, 196 of 256 working days elapsed | Points target 170/year, pro-rated 130.2; 146% → score 40/40 | — |
 
 ### 10.3 Import, sharing and access tests [REQ, REC]
 

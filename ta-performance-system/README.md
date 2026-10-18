@@ -17,6 +17,15 @@ A working dashboard for the India Talent Acquisition team. It covers continuous 
 6. Rate competencies, score projects and competency development, and build next-year development plans in **Member View**. You can also paste self and TA Head ratings in Data Import → Competency ratings.
 7. Use **Reports** for annual reports (2–4 pages plus annexures), section reports, member comparisons, the calibration pack and the confidential talent report. PDF opens the print dialog (choose *Save as PDF*); Excel downloads a workbook.
 
+## How delivery is assessed
+
+People are assessed on **weighted hiring points**, not offer counts:
+- **Points target = offer target × 2.** Change the default in Rules & Settings, or set a value per business area in Team Setup.
+- **Offer Delivery & Complexity score (40) = 40 × points ÷ points target**, capped at 40.
+- Statuses, 10-day cadence charts, exceptions and comparisons all use points; offer counts are shown for context.
+
+For people with only a summary scorecard, enter their weighted points with **Enter points** on their Business Deliverables panel, or include a *Weighted Points* column in the recruiter scorecard import.
+
 ## Teams, roles and assignments
 
 Open **Team Setup** to:

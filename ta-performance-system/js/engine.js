@@ -50,13 +50,20 @@ function migrateState(s) {
   s.roles = s.roles || JSON.parse(JSON.stringify(DEFAULT_ROLES));
   s.scorecards = s.scorecards || {};
   for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; }
+  s.areaPPO = s.areaPPO || {};
+  if (s.rules && s.rules.pointsPerOffer == null) {
+    // Points-based assessment (TA Head decision, 18 Oct 2026) applied to older workspaces.
+    s.rules.pointsPerOffer = 2; s.rules.offerFormula = 'P'; s.rules.gate = Object.assign({}, s.rules.gate, { g: 0 });
+    Object.assign(s.rules.status, { offerFormula: ['approved', 'TA Head 18 Oct 2026'], pointsPerOffer: ['approved', 'TA Head 18 Oct 2026'], gate: ['pending', 'D-03 (off)'] });
+    (s.audit = s.audit || []).unshift({ at: nowStamp(), who: 'TA Head', action: 'Rule changed', object: 'Offer Delivery & Complexity', detail: 'Offer counts → weighted points: points target = offer target × 2; score = 40 × points ÷ points target (capped); volume gate off', reason: 'TA Head decision 18 Oct 2026' });
+  }
   return s;
 }
 function resetState() { state = buildSampleState(); calcVersion++; saveState(); }
 // Empty workspace for real use: same structure, no people or transactions.
 function emptyState() {
   return {
-    mode: 'live', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)),
+    mode: 'live', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)), areaPPO: {},
     teams: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), roles: JSON.parse(JSON.stringify(DEFAULT_ROLES)), scorecards: {},
     areaTargets: Object.fromEntries(Object.entries(AREAS).map(([k, v]) => [k, v.target])),
     employees: [], offers: [], assessments: {}, projects: [], learning: [], compDev: {}, idp: {}, afi: {}, requests: [], batches: [],
@@ -65,6 +72,8 @@ function emptyState() {
   };
 }
 function startLive() { state = emptyState(); calcVersion++; saveState(); }
+function ppoFor(a) { return state.areaPPO && state.areaPPO[a] != null ? Number(state.areaPPO[a]) : state.rules.pointsPerOffer; }
+const pointsBasis = () => state.rules.offerFormula === 'P';
 function areaTarget(a) { const t = state.areaTargets[a]; return t == null ? 0 : Number(t); }
 function addEmployee(o) {
   const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
@@ -98,7 +107,7 @@ function buildSampleState() {
   const pick = (arr) => arr[Math.floor(rnd() * arr.length)];
   const wpick = (pairs) => { let r = rnd() * sum(pairs.map(p => p[1])); for (const [v, w] of pairs) { r -= w; if (r <= 0) return v; } return pairs[pairs.length - 1][0]; };
   const s = {
-    mode: 'sample', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)),
+    mode: 'sample', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)), areaPPO: {},
     teams: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), roles: JSON.parse(JSON.stringify(DEFAULT_ROLES)), scorecards: {},
     areaTargets: Object.fromEntries(Object.entries(AREAS).map(([k, v]) => [k, v.target])),
     employees: EMPLOYEES.map(e => ({ id: e.id, name: e.name, team: e.team, area: e.area, type: e.type, level: e.level, since: e.since, ratings: [...e.ratings], start: e.start || null, end: null, status: 'Active', alsoTeams: [], flags: [], leave: e.leave || null })),
@@ -261,12 +270,15 @@ function ctScore(a) { if (a == null) return null; const b = state.rules.ctBands;
 function ctLabel(a) { if (a == null) return '—'; const b = state.rules.ctBands; return a < b.strong ? 'Strong' : a <= b.acceptable ? 'Acceptable' : 'Improvement Required'; }
 function vendorScore(p) { if (p == null) return null; const b = state.rules.vendorBands; return p < b.low ? 5 : p <= b.high ? 3 : 1; }
 
-function offerScore(expected, actual, points) {
+function offerScore(expected, actual, points, pointsTarget) {
   const R = state.rules;
   if (!expected) return { score: null, note: 'No closed cycle yet' };
-  const vol = actual / expected, patt = points / expected;
+  if (points == null) return { score: null, how: 'Weighted points not available' };
+  const vol = actual != null ? actual / expected : null;
+  let patt = points / expected;
   let score, how;
-  if (R.offerFormula === 'O1') { score = 40 * Math.min(patt, 1); how = '40 × min(points ÷ expected, 1)'; }
+  if (R.offerFormula === 'P') { patt = pointsTarget ? points / pointsTarget : null; score = patt == null ? null : 40 * Math.min(patt, 1); how = '40 × min(points ÷ points target, 1); points target = offer target × points per offer'; }
+  else if (R.offerFormula === 'O1') { score = 40 * Math.min(patt, 1); how = '40 × min(points ÷ expected, 1)'; }
   else if (R.offerFormula === 'O2') {
     const avgPts = actual ? points / actual : 0;
     score = 28 * Math.min(vol, 1) + 12 * clamp((avgPts - 1) / 0.5, 0, 1); how = '28 × min(volume, 1) + 12 × min((avg points − 1) ÷ 0.5, 1)';
@@ -274,16 +286,16 @@ function offerScore(expected, actual, points) {
     score = patt >= 1 ? 40 : patt >= .9 ? 34 : patt >= .8 ? 28 : patt >= .7 ? 20 : 10; how = 'Bands on points attainment: ≥100% 40 · ≥90% 34 · ≥80% 28 · ≥70% 20 · else 10';
   }
   let gated = false;
-  if (vol < R.gate.g && score > 40 * R.gate.c) { score = 40 * R.gate.c; gated = true; }
+  if (vol != null && R.gate.g > 0 && vol < R.gate.g && score > 40 * R.gate.c) { score = 40 * R.gate.c; gated = true; }
   return { score: r1(score), how, gated, vol, patt };
 }
 
-function deliveryBlock(offers, days, target) {
+function deliveryBlock(offers, days, target, ppo = state.rules.pointsPerOffer) {
   const nClosed = Math.floor(days.length / 10);
   const cycles = [];
   for (let i = 0; i * 10 < days.length; i++) {
     const chunk = days.slice(i * 10, i * 10 + 10);
-    cycles.push({ n: i + 1, from: chunk[0], to: chunk[chunk.length - 1], days: chunk.length, closed: chunk.length === 10, target: target * chunk.length / 10, offers: 0, points: 0 });
+    cycles.push({ n: i + 1, from: chunk[0], to: chunk[chunk.length - 1], days: chunk.length, closed: chunk.length === 10, target: target * chunk.length / 10, pointsTarget: target * ppo * chunk.length / 10, offers: 0, points: 0 });
   }
   const lastDay = days[days.length - 1];
   const inPeriod = offers.filter(o => days.length && o.offerDate >= days[0] && o.offerDate <= PERIOD.cutoff);
@@ -296,7 +308,8 @@ function deliveryBlock(offers, days, target) {
   const closed = cycles.filter(c => c.closed);
   const expectedFormal = nClosed * target, actualFormal = sum(closed.map(c => c.offers)), pointsFormal = sum(closed.map(c => c.points));
   const pts = inPeriod.map(o => pointsFor(o));
-  const os = offerScore(expectedFormal, actualFormal, pointsFormal);
+  const pointsTargetFormal = expectedFormal * ppo;
+  const os = offerScore(expectedFormal, actualFormal, pointsFormal, pointsTargetFormal);
   // joining
   const matured = inPeriod.filter(o => o.expJoin <= PERIOD.cutoff && o.status !== 'Revoked');
   const joined = matured.filter(o => o.status === 'Joined').length;
@@ -312,11 +325,12 @@ function deliveryBlock(offers, days, target) {
   const mix = {};
   inPeriod.forEach((o, i) => { const k = o.cat; mix[k] = mix[k] || { n: 0, women: 0, points: 0, bonus: 0 }; mix[k].n++; if (o.gender === 'Female') mix[k].women++; mix[k].points += pts[i].total; mix[k].bonus += pts[i].bonus; });
   // repeated misses (consecutive closed cycles below target, most recent run)
-  let run = 0; for (let i = closed.length - 1; i >= 0 && closed[i].offers < closed[i].target; i--) run++;
+  const missed = c => pointsBasis() ? c.points < c.pointsTarget : c.offers < c.target;
+  let run = 0; for (let i = closed.length - 1; i >= 0 && missed(closed[i]); i--) run++;
   return {
     days: days.length, target, cycles, nClosed, lastDay,
     expectedYTD: days.length / 10 * target, actualYTD: inPeriod.length, pointsYTD: sum(pts.map(p => p.total)), bonusYTD: sum(pts.map(p => p.bonus)),
-    expectedFormal, actualFormal, pointsFormal, offer: os,
+    expectedFormal, actualFormal, pointsFormal, pointsTargetFormal, ppo, pointsTargetYTD: days.length / 10 * target * ppo, offer: os,
     matured: matured.length, joined, declined: matured.filter(o => o.status === 'Declined').length, noshow: matured.filter(o => o.status === 'No-show').length,
     pending: inPeriod.filter(o => o.expJoin > PERIOD.cutoff).length, jr, jrScore: jrScore(jr),
     ctAvg, ctMedian: median(ctAll), ctCount: ctAll.length, ctExcluded: ctAll.length - ctScored.length, ctScore: ctScore(ctAvg), ctBands: [ctAll.filter(x => x < 45).length, ctAll.filter(x => x >= 45 && x <= 55).length, ctAll.filter(x => x > 55).length],
@@ -339,28 +353,30 @@ function deliverablesTotal(b, ov, noRescale = false) {
    offer-level data is not available. Attainment follows the source scorecard (joiners vs target), pro-rated
    to the scorecard date (D-46). The 40-point offer score needs offer-level data, so it stays empty unless
    the TA Head records an override with a reason. */
-function summaryBlock(sc, e) {
+function summaryBlock(sc, e, ppo = state.rules.pointsPerOffer) {
   const yearDays = workingDays(PERIOD.start, PERIOD.end).length;
   const asOf = e.end && e.end < sc.asOf ? e.end : sc.asOf;
   const from = e.start && e.start > PERIOD.start ? e.start : PERIOD.start;
   const elapsed = workingDays(from, asOf).length;
   const proRata = sc.target != null ? sc.target * elapsed / yearDays : null;
   const jr = sc.offers ? sc.joiners / sc.offers * 100 : null;
-  return { mode: 'summary', sc, asOf, elapsed, yearDays, target: sc.target, days: elapsed, cycles: [], nClosed: 0, lastDay: asOf,
-    expectedFormal: proRata, actualFormal: sc.joiners, pointsFormal: null,
-    offer: { score: null, how: 'Not calculable from a summary scorecard: needs offer-level category, SG and gender, or a TA Head override with reason.' },
-    expectedYTD: proRata, actualYTD: sc.offers, pointsYTD: null, bonusYTD: null,
+  const pts = sc.points != null ? sc.points : null, ptTarget = proRata != null ? proRata * ppo : null;
+  const offer = pts == null ? { score: null, how: 'Weighted points not in the scorecard yet: enter them (Enter points) or import offer-level data.' } : offerScore(proRata, sc.offers, pts, ptTarget);
+  return { mode: 'summary', sc, asOf, elapsed, yearDays, target: sc.target, days: elapsed, cycles: [], nClosed: 0, lastDay: asOf, ppo,
+    expectedFormal: proRata, actualFormal: sc.offers, pointsFormal: pts, pointsTargetFormal: ptTarget, pointsTargetFull: sc.target != null ? sc.target * ppo : null,
+    offer, expectedYTD: proRata, actualYTD: sc.offers, pointsYTD: pts, pointsTargetYTD: ptTarget, bonusYTD: null,
     matured: sc.offers, joined: sc.joiners, declined: null, noshow: null, pending: null, jr, jrScore: jrScore(jr),
     ctAvg: sc.offerDays, ctMedian: null, ctCount: null, ctExcluded: 0, ctScore: ctScore(sc.offerDays), ctBands: [0, 0, 0],
     applicable: null, vendor: null, vendorPct: sc.vendorPct, vendorScore: vendorScore(sc.vendorPct), mix: {}, offers: [], missRun: 0 };
 }
 function aggregateSummary(blocks, members) {
   const S = k => sum(blocks.map(b => b[k] || 0));
-  const offers = S('actualYTD'), joiners = S('actualFormal');
+  const offers = S('actualYTD'), joiners = S('joined');
+  const allPts = blocks.every(b => b.pointsFormal != null), pts = allPts ? S('pointsFormal') : null, ptT = S('pointsTargetFormal');
   const wavg = k => { const w = blocks.filter(b => b[k] != null && b.actualYTD); const tw = sum(w.map(b => b.actualYTD)); return tw ? sum(w.map(b => b[k] * b.actualYTD)) / tw : null; };
   const jr = offers ? joiners / offers * 100 : null, ct = wavg('ctAvg'), vp = wavg('vendorPct');
-  return { mode: 'summary', members: members.map(m => m.id), cycles: [], expectedFormal: S('expectedFormal'), actualFormal: joiners, pointsFormal: null,
-    offer: { score: null, how: 'Team offer score needs offer-level data.' }, expectedYTD: S('expectedYTD'), actualYTD: offers, pointsYTD: null,
+  return { mode: 'summary', members: members.map(m => m.id), cycles: [], expectedFormal: S('expectedFormal'), actualFormal: offers, pointsFormal: pts, pointsTargetFormal: ptT,
+    offer: pts == null ? { score: null, how: 'Team score needs weighted points for every member.' } : offerScore(S('expectedFormal'), offers, pts, ptT), expectedYTD: S('expectedYTD'), actualYTD: offers, pointsYTD: null,
     matured: offers, joined: joiners, jr, jrScore: jrScore(jr), ctAvg: ct, ctMedian: null, ctScore: ctScore(ct), applicable: null, vendor: null, vendorPct: vp, vendorScore: vendorScore(vp), offers: [] };
 }
 
@@ -375,7 +391,8 @@ function metrics(id) {
   const txOffers = state.offers.filter(o => o.emp === id);
   const sc = state.scorecards && state.scorecards[id];
   const mode = isSup ? 'support' : (!txOffers.length && sc ? 'summary' : 'tx');
-  const own = mode === 'summary' ? summaryBlock(sc, e) : deliveryBlock(txOffers, days, target);
+  const ppo = ppoFor(e.area);
+  const own = mode === 'summary' ? summaryBlock(sc, e, ppo) : deliveryBlock(txOffers, days, target, ppo);
   const ov = state.overrides.filter(o => o.emp === id);
   const ownDel = deliverablesTotal(own, ov, mode === 'summary');
   let team = null, teamDel = null, deliverables = isSup ? null : ownDel.total;
@@ -424,11 +441,14 @@ function metrics(id) {
   const gaps = latest ? COMPETENCIES.map(c => latest.self[c] != null ? latest.self[c] - latest.mgr[c] : null) : [];
   const vol = own.expectedFormal ? own.actualFormal / own.expectedFormal : null;
   const teamVol = team && team.expectedFormal ? team.actualFormal / team.expectedFormal : null;
-  const statusVol = isTL ? (teamVol != null && vol != null ? Math.min(teamVol, vol) : vol) : vol;
+  // Attainment drives status: weighted points vs points target when assessing on points, else offer volume.
+  const attOf = b => !b ? null : pointsBasis() ? (b.pointsTargetFormal && b.pointsFormal != null ? b.pointsFormal / b.pointsTargetFormal : null) : (b.expectedFormal ? b.actualFormal / b.expectedFormal : null);
+  const att = attOf(own), teamAtt = attOf(team);
+  const statusVol = isTL ? (teamAtt != null && att != null ? Math.min(teamAtt, att) : att) : att;
   const noData = mode === 'tx' && !txOffers.length && !(isTL && team && team.actualYTD);
   const status = isSup || noData || statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
   const res = { e, role, mode, isSup, isTL, target, own, ownDel, team, teamDel, deliverables, projects, projectsSelf, cdM, cdS, cd, total, selfTotal, partial, model,
-    projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, status, provisional: anyPending() };
+    projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, att, teamAtt, ppo, status, provisional: anyPending() };
   _cache[key] = res;
   return res;
 }
@@ -438,7 +458,7 @@ function aggregateBlocks(blocks, members) {
   const cycles = [];
   for (let i = 0; i < nCycles; i++) {
     const cs = blocks.map(b => b.cycles[i]).filter(Boolean);
-    cycles.push({ n: i + 1, from: cs[0].from, to: cs[0].to, closed: cs.every(c => c.closed), target: sum(cs.map(c => c.target)), offers: sum(cs.map(c => c.offers)), points: sum(cs.map(c => c.points)) });
+    cycles.push({ n: i + 1, from: cs[0].from, to: cs[0].to, closed: cs.every(c => c.closed), target: sum(cs.map(c => c.target)), pointsTarget: sum(cs.map(c => c.pointsTarget || 0)), offers: sum(cs.map(c => c.offers)), points: sum(cs.map(c => c.points)) });
   }
   const expectedFormal = sum(blocks.map(b => b.expectedFormal)), actualFormal = sum(blocks.map(b => b.actualFormal)), pointsFormal = sum(blocks.map(b => b.pointsFormal));
   const matured = all.filter(o => o.expJoin <= PERIOD.cutoff && o.status !== 'Revoked');
@@ -447,7 +467,8 @@ function aggregateBlocks(blocks, members) {
   const ctAll = all.map(cycleDays), ctScored = all.filter(o => !(o.exc && o.exc.status === 'Approved')).map(cycleDays);
   const applicable = all.filter(o => !state.rules.vendorExcluded.includes(o.cat)), vend = applicable.filter(o => o.source === 'Vendor').length;
   const vp = applicable.length ? vend / applicable.length * 100 : null;
-  return { members: members.map(m => m.id), cycles, expectedFormal, actualFormal, pointsFormal, offer: offerScore(expectedFormal, actualFormal, pointsFormal),
+  const pointsTargetFormal = sum(blocks.map(b => b.pointsTargetFormal || 0));
+  return { members: members.map(m => m.id), cycles, expectedFormal, actualFormal, pointsFormal, pointsTargetFormal, offer: offerScore(expectedFormal, actualFormal, pointsFormal, pointsTargetFormal),
     expectedYTD: sum(blocks.map(b => b.expectedYTD)), actualYTD: all.length, pointsYTD: sum(blocks.map(b => b.pointsYTD)),
     matured: matured.length, joined, jr, jrScore: jrScore(jr), ctAvg: avg(ctScored), ctMedian: median(ctAll), ctScore: ctScore(avg(ctScored)),
     applicable: applicable.length, vendor: vend, vendorPct: vp, vendorScore: vendorScore(vp), offers: all };
@@ -461,7 +482,8 @@ function exceptionsList() {
   for (const e of state.employees) {
     const m = metrics(e.id), b = m.own;
     const lastClosed = b.cycles.filter(c => c.closed).slice(-1)[0];
-    if (lastClosed && lastClosed.offers < lastClosed.target) add(e, 'Below cadence', 'Last closed 10-day cycle', lastClosed.offers + ' offers', 'Target ' + r1(lastClosed.target), 'Review pipeline in next 1:1', 2);
+    if (lastClosed && (pointsBasis() ? lastClosed.points < lastClosed.pointsTarget : lastClosed.offers < lastClosed.target)) add(e, 'Below cadence', 'Last closed 10-day cycle', pointsBasis() ? r1(lastClosed.points) + ' points (' + lastClosed.offers + ' offers)' : lastClosed.offers + ' offers', 'Target ' + r1(pointsBasis() ? lastClosed.pointsTarget : lastClosed.target) + (pointsBasis() ? ' points' : ''), 'Review pipeline in next 1:1', 2);
+    if (m.mode === 'summary' && b.pointsFormal == null) add(e, 'Points missing', 'Summary scorecard', 'No weighted points', 'Needed for the 40-point score', 'Enter points or import offer data', 2);
     if (b.missRun >= R.repeatMissN) add(e, 'Repeated 10-day misses', 'Consecutive missed cycles', b.missRun + ' cycles', '≥ ' + R.repeatMissN, 'Agree a recovery plan', 1);
     if (b.jr != null && b.jr < R.jrException) add(e, 'Joining ratio below threshold', 'Joining ratio', r1(b.jr) + '%', '< ' + R.jrException + '%', 'Review declines and no-shows', 2);
     if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) add(e, 'Cycle time > 55 days', 'Avg req-to-offer', r1(b.ctAvg) + ' days', '> ' + R.ctBands.acceptable, 'Check ageing reqs and exception requests', 2);
@@ -516,7 +538,7 @@ function promotion(id) {
 function recommendations(id) {
   const m = metrics(id), b = m.own, out = [];
   const R = state.rules;
-  if (m.vol != null && m.vol < .85) out.push({ area: 'Delivery', fact: `Volume attainment is ${Math.round(m.vol * 100)}% of the closed-cycle target (${b.actualFormal} of ${r1(b.expectedFormal)} offers).`, suggestion: 'Agree a 2-cycle recovery plan: weekly pipeline review and early escalation of stalled requisitions.', vis: 'all' });
+  if (m.att != null && m.att < .85) out.push({ area: 'Delivery', fact: pointsBasis() ? `Weighted points are ${Math.round(m.att * 100)}% of the points target (${r1(b.pointsFormal)} of ${r1(b.pointsTargetFormal)}; ${b.actualFormal} offers).` : `Volume attainment is ${Math.round(m.att * 100)}% of the closed-cycle target (${b.actualFormal} of ${r1(b.expectedFormal)} offers).`, suggestion: pointsBasis() && b.actualYTD && b.pointsYTD / b.actualYTD < state.rules.pointsPerOffer ? `Average ${r1(b.pointsYTD / b.actualYTD)} points per offer, below the ${state.rules.pointsPerOffer} assumed in the target: discuss the hiring mix and whether the area's points-per-offer should differ.` : 'Agree a 2-cycle recovery plan: weekly pipeline review and early escalation of stalled requisitions.', vis: 'all' });
   if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) out.push({ area: 'Cycle time', fact: `Average req-to-offer cycle time is ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}).`, suggestion: 'Consider a requisition-ageing improvement project; record approved exceptions for genuine business holds.', vis: 'all' });
   if (b.jr != null && b.jr < R.jrException) out.push({ area: 'Joining', fact: `Joining ratio is ${r1(b.jr)}% (${b.joined} of ${b.matured} matured offers).`, suggestion: 'Introduce pre-joining engagement touchpoints and review decline reasons monthly.', vis: 'all' });
   if (b.vendorPct != null && b.vendorPct > R.vendorBands.high) out.push({ area: 'Sourcing', fact: `Vendor usage is ${r1(b.vendorPct)}% of applicable hires.`, suggestion: 'Build direct-sourcing pipelines (referrals, talent communities) for repeat roles.', vis: 'all' });
@@ -528,7 +550,7 @@ function recommendations(id) {
   }
   const strong = m.latest ? COMPETENCIES.filter(c => m.latest.mgr[c] >= 4) : [];
   if (strong.length) out.push({ area: 'Strength', fact: `Rated 4+ by TA Head on: ${strong.join(', ')}.`, suggestion: 'Use as an internal coach or panel member for these areas.', vis: 'all' });
-  if (m.isTL && m.team) out.push({ area: 'Team leadership', fact: `Team volume attainment ${m.teamVol != null ? Math.round(m.teamVol * 100) + '%' : 'n/a'}; team joining ratio ${r1(m.team.jr)}%; team avg cycle ${r1(m.team.ctAvg)} days.`, suggestion: m.teamVol != null && m.teamVol < 1 ? 'Focus coaching on the members with the largest cadence gaps; review weekly team pipeline.' : 'Share team practices with other TA teams; consider broader scope.', vis: 'all' });
+  if (m.isTL && m.team) out.push({ area: 'Team leadership', fact: `Team ${pointsBasis() ? 'points' : 'volume'} attainment ${m.teamAtt != null ? Math.round(m.teamAtt * 100) + '%' : 'n/a'}; team joining ratio ${r1(m.team.jr)}%; team avg cycle ${r1(m.team.ctAvg)} days.`, suggestion: m.teamAtt != null && m.teamAtt < 1 ? 'Focus coaching on the members with the largest cadence gaps; review weekly team pipeline.' : 'Share team practices with other TA teams; consider broader scope.', vis: 'all' });
   const pr = promotion(id);
   out.push({ area: 'Promotion (confidential)', fact: pr.crit.map(c => (c.ok ? '✓ ' : '✕ ') + c.label + ' — ' + c.fact).join('\n'), suggestion: `Advisory readiness: ${pr.level}. Next level: ${pr.nextLevel}. Final decision rests with the TA Head and HR process.`, vis: 'head' });
   return out;

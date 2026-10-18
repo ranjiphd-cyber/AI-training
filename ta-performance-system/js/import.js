@@ -43,7 +43,7 @@ const IMPORT_DATASETS = {
   ] },
   scorecard: { label: 'Recruiter scorecard (YTD summary per person)', roles: ['head', 'importer'], fields: [
     ['emp', 'Employee ID', true, ['employee id', 'emp id', 'recruiter', 'employee', 'name']], ['asOf', 'As Of Date', true, ['as of date', 'as of', 'data cut-off', 'cutoff']],
-    ['target', 'Annual Target', false, ['annual target', 'target']], ['offers', 'Offers', true, ['offers', 'offers released', 'total offers']], ['joiners', 'Joiners', true, ['joiners', 'joined', 'total joiners']],
+    ['target', 'Annual Target', false, ['annual target', 'target']], ['points', 'Weighted Points', false, ['weighted points', 'points', 'total points', 'hiring points']], ['offers', 'Offers', true, ['offers', 'offers released', 'total offers']], ['joiners', 'Joiners', true, ['joiners', 'joined', 'total joiners']],
     ['offerDays', 'Offer Days (avg req-to-offer)', false, ['offer days', 'days to offer', 'avg offer days', 'cycle time']], ['joinDays', 'Join Days', false, ['join days', 'days to join']],
     ['declinedPct', 'Declined %', false, ['declined %', 'declined', 'decline %']], ['diversityPct', 'Diversity %', false, ['diversity %', 'diversity', 'gender diversity %']],
     ['vendorPct', 'Vendor %', false, ['vendor %', 'vendor', 'vendor usage %']], ['referralPct', 'Referral %', false, ['referral %', 'referral', 'referrals %']],
@@ -247,13 +247,14 @@ function validateScorecard(rec, seen) {
   if (seen[v.emp]) E('V1 Duplicate person in file'); seen[v.emp] = 1;
   const d = normDate(v.asOf); if (!d || d.startsWith('INVALID')) E('As Of Date missing or unreadable'); else n.asOf = d;
   const num = (k, req) => { const raw = String(v[k] ?? '').replace(/[%,\s]/g, ''); if (raw === '' || raw === '—' || raw === '-') { if (req) E(k + ' missing'); return null; } const x = parseFloat(raw); if (isNaN(x) || x < 0) { E('Not a number: ' + k + ' "' + v[k] + '"'); return null; } return x; };
-  for (const k of ['target', 'offers', 'joiners', 'offerDays', 'joinDays', 'declinedPct', 'diversityPct', 'vendorPct', 'referralPct']) n[k] = num(k, ['offers', 'joiners'].includes(k));
+  for (const k of ['points', 'target', 'offers', 'joiners', 'offerDays', 'joinDays', 'declinedPct', 'diversityPct', 'vendorPct', 'referralPct']) n[k] = num(k, ['offers', 'joiners'].includes(k));
   n.streams = { core: num('oCore'), nats: num('oNats'), excelher: num('oExcel'), other: num('oOther') };
   n.joinStreams = { core: num('jCore'), nats: num('jNats'), excelher: num('jExcel'), other: num('jOther') };
   const so = sum(Object.values(n.streams).filter(x => x != null)), sj = sum(Object.values(n.joinStreams).filter(x => x != null));
   if (so && n.offers != null && so !== n.offers) W(`Offers by stream add up to ${so}, not ${n.offers}`);
   if (sj && n.joiners != null && sj !== n.joiners) W(`Joiners by stream add up to ${sj}, not ${n.joiners}`);
-  if (n.target == null) W('No annual target — attainment cannot be shown');
+  if (n.target == null) W('No annual offer target — points target cannot be set');
+  if (n.points == null) W('No weighted points — the 40-point score stays empty until points are entered');
   if (n.offers != null && n.joiners != null && n.joiners > n.offers) W('More joiners than offers (joiners can include earlier offers) — joining ratio is approximate');
   if (e && state.offers.some(o => o.emp === e.id)) W('Offer-level data already loaded for this person — the dashboard uses offer-level data and keeps this summary for reference');
   n.source = v.source || 'Recruiter scorecard'; n.note = v.note || '';

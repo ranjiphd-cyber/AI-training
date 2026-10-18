@@ -28,7 +28,7 @@ function memberView(id, viewer) {
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
       <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) || !tl || tl.id === e.id ? 'TA Head' : esc(tl.name) + ' (TL) · TA Head'}</dd></div>
       ${(e.alsoTeams || []).length ? `<div><dt>Also supports</dt><dd>${e.alsoTeams.map(t => esc(teamName(t))).join(', ')}</dd></div>` : ''}
-      <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Offer target</dt><dd>${m.mode === 'support' ? 'Not applicable' : m.mode === 'summary' ? (m.own.target == null ? '—' : fmt(m.own.target) + ' per year (scorecard)') : fmt(m.target) + ' / 10 working days'} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
+      <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Points target</dt><dd>${m.mode === 'support' ? 'Not applicable' : m.mode === 'summary' ? (m.own.target == null ? '—' : fmt(m.own.pointsTargetFull) + ' per year (' + fmt(m.own.target) + ' offers × ' + m.ppo + ')') : fmt(m.target * m.ppo) + ' / 10 working days (' + fmt(m.target) + ' offers × ' + m.ppo + ')'} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
     </div><div class="actions" style="flex-direction:column;align-items:flex-end">
       <div class="actions"><span class="chip">Self ${selfTot == null ? '—' : fmt(selfTot)}</span><span class="chip">TA Head ${mgrTot == null ? '—' : fmt(mgrTot)}</span><span class="chip">Gap ${gap == null ? '—' : (gap > 0 ? '+' : '') + gap}</span></div>
       <div class="actions">${statusOf(m)} ${provChip()} ${state.review[id] && state.review[id].finalised ? statusChip('approved', true, 'Final') : '<span class="chip">Draft</span>'}</div>
@@ -65,8 +65,8 @@ function memberView(id, viewer) {
     h += `<h3>Team goal achievement <span class="muted small">(${t.members.length} members, TL's own offers excluded · ${statusChip('pending', true, 'Proposed model — D-21/D-23')})</span></h3>
       <div class="grid g5">${kpiOffers(t, null, 'Team offers (closed cycles)')}${kpiPoints(t)}${kpiJR(t, null)}${kpiCT(t, null)}${kpiVendor(t, null)}</div>
       <p class="small muted">Team deliverables score: <b>${fmt(m.teamDel.total)}</b> /70 → contributes ${state.rules.tlModel === 'TL-A' ? '35' : '40'} points max.</p>
-      <div class="grid g2">${cadenceChart(t.cycles, { title: 'Team offers per 10-day cycle vs combined target' })}${cumulativeChart(t.cycles, 'Team YTD cumulative offers vs expected')}</div>
-      <h3 style="margin-top:14px">Own delivery <span class="muted small">(target ${fmt(m.target)} per 10 working days = ${Math.round(state.rules.tlTargetShare * 100)}% of a team member's target)</span></h3>`;
+      <div class="grid g2">${cadenceChart(t.cycles, { title: pointsBasis() ? 'Team points per 10-day cycle vs combined points target' : 'Team offers per 10-day cycle vs combined target' })}${cumulativeChart(t.cycles, 'Team YTD cumulative offers vs expected')}</div>
+      <h3 style="margin-top:14px">Own delivery <span class="muted small">(target ${fmt(m.target)} offers = ${fmt(m.target * m.ppo)} points per 10 working days; ${Math.round(state.rules.tlTargetShare * 100)}% of a team member's target)</span></h3>`;
   }
   const b = m.own, ov = state.overrides.filter(o => o.emp === id);
   h += `<div class="grid g5">${kpiOffers(b, ov, 'Offers (closed cycles)', id, head)}${kpiPoints(b)}${kpiJR(b, ov, id, head)}${kpiCT(b, ov, id, head)}${kpiVendor(b, ov, id, head)}</div>
@@ -95,27 +95,29 @@ function memberView(id, viewer) {
 }
 function summaryDeliverables(m, head) {
   const b = m.own, sc = b.sc, id = m.e.id, ov = state.overrides.filter(o => o.emp === id);
-  const raw = sc.target ? sc.joiners / sc.target : null, pro = b.expectedFormal ? sc.joiners / b.expectedFormal : null;
-  const st = pro == null ? 'none' : pro >= 1 ? 'good' : pro >= .85 ? 'watch' : 'below';
+  const att = b.pointsFormal != null && b.pointsTargetFormal ? b.pointsFormal / b.pointsTargetFormal : null;
+  const st = att == null ? 'none' : att >= 1 ? 'good' : att >= .85 ? 'watch' : 'below';
   const streams = sc.streams || {};
-  let h = `<section class="card" id="s-del"><header><h2>Business Deliverables</h2><span class="tag">From summary scorecard</span>${sectionActions(id, 'deliverables')}</header>
-   <div class="note">Source: ${esc(sc.source || 'recruiter scorecard')}, ${D.nice(PERIOD.start)} – ${D.nice(sc.asOf)}. Offer-level data (category, SG, gender, dates) is not loaded, so the 10-day cadence and the 40-point Offer Delivery &amp; Complexity score cannot be calculated yet. Import offers to replace this summary, or record a TA Head override with reason.</div>`;
+  let h = `<section class="card" id="s-del"><header><h2>Business Deliverables</h2><span class="tag">From summary scorecard</span>${sectionActions(id, 'deliverables', head ? `<button class="btn sm pri" onclick="scorecardDlg('${id}')">${b.pointsFormal == null ? 'Enter points' : 'Edit scorecard'}</button>` : '')}</header>
+   <div class="note">Source: ${esc(sc.source || 'recruiter scorecard')}, ${D.nice(PERIOD.start)} – ${D.nice(sc.asOf)}. Performance is assessed on <b>weighted points</b> against a <b>points target = offer target × ${m.ppo}</b>. Offer-level data is not loaded, so 10-day cycles are not shown${b.pointsFormal == null ? ' and the <b>weighted points are not yet recorded</b>. Enter them from the ATS points report, or import offer-level data so the dashboard calculates them' : ''}.</div>`;
   if (m.isTL && !m.team) h += `<div class="note warn">No team members are assigned to ${esc(teamName(m.e.team))} as their primary team, so the team-goal part of the Team Lead scorecard is empty. Assign members in <a href="#setup">Team Setup</a>, or change this person's role.</div>`;
-  if (m.isTL && m.team) h += `<h3>Team goal (${m.team.members.length} member${m.team.members.length === 1 ? '' : 's'}, lead excluded)</h3><div class="grid g4">
-     <div class="kpi"><div class="lab">Team joiners vs pro-rated target</div><div class="val">${m.team.actualFormal} <small>of ${fmt(m.team.expectedFormal)}</small></div>${progressBar(m.team.actualFormal, m.team.expectedFormal)}<div class="sub">${m.team.expectedFormal ? Math.round(m.team.actualFormal / m.team.expectedFormal * 100) + '%' : '—'}</div></div>
-     <div class="kpi"><div class="lab">Team joiners ÷ offers</div><div class="val">${pct(m.team.jr)}</div><div class="sub">${m.team.actualYTD} offers</div></div>
-     <div class="kpi"><div class="lab">Team avg offer days</div><div class="val">${fmt(m.team.ctAvg)}</div><div class="sub">offer-weighted</div></div>
-     <div class="kpi"><div class="lab">Team vendor usage</div><div class="val">${pct(m.team.vendorPct)}</div><div class="sub">offer-weighted</div></div></div><h3 style="margin-top:12px">Own delivery</h3>`;
+  if (m.isTL && m.team) { const t = m.team, ta = t.pointsFormal != null && t.pointsTargetFormal ? t.pointsFormal / t.pointsTargetFormal : null;
+    h += `<h3>Team goal (${t.members.length} member${t.members.length === 1 ? '' : 's'}, lead excluded)</h3><div class="grid g4">
+     <div class="kpi"><div class="lab">Team points vs points target</div><div class="val">${t.pointsFormal == null ? '—' : fmt(t.pointsFormal)} <small>of ${fmt(t.pointsTargetFormal)}</small></div>${progressBar(t.pointsFormal || 0, t.pointsTargetFormal)}<div class="sub">${ta == null ? 'Needs points for every member' : Math.round(ta * 100) + '%'} · ${t.actualYTD} offers</div></div>
+     <div class="kpi"><div class="lab">Team joiners ÷ offers</div><div class="val">${pct(t.jr)}</div></div>
+     <div class="kpi"><div class="lab">Team avg offer days</div><div class="val">${fmt(t.ctAvg)}</div><div class="sub">offer-weighted</div></div>
+     <div class="kpi"><div class="lab">Team vendor usage</div><div class="val">${pct(t.vendorPct)}</div><div class="sub">offer-weighted</div></div></div><h3 style="margin-top:12px">Own delivery</h3>`; }
   h += `<div class="grid g5">
-   <div class="kpi"><div class="lab">Joiners vs target</div><div class="val">${sc.joiners} <small>of ${sc.target == null ? '—' : sc.target} full-year</small></div>${progressBar(sc.joiners, sc.target)}
-     <div class="sub">${raw == null ? '—' : Math.round(raw * 100) + '%'} of full-year target (as in scorecard)</div><div class="sub">${pro == null ? '—' : Math.round(pro * 100) + '%'} of pro-rated ${fmt(b.expectedFormal)} ${statusChip(st)}</div>
-     <details><summary>How calculated</summary>Pro-rated target = annual target × working days elapsed (${b.elapsed}) ÷ working days in year (${b.yearDays})${m.e.end ? ', to leaving date ' + D.nice(m.e.end) : ''}. Whether the target counts offers or joiners is pending (D-46).</details></div>
-   <div class="kpi"><div class="lab">Offers released</div><div class="val">${sc.offers}</div><div class="sub">${sc.target ? Math.round(sc.offers / sc.target * 100) + '% of full-year target' : ''}</div><div class="sub">Offer score <b>${(ov.find(o => o.measure === 'offer') || {}).revised ?? '—'}</b>/40</div>${ovBadge(ov, 'offer')}${ovBtn(id, 'offer', head)}</div>
+   <div class="kpi"><div class="lab">Weighted points vs points target</div><div class="val">${b.pointsFormal == null ? '—' : fmt(b.pointsFormal)} <small>of ${fmt(b.pointsTargetFormal)} (pro-rated)</small></div>${progressBar(b.pointsFormal || 0, b.pointsTargetFormal)}
+     <div class="sub">${att == null ? 'Points not recorded' : Math.round(att * 100) + '% of pro-rated target'} ${statusChip(st)}</div><div class="sub">Full-year points target ${fmt(b.pointsTargetFull)}</div>
+     <div class="sub">Score <b>${fmt((ov.find(o => o.measure === 'offer') || {}).revised ?? b.offer.score)}</b>/40</div>${ovBadge(ov, 'offer')}
+     <details><summary>How calculated</summary>Points target = offer target ${sc.target ?? '—'} × ${m.ppo} = ${fmt(b.pointsTargetFull)} per year, pro-rated by working days elapsed (${b.elapsed} of ${b.yearDays})${m.e.end ? ' to leaving date ' + D.nice(m.e.end) : ''} = ${fmt(b.pointsTargetFormal)}. Score = 40 × points ÷ pro-rated points target, capped at 40.</details>${ovBtn(id, 'offer', head)}</div>
+   <div class="kpi"><div class="lab">Offers (context)</div><div class="val">${sc.offers} <small>of ${fmt(b.expectedFormal)} pro-rated</small></div><div class="sub">${b.pointsFormal != null && sc.offers ? fmt(b.pointsFormal / sc.offers, 2) + ' points per offer (target assumes ' + m.ppo + ')' : 'Full-year offer target ' + (sc.target ?? '—')}</div><div class="sub">Joiners ${sc.joiners}</div></div>
    ${kpiJR(b, ov, id, head).replace('matured', 'offers').replace('How calculated</summary>', 'How calculated</summary><b>Approximation:</b> joiners ÷ offers from the scorecard, not maturity-adjusted; joiners can include earlier offers. ')}
    ${kpiCT(b, ov, id, head).replace('days avg', 'offer days').replace('Median —', 'Median n/a')}
    ${kpiVendor(b, ov, id, head).replace(/<div class="sub">.* vendor of .* applicable<\/div>/, '<div class="sub">Scorecard figure (excludes campus)</div>')}</div>
-   <p class="small muted">Deliverables available: <b>${fmt(m.ownDel.raw)}</b> of ${m.ownDel.maxAvail} points; offer score pending. ${sc.note ? esc(sc.note) : ''}</p>`;
-  const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] || (sc.joinStreams || {})[k]);
+   <p class="small muted">Deliverables: <b>${m.ownDel.total != null ? fmt(m.ownDel.total) + ' / 70' : fmt(m.ownDel.raw) + ' of ' + m.ownDel.maxAvail + ' available (points needed for the 40-point score)'}</b>. ${sc.note ? esc(sc.note) : ''}</p>`;
+  const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] != null || (sc.joinStreams || {})[k] != null);
   if (rows.length) h += `<h3>Offers and joiners by stream</h3><div class="tbl-wrap"><table><thead><tr><th>Stream</th><th class="n">Offers</th><th class="n">Joiners</th></tr></thead><tbody>${rows.map(k => `<tr><td>${{ core: 'Core / campus (incl. conversion)', nats: 'NATS', excelher: 'ExcelHER', other: 'Other (interns, PwD, PhD, veterans, SPARK)' }[k]}</td><td class="n">${streams[k] ?? '—'}</td><td class="n">${(sc.joinStreams || {})[k] ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
   h += `<div class="grid g4" style="margin-top:10px"><div class="kpi"><div class="lab">Days to join</div><div class="val">${sc.joinDays ?? '—'}</div></div><div class="kpi"><div class="lab">Offers declined</div><div class="val">${pct(sc.declinedPct)}</div></div><div class="kpi"><div class="lab">Gender diversity</div><div class="val">${pct(sc.diversityPct)}</div><div class="sub">denominator not stated in source</div></div><div class="kpi"><div class="lab">Referral share</div><div class="val">${pct(sc.referralPct)}</div></div></div></section>`;
   return h;
@@ -125,15 +127,19 @@ function jump(ev, id) { ev.preventDefault(); const el = document.getElementById(
 function ovBadge(ov, k) { const o = ov && ov.find(x => x.measure === k); return o ? `<div class="sub" data-tip="${esc('Original ' + o.original + ' → ' + o.revised + ' · ' + o.reason + ' · ' + o.by + ' ' + o.at)}">⚑ Override: ${o.original} → ${o.revised}</div>` : ''; }
 function ovBtn(id, k, head) { return head ? `<button class="btn link small" onclick="overrideDlg('${id}','${k}')">Override…</button>` : ''; }
 function kpiOffers(b, ov, label, id, head) {
-  const vol = b.expectedFormal ? b.actualFormal / b.expectedFormal : null;
-  const st = vol == null ? 'none' : vol >= 1 ? 'good' : vol >= .85 ? 'watch' : 'below';
-  return `<div class="kpi"><div class="lab">${label}</div><div class="val">${b.actualFormal} <small>of ${fmt(b.expectedFormal)} expected</small></div>
-   ${progressBar(b.actualFormal, b.expectedFormal, 'Volume attainment')}<div class="sub">${vol == null ? '—' : Math.round(vol * 100) + '%'} volume · ${statusChip(st)}</div>
+  const P = pointsBasis();
+  const att = P ? (b.pointsTargetFormal && b.pointsFormal != null ? b.pointsFormal / b.pointsTargetFormal : null) : (b.expectedFormal ? b.actualFormal / b.expectedFormal : null);
+  const st = att == null ? 'none' : att >= 1 ? 'good' : att >= .85 ? 'watch' : 'below';
+  const ppoTxt = b.ppo != null ? b.ppo : state.rules.pointsPerOffer;
+  return `<div class="kpi"><div class="lab">${P ? label.replace(/offers/i, 'Points') + ' vs points target' : label}</div>
+   <div class="val">${P ? `${fmt(b.pointsFormal)} <small>of ${fmt(b.pointsTargetFormal)} points</small>` : `${b.actualFormal} <small>of ${fmt(b.expectedFormal)} expected</small>`}</div>
+   ${progressBar(P ? b.pointsFormal : b.actualFormal, P ? b.pointsTargetFormal : b.expectedFormal, 'Attainment')}<div class="sub">${att == null ? '—' : Math.round(att * 100) + '%'} ${P ? 'points' : 'volume'} · ${statusChip(st)}</div>
+   ${P ? `<div class="sub">${b.actualFormal} offers vs ${fmt(b.expectedFormal)} offer target (context only)</div>` : ''}
    <div class="sub">Score <b>${fmt(b.offer.score)}</b>/40 ${b.offer.gated ? '· capped by volume gate' : ''}</div>${ovBadge(ov, 'offer')}
-   <details><summary>How calculated</summary>Expected = closed cycles × target (${b.nClosed != null ? b.nClosed + ' × ' + fmt(b.target) : 'team sum'}). YTD incl. partial cycle: ${b.actualYTD} of ${fmt(b.expectedYTD)}.<br>Formula (${state.rules.offerFormula}, pending D-02): ${esc(b.offer.how || '')}. Volume gate (D-03): below ${Math.round(state.rules.gate.g * 100)}% volume, cap at ${Math.round(state.rules.gate.c * 40)}.</details>${id ? ovBtn(id, 'offer', head) : ''}</div>`;
+   <details><summary>How calculated</summary>${P ? `Points target = offer target × ${ppoTxt} points per offer (TA Head decision, 18 Oct 2026) = ${fmt(b.expectedFormal)} × ${ppoTxt} = ${fmt(b.pointsTargetFormal)} for closed cycles. Score = 40 × points ÷ points target, capped at 40.` : `Expected = closed cycles × target. Formula ${state.rules.offerFormula}: ${esc(b.offer.how || '')}.`} YTD incl. partial cycle: ${fmt(b.pointsYTD)} points, ${b.actualYTD} offers.</details>${id ? ovBtn(id, 'offer', head) : ''}</div>`;
 }
 function kpiPoints(b) {
-  return `<div class="kpi"><div class="lab">Weighted hiring points</div><div class="val">${fmt(b.pointsFormal)} <small>closed cycles</small></div>
+  return `<div class="kpi"><div class="lab">Hiring mix &amp; complexity</div><div class="val">${b.actualYTD ? fmt(b.pointsYTD / b.actualYTD, 2) : '—'} <small>points per offer</small></div><div class="sub">Assumed in target: ${b.ppo != null ? b.ppo : state.rules.pointsPerOffer}</div>
    <div class="sub">YTD ${fmt(b.pointsYTD)} · women bonus ${fmt(b.bonusYTD != null ? b.bonusYTD : 0)}</div><div class="sub">Contribution index ${b.expectedFormal ? fmt(b.pointsFormal / b.expectedFormal, 2) : '—'} <span data-tip="Definition pending (D-04): shown as points ÷ expected offers">ⓘ</span></div>
    <details><summary>How calculated</summary>Per offer: base points + 0.5 women bonus where eligible, from ${esc(POINT_TABLES[state.rules.pointsTable].label)} (D-01: BRD tables conflict).</details></div>`;
 }
@@ -269,13 +275,13 @@ function teamView(tlMode) {
      <button class="btn sm" style="align-self:end" onclick="go('setup')">Assign teams &amp; roles</button></div>`;
   const cnt = k => ms.filter(m => m.status === k).length;
   h += `<div class="grid g5" style="margin-bottom:16px"><div class="kpi"><div class="lab">Members</div><div class="val">${list.length}</div><div class="sub">${list.filter(isLead).length} team lead(s)${list.filter(isFormer).length ? ' · ' + list.filter(isFormer).length + ' former' : ''}</div></div>
-   <div class="kpi"><div class="lab">On track (volume)</div><div class="val">${cnt('good')}</div><div class="sub">${statusChip('good')}</div></div>
+   <div class="kpi"><div class="lab">On track (${pointsBasis() ? 'points' : 'volume'})</div><div class="val">${cnt('good')}</div><div class="sub">${statusChip('good')}</div></div>
    <div class="kpi"><div class="lab">Watch</div><div class="val">${cnt('watch')}</div><div class="sub">${statusChip('watch')} 85–99%</div></div>
    <div class="kpi"><div class="lab">Below target</div><div class="val">${cnt('below')}</div><div class="sub">${statusChip('below')} &lt;85%</div></div>
    <div class="kpi"><div class="lab">Open exceptions</div><div class="val">${ex.length}</div><div class="sub">${tlMode ? '' : '<a href="#exceptions">Review</a>'}</div></div></div>`;
   if (tlMode) {
-    h += `<section class="card"><div class="tbl-wrap"><table><thead><tr><th>Member</th><th>Area</th><th class="n">Offers / expected</th><th class="n">Volume</th><th class="n">Points</th><th class="n">Joining %</th><th class="n">Avg cycle</th><th class="n">Vendor %</th><th>Status</th></tr></thead><tbody>
-      ${ms.map(m => `<tr><td>${esc(m.e.name)}</td><td>${esc(m.e.area)}</td><td class="n">${m.own.actualFormal} / ${fmt(m.own.expectedFormal)}</td><td class="n">${m.vol == null ? '—' : Math.round(m.vol * 100) + '%'}</td><td class="n">${fmt(m.own.pointsFormal)}</td><td class="n">${pct(m.own.jr)}</td><td class="n">${fmt(m.own.ctAvg)}</td><td class="n">${pct(m.own.vendorPct)}</td><td>${statusOf(m)}</td></tr>`).join('')}</tbody></table></div></section>`;
+    h += `<section class="card"><div class="tbl-wrap"><table><thead><tr><th>Member</th><th>Area</th><th class="n">Points / target</th><th class="n">Attainment</th><th class="n">Offers</th><th class="n">Joining %</th><th class="n">Avg cycle</th><th class="n">Vendor %</th><th>Status</th></tr></thead><tbody>
+      ${ms.map(m => `<tr><td>${esc(m.e.name)}</td><td>${esc(m.e.area)}</td><td class="n">${fmt(m.own.pointsFormal)} / ${fmt(m.own.pointsTargetFormal)}</td><td class="n">${m.att == null ? '—' : Math.round(m.att * 100) + '%'}</td><td class="n">${m.own.actualFormal}</td><td class="n">${pct(m.own.jr)}</td><td class="n">${fmt(m.own.ctAvg)}</td><td class="n">${pct(m.own.vendorPct)}</td><td>${statusOf(m)}</td></tr>`).join('')}</tbody></table></div></section>`;
   } else {
     const row = m => { const g = m.selfTotal != null && m.total != null ? r1(m.selfTotal - m.total) : null;
       const sup = teamF !== 'all' && m.e.team !== teamF ? ' <span class="chip">supports</span>' : '';
@@ -285,16 +291,16 @@ function teamView(tlMode) {
       ${ic.length ? `<tr class="grp"><td colspan="11">Recruiters &amp; sourcers (${ic.length})</td></tr>` + ic.map(row).join('') : ''}
       ${tls.length ? `<tr class="grp"><td colspan="11">Team leads (${tls.length}) — TL scorecard (${state.rules.tlModel}, proposed)</td></tr>` + tls.map(row).join('') : ''}
       ${sups.length ? `<tr class="grp"><td colspan="11">Support &amp; operations (${sups.length}) — no hiring targets; scored on projects and competency (/30)</td></tr>` + sups.map(row).join('') : ''}</tbody></table></div>
-      <p class="small muted">Status reflects volume attainment on closed cycles (for team leads: the lower of team and own). Totals in brackets are partial.</p></section>`;
+      <p class="small muted">Status reflects ${pointsBasis() ? 'weighted points against the points target (offer target × points per offer)' : 'offer volume on closed cycles'}; for team leads, the lower of team and own. Totals in brackets are partial.</p></section>`;
   }
   const hiring = ms.filter(m => !m.isSup);
-  h += `<div class="grid g2"><section class="card">${hbars(hiring.map(m => ({ label: m.e.name, sub: m.e.area, value: m.vol == null ? null : Math.round(m.vol * 100), status: m.status, tip: esc(m.e.name) + ': ' + m.own.actualFormal + ' of ' + fmt(m.own.expectedFormal) + ' expected offers' })).sort((a, b) => (b.value || 0) - (a.value || 0)), { title: hiring.some(m => m.mode === 'summary') ? 'Attainment by member (closed cycles, or joiners vs pro-rated target for summary scorecards)' : 'Volume attainment by member (closed cycles)', ref: 100, refLabel: '100% of target', unit: '%', max: 140 })}</section>
+  h += `<div class="grid g2"><section class="card">${hbars(hiring.map(m => ({ label: m.e.name, sub: m.e.area, value: m.att == null ? null : Math.round(m.att * 100), status: m.status, tip: esc(m.e.name) + ': ' + fmt(m.own.pointsFormal) + ' of ' + fmt(m.own.pointsTargetFormal) + ' target points; ' + m.own.actualFormal + ' offers' })).sort((a, b) => (b.value || 0) - (a.value || 0)), { title: pointsBasis() ? 'Points attainment by member (weighted points vs points target)' : 'Volume attainment by member (closed cycles)', ref: 100, refLabel: '100% of target', unit: '%', max: 140 })}</section>
    <section class="card">${cadenceChart(aggregateBlocks(hiring.map(m => m.own), hiring.map(m => m.e)).cycles, { title: 'Combined offers per 10-day cycle vs combined target' })}</section></div>`;
   return h;
 }
 function teamExcel() {
-  const rows = [['Employee ID', 'Name', 'Team', 'Business area', 'Role', 'Deliverables /70', 'Projects /15', 'Competency Dev /15', 'Total', 'Self total', 'Volume %', 'Offers (closed)', 'Expected (closed)', 'Points', 'Joining %', 'Avg cycle days', 'Vendor %', 'Status']];
-  for (const e of sortedEmployees()) { const m = metrics(e.id); rows.push([e.id, e.name, teamName(e.team), e.area, roleOf(e).name, m.deliverables, m.projects, m.cdM, m.total, m.selfTotal, m.vol == null ? '' : Math.round(m.vol * 100), m.own.actualFormal, r1(m.own.expectedFormal), r1(m.own.pointsFormal), r1(m.own.jr), r1(m.own.ctAvg), r1(m.own.vendorPct), STATUS[m.status][1]]); }
+  const rows = [['Employee ID', 'Name', 'Team', 'Business area', 'Role', 'Deliverables /70', 'Projects /15', 'Competency Dev /15', 'Total', 'Self total', 'Points attainment %', 'Points target', 'Weighted points', 'Offers', 'Offer target', 'Joining %', 'Avg cycle days', 'Vendor %', 'Status']];
+  for (const e of sortedEmployees()) { const m = metrics(e.id); rows.push([e.id, e.name, teamName(e.team), e.area, roleOf(e).name, m.deliverables, m.projects, m.cdM, m.total, m.selfTotal, m.att == null ? '' : Math.round(m.att * 100), r1(m.own.pointsTargetFormal), r1(m.own.pointsFormal), m.own.actualFormal, r1(m.own.expectedFormal), r1(m.own.jr), r1(m.own.ctAvg), r1(m.own.vendorPct), STATUS[m.status][1]]); }
   download(`${PERIOD.year}_Team_Scorecard.csv`, toCSV(rows), 'text/csv'); audit('Download', 'Team scorecard', 'CSV');
 }
 
@@ -307,8 +313,8 @@ VIEWS.compare = () => {
   const mixed = new Set(sel.map(m => m.role.template)).size > 1 || new Set(sel.map(m => m.mode)).size > 1;
   const metricsRows = [
     ['Business Deliverables /70', m => m.deliverables], ['Improvement Projects /15', m => m.projects], ['Competency Development /15', m => m.cdM], ['Total /100', m => m.total],
-    ['Self total', m => m.selfTotal], ['|Delivery (own)'], ['Offer target / 10 days', m => m.target], ['Offers (closed cycles)', m => m.own.actualFormal], ['Expected (closed cycles)', m => r1(m.own.expectedFormal)],
-    ['Volume attainment %', m => m.vol == null ? null : Math.round(m.vol * 100)], ['Weighted points', m => r1(m.own.pointsFormal)], ['Points per offer', m => m.own.actualYTD ? r1(m.own.pointsYTD / m.own.actualYTD) : null],
+    ['Self total', m => m.selfTotal], ['|Delivery (own)'], ['Points target', m => r1(m.own.pointsTargetFormal)], ['Weighted points', m => r1(m.own.pointsFormal)], ['Points attainment %', m => m.att == null ? null : Math.round(m.att * 100)],
+    ['Offers', m => m.own.actualFormal], ['Offer target', m => r1(m.own.expectedFormal)], ['Points per offer', m => m.own.actualYTD ? r1(m.own.pointsYTD / m.own.actualYTD) : null],
     ['Joining ratio %', m => r1(m.own.jr)], ['Avg cycle time (days)', m => r1(m.own.ctAvg), true], ['Vendor usage %', m => r1(m.own.vendorPct), true], ['Repeated misses (current run)', m => m.own.missRun, true],
     ['|Competencies (TA Head, latest)'], ...COMPETENCIES.map(c => [c, m => m.latest ? m.latest.mgr[c] : null]),
   ];
@@ -327,7 +333,7 @@ VIEWS.compare = () => {
   }
   h += `</tbody></table></div><p class="small muted">★ marks the best value in the selection (lowest for cycle time, vendor % and misses).</p></section>`;
   h += `<div class="grid g2"><section class="card">${hbars(sel.map(m => ({ label: m.e.name, value: m.total != null ? m.total : m.partial, tip: esc(m.e.name) + ': ' + (m.total != null ? 'total ' + m.total : 'partial ' + m.partial) })), { title: 'Total score (TA Head)', max: 100 })}</section>
-    <section class="card">${hbars(sel.map(m => ({ label: m.e.name, value: m.vol == null ? null : Math.round(m.vol * 100), status: m.status })), { title: 'Volume attainment %', ref: 100, refLabel: 'Target', unit: '%', max: 140 })}</section></div>`;
+    <section class="card">${hbars(sel.map(m => ({ label: m.e.name, value: m.att == null ? null : Math.round(m.att * 100), status: m.status })), { title: pointsBasis() ? 'Points attainment %' : 'Volume attainment %', ref: 100, refLabel: 'Target', unit: '%', max: 140 })}</section></div>`;
   return h;
 };
 function toggleCompare(id, on) { ui.compare = on ? [...new Set([...ui.compare, id])].slice(0, 8) : ui.compare.filter(x => x !== id); render(); }
@@ -446,9 +452,9 @@ VIEWS.setup = () => {
    <div class="tbl-wrap"><table><thead><tr><th>Role</th><th>Scorecard</th><th class="n">Share of area target</th><th class="n">People</th><th></th></tr></thead><tbody>
    ${Object.entries(state.roles).map(([k, r]) => `<tr><td>${esc(r.name)}</td><td class="small">${esc(ROLE_TEMPLATES[r.template])}</td><td class="n">${r.template === 'support' ? 'n/a' : Math.round((r.template === 'lead' ? state.rules.tlTargetShare : r.share) * 100) + '%'}</td><td class="n">${state.employees.filter(e => e.type === k).length}</td><td>${canEdit ? `<button class="btn sm" onclick="roleDlg('${k}')">Edit</button>` : ''}</td></tr>`).join('')}</tbody></table></div>
    <p class="small muted">Team lead share comes from Rules &amp; Settings (D-20). Shares for other roles, such as sourcers, are pending decision (D-48).</p></section></div>
-  <section class="card"><header><h2>Business areas &amp; offer targets</h2><span class="muted small">Offers per 10 working days</span></header>
-   <div class="tbl-wrap"><table><thead><tr><th>Team</th><th>Business area</th><th class="n">Target</th><th>Source</th><th></th></tr></thead><tbody>
-   ${Object.entries(state.teams).flatMap(([k, t]) => t.areas.map(a => `<tr><td>${esc(t.name)}</td><td>${esc(a)}</td><td class="n">${state.areaTargets[a] == null ? 'n/a' : fmt(areaTarget(a))}</td><td>${AREAS[a] ? (AREAS[a].status === 'brd' ? statusChip('brd') : statusChip('pending', true, 'Placeholder — D-15')) : '<span class="chip">Set in workspace</span>'}</td><td>${canEdit ? `<button class="btn sm" onclick="targetDlg('${esc(a)}')">Change</button>` : ''}</td></tr>`)).join('')}</tbody></table></div></section>
+  <section class="card"><header><h2>Business areas &amp; targets</h2><span class="muted small">Per 10 working days · points target = offer target × points per offer</span></header>
+   <div class="tbl-wrap"><table><thead><tr><th>Team</th><th>Business area</th><th class="n">Offer target</th><th class="n">Points per offer</th><th class="n">Points target</th><th>Source</th><th></th></tr></thead><tbody>
+   ${Object.entries(state.teams).flatMap(([k, t]) => t.areas.map(a => `<tr><td>${esc(t.name)}</td><td>${esc(a)}</td><td class="n">${state.areaTargets[a] == null ? 'n/a' : fmt(areaTarget(a))}</td><td class="n">${state.areaTargets[a] == null ? '' : ppoFor(a) + (state.areaPPO[a] != null ? ' (area)' : '')}</td><td class="n"><b>${state.areaTargets[a] == null ? '' : fmt(areaTarget(a) * ppoFor(a))}</b></td><td>${AREAS[a] ? (AREAS[a].status === 'brd' ? statusChip('brd') : statusChip('pending', true, 'Placeholder — D-15')) : '<span class="chip">Set in workspace</span>'}</td><td>${canEdit ? `<button class="btn sm" onclick="targetDlg('${esc(a)}')">Change</button>` : ''}</td></tr>`)).join('')}</tbody></table></div></section>
   <section class="card"><header><h2>Workspace</h2><span class="chip">${state.mode === 'live' ? 'Live workspace' : 'Sample data (fictional)'}</span></header>
    <p class="small">Data is saved in <b>this browser only</b>. Export a backup regularly and keep it in an approved, access-controlled location (it contains confidential performance data).</p>
    <div class="actions"><button class="btn" onclick="exportBackup()">Export backup (.json)</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label>
@@ -462,8 +468,9 @@ VIEWS.admin = () => {
   const decide = k => head && R.status[k] && R.status[k][0] === 'pending' ? `<button class="btn sm" onclick="approveRule('${k}')">Record decision</button>` : '';
   const rows = [
     ['pointsTable', 'Hiring points table', `<select ${admin ? '' : 'disabled'} onchange="setRule('pointsTable',this.value)">${Object.entries(POINT_TABLES).map(([k, v]) => `<option value="${k}" ${R.pointsTable === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('')}</select>`],
-    ['offerFormula', 'Offer Delivery & Complexity formula (40)', `<select ${admin ? '' : 'disabled'} onchange="setRule('offerFormula',this.value)"><option value="O1" ${R.offerFormula === 'O1' ? 'selected' : ''}>O1 Points attainment</option><option value="O2" ${R.offerFormula === 'O2' ? 'selected' : ''}>O2 Volume 28 + complexity 12</option><option value="O3" ${R.offerFormula === 'O3' ? 'selected' : ''}>O3 Banded attainment</option></select>`],
-    ['gate', 'Volume gate', `below <input type="number" step="5" style="width:64px" ${admin ? '' : 'disabled'} value="${R.gate.g * 100}" onchange="setRule('gate.g',this.value/100)">% volume → cap at <input type="number" step="5" style="width:64px" ${admin ? '' : 'disabled'} value="${R.gate.c * 100}" onchange="setRule('gate.c',this.value/100)">% of 40`],
+ ['offerFormula', 'Offer Delivery & Complexity formula (40)', `<select ${admin ? '' : 'disabled'} onchange="setRule('offerFormula',this.value)"><option value="P" ${R.offerFormula === 'P' ? 'selected' : ''}>P Points vs points target (offer target × points per offer)</option><option value="O1" ${R.offerFormula === 'O1' ? 'selected' : ''}>O1 Points attainment</option><option value="O2" ${R.offerFormula === 'O2' ? 'selected' : ''}>O2 Volume 28 + complexity 12</option><option value="O3" ${R.offerFormula === 'O3' ? 'selected' : ''}>O3 Banded attainment</option></select>`],
+    ['pointsPerOffer', 'Points per offer (default for points target)', `<input type="number" step="0.1" style="width:64px" ${admin ? '' : 'disabled'} value="${R.pointsPerOffer}" onchange="setRule('pointsPerOffer',+this.value)"> points; areas can override in Team Setup`],
+    ['gate', 'Volume gate (offer-count floor; 0 = off)', `below <input type="number" step="5" style="width:64px" ${admin ? '' : 'disabled'} value="${R.gate.g * 100}" onchange="setRule('gate.g',this.value/100)">% volume → cap at <input type="number" step="5" style="width:64px" ${admin ? '' : 'disabled'} value="${R.gate.c * 100}" onchange="setRule('gate.c',this.value/100)">% of 40`],
     ['tlModel', 'Team Lead scorecard', `<select ${admin ? '' : 'disabled'} onchange="setRule('tlModel',this.value)"><option value="TL-A" ${R.tlModel === 'TL-A' ? 'selected' : ''}>TL-A: team 35 + own 35, projects 15, competency 15</option><option value="TL-B" ${R.tlModel === 'TL-B' ? 'selected' : ''}>TL-B: team 40 + own 20, leadership 20, competency 20</option></select>`],
     ['tlTargetShare', 'Team Lead own offer target', `<input type="number" step="5" style="width:64px" ${admin ? '' : 'disabled'} value="${R.tlTargetShare * 100}" onchange="setRule('tlTargetShare',this.value/100)">% of a team member's target`],
     ['jrBands', 'Joining ratio bands', R.jrBands.map(b => `≥${b[0]}% → ${b[1]}`).join(' · ')],

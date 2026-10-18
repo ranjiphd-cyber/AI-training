@@ -196,9 +196,9 @@ function draftSummary(id) {
   const m = metrics(id), b = m.own, L = m.latest;
   const strengths = L ? COMPETENCIES.filter(c => L.mgr[c] >= 4) : [];
   const gaps = L ? COMPETENCIES.filter(c => L.mgr[c] < m.e.targets[c]) : [];
-  return [`FACT: ${b.actualFormal} offers in closed cycles against ${r1(b.expectedFormal)} expected (${m.vol == null ? '—' : Math.round(m.vol * 100)}%), ${r1(b.pointsFormal)} weighted points.`,
+  return [`FACT: ${b.pointsFormal == null ? 'weighted points not recorded' : r1(b.pointsFormal) + ' weighted points'} against a points target of ${r1(b.pointsTargetFormal)} (${m.att == null ? '—' : Math.round(m.att * 100) + '%'}); ${b.actualFormal} offers.`,
     `FACT: Joining ratio ${r1(b.jr)}%; average cycle time ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}); vendor usage ${r1(b.vendorPct)}%.`,
-    m.isTL && m.team ? `FACT: Team (${m.team.members.length} members) delivered ${m.team.actualFormal} of ${r1(m.team.expectedFormal)} expected offers.` : '',
+    m.isTL && m.team ? `FACT: Team (${m.team.members.length} members) delivered ${m.team.pointsFormal == null ? 'n/a' : r1(m.team.pointsFormal)} of ${r1(m.team.pointsTargetFormal)} target points (${m.team.actualFormal} offers).` : '',
     `FACT: Projects ${m.projects == null ? 'not yet scored' : m.projects + '/15'}; competency development ${m.cdM == null ? 'not yet scored' : m.cdM + '/15'}.`,
     strengths.length ? `FACT: TA Head rated 4+ on ${strengths.join(', ')}.` : '',
     gaps.length ? `FACT: Below target on ${gaps.join(', ')}.` : '',
@@ -344,9 +344,24 @@ function roleDlg(k) {
       if (t === 'lead' && Math.abs(share - state.rules.tlTargetShare) > 1e-9) { audit('Rule changed', 'tlTargetShare', `${state.rules.tlTargetShare} → ${share}`, val('rl-why')); state.rules.tlTargetShare = share; }
       audit(k ? 'Role updated' : 'Role added', n, (before ? before + ' → ' : '') + `${n} · ${t} · ${share}`, val('rl-why')); touch(); render(); } }]);
 }
+// Edit a summary scorecard (TA Head): weighted points and the YTD figures, with a reason.
+function scorecardDlg(id) {
+  const sc = state.scorecards[id], e = emp(id);
+  const f = (k, lab) => `<label class="field">${lab}<input type="number" step="0.5" id="sc-${k}" value="${sc[k] ?? ''}"></label>`;
+  openDlg('Scorecard — ' + e.name, `<p class="small">Enter <b>weighted points</b> from the ATS or the points calculation (base points by hiring category and SG, plus the women-hiring bonus). Points are what the 40-point score and status use.</p>
+   <div class="formgrid">${f('points', 'Weighted points (YTD)')}${f('target', 'Annual offer target')}${f('offers', 'Offers')}${f('joiners', 'Joiners')}${f('offerDays', 'Offer days')}${f('vendorPct', 'Vendor %')}</div>
+   <label class="field">As of<input type="date" id="sc-asOf" value="${sc.asOf}"></label><label class="field">Source of points / reason<input type="text" id="sc-why"></label>`,
+    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('sc-why'))) return false;
+      const before = JSON.stringify({ points: sc.points, target: sc.target, offers: sc.offers, joiners: sc.joiners });
+      for (const k of ['points', 'target', 'offers', 'joiners', 'offerDays', 'vendorPct']) { const v = val('sc-' + k); sc[k] = v === '' ? null : +v; }
+      sc.asOf = val('sc-asOf') || sc.asOf;
+      audit('Scorecard updated', e.name, before + ' → ' + JSON.stringify({ points: sc.points, target: sc.target, offers: sc.offers, joiners: sc.joiners }), val('sc-why')); touch(); render(); } }]);
+}
 function targetDlg(a) {
-  openDlg('Offer target — ' + a, `<label class="field">Offers per 10 working days (leave blank if not applicable)<input type="number" step="0.5" id="tg-v" value="${state.areaTargets[a] == null ? '' : state.areaTargets[a]}"></label><label class="field">Reason / decision reference<input type="text" id="tg-r"></label>`,
-    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('tg-r'))) return false; const before = state.areaTargets[a]; state.areaTargets[a] = val('tg-v') === '' ? null : +val('tg-v'); audit('Target changed', a, `${before} → ${val('tg-v')}`, val('tg-r')); touch(); render(); } }]);
+  openDlg('Offer and points target — ' + a, `<label class="field">Offers per 10 working days (leave blank if not applicable)<input type="number" step="0.5" id="tg-v" value="${state.areaTargets[a] == null ? '' : state.areaTargets[a]}"></label>
+   <label class="field">Points per offer for this area (blank = workspace default ${state.rules.pointsPerOffer})<input type="number" step="0.1" id="tg-p" value="${state.areaPPO[a] ?? ''}"></label>
+   <p class="small muted">Points target = offer target × points per offer. Use an area value only where its hiring mix differs (for example, NATS-heavy early-career areas average close to 1 point per offer).</p><label class="field">Reason / decision reference<input type="text" id="tg-r"></label>`,
+    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('tg-r'))) return false; const before = state.areaTargets[a] + ' × ' + ppoFor(a); state.areaTargets[a] = val('tg-v') === '' ? null : +val('tg-v'); if (val('tg-p') === '') delete state.areaPPO[a]; else state.areaPPO[a] = +val('tg-p'); audit('Target changed', a, `${before} → ${val('tg-v') || 'n/a'} × ${ppoFor(a)}`, val('tg-r')); touch(); render(); } }]);
 }
 function exportBackup() { download(`TA_Performance_backup_${D.fmt(Date.now())}.json`, JSON.stringify(state, null, 1), 'application/json'); audit('Backup exported', 'Workspace', state.employees.length + ' members'); saveState(); }
 function restoreBackup(file) {
