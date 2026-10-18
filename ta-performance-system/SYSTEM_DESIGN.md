@@ -753,7 +753,7 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-47 | Support / operations roles | BRD scorecard is recruiter-only; Global SF support and operations roles have no hiring deliverables | Projects + competency only (/30, current) · role-specific service KPIs | TA Head |
 | D-48 | Target share by role | Sourcers and other roles: share of business-area target not defined | 100% (current placeholder) · role-specific | TA Head |
 | D-49 | Members supporting several teams | Someone may serve more than one team (e.g. TTI and VCE) | Count in primary team goal only (current) · split by share of effort | TA Head |
-| D-50 | Former team members | People who left mid-year (e.g. Padma) | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
+| D-50 | Former team members | People who left mid-year | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
 | D-43 | Offer definition | Count offers released, or accepted? Re-issued offers to the same candidate? | TA Head |
 
 ---
