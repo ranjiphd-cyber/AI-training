@@ -202,6 +202,9 @@ dialog .db { padding: 16px 18px; max-height: 70vh; overflow: auto; }
 dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; }
 .formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 600px) { .formgrid { grid-template-columns: 1fr; } }
+.signin { max-width: 980px; margin: 0 auto; }
+.signin input[type=email], .signin input[type=password], .signin input[type=file] { width: 100%; }
+#session-bar { display: inline-flex; gap: 8px; align-items: center; }
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--navy); color: var(--onnavy); padding: 8px 16px; border-radius: 8px; z-index: 200; font-size: 13px; }
 
 /* report document (screen preview + print) */
@@ -226,8 +229,9 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
 <body>
 <div class="top" role="banner">
   <div class="brand">TA Performance &amp; Development <small id="period-label"></small> <span class="mode" id="mode-label"></span></div>
-  <label>Signed in as <select id="role-sel" aria-label="Role"></select></label>
+  <label id="role-wrap">View as <select id="role-sel" aria-label="View as"></select></label>
   <label id="emp-sel-wrap">Person <select id="emp-sel" aria-label="Person"></select></label>
+  <span id="session-bar"></span>
   <button id="theme-btn" type="button" aria-label="Toggle dark mode">◐ Theme</button>
 </div>
 <div class="layout">
@@ -248,6 +252,7 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
 <script src="js/actions.js"></script>
 <script src="js/import.js"></script>
 <script src="js/reports.js"></script>
+<script src="js/security.js"></script>
 <script>boot();</script>
 </body>
 </html>

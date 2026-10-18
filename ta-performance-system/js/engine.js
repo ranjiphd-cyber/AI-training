@@ -39,7 +39,8 @@ const STORE_KEY = 'ta-pdms-prototype-v1';
 let state = null;
 let calcVersion = 0;
 
-function saveState() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: session-only */ } }
+// Saving goes through security.js: encrypted for the TA Head, in-memory for member files and the demo.
+function saveState() { if (typeof persistState === 'function') persistState(); }
 function loadState() {
   try { const s = localStorage.getItem(STORE_KEY); if (s) { state = migrateState(JSON.parse(s)); return; } } catch (e) { /* ignore */ }
   state = buildSampleState();
@@ -72,6 +73,16 @@ function emptyState() {
   };
 }
 function startLive() { state = emptyState(); calcVersion++; saveState(); }
+let _yearDays = null;
+function yearWorkingDays() { return _yearDays || (_yearDays = workingDays(PERIOD.start, PERIOD.end).length); }
+// Default annual points target: offer target × points per offer (per-person override in e.ptAnnual).
+function defaultAnnualPoints(e) {
+  const sc = state.scorecards && state.scorecards[e.id];
+  if (isSupport(e)) return null;
+  if (sc && !state.offers.some(o => o.emp === e.id)) return sc.target != null ? sc.target * ppoFor(e.area) : null;
+  return areaTarget(e.area) * (isLead(e) ? state.rules.tlTargetShare : roleOf(e).share) * ppoFor(e.area) * yearWorkingDays() / 10;
+}
+function annualPoints(e) { return e.ptAnnual != null ? e.ptAnnual : defaultAnnualPoints(e); }
 function ppoFor(a) { return state.areaPPO && state.areaPPO[a] != null ? Number(state.areaPPO[a]) : state.rules.pointsPerOffer; }
 const pointsBasis = () => state.rules.offerFormula === 'P';
 function areaTarget(a) { const t = state.areaTargets[a]; return t == null ? 0 : Number(t); }
@@ -99,7 +110,7 @@ function teamAreas(team) { return (state.teams[team] && state.teams[team].areas)
 function audit(action, object, detail, reason = '', who = null) {
   state.audit.unshift({ at: nowStamp(), who: who || currentUserLabel(), action, object, detail, reason });
 }
-function touch() { calcVersion++; saveState(); }
+function touch() { calcVersion++; if (typeof session !== 'undefined' && session && session.kind === 'member') session.dirty = true; saveState(); }
 
 // ---------- sample data ----------
 function buildSampleState() {
@@ -290,12 +301,13 @@ function offerScore(expected, actual, points, pointsTarget) {
   return { score: r1(score), how, gated, vol, patt };
 }
 
-function deliveryBlock(offers, days, target, ppo = state.rules.pointsPerOffer) {
+function deliveryBlock(offers, days, target, ppo = state.rules.pointsPerOffer, ptPer10 = null) {
+  if (ptPer10 == null) ptPer10 = target * ppo;
   const nClosed = Math.floor(days.length / 10);
   const cycles = [];
   for (let i = 0; i * 10 < days.length; i++) {
     const chunk = days.slice(i * 10, i * 10 + 10);
-    cycles.push({ n: i + 1, from: chunk[0], to: chunk[chunk.length - 1], days: chunk.length, closed: chunk.length === 10, target: target * chunk.length / 10, pointsTarget: target * ppo * chunk.length / 10, offers: 0, points: 0 });
+    cycles.push({ n: i + 1, from: chunk[0], to: chunk[chunk.length - 1], days: chunk.length, closed: chunk.length === 10, target: target * chunk.length / 10, pointsTarget: ptPer10 * chunk.length / 10, offers: 0, points: 0 });
   }
   const lastDay = days[days.length - 1];
   const inPeriod = offers.filter(o => days.length && o.offerDate >= days[0] && o.offerDate <= PERIOD.cutoff);
@@ -308,7 +320,7 @@ function deliveryBlock(offers, days, target, ppo = state.rules.pointsPerOffer) {
   const closed = cycles.filter(c => c.closed);
   const expectedFormal = nClosed * target, actualFormal = sum(closed.map(c => c.offers)), pointsFormal = sum(closed.map(c => c.points));
   const pts = inPeriod.map(o => pointsFor(o));
-  const pointsTargetFormal = expectedFormal * ppo;
+  const pointsTargetFormal = nClosed * ptPer10;
   const os = offerScore(expectedFormal, actualFormal, pointsFormal, pointsTargetFormal);
   // joining
   const matured = inPeriod.filter(o => o.expJoin <= PERIOD.cutoff && o.status !== 'Revoked');
@@ -330,7 +342,7 @@ function deliveryBlock(offers, days, target, ppo = state.rules.pointsPerOffer) {
   return {
     days: days.length, target, cycles, nClosed, lastDay,
     expectedYTD: days.length / 10 * target, actualYTD: inPeriod.length, pointsYTD: sum(pts.map(p => p.total)), bonusYTD: sum(pts.map(p => p.bonus)),
-    expectedFormal, actualFormal, pointsFormal, pointsTargetFormal, ppo, pointsTargetYTD: days.length / 10 * target * ppo, offer: os,
+    expectedFormal, actualFormal, pointsFormal, pointsTargetFormal, ppo, pointsTargetYTD: days.length / 10 * ptPer10, ptPer10, offer: os,
     matured: matured.length, joined, declined: matured.filter(o => o.status === 'Declined').length, noshow: matured.filter(o => o.status === 'No-show').length,
     pending: inPeriod.filter(o => o.expJoin > PERIOD.cutoff).length, jr, jrScore: jrScore(jr),
     ctAvg, ctMedian: median(ctAll), ctCount: ctAll.length, ctExcluded: ctAll.length - ctScored.length, ctScore: ctScore(ctAvg), ctBands: [ctAll.filter(x => x < 45).length, ctAll.filter(x => x >= 45 && x <= 55).length, ctAll.filter(x => x > 55).length],
@@ -353,17 +365,18 @@ function deliverablesTotal(b, ov, noRescale = false) {
    offer-level data is not available. Attainment follows the source scorecard (joiners vs target), pro-rated
    to the scorecard date (D-46). The 40-point offer score needs offer-level data, so it stays empty unless
    the TA Head records an override with a reason. */
-function summaryBlock(sc, e, ppo = state.rules.pointsPerOffer) {
+function summaryBlock(sc, e, ppo = state.rules.pointsPerOffer, ptFull = null) {
   const yearDays = workingDays(PERIOD.start, PERIOD.end).length;
   const asOf = e.end && e.end < sc.asOf ? e.end : sc.asOf;
   const from = e.start && e.start > PERIOD.start ? e.start : PERIOD.start;
   const elapsed = workingDays(from, asOf).length;
   const proRata = sc.target != null ? sc.target * elapsed / yearDays : null;
   const jr = sc.offers ? sc.joiners / sc.offers * 100 : null;
-  const pts = sc.points != null ? sc.points : null, ptTarget = proRata != null ? proRata * ppo : null;
+  if (ptFull == null && sc.target != null) ptFull = sc.target * ppo;
+  const pts = sc.points != null ? sc.points : null, ptTarget = ptFull != null ? ptFull * elapsed / yearDays : null;
   const offer = pts == null ? { score: null, how: 'Weighted points not in the scorecard yet: enter them (Enter points) or import offer-level data.' } : offerScore(proRata, sc.offers, pts, ptTarget);
   return { mode: 'summary', sc, asOf, elapsed, yearDays, target: sc.target, days: elapsed, cycles: [], nClosed: 0, lastDay: asOf, ppo,
-    expectedFormal: proRata, actualFormal: sc.offers, pointsFormal: pts, pointsTargetFormal: ptTarget, pointsTargetFull: sc.target != null ? sc.target * ppo : null,
+    expectedFormal: proRata, actualFormal: sc.offers, pointsFormal: pts, pointsTargetFormal: ptTarget, pointsTargetFull: ptFull,
     offer, expectedYTD: proRata, actualYTD: sc.offers, pointsYTD: pts, pointsTargetYTD: ptTarget, bonusYTD: null,
     matured: sc.offers, joined: sc.joiners, declined: null, noshow: null, pending: null, jr, jrScore: jrScore(jr),
     ctAvg: sc.offerDays, ctMedian: null, ctCount: null, ctExcluded: 0, ctScore: ctScore(sc.offerDays), ctBands: [0, 0, 0],
@@ -392,7 +405,8 @@ function metrics(id) {
   const sc = state.scorecards && state.scorecards[id];
   const mode = isSup ? 'support' : (!txOffers.length && sc ? 'summary' : 'tx');
   const ppo = ppoFor(e.area);
-  const own = mode === 'summary' ? summaryBlock(sc, e, ppo) : deliveryBlock(txOffers, days, target, ppo);
+  const ptOverride = e.ptAnnual != null ? e.ptAnnual : null;
+  const own = mode === 'summary' ? summaryBlock(sc, e, ppo, ptOverride) : deliveryBlock(txOffers, days, target, ppo, ptOverride != null ? ptOverride / (yearWorkingDays() / 10) : null);
   const ov = state.overrides.filter(o => o.emp === id);
   const ownDel = deliverablesTotal(own, ov, mode === 'summary');
   let team = null, teamDel = null, deliverables = isSup ? null : ownDel.total;
@@ -400,7 +414,9 @@ function metrics(id) {
     const members = teamMembers(e.team, false);
     // Team goal: members' results against members' combined expectation (TL's own excluded, D-23)
     const blocks = members.map(m => metrics(m.id).own);
-    if (blocks.length) {
+    const snap = !blocks.length && state.teamSnapshots && state.teamSnapshots[id]; // personal file: team totals only
+    if (snap) { team = snap; teamDel = deliverablesTotal(team, [], team.mode === 'summary'); }
+    else if (blocks.length) {
       const anySummary = blocks.some(b => b.mode === 'summary');
       team = anySummary ? aggregateSummary(blocks, members) : aggregateBlocks(blocks, members);
       teamDel = deliverablesTotal(team, [], anySummary);
@@ -448,7 +464,7 @@ function metrics(id) {
   const noData = mode === 'tx' && !txOffers.length && !(isTL && team && team.actualYTD);
   const status = isSup || noData || statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
   const res = { e, role, mode, isSup, isTL, target, own, ownDel, team, teamDel, deliverables, projects, projectsSelf, cdM, cdS, cd, total, selfTotal, partial, model,
-    projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, att, teamAtt, ppo, status, provisional: anyPending() };
+    projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, att, teamAtt, ppo, ptOverride, status, provisional: anyPending() };
   _cache[key] = res;
   return res;
 }

@@ -114,6 +114,8 @@ The business owner confirmed four TA teams, each serving one or more business ar
 
 **Editable structure [REQ].** Teams, their business areas, and roles are workspace settings rather than fixed lists. The TA Head (or the administrator, for master data) can add or rename teams, set each team's business areas, define roles, and reassign any person's team, business area or role. Each role uses one of three scorecard templates: *Recruiter*, *Team Lead* or *Support (no hiring targets)*. A person has one primary team, and may also be marked as supporting other teams; they then appear in those teams' views but count only in their primary team's goal (D-49). Former members keep their records and are evaluated to their leaving date (D-50). Every assignment change requires a reason and is audited.
 
+**Access in the current dashboard [REQ].** TA Head access is restricted to **ranjith.tp@volvo.com** with a passphrase, and the TA Head workspace is encrypted (AES-256-GCM, PBKDF2 key). Everyone else sees only their own performance, through a personal file the TA Head generates. The file holds only that person's records, plus team totals for a lead, and is encrypted with its own passphrase. People return their inputs as an encrypted responses file that the TA Head imports. The TA Head can add, rename and remove people, and set a personal annual points target for each team member and lead. This is a confidentiality control, not single sign-on; production access uses Entra ID (§7.1).
+
 ### 2.3 Permission matrix
 
 Key: **V** view · **E** enter/edit · **U** upload/paste · **Val** validate · **C** comment · **A** approve · **D** download · **Am** amend (with reason, audited) · — no access
@@ -771,6 +773,7 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-47 | Support / operations roles | BRD scorecard is recruiter-only; Global SF support and operations roles have no hiring deliverables | Projects + competency only (/30, current) · role-specific service KPIs | TA Head |
 | D-48 | Target share by role | Sourcers and other roles: share of business-area target not defined | 100% (current placeholder) · role-specific | TA Head |
 | D-49 | Members supporting several teams | Someone may serve more than one team (e.g. TTI and VCE) | Count in primary team goal only (current) · split by share of effort | TA Head |
+| D-52 | Personal points targets | TA Head can set a personal annual points target per member or lead (pro-rated across the year and 10-day cycles) | Criteria for when a personal target differs from offer target × 2 | TA Head + HR |
 | D-51 | Points per offer by area | Global ×2 assumption disadvantages areas with mostly 1-point hires (NATS, GET/PGET, PMIS) | Keep ×2 everywhere · set area values from historical points per offer | TA Head |
 | D-50 | Former team members | People who left mid-year | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
 | D-43 | Offer definition | Count offers released, or accepted? Re-issued offers to the same candidate? | TA Head |

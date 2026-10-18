@@ -28,7 +28,7 @@ function memberView(id, viewer) {
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
       <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) || !tl || tl.id === e.id ? 'TA Head' : esc(tl.name) + ' (TL) · TA Head'}</dd></div>
       ${(e.alsoTeams || []).length ? `<div><dt>Also supports</dt><dd>${e.alsoTeams.map(t => esc(teamName(t))).join(', ')}</dd></div>` : ''}
-      <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Points target</dt><dd>${m.mode === 'support' ? 'Not applicable' : m.mode === 'summary' ? (m.own.target == null ? '—' : fmt(m.own.pointsTargetFull) + ' per year (' + fmt(m.own.target) + ' offers × ' + m.ppo + ')') : fmt(m.target * m.ppo) + ' / 10 working days (' + fmt(m.target) + ' offers × ' + m.ppo + ')'} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
+      <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Points target</dt><dd>${m.mode === 'support' ? 'Not applicable' : fmt(annualPoints(e)) + ' per year' + (e.ptAnnual != null ? ' (personal target)' : m.mode === 'summary' ? ' (' + fmt(m.own.target) + ' offers × ' + m.ppo + ')' : ' (' + fmt(m.target) + ' offers per 10 days × ' + m.ppo + ')')}${head && m.mode !== 'support' ? ` <button class="btn link small" onclick="pointsTargetDlg('${e.id}')">Edit</button>` : ''} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
     </div><div class="actions" style="flex-direction:column;align-items:flex-end">
       <div class="actions"><span class="chip">Self ${selfTot == null ? '—' : fmt(selfTot)}</span><span class="chip">TA Head ${mgrTot == null ? '—' : fmt(mgrTot)}</span><span class="chip">Gap ${gap == null ? '—' : (gap > 0 ? '+' : '') + gap}</span></div>
       <div class="actions">${statusOf(m)} ${provChip()} ${state.review[id] && state.review[id].finalised ? statusChip('approved', true, 'Final') : '<span class="chip">Draft</span>'}</div>
@@ -416,8 +416,8 @@ VIEWS.talent = () => {
 VIEWS.requests = () => {
   const head = isHead();
   const list = state.requests.filter(r => head || r.emp === ui.emp).sort((a, b) => b.created.localeCompare(a.created));
-  let h = `<div class="pagehead"><div class="grow"><h1>${head ? 'Requests to employees' : 'Inbox'}</h1><p class="muted">${head ? 'Ask an employee to confirm imported data, correct it, add evidence or comment. Each request contains only that employee\'s own records.' : 'Requests from your TA Head. You see only your own records.'}</p></div>
-    ${head ? `<button class="btn pri" onclick="newRequestDlg()">New request</button>` : ''}</div>
+  let h = `<div class="pagehead"><div class="grow"><h1>${head ? 'Requests to employees' : 'Inbox'}</h1><p class="muted">${head ? 'Ask an employee to confirm imported data, correct it, add evidence or comment. Each request contains only that employee\'s own records. Requests reach people through their personal file; import the responses file they send back.' : 'Requests from your TA Head. You see only your own records. When you are done, use <b>Export my responses</b> (top right) and send the file to your TA Head.'}</p></div>
+    ${head ? `<div class="actions"><button class="btn pri" onclick="newRequestDlg()">New request</button>${session && session.kind === 'head' ? '<label class="btn">Import employee responses<input type="file" accept=".json" hidden onchange="importResponsesFile(this.files[0])"></label>' : ''}</div>` : ''}</div>
    <section class="card"><div class="tbl-wrap"><table><thead><tr><th>ID</th>${head ? '<th>Employee</th>' : ''}<th>Type</th><th>Message</th><th>Rows</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
    ${list.map(r => `<tr><td class="mono">${r.id}</td>${head ? `<td>${esc(emp(r.emp) ? emp(r.emp).name : r.emp)}</td>` : ''}<td>${esc(r.type)}</td><td class="small">${esc(r.msg)}${r.response ? `<div class="note"><b>${esc(r.response.kind)}:</b> ${esc(r.response.text)}${r.response.link ? ' · ' + esc(r.response.link) : ''}<br><span class="muted">${esc(r.response.at)}</span></div>` : ''}${r.decision ? `<div class="small muted">TA Head: ${esc(r.decision)}</div>` : ''}</td><td class="n">${r.rows.length}</td><td>${D.nice(r.due)}</td><td><span class="chip ${r.status === 'Responded' ? 'st-watch' : r.status === 'Closed' ? 'st-good' : ''}">${esc(r.status)}</span></td>
    <td><div class="actions">${head && r.status === 'Responded' ? `<button class="btn sm pri" onclick="decideRequest('${r.id}','Accepted')">Accept</button><button class="btn sm" onclick="decideRequest('${r.id}','Rejected')">Reject</button>` : ''}${!head && ['Sent', 'Viewed'].includes(r.status) ? `<button class="btn sm pri" onclick="respondDlg('${r.id}')">Respond</button>` : ''}<button class="btn sm" onclick="requestRowsDlg('${r.id}')">View rows</button></div></td></tr>`).join('') || `<tr><td colspan="8" class="empty">No requests.</td></tr>`}</tbody></table></div></section>`;
@@ -432,13 +432,14 @@ VIEWS.setup = () => {
   const roleOpts = cur => Object.entries(state.roles).map(([k, r]) => `<option value="${k}" ${k === cur ? 'selected' : ''}>${esc(r.name)}</option>`).join('');
   const areaOpts = (team, cur) => { const a = teamAreas(team); return (a.includes(cur) ? a : [cur, ...a]).map(x => `<option ${x === cur ? 'selected' : ''}>${esc(x)}</option>`).join(''); };
   return `<div class="pagehead"><div class="grow"><h1>Team setup</h1><p class="muted">Assign people to teams and roles, set up teams and their business areas, define roles, and manage workspace data. Every change asks for a reason and is recorded in the audit log.</p></div></div>
-  <section class="card"><header><h2>Team members (${list.length})</h2>${head ? `<div class="actions"><button class="btn sm pri" onclick="memberDlg()">Add member</button><button class="btn sm" onclick="go('import',{impDataset:'profile'})">Paste / upload member list</button></div>` : ''}</header>
+  <section class="card"><header><h2>Team members (${list.length})</h2>${head ? `<div class="actions"><button class="btn sm pri" onclick="memberDlg()">Add person</button><button class="btn sm" onclick="go('import',{impDataset:'profile'})">Paste / upload list</button>${session && session.kind === 'head' ? '<button class="btn sm" onclick="packsDlg()">Create personal files</button>' : ''}</div>` : ''}</header>
    <p class="small muted">Change a team, business area or role directly in the table. Use <b>Edit</b> for job level, rating history, start or leaving date, status, other teams supported and notes.</p>
-   <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Team</th><th>Business area</th><th>Role</th><th>Also supports</th><th>Status</th>${head ? '<th>Job level</th><th>Last 3 ratings</th>' : ''}<th></th></tr></thead><tbody>
+   <div class="tbl-wrap"><table><thead><tr><th>Name</th><th>Team</th><th>Business area</th><th>Role</th><th class="n">Annual points target</th><th>Also supports</th><th>Status</th>${head ? '<th>Job level</th><th>Last 3 ratings</th>' : ''}<th></th></tr></thead><tbody>
    ${list.map(e => `<tr><td>${esc(e.name)}<br><span class="mono muted">${esc(e.id)}</span>${(e.flags || []).length ? `<br><span class="chip st-watch" data-tip="${esc(e.flags.map(esc).join('<br>'))}">▲ ${e.flags.length} to confirm</span>` : ''}</td>
      <td>${canEdit ? `<select aria-label="Team for ${esc(e.name)}" onchange="assignField('${e.id}','team',this.value)">${teamOpts(e.team)}</select>` : esc(teamName(e.team))}</td>
      <td>${canEdit ? `<select aria-label="Business area for ${esc(e.name)}" onchange="assignField('${e.id}','area',this.value)">${areaOpts(e.team, e.area)}</select>` : esc(e.area)}</td>
      <td>${canEdit ? `<select aria-label="Role for ${esc(e.name)}" onchange="assignField('${e.id}','type',this.value)">${roleOpts(e.type)}</select>` : esc(roleOf(e).name)}</td>
+     <td class="n">${isSupport(e) ? 'n/a' : fmt(annualPoints(e))}${e.ptAnnual != null ? ' <span class="chip">personal</span>' : ''}${canEdit && !isSupport(e) ? ` <button class="btn link small" onclick="pointsTargetDlg('${e.id}')">Edit</button>` : ''}</td>
      <td class="small">${(e.alsoTeams || []).map(t => esc(teamName(t))).join(', ') || '—'}</td>
      <td>${isFormer(e) ? `<span class="chip st-watch">Former${e.end ? ' · ' + D.nice(e.end) : ''}</span>` : '<span class="chip st-good">Active</span>'}</td>
      ${head ? `<td class="small">${esc(e.level || '—')}</td><td class="small">${e.ratings.map(r => esc(r || '—')).join(' · ')}</td>` : ''}
@@ -455,10 +456,10 @@ VIEWS.setup = () => {
   <section class="card"><header><h2>Business areas &amp; targets</h2><span class="muted small">Per 10 working days · points target = offer target × points per offer</span></header>
    <div class="tbl-wrap"><table><thead><tr><th>Team</th><th>Business area</th><th class="n">Offer target</th><th class="n">Points per offer</th><th class="n">Points target</th><th>Source</th><th></th></tr></thead><tbody>
    ${Object.entries(state.teams).flatMap(([k, t]) => t.areas.map(a => `<tr><td>${esc(t.name)}</td><td>${esc(a)}</td><td class="n">${state.areaTargets[a] == null ? 'n/a' : fmt(areaTarget(a))}</td><td class="n">${state.areaTargets[a] == null ? '' : ppoFor(a) + (state.areaPPO[a] != null ? ' (area)' : '')}</td><td class="n"><b>${state.areaTargets[a] == null ? '' : fmt(areaTarget(a) * ppoFor(a))}</b></td><td>${AREAS[a] ? (AREAS[a].status === 'brd' ? statusChip('brd') : statusChip('pending', true, 'Placeholder — D-15')) : '<span class="chip">Set in workspace</span>'}</td><td>${canEdit ? `<button class="btn sm" onclick="targetDlg('${esc(a)}')">Change</button>` : ''}</td></tr>`)).join('')}</tbody></table></div></section>
-  <section class="card"><header><h2>Workspace</h2><span class="chip">${state.mode === 'live' ? 'Live workspace' : 'Sample data (fictional)'}</span></header>
-   <p class="small">Data is saved in <b>this browser only</b>. Export a backup regularly and keep it in an approved, access-controlled location (it contains confidential performance data).</p>
-   <div class="actions"><button class="btn" onclick="exportBackup()">Export backup (.json)</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label>
-   ${head ? `<button class="btn" onclick="confirmLive()">Start a live workspace (remove sample data)</button><button class="btn" onclick="loadSample()">Load fictional sample data</button>` : ''}</div></section>`;
+  <section class="card"><header><h2>Workspace</h2><span class="chip">${session && session.kind === 'head' ? 'Encrypted · ' + esc(session.email) : 'Demo'}</span></header>
+   ${session && session.kind === 'head' ? `<p class="small">Your workspace is <b>encrypted</b> and saved in this browser only. Export an encrypted backup regularly; it opens only with your passphrase.</p>
+   <div class="actions"><button class="btn" onclick="exportBackup()">Export encrypted backup</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label></div>`
+   : '<p class="small">Demo data is fictional and is not saved.</p>'}</section>`;
 };
 
 // ================= RULES & SETTINGS =================
@@ -504,18 +505,18 @@ VIEWS.audit = () => {
 
 // ================= GUIDE =================
 VIEWS.guide = () => `<div class="pagehead"><div class="grow"><h1>How to use this dashboard</h1></div></div>
- <section class="card"><h2>Getting started with your own data</h2><ol>
-  <li><b>Team Setup → Start a live workspace</b> to remove the fictional sample data.</li>
-  <li><b>Add team members</b> one by one, or paste the member list (template: <span class="mono">templates/employee_profile_template.csv</span>) in Data Import → “Employee profile &amp; ratings”.</li>
-  <li><b>Data Import → Offers</b>: copy rows from Excel (with the header row) and paste, or upload a CSV. Check the preview, fix errors, then approve.</li>
-  <li><b>Share with employees</b> after publishing, to ask them to confirm or correct their own rows.</li>
-  <li>Use <b>Member View</b> to rate competencies, score projects and competency development, and build next-year IDPs.</li>
-  <li><b>Reports</b>: annual report, section reports, comparisons and bulk packs. “PDF” opens the print dialog — choose <i>Save as PDF</i>.</li>
-  <li><b>Export a backup</b> regularly (Team Setup). Data lives only in this browser.</li></ol></section>
- <section class="card"><h2>Roles</h2><p>Use “Signed in as” to see what each role sees. In production, sign-in decides this automatically.</p>
-  <table><tbody><tr><td><b>TA Head</b></td><td>All team data, ratings, imports, approvals, calibration, reports, talent &amp; promotion.</td></tr>
-  <tr><td><b>Team Lead</b></td><td>Own record (team-lead scorecard) and an operational view of their team (no confidential ratings).</td></tr>
-  <tr><td><b>Employee</b></td><td>Own record, self-assessment, evidence, inbox, own reports.</td></tr>
-  <tr><td><b>TA Ops (importer)</b></td><td>Prepares imports; cannot approve them or see ratings.</td></tr>
-  <tr><td><b>System Administrator</b></td><td>Rules, targets, calendar and master data; no automatic access to confidential commentary.</td></tr></tbody></table></section>
- <section class="card"><h2>Important</h2><p>Scores marked ${statusChip('prov')} depend on rules the BRD leaves open or states inconsistently. See <a href="#admin">Rules &amp; Settings</a> and <span class="mono">SYSTEM_DESIGN.md</span> §8. Metrics are evidence for discussion, not a substitute for managerial judgement.</p></section>`;
+ ${session && session.kind === 'member' ? `<section class="card"><h2>Your performance file</h2><ol>
+  <li><b>My Performance</b> shows only your own record: points against your points target, joining, cycle time, vendor usage, projects, competencies and development plan.</li>
+  <li>Complete your <b>self-assessment</b>, update <b>projects</b> and <b>learning</b>, and answer requests in your <b>Inbox</b>.</li>
+  <li>Click <b>Export my responses</b> (top right) and send the file to your TA Head. Changes are not saved in the browser until you export them.</li>
+  <li><b>Reports</b> lets you download your own reports.</li></ol></section>`
+ : `<section class="card"><h2>Getting started (TA Head)</h2><ol>
+  <li>Sign in with <b>${esc(TA_HEAD_EMAIL)}</b> and your passphrase. The workspace is encrypted in this browser.</li>
+  <li><b>Team Setup</b>: restore your team file, then add, rename or remove people and set teams, roles and each person's <b>annual points target</b>.</li>
+  <li><b>Data Import</b>: paste or upload offers or recruiter scorecards (with weighted points). Review, fix and approve.</li>
+  <li><b>Create personal files</b> (Team Setup) for each person and send each passphrase separately. People see only their own performance.</li>
+  <li><b>Import employee responses</b> (Requests page) when people send their responses file back.</li>
+  <li>Use <b>Member View</b>, <b>Compare</b>, <b>Annual Review</b> and <b>Talent &amp; Promotion</b> for the overall view; <b>Reports</b> for PDF and Excel.</li>
+  <li><b>Export an encrypted backup</b> regularly (Team Setup).</li></ol>
+  <p class="small muted">"View as" previews what each role sees; it does not change who can open the data.</p></section>`}
+ <section class="card"><h2>How performance is assessed</h2><p>Delivery is assessed on <b>weighted hiring points</b> against a <b>points target</b> (offer target × ${state.rules.pointsPerOffer}, or a personal target set by the TA Head). Offer Delivery &amp; Complexity = 40 × points ÷ points target, capped at 40. Scores marked ${statusChip('prov')} depend on rules still awaiting decisions (see <span class="mono">SYSTEM_DESIGN.md</span> §8). Metrics are evidence for discussion, not a substitute for managerial judgement.</p></section>`;

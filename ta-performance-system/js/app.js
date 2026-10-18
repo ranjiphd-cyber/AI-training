@@ -6,6 +6,7 @@ const ROLES = {
   tl:       { label: 'Team Lead', pages: ['me', 'myteam', 'requests', 'reports', 'guide'] },
   importer: { label: 'TA Ops (data importer)', pages: ['import', 'audit', 'guide'] },
   admin:    { label: 'System Administrator', pages: ['admin', 'setup', 'audit', 'guide'] },
+  member:   { label: 'Team member', pages: ['me', 'requests', 'reports', 'guide'] },
 };
 const PAGE_TITLES = {
   team: 'Team Overview', member: 'Member View', compare: 'Compare Members', exceptions: 'Exceptions', heatmap: 'Capability Heatmap',
@@ -19,6 +20,8 @@ function saveUI() { try { localStorage.setItem(UI_KEY, JSON.stringify(Object.ass
 function loadUI() { try { const s = localStorage.getItem(UI_KEY); if (s) ui = Object.assign(ui, JSON.parse(s)); } catch (e) { /* ignore */ } }
 
 function currentUserLabel() {
+  if (session && session.kind === 'head') return 'TA Head (' + session.email + ')';
+  if (session && session.kind === 'member') { const e = emp(session.empId); return e ? e.name : 'Team member'; }
   if (ui.role === 'head') return 'TA Head';
   if (ui.role === 'admin') return 'System Admin';
   if (ui.role === 'importer') return 'TA Ops Analyst';
@@ -30,11 +33,11 @@ const sortKey = e => (Object.keys(state.teams).indexOf(e.team) + 100) + (isLead(
 function sortedEmployees() { return [...state.employees].sort((a, b) => sortKey(a).localeCompare(sortKey(b))); }
 
 function boot() {
-  loadState(); loadUI();
+  loadUI();
   try { const t = localStorage.getItem('ta-pdms-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) { /* ignore */ }
   document.getElementById('period-label').textContent = '· ' + PERIOD.label + ' · data cut-off ' + D.nice(PERIOD.cutoff);
   const rs = document.getElementById('role-sel');
-  rs.innerHTML = Object.entries(ROLES).map(([k, r]) => `<option value="${k}">${r.label}</option>`).join('');
+  rs.innerHTML = Object.entries(ROLES).filter(([k]) => k !== 'member').map(([k, r]) => `<option value="${k}">${r.label}</option>`).join('');
   rs.onchange = () => { ui.role = rs.value; ui.page = ROLES[ui.role].pages.find(p => p[0] !== '|'); render(); };
   document.getElementById('emp-sel').onchange = ev => { ui.emp = ev.target.value; render(); };
   document.getElementById('theme-btn').onclick = () => {
@@ -49,6 +52,21 @@ function boot() {
 }
 
 function render(pushHash = true) {
+  const sb = document.getElementById('session-bar'), rw = document.getElementById('role-wrap');
+  if (!session) {
+    closeDlg();
+    document.getElementById('nav').innerHTML = ''; document.getElementById('nav').style.display = 'none'; rw.style.display = 'none'; document.getElementById('emp-sel-wrap').style.display = 'none';
+    sb.innerHTML = ''; document.getElementById('mode-label').textContent = '';
+    document.getElementById('main').innerHTML = signInView(); document.title = 'Sign in · TA Performance Dashboard'; return;
+  }
+  document.getElementById('nav').style.display = '';
+  // Only the TA Head (to preview what others see) and the demo can switch views; a member file is fixed to its owner.
+  if (session.kind === 'member') { ui.role = 'member'; ui.emp = session.empId; }
+  else if (ui.role === 'member') ui.role = 'head';
+  rw.style.display = session.kind === 'member' ? 'none' : '';
+  sb.innerHTML = session.kind === 'head' ? `<span class="small">🔒 ${esc(session.email)}</span> <button type="button" onclick="signOut()">Lock</button>`
+    : session.kind === 'member' ? `<span class="small">${esc(currentUserLabel())}${session.dirty ? ' · unsaved changes' : ''}</span> <button type="button" onclick="exportResponses()">Export my responses</button> <button type="button" onclick="signOut()">Close</button>`
+    : `<span class="small">Demo (fictional)</span> <button type="button" onclick="signOut()">Exit demo</button>`;
   const role = ROLES[ui.role];
   if (!role.pages.includes(ui.page)) ui.page = role.pages.find(p => p[0] !== '|');
   // person selector for employee and team-lead roles
@@ -60,7 +78,7 @@ function render(pushHash = true) {
     es.innerHTML = people.map(p => `<option value="${p.id}" ${p.id === ui.emp ? 'selected' : ''}>${esc(p.name)}</option>`).join('');
   }
   document.getElementById('role-sel').value = ui.role;
-  document.getElementById('mode-label').textContent = state.mode === 'live' ? 'Live workspace' : 'Sample data (fictional)';
+  document.getElementById('mode-label').textContent = session.kind === 'head' ? (ui.role === 'head' ? 'TA Head · encrypted workspace' : 'Preview as ' + ROLES[ui.role].label) : session.kind === 'member' ? 'My performance file' : 'Demo · fictional data';
   const openReq = state.requests.filter(r => ['Sent', 'Viewed'].includes(r.status) && (ui.role === 'head' ? false : r.emp === ui.emp)).length + (isHead() ? state.requests.filter(r => r.status === 'Responded').length : 0);
   const pendingBatches = state.batches.filter(b => b.status === 'Awaiting approval').length;
   document.getElementById('nav').innerHTML = role.pages.map(p => {
@@ -86,11 +104,10 @@ function go(page, extra = {}) { Object.assign(ui, extra); ui.page = page; render
 
 function emptyWorkspace() {
   return `<div class="card"><h1>Your workspace is empty</h1>
-  <p>Add your team members, then import performance data. Data is saved in this browser only; use <b>Team Setup → Export backup</b> to keep a copy or move it to another computer.</p>
-  <ol><li>Go to <a href="#setup">Team Setup</a> and add team members (or paste the employee profile template).</li>
-  <li>Go to <a href="#import">Data Import</a> and paste or upload your offer data.</li>
-  <li>Return here to see the dashboards.</li></ol>
-  <button class="btn" onclick="loadSample()">Or explore with fictional sample data</button></div>`;
+  <p>Add your team, then load performance data. Everything is encrypted with your passphrase and saved in this browser only.</p>
+  <ol><li><b>Load your team file:</b> <a href="#setup">Team Setup</a> → Restore backup, or add people one at a time.</li>
+  <li>Paste or upload offer data or recruiter scorecards in <a href="#import">Data Import</a>.</li>
+  <li>Create personal files for your team in Team Setup so each person can see only their own performance.</li></ol></div>`;
 }
 
 // ---------- dialogs & toast ----------

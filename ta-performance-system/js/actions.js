@@ -363,11 +363,18 @@ function targetDlg(a) {
    <p class="small muted">Points target = offer target × points per offer. Use an area value only where its hiring mix differs (for example, NATS-heavy early-career areas average close to 1 point per offer).</p><label class="field">Reason / decision reference<input type="text" id="tg-r"></label>`,
     [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('tg-r'))) return false; const before = state.areaTargets[a] + ' × ' + ppoFor(a); state.areaTargets[a] = val('tg-v') === '' ? null : +val('tg-v'); if (val('tg-p') === '') delete state.areaPPO[a]; else state.areaPPO[a] = +val('tg-p'); audit('Target changed', a, `${before} → ${val('tg-v') || 'n/a'} × ${ppoFor(a)}`, val('tg-r')); touch(); render(); } }]);
 }
-function exportBackup() { download(`TA_Performance_backup_${D.fmt(Date.now())}.json`, JSON.stringify(state, null, 1), 'application/json'); audit('Backup exported', 'Workspace', state.employees.length + ' members'); saveState(); }
-function restoreBackup(file) {
-  if (!file) return; const rd = new FileReader();
-  rd.onload = () => { try { const s = JSON.parse(rd.result); if (!s.employees || !s.rules) throw new Error('Not a dashboard backup'); migrateState(s); confirmDlg('Restore backup', 'Replace the current workspace with ' + file.name + ' (' + s.employees.length + ' members)?', () => { state = s; state.audit.unshift({ at: nowStamp(), who: currentUserLabel(), action: 'Backup restored', object: file.name, detail: s.employees.length + ' members', reason: '' }); touch(); render(); toast('Backup restored'); }); } catch (e) { toast('Could not read backup: ' + e.message); } };
-  rd.readAsText(file);
+function exportBackup() { exportBackupSecure(); }
+function restoreBackup(file) { restoreBackupSecure(file); }
+// Per-person annual points target (team members and leads). Blank = default (offer target × points per offer).
+function pointsTargetDlg(id) {
+  const e = emp(id), def = defaultAnnualPoints(e);
+  openDlg('Points target — ' + e.name, `<p class="small">Default annual points target: <b>${def == null ? 'n/a' : fmt(def)}</b> (offer target × ${ppoFor(e.area)} points per offer${isLead(e) ? ', at the team lead share' : ''}). Set a personal target to override it; it is pro-rated over the year and across 10-day cycles.</p>
+   <label class="field">Annual points target (blank = default)<input type="number" step="1" min="0" id="pt-v" value="${e.ptAnnual ?? ''}"></label>
+   <label class="field">Reason<input type="text" id="pt-why"></label>`,
+    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('pt-why'))) return false;
+      const before = e.ptAnnual ?? ('default ' + fmt(def)); const v = val('pt-v');
+      e.ptAnnual = v === '' ? null : +v;
+      audit('Points target changed', e.name, `${before} → ${e.ptAnnual ?? 'default ' + fmt(def)}`, val('pt-why')); touch(); render(); } }]);
 }
 function confirmLive() {
   openDlg('Start a live workspace', '<p>This removes all fictional sample data from this browser and starts an empty workspace for your team. Export a backup first if you have made changes you want to keep.</p>',
