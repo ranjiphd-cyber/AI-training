@@ -1,0 +1,60 @@
+# TA Performance Dashboard
+
+An editable performance-management dashboard for the Head of Talent Acquisition, India. It links
+commitments → results → trends → business value → decisions → actions → evidence.
+
+## Open it
+
+Open `index.html` in Chrome or Edge. No install or build step is needed, and it works offline.
+The export libraries are bundled in `vendor/`: PptxGenJS 3.12.0, docx 9.5.1, jsPDF 2.5.2 and jsPDF-AutoTable 3.8.4, all MIT-licensed.
+
+## Sections
+
+Executive Overview · Deliverables & Metrics · Trends & Programme Results · Team & Development ·
+Projects & Process Improvement · Leadership Development · Feedback & Actions · Business Value & Savings ·
+Data Quality & Evidence · Reports & Exports · Settings / Backup.
+
+## Seed data
+
+The dashboard is seeded only with the reference data in the brief:
+
+- Programme targets and joiners for 1 Jan–14 Oct 2026.
+- The other reported measures for the same period.
+- Adarsh's offer figures for 1 Jan–12 Oct 2026.
+- The departures of Padma and Jayaram.
+
+Anything not supplied is shown as **Not provided**, including definitions, populations, targets, roles, financial inputs, projects, feedback and development records. The brief's open questions are pre-loaded under Data Quality & Evidence → Open questions.
+
+## How data is stored
+
+- Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.
+- It is not synced, shared, encrypted or backed up anywhere else.
+- If you clear browser data, use a private window, or open the file from another folder or browser, you will see a different (or empty) store.
+- There is no login, authentication, multi-user access, cloud storage or external integration.
+- The AI insight service is a labelled placeholder. Insights come from transparent, documented rules.
+- No API credentials are stored or used.
+- Use **Settings / Backup → Download backup (JSON)** regularly, and **Restore from backup** to recover.
+- A recovery point is created automatically before any restore, import or reset (the last five are kept, in this browser only).
+
+## Exports
+
+These files are generated in the browser from saved data, the selected period and the selected sections:
+
+- **PPTX:** native, editable charts, tables and text.
+- **DOCX:** editable tables and text. Chart data is included as tables, not as native Word charts.
+- **PDF:** a presentation-ready snapshot.
+
+Every file shows the reporting dates, generation date, assumptions, sources, data-quality conflicts and open questions.
+
+Confidential individual details are excluded by default. When excluded, team-member names are replaced throughout, and individual results appear only as team-level counts.
+
+## Acceptance test
+
+```
+python3 -m http.server 8765        # from this folder
+npm i playwright                   # or set PLAYWRIGHT_CORE / CHROMIUM_PATH
+node tests/acceptance.js http://localhost:8765/index.html
+```
+
+The test exercises the 12 validation criteria from the brief, including opening the downloaded PPTX and DOCX files.
+It resets the dashboard to the seed data before and after the run.

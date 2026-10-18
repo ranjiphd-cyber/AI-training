@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TA Performance Dashboard</title>
+<meta name="description" content="Performance-management dashboard for the Head of Talent Acquisition, India. Data is stored in this browser only.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Crect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23001433%27/%3E%3Crect x=%273%27 y=%278%27 width=%272.5%27 height=%275%27 fill=%27%2300819B%27/%3E%3Crect x=%276.75%27 y=%275%27 width=%272.5%27 height=%278%27 fill=%27%2300819B%27/%3E%3Crect x=%2710.5%27 y=%273%27 width=%272.5%27 height=%2710%27 fill=%27%2300819B%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<a class="skip-link" href="#content">Skip to main content</a>
+<div class="app">
+  <aside class="sidebar" aria-label="Sections">
+    <div class="brand">
+      <div class="brand-title">TA Performance Dashboard</div>
+      <div class="brand-sub">Talent Acquisition · India</div>
+    </div>
+    <nav aria-label="Dashboard sections"><ul class="nav" id="nav"></ul></nav>
+    <div class="sidebar-foot">
+      Single-owner dashboard. Data stays in this browser; download backups from Settings / Backup.
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div class="field-inline"><label for="period">Reporting period</label><select id="period"></select></div>
+      <span class="freshness" id="freshness"></span>
+      <span class="spacer"></span>
+      <div style="position:relative">
+        <label for="global-search" style="position:absolute;left:-9999px">Search all records</label>
+        <input type="search" id="global-search" placeholder="Search all records…" autocomplete="off" style="width:220px">
+        <div id="search-results" class="card" hidden style="position:absolute;right:0;top:36px;width:360px;max-height:420px;overflow:auto;z-index:40;padding:8px 12px"></div>
+      </div>
+      <span class="small muted" id="save-status" role="status" aria-live="polite"></span>
+    </header>
+    <main id="content" class="content" tabindex="-1" aria-live="off">
+      <noscript>This dashboard needs JavaScript enabled.</noscript>
+    </main>
+  </div>
+</div>
+<dialog id="dlg-form" aria-label="Record form"></dialog>
+<dialog id="dlg-drawer" class="drawer" aria-label="Record details"></dialog>
+<dialog id="dlg-confirm" aria-label="Confirm"></dialog>
+<!-- Export libraries (MIT), vendored so the dashboard works offline: PptxGenJS 3.12.0, docx 9.5.1, jsPDF 2.5.2, jsPDF-AutoTable 3.8.4 -->
+<script src="vendor/pptxgen.bundle.js"></script>
+<script src="vendor/docx.iife.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.plugin.autotable.min.js"></script>
+<script src="js/schema.js"></script>
+<script src="js/store.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/ui-core.js"></script>
+<script src="js/exports.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
