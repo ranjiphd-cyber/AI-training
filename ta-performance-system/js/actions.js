@@ -32,7 +32,7 @@ function overrideDlg(id, k) {
   openDlg('Override — ' + names[k][0], `<p class="small">Calculated value: <b>${part.original == null ? '—' : part.original}</b> / ${names[k][1]}. Overrides keep the original value, and need a justification and evidence (BRD §14).</p>
    <div class="formgrid"><label class="field">Revised score<input type="number" id="ov-v" min="0" max="${names[k][1]}" step="0.5" value="${ex ? ex.revised : ''}"></label><label class="field">Evidence link<input type="text" id="ov-e" value="${ex ? esc(ex.evidence || '') : ''}"></label></div>
    <label class="field">Justification (required)<textarea id="ov-r" rows="3">${ex ? esc(ex.reason) : ''}</textarea></label>`,
-    [ex ? { label: 'Remove override', onClick: () => { const r = prompt('Reason for removing the override?'); if (!r) return false; state.overrides = state.overrides.filter(o => o !== ex); audit('Override removed', emp(id).name + ' · ' + names[k][0], `${ex.revised} → calculated ${part.original}`, r); touch(); render(); } } : { label: 'Cancel' },
+    [ex ? { label: 'Remove override', onClick: () => { askText('Remove override', 'Reason for removing the override:', r => { state.overrides = state.overrides.filter(o => o !== ex); audit('Override removed', emp(id).name + ' · ' + names[k][0], `${ex.revised} → calculated ${part.original}`, r); touch(); render(); }); return false; } } : { label: 'Cancel' },
      { label: 'Save override', cls: 'pri', onClick: () => { const v = parseFloat(val('ov-v')), r = val('ov-r'); if (isNaN(v) || v < 0 || v > names[k][1]) { toast('Enter a score between 0 and ' + names[k][1]); return false; } if (!requireReason(r)) return false;
        state.overrides = state.overrides.filter(o => !(o.emp === id && o.measure === k));
        state.overrides.push({ emp: id, measure: k, original: part.original, revised: v, reason: r, evidence: val('ov-e'), by: 'TA Head', at: nowStamp() });
@@ -265,7 +265,9 @@ function respondDlg(rid) {
 }
 function decideRequest(rid, decision) {
   const r = state.requests.find(x => x.id === rid);
-  const note = prompt(decision === 'Accepted' ? 'Accept: what will change? (recorded in audit)' : 'Reason for rejecting?'); if (!note) return;
+  askText(decision === 'Accepted' ? 'Accept response' : 'Reject response', decision === 'Accepted' ? 'What will change? (recorded in the audit log)' : 'Reason for rejecting:', note => applyDecision(r, decision, note));
+}
+function applyDecision(r, decision, note) {
   r.status = 'Closed'; r.decision = decision + ' — ' + note;
   if (decision === 'Accepted' && r.response && r.response.kind === 'Dispute' && r.response.row) {
     const o = state.offers.find(x => x.id === r.response.row);
@@ -284,7 +286,7 @@ function memberDlg(id) {
    <label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS, e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
    <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label>
    ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}</div>`,
-    [id ? { label: 'Remove member', onClick: () => { const r = prompt('Reason for removing ' + e.name + '? Their records stay in the audit log.'); if (!r) return false; state.employees = state.employees.filter(x => x.id !== id); audit('Member removed', e.name, id, r); touch(); render(); } } : { label: 'Cancel' },
+    [id ? { label: 'Remove member', onClick: () => { askText('Remove ' + e.name, 'Reason for removing this member (their audit history is kept):', r => { state.employees = state.employees.filter(x => x.id !== id); audit('Member removed', e.name, id, r); touch(); render(); }); return false; } } : { label: 'Cancel' },
      { label: 'Save', cls: 'pri', onClick: () => {
       const nid = id || val('mb-id'); if (!nid || !val('mb-n')) { toast('Employee ID and name are required.'); return false; }
       if (!id && emp(nid)) { toast('That employee ID already exists.'); return false; }
@@ -300,18 +302,23 @@ function targetDlg(a) {
 function exportBackup() { download(`TA_Performance_backup_${D.fmt(Date.now())}.json`, JSON.stringify(state, null, 1), 'application/json'); audit('Backup exported', 'Workspace', state.employees.length + ' members'); saveState(); }
 function restoreBackup(file) {
   if (!file) return; const rd = new FileReader();
-  rd.onload = () => { try { const s = JSON.parse(rd.result); if (!s.employees || !s.rules) throw new Error('Not a dashboard backup'); if (!confirm('Replace the current workspace with this backup?')) return; state = s; state.audit.unshift({ at: nowStamp(), who: currentUserLabel(), action: 'Backup restored', object: file.name, detail: s.employees.length + ' members', reason: '' }); touch(); render(); toast('Backup restored'); } catch (e) { toast('Could not read backup: ' + e.message); } };
+  rd.onload = () => { try { const s = JSON.parse(rd.result); if (!s.employees || !s.rules) throw new Error('Not a dashboard backup'); confirmDlg('Restore backup', 'Replace the current workspace with ' + file.name + ' (' + s.employees.length + ' members)?', () => { state = s; state.audit.unshift({ at: nowStamp(), who: currentUserLabel(), action: 'Backup restored', object: file.name, detail: s.employees.length + ' members', reason: '' }); touch(); render(); toast('Backup restored'); }); } catch (e) { toast('Could not read backup: ' + e.message); } };
   rd.readAsText(file);
 }
 function confirmLive() {
   openDlg('Start a live workspace', '<p>This removes all fictional sample data from this browser and starts an empty workspace for your team. Export a backup first if you have made changes you want to keep.</p>',
     [{ label: 'Cancel' }, { label: 'Start live workspace', cls: 'pri', onClick: () => { startLive(); ui.page = 'setup'; render(); } }]);
 }
-function loadSample() { if (state.mode === 'live' && state.employees.length && !confirm('Replace your live workspace with sample data? Export a backup first.')) return; resetState(); ui.page = ui.role === 'head' ? 'team' : ui.page; render(); }
+function loadSample() {
+  const go2 = () => { resetState(); ui.page = ui.role === 'head' ? 'team' : ui.page; render(); };
+  if (state.mode === 'live' && state.employees.length) confirmDlg('Load sample data', 'This replaces your live workspace with fictional sample data. Export a backup first if you need it.', go2); else go2();
+}
 
 // ---------- rules ----------
 function setRule(path, v) {
-  const reason = prompt('Reason for this rule change (audited):'); if (!reason) { render(); return; }
+  askText('Change rule', 'Reason for this rule change (recorded in the audit log):', reason => applyRule(path, v, reason), () => render());
+}
+function applyRule(path, v, reason) {
   const R = state.rules; const [a, b] = path.split('.');
   const before = JSON.stringify(b ? R[a][b] : R[a]);
   if (b) R[a][b] = v; else R[a] = v;
@@ -320,7 +327,9 @@ function setRule(path, v) {
 }
 function toggleVendorEx(c, on) { const R = state.rules; const v = on ? [...new Set([...R.vendorExcluded, c])] : R.vendorExcluded.filter(x => x !== c); setRule('vendorExcluded', v); }
 function approveRule(k) {
-  const ref = prompt(`Record the stakeholder decision for ${state.rules.status[k][1]} (who approved, when, reference):`); if (!ref) return;
+  askText('Record decision ' + state.rules.status[k][1], 'Who approved, when, and the reference:', ref => applyApproval(k, ref));
+}
+function applyApproval(k, ref) {
   state.rules.status[k] = ['approved', state.rules.status[k][1]]; audit('Rule decision recorded', k, 'Pending → Approved', ref); touch(); render();
 }
 function breakGlassDlg() {

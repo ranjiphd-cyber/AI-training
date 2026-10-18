@@ -2,7 +2,8 @@
 
 A working dashboard for the India Talent Acquisition team. It covers continuous performance tracking, coaching, team comparison, promotion readiness (visible to the TA Head only) and annual review, built from the *TA Performance & Development Management System BRD v1.0*.
 
-- **Open:** double-click `index.html`. It runs in any modern browser and needs no install, server or internet connection.
+- **Open:** double-click `index.html`. It runs in any modern browser and needs no install or server. Internet is used only to create `.xlsx` files.
+- **Hosted copy:** a private claude.ai artifact of the same dashboard. There, PDF reports download as `.html` files that you open and print to PDF, because the hosted viewer can't open the print dialog.
 - **Design:** [`SYSTEM_DESIGN.md`](SYSTEM_DESIGN.md) covers users and permissions, page layouts, KPI rules, the import workflow, reporting, security and AI guardrails, **open BRD conflicts and decisions (§8)**, the roadmap and acceptance tests.
 - **Templates:** [`templates/`](templates). You can also download each template from the Data Import page.
 
@@ -33,4 +34,4 @@ Team Leads are scored on team goal achievement, their own delivery against 50% o
 - **One user per browser.** The role switcher demonstrates the permission design, but it is **not security**: anyone who can open the browser profile can switch roles. For real multi-user access with sign-in, employee self-service and enforced confidentiality, build the production version on the BRD architecture (Power Apps + Dataverse + Power Automate + Power BI), as described in `SYSTEM_DESIGN.md` §9.
 - **Provisional scores.** Several scoring rules conflict or are undefined in the BRD, for example the hiring-point tables, the 40-point offer formula, the volume gate and the vendor denominator. Each one is configurable in **Rules & Settings** and marked *Pending*. Scores that depend on them are labelled *Provisional* until you record a decision.
 - Reports cover the review period to the data cut-off (16 Oct 2026 in this version). Quarterly and monthly report filters are part of the production design, not this version.
-- Excel downloads use the Excel 2003 XML format (`.xls`). Excel may warn that the file format and extension don't match; choose *Yes* to open it.
+- Excel downloads are real `.xlsx` workbooks when the computer is online. Offline, the dashboard falls back to the Excel 2003 XML format (`.xls`); Excel may warn that the format and extension don't match. Choose *Yes* to open it.

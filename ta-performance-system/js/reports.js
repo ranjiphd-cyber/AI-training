@@ -83,22 +83,33 @@ function compareReport(f) { if (ui.compare.length < 2) { toast('Select at least 
 function generate(type, ids, f, opts) {
   const T = REPORT_TYPES[type];
   let versions = [];
-  if (T.team || T.multi) versions.push(createReportVersion(null, T.label, opts.status, type, f));
-  else versions = ids.map(id => createReportVersion(id, T.label, opts.status, type, f));
+  const ext = f === 'xls' ? excelExt() : 'pdf';
+  if (T.team || T.multi) versions.push(createReportVersion(null, T.label, opts.status, type, ext));
+  else versions = ids.map(id => createReportVersion(id, T.label, opts.status, type, ext));
   if (f === 'xls') {
     const sheets = T.team || T.multi ? teamSheets(type, ids) : [].concat(...ids.map(id => personSheets(type, id, opts, ids.length > 1)));
-    download(versions.length === 1 ? versions[0].file : `${PERIOD.year}_${T.file}_${ids.length}_employees.xls`, xlsWorkbook(sheets, versions), 'application/vnd.ms-excel');
+    const name = versions.length === 1 ? versions[0].file : `${PERIOD.year}_Annual_${T.file}_${ids.length}_employees.${excelExt()}`;
+    download(name, excelFile(sheets, versions), 'application/vnd.ms-excel');
     toast('Excel downloaded'); render(); return;
   }
   let html = '';
   if (T.team || T.multi) html = teamDoc(type, ids, opts, versions[0]);
   else html = ids.map((id, i) => `<div class="${i ? 'pb' : ''}">${personDoc(type, id, opts, versions[i])}</div>`).join('');
   render();
-  openDlg('Report preview', `<div class="noprint actions" style="margin-bottom:10px"><button class="btn pri" onclick="printReport()">Print / Save as PDF</button><span class="small muted">File name: ${esc(versions.length === 1 ? versions[0].file : versions.length + ' files')}</span></div><div id="rp-prev">${html}</div>`, [{ label: 'Close' }, { label: 'Print / Save as PDF', cls: 'pri', onClick: () => { printReport(); return false; } }]);
+  const pdfLabel = HOSTED ? 'Download for PDF (.html)' : 'Print / Save as PDF';
+  lastReport = { html, file: versions.length === 1 ? versions[0].file : `${PERIOD.year}_Annual_${T.file}_${ids.length || 'team'}.pdf` };
+  openDlg('Report preview', `<div class="noprint actions" style="margin-bottom:10px"><button class="btn pri" onclick="printReport()">${pdfLabel}</button><span class="small muted">File name: ${esc(lastReport.file)}${HOSTED ? ' · open the downloaded file in a browser and print it to PDF' : ''}</span></div><div id="rp-prev">${html}</div>`, [{ label: 'Close' }, { label: pdfLabel, cls: 'pri', onClick: () => { printReport(); return false; } }]);
   document.getElementById('dlg').style.maxWidth = '900px';
   document.getElementById('report-root').innerHTML = html;
 }
+let lastReport = null;
 function printReport() {
+  if (HOSTED) {
+    const css = [...document.querySelectorAll('style')].map(s => s.textContent).join('\n');
+    const doc = `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><title>${esc(lastReport.file)}</title><style>${css}</style></head><body><div id="report-root" style="display:block">${lastReport.html}</div></body></html>`;
+    download(lastReport.file.replace(/\.pdf$/, '.html'), doc, 'text/html');
+    return;
+  }
   document.body.classList.add('printing');
   const done = () => { document.body.classList.remove('printing'); window.removeEventListener('afterprint', done); };
   window.addEventListener('afterprint', done);
@@ -259,9 +270,23 @@ function teamSheets(type, ids) {
   if (type === 'calibration') sheets.push({ name: 'Exceptions', rows: [['Employee', 'Exception', 'Measure', 'Value', 'Threshold']].concat(exceptionsList().map(x => [x.name, x.type, x.measure, x.value, x.threshold])) });
   return sheets;
 }
+// Real .xlsx when SheetJS has loaded (needs internet); otherwise Excel 2003 XML (.xls) for offline use.
+function excelExt() { return window.XLSX ? 'xlsx' : 'xls'; }
+function reportInfoRows(versions) {
+  return [['Report', versions.map(v => v.type).join('; ')], ['Files', versions.map(v => v.file).join('; ')], ['Version', versions.map(v => 'v' + v.version + ' ' + v.status).join('; ')], ['Generated', nowStamp() + ' by ' + currentUserLabel()], ['Data cut-off', PERIOD.cutoff], ['Rule version', state.rules.version], ['Classification', 'Confidential — People & Culture'], ['Status', anyPending() ? 'Provisional: scoring rules pending approval' : 'Rules approved']];
+}
+function excelFile(sheets, versions) {
+  if (!window.XLSX) return xlsWorkbook(sheets, versions);
+  const wb = XLSX.utils.book_new(), used = new Set();
+  [{ name: 'Report info', rows: reportInfoRows(versions) }].concat(sheets).forEach(s => {
+    let n = s.name.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31); while (used.has(n)) n = n.slice(0, 28) + used.size; used.add(n);
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(s.rows.map(r => (r || []).map(c => c == null ? '' : c))), n);
+  });
+  return new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })]);
+}
 function xlsWorkbook(sheets, versions) {
   const x = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const meta = [['Report', versions.map(v => v.type).join('; ')], ['Files', versions.map(v => v.file).join('; ')], ['Version', versions.map(v => 'v' + v.version + ' ' + v.status).join('; ')], ['Generated', nowStamp() + ' by ' + currentUserLabel()], ['Data cut-off', PERIOD.cutoff], ['Rule version', state.rules.version], ['Classification', 'Confidential — People & Culture'], ['Status', anyPending() ? 'Provisional: scoring rules pending approval' : 'Rules approved']];
+  const meta = reportInfoRows(versions);
   const used = new Set();
   const sheetXml = (name, rows) => { let n = name.replace(/[\\/?*[\]:]/g, ' ').slice(0, 31); while (used.has(n)) n = n.slice(0, 28) + used.size; used.add(n);
     return `<Worksheet ss:Name="${x(n)}"><Table>${rows.map((r, i) => `<Row>${(r || []).map(c => typeof c === 'number' && isFinite(c) ? `<Cell${i === 0 ? ' ss:StyleID="h"' : ''}><Data ss:Type="Number">${c}</Data></Cell>` : `<Cell${i === 0 ? ' ss:StyleID="h"' : ''}><Data ss:Type="String">${x(c)}</Data></Cell>`).join('')}</Row>`).join('')}</Table></Worksheet>`; };

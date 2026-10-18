@@ -46,7 +46,7 @@ h1 { font-size: 22px; } h2 { font-size: 17px; } h3 { font-size: 15px; } h4 { fon
 :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
 /* shell */
-.top { position: sticky; top: 0; z-index: 20; background: var(--navy); color: var(--onnavy); display: flex; align-items: center; gap: 12px; padding: 8px 16px; flex-wrap: wrap; }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--navy); color: var(--onnavy); display: flex; align-items: center; gap: 12px; padding: 8px 16px; flex-wrap: wrap; }
 .top .brand { font-weight: 600; font-size: 15px; margin-right: auto; display: flex; gap: 10px; align-items: center; }
 .top .brand small { font-weight: 400; opacity: .8; }
 .top label { font-size: 12px; opacity: .9; display: flex; align-items: center; gap: 6px; }
@@ -238,6 +238,8 @@ dialog .df { padding: 12px 18px; border-top: 1px solid var(--line); display: fle
 <dialog id="dlg"><div class="dh"><h2 id="dlg-title"></h2><button class="btn sm" type="button" onclick="closeDlg()" aria-label="Close">✕</button></div><div class="db" id="dlg-body"></div><div class="df" id="dlg-foot"></div></dialog>
 <div id="report-root"></div>
 
+<!-- SheetJS for .xlsx export; without internet the dashboard falls back to Excel 2003 XML (.xls). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="js/data.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/charts.js"></script>

@@ -347,7 +347,9 @@ function impShare(bid) {
 }
 function reverseBatch(id) {
   const b = state.batches.find(x => x.id === id);
-  const reason = prompt(`Reverse ${id}? Added rows are removed and updated rows restored. The batch record is kept. Reason:`); if (!reason) return;
+  askText('Reverse ' + id, 'Added rows are removed and updated rows restored; the batch record is kept. Reason:', reason => doReverse(id, b, reason));
+}
+function doReverse(id, b, reason) {
   const added = new Set(b.records.added || []);
   if (b.dsKey === 'offers' || b.dataset.startsWith('Offers')) { state.offers = state.offers.filter(o => !added.has(o.id)); for (const u of b.records.updated || []) { const o = state.offers.find(x => x.id === u.id); if (o) Object.assign(o, u.prev); } }
   else if (b.dsKey === 'profile') { state.employees = state.employees.filter(e => !added.has(e.id)); for (const u of b.records.updated || []) { const e = emp(u.id); if (e) Object.assign(e, u.prev); } }
@@ -364,7 +366,7 @@ function batchHistory() {
    <td><span class="chip ${b.status === 'Published' ? 'st-good' : b.status === 'Awaiting approval' ? 'st-watch' : ''}">${esc(b.status)}</span></td>
    <td>${b.status === 'Awaiting approval' && isHead() ? `<button class="btn sm pri" onclick="reviewBatch('${b.id}')">Review &amp; approve</button><button class="btn sm" onclick="rejectBatch('${b.id}')">Reject</button>` : ''}${b.status === 'Published' && b.records && isHead() ? `<button class="btn sm" onclick="reverseBatch('${b.id}')">Reverse</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="11" class="empty">No imports yet.</td></tr>'}</tbody></table></div></section>`;
 }
-function rejectBatch(id) { const r = prompt('Reason for rejecting this batch?'); if (!r) return; const b = state.batches.find(x => x.id === id); b.status = 'Rejected'; delete b.pending; audit('Import rejected', id, b.dataset, r); touch(); render(); }
+function rejectBatch(id) { askText('Reject ' + id, 'Reason for rejecting this batch:', r => { const b = state.batches.find(x => x.id === id); b.status = 'Rejected'; delete b.pending; audit('Import rejected', id, b.dataset, r); touch(); render(); }); }
 
 function sampleImportText() {
   const e1 = state.employees.find(e => e.type === 'IC') || { id: 'E0000', area: 'DTO' };

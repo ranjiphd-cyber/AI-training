@@ -77,7 +77,7 @@ function render(pushHash = true) {
     try { html = VIEWS[ui.page](); } catch (err) { console.error(err); html = `<div class="card"><h2>Something went wrong</h2><p class="muted">${esc(err.message)}</p></div>`; }
     document.getElementById('main').innerHTML = html;
   }
-  if (pushHash && location.hash.slice(1) !== ui.page) history.replaceState(null, '', '#' + ui.page);
+  if (pushHash && location.hash.slice(1) !== ui.page) { try { history.replaceState(null, '', '#' + ui.page); } catch (e) { /* sandboxed */ } }
   document.title = PAGE_TITLES[ui.page] + ' · TA Performance Dashboard';
   saveUI();
 }
@@ -109,6 +109,15 @@ function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role', 'status'); t.textContent = msg;
   document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
 }
+// In-page replacements for prompt()/confirm(), which hosted viewers block.
+function askText(title, label, onOk, onCancel) {
+  openDlg(title, `<label class="field">${esc(label)}<textarea id="ask-t" rows="3"></textarea></label>`,
+    [{ label: 'Cancel', onClick: () => { if (onCancel) onCancel(); } }, { label: 'Confirm', cls: 'pri', onClick: () => { const v = val('ask-t'); if (!requireReason(v)) return false; closeDlg(); onOk(v); return false; } }]);
+  setTimeout(() => { const t = document.getElementById('ask-t'); if (t) t.focus(); }, 30);
+}
+function confirmDlg(title, msg, onOk) {
+  openDlg(title, `<p>${esc(msg)}</p>`, [{ label: 'Cancel' }, { label: 'Continue', cls: 'pri', onClick: () => { closeDlg(); onOk(); return false; } }]);
+}
 function requireReason(r) { if (!r) { toast('A reason is required.'); return false; } return true; }
 
 // ---------- tooltip ----------
@@ -125,7 +134,16 @@ function initTooltip() {
 }
 
 // ---------- downloads ----------
-function download(name, content, type) {
+// Hosted viewers block script-started downloads; there the page asks the viewer to save via the downloads capability.
+const HOSTED = !!(window.claude && window.claude.use);
+async function download(name, content, type) {
+  if (HOSTED) {
+    const dl = await window.claude.use('downloads');
+    if (!dl) { toast('Downloads are not available in this view.'); return; }
+    try { await dl.save({ filename: name, data: content }); toast('Saved ' + name); }
+    catch (e) { if (e && e.code !== 'declined') toast('Could not save: ' + (e.message || e.code)); }
+    return;
+  }
   const blob = content instanceof Blob ? content : new Blob([content], { type });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
