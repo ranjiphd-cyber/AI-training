@@ -116,6 +116,6 @@ function dmaicTracker(p) {
   return `<ol class="dmaic" aria-label="DMAIC stages">${DMAIC.map((st, i) => {
     const k = i <= p.stage ? 'done' : i === p.inProgress ? 'prog' : 'todo';
     const lab = k === 'done' ? 'Validated' : k === 'prog' ? 'In progress' : 'Not started';
-    return `<li class="dm ${k}" data-tip="${st}: ${lab}${k === 'done' && p.history[i] ? ' · ' + D.nice(p.history[i].validated) : ''} · plan ${D.nice(p.planStages[i])}"><span class="dm-dot" aria-hidden="true">${k === 'done' ? '●' : k === 'prog' ? '◐' : '○'}</span><span class="dm-st">${st}</span><span class="dm-lab">${lab}</span></li>`;
+    return `<li class="dm ${k}" data-tip="${st}: ${lab}${k === 'done' && p.history[i] ? ' · ' + D.nice(p.history[i].validated) : ''} · plan ${D.nice((p.planStages || [])[i])}"><span class="dm-dot" aria-hidden="true">${k === 'done' ? '●' : k === 'prog' ? '◐' : '○'}</span><span class="dm-st">${st}</span><span class="dm-lab">${lab}</span></li>`;
   }).join('')}</ol>`;
 }

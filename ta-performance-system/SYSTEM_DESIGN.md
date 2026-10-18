@@ -10,7 +10,7 @@
 |---|---|
 | [`index.html`](index.html) | Working dashboard implementing this design: starts with fictional sample data, or an empty live workspace for your own team; role switching, paste/upload import with validation, employee requests, comparison, promotion view and PDF/Excel reports. |
 | [`README.md`](README.md) | How to open and use the dashboard with your own data. |
-| [`templates/`](templates) | CSV import templates for offers, employee profile (job level and 3-year rating history), learning, project updates and competency ratings. |
+| [`templates/`](templates) | CSV import templates: offers, employee profile (team, role, also-supports, status, job level, 3-year ratings), recruiter scorecard (YTD summary), learning, project updates and competency ratings. |
 
 ### How to read the labels
 
@@ -111,6 +111,8 @@ The business owner confirmed four TA teams, each serving one or more business ar
 | VCE + Leadership Hiring | VCE, Leadership Hiring | VCE 4 [BRD §5.1] · **Leadership Hiring: not defined** | **D-15** (consider a points-based target given SG9+ complexity) |
 
 **[ASM]** One Team Lead per TA team; the TL's own target is 50% of the target of the business area they personally serve (**D-20**). A TL's *team goal* is the combined expected vs actual offers of their team members, each measured against their own business-area target (**D-23**). The prototype uses placeholder targets (Penta 4, Early Careers 6, Leadership Hiring 1), labelled *Placeholder* wherever they appear.
+
+**Editable structure [REQ].** Teams, their business areas, and roles are workspace settings rather than fixed lists. The TA Head (or the administrator, for master data) can add or rename teams, set each team's business areas, define roles, and reassign any person's team, business area or role. Each role uses one of three scorecard templates: *Recruiter*, *Team Lead* or *Support (no hiring targets)*. A person has one primary team, and may also be marked as supporting other teams; they then appear in those teams' views but count only in their primary team's goal (D-49). Former members keep their records and are evaluated to their leaving date (D-50). Every assignment change requires a reason and is audited.
 
 ### 2.3 Permission matrix
 
@@ -746,6 +748,12 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-41 | Source systems | Which ATS/HRIS/LMS exports exist, and their field names (affects mapping and automation) | TA Ops + IT |
 | D-42 | "TTI" | Expand acronym (scope now confirmed as GTP/GTO/GTT) | TA Head |
 | D-44 | TTI business areas | Request lists "GTP, GTP, GTT"; GTO assumed for the duplicate | TA Head |
+| D-45 | Summary-scorecard data | Where only YTD totals per recruiter exist (no offer-level data), the 40-point offer score cannot be calculated; joining ratio becomes joiners ÷ offers (not maturity-adjusted) | Load offer-level ATS data (recommended) · accept TA Head override with reason | TA Head |
+| D-46 | Annual recruiter targets | Recruiter scorecards carry an annual target (e.g. 85, 114, 57) alongside the BRD's 10-day cadence; unclear whether it counts offers or joiners, and whether attainment is pro-rated | Joiners (as scorecard attainment) · offers · both; pro-rated to date vs full-year | TA Head |
+| D-47 | Support / operations roles | BRD scorecard is recruiter-only; Global SF support and operations roles have no hiring deliverables | Projects + competency only (/30, current) · role-specific service KPIs | TA Head |
+| D-48 | Target share by role | Sourcers and other roles: share of business-area target not defined | 100% (current placeholder) · role-specific | TA Head |
+| D-49 | Members supporting several teams | Someone may serve more than one team (e.g. TTI and VCE) | Count in primary team goal only (current) · split by share of effort | TA Head |
+| D-50 | Former team members | People who left mid-year (e.g. Padma) | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
 | D-43 | Offer definition | Count offers released, or accepted? Re-issued offers to the same candidate? | TA Head |
 
 ---

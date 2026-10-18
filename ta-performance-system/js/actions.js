@@ -120,7 +120,7 @@ function projectUpdateDlg(pid) {
 // ---------- competency development & learning ----------
 function compDevDlg(id, who) {
   const cd = state.compDev[id] = state.compDev[id] || {}; const s = cd[who] || {};
-  const tl = emp(id).type === 'TL' && who === 'mgr';
+  const tl = isLead(emp(id)) && who === 'mgr';
   openDlg((who === 'mgr' ? 'Score competency development — ' : 'Self-score competency development — ') + emp(id).name, `<div class="formgrid">
    <label class="field">Demonstrated capability growth (0–7)<input type="number" id="cd-g" min="0" max="7" value="${s.g != null ? s.g : ''}"></label>
    <label class="field">Application of learning (0–5)<input type="number" id="cd-a" min="0" max="5" value="${s.a != null ? s.a : ''}"></label>
@@ -278,31 +278,80 @@ function applyDecision(r, decision, note) {
 
 // ---------- setup ----------
 function memberDlg(id) {
-  const e = id ? emp(id) : { team: 'DTOP', area: 'DTO', type: 'IC', level: JOB_LEVELS[0], ratings: [null, null, null] };
+  const e = id ? emp(id) : { team: Object.keys(state.teams)[0], area: teamAreas(Object.keys(state.teams)[0])[0], type: 'IC', level: JOB_LEVELS[0], ratings: [null, null, null], alsoTeams: [], flags: [], status: 'Active' };
+  const head = isHead();
   openDlg(id ? 'Edit team member' : 'Add team member', `<div class="formgrid"><label class="field">Employee ID<input type="text" id="mb-id" value="${esc(e.id || '')}" ${id ? 'disabled' : ''}></label><label class="field">Name<input type="text" id="mb-n" value="${esc(e.name || '')}"></label>
-   <label class="field">Team<select id="mb-t" onchange="const a=TEAMS[this.value].areas;document.getElementById('mb-a').innerHTML=a.map(x=>'<option>'+x+'</option>').join('')">${Object.entries(TEAMS).map(([k, t]) => `<option value="${k}" ${k === e.team ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></label>
-   <label class="field">Business area<select id="mb-a">${opt(TEAMS[e.team].areas, e.area)}</select></label>
-   <label class="field">Role type<select id="mb-ty"><option value="IC" ${e.type === 'IC' ? 'selected' : ''}>Individual contributor</option><option value="TL" ${e.type === 'TL' ? 'selected' : ''}>Team lead</option></select></label>
-   <label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS, e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
-   <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label>
-   ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}</div>`,
+   <label class="field">Team<select id="mb-t" onchange="document.getElementById('mb-a').innerHTML=teamAreas(this.value).map(x=>'<option>'+esc(x)+'</option>').join('')">${Object.entries(state.teams).map(([k, t]) => `<option value="${k}" ${k === e.team ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select></label>
+   <label class="field">Business area<select id="mb-a">${opt(teamAreas(e.team).includes(e.area) || !e.area ? teamAreas(e.team) : [e.area, ...teamAreas(e.team)], e.area)}</select></label>
+   <label class="field">Role<select id="mb-ty">${Object.entries(state.roles).map(([k, r]) => `<option value="${k}" ${k === e.type ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
+   <label class="field">Status<select id="mb-st2"><option ${e.status !== 'Former' ? 'selected' : ''}>Active</option><option ${e.status === 'Former' ? 'selected' : ''}>Former</option></select></label>
+   <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label><label class="field">Leaving date (former members)<input type="date" id="mb-end" value="${e.end || ''}"></label>
+   ${head ? `<label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS.includes(e.level) ? JOB_LEVELS : [e.level, ...JOB_LEVELS], e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
+   ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}` : ''}</div>
+   <fieldset style="border:1px solid var(--line);border-radius:8px;margin:10px 0;padding:6px 12px"><legend class="small">Also supports (shown in these teams; not counted in their team goal)</legend>${Object.entries(state.teams).map(([k, t]) => `<label class="small" style="margin-right:12px"><input type="checkbox" class="mb-also" value="${k}" ${(e.alsoTeams || []).includes(k) ? 'checked' : ''}> ${esc(t.name)}</label>`).join('')}</fieldset>
+   <label class="field">Notes to confirm (one per line; shown until cleared)<textarea id="mb-f" rows="3">${esc((e.flags || []).join('\n'))}</textarea></label>
+   ${id ? '<label class="field">Reason for change<input type="text" id="mb-why"></label>' : ''}`,
     [id ? { label: 'Remove member', onClick: () => { askText('Remove ' + e.name, 'Reason for removing this member (their audit history is kept):', r => { state.employees = state.employees.filter(x => x.id !== id); audit('Member removed', e.name, id, r); touch(); render(); }); return false; } } : { label: 'Cancel' },
      { label: 'Save', cls: 'pri', onClick: () => {
       const nid = id || val('mb-id'); if (!nid || !val('mb-n')) { toast('Employee ID and name are required.'); return false; }
       if (!id && emp(nid)) { toast('That employee ID already exists.'); return false; }
-      if (val('mb-ty') === 'TL') { const other = state.employees.find(x => x.team === val('mb-t') && x.type === 'TL' && x.id !== nid); if (other) { toast(other.name + ' is already the team lead for this team.'); return false; } }
-      const data = { id: nid, name: val('mb-n'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), level: val('mb-l'), since: val('mb-s') || PERIOD.start, start: val('mb-st') || null, ratings: [0, 1, 2].map(i => val('mb-r' + i) || null) };
+      if (id && !val('mb-why')) { toast('Add a reason for the change.'); return false; }
+      const role = state.roles[val('mb-ty')];
+      if (role.template === 'lead' && val('mb-st2') !== 'Former') { const other = state.employees.find(x => x.team === val('mb-t') && isLead(x) && !isFormer(x) && x.id !== nid); if (other) { toast(other.name + ' is already the active team lead for this team.'); return false; } }
+      const data = { id: nid, name: val('mb-n'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
+        alsoTeams: [...document.querySelectorAll('.mb-also:checked')].map(x => x.value).filter(t => t !== val('mb-t')), flags: val('mb-f').split('\n').map(x => x.trim()).filter(Boolean) };
+      if (head) Object.assign(data, { level: val('mb-l'), since: val('mb-s') || PERIOD.start, ratings: [0, 1, 2].map(i => val('mb-r' + i) || null) });
+      const before = id ? `${teamName(e.team)} · ${e.area} · ${roleOf(e).name} · ${e.status || 'Active'}` : '';
       if (id) Object.assign(e, data); else addEmployee(data);
-      audit(id ? 'Member updated' : 'Member added', data.name, `${teamName(data.team)} · ${data.area} · ${data.type}`); touch(); render(); } }]);
+      audit(id ? 'Member updated' : 'Member added', data.name, (before ? before + ' → ' : '') + `${teamName(data.team)} · ${data.area} · ${role.name} · ${data.status}`, id ? val('mb-why') : ''); touch(); render(); } }]);
+}
+// Inline reassignment from the Team Setup table.
+function assignField(id, field, value) {
+  const e = emp(id), label = { team: 'team', area: 'business area', type: 'role' }[field];
+  const show = (f, v) => f === 'team' ? teamName(v) : f === 'type' ? (state.roles[v] || {}).name : v;
+  if (field === 'type' && state.roles[value].template === 'lead' && !isFormer(e)) { const other = state.employees.find(x => x.team === e.team && isLead(x) && !isFormer(x) && x.id !== id); if (other) { toast(other.name + ' is already the active team lead for ' + teamName(e.team) + '.'); render(); return; } }
+  askText(`Change ${label} — ${e.name}`, `${show(field, e[field])} → ${show(field, value)}. Reason (recorded in the audit log):`, reason => {
+    const before = show(field, e[field]); e[field] = value;
+    if (field === 'team') { e.alsoTeams = (e.alsoTeams || []).filter(t => t !== value); if (!teamAreas(value).includes(e.area)) e.area = teamAreas(value)[0] || e.area; }
+    audit('Assignment changed', e.name, `${label}: ${before} → ${show(field, value)}`, reason); touch(); render(); toast('Updated');
+  }, () => render());
+}
+function teamDlg(k) {
+  const t = k ? state.teams[k] : { name: '', areas: [] };
+  openDlg(k ? 'Edit team' : 'Add team', `<div class="formgrid"><label class="field">Team name<input type="text" id="tm-n" value="${esc(t.name)}"></label><label class="field">Short name (optional)<input type="text" id="tm-s" value="${esc(t.short || '')}"></label></div>
+   <label class="field">Business areas served (comma-separated)<input type="text" id="tm-a" value="${esc(t.areas.join(', '))}"></label><p class="small muted">New areas start without an offer target; set one under Business areas &amp; offer targets.</p><label class="field">Reason<input type="text" id="tm-why"></label>`,
+    [k && !state.employees.some(e => e.team === k) ? { label: 'Delete team', onClick: () => { const n = state.teams[k].name; delete state.teams[k]; state.employees.forEach(e => { e.alsoTeams = (e.alsoTeams || []).filter(x => x !== k); }); audit('Team deleted', n, '', val('tm-why')); touch(); render(); } } : { label: 'Cancel' },
+     { label: 'Save', cls: 'pri', onClick: () => { const n = val('tm-n'); if (!n) { toast('Team name is required.'); return false; } if (!requireReason(val('tm-why'))) return false;
+      const areas = val('tm-a').split(',').map(x => x.trim()).filter(Boolean);
+      const key = k || n.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) + (state.teams[n.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10)] ? Date.now() % 1000 : '');
+      const before = k ? `${t.name}: ${t.areas.join(', ')}` : '';
+      state.teams[key] = { name: n, short: val('tm-s') || undefined, areas };
+      areas.forEach(a => { if (!(a in state.areaTargets)) state.areaTargets[a] = null; });
+      audit(k ? 'Team updated' : 'Team added', n, (before ? before + ' → ' : '') + `${n}: ${areas.join(', ')}`, val('tm-why')); touch(); render(); } }]);
+}
+function roleDlg(k) {
+  const r = k ? state.roles[k] : { name: '', template: 'recruiter', share: 1 };
+  openDlg(k ? 'Edit role' : 'Add role', `<div class="formgrid"><label class="field">Role name<input type="text" id="rl-n" value="${esc(r.name)}"></label>
+   <label class="field">Scorecard template<select id="rl-t">${Object.entries(ROLE_TEMPLATES).map(([t, l]) => `<option value="${t}" ${t === r.template ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+   <label class="field">Share of business-area offer target (%)<input type="number" id="rl-s" min="0" max="200" step="5" value="${Math.round((r.template === 'lead' ? state.rules.tlTargetShare : r.share) * 100)}"></label></div>
+   <p class="small muted">Recruiter: hiring deliverables + projects + competency. Team Lead: team goal + own delivery at the lead share (set in Rules &amp; Settings). Support: no hiring targets. Shares other than the BRD's are pending decision (D-48).</p><label class="field">Reason<input type="text" id="rl-why"></label>`,
+    [k && !state.employees.some(e => e.type === k) && Object.keys(state.roles).length > 1 ? { label: 'Delete role', onClick: () => { const n = state.roles[k].name; delete state.roles[k]; audit('Role deleted', n, '', val('rl-why')); touch(); render(); } } : { label: 'Cancel' },
+     { label: 'Save', cls: 'pri', onClick: () => { const n = val('rl-n'); if (!n) { toast('Role name is required.'); return false; } if (!requireReason(val('rl-why'))) return false;
+      const t = val('rl-t'), share = clamp(+val('rl-s') / 100, 0, 2);
+      const key = k || n.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || 'ROLE' + Date.now() % 1000;
+      const before = k ? `${r.name} · ${r.template} · ${r.share}` : '';
+      state.roles[key] = { name: n, template: t, share: t === 'support' ? 0 : share };
+      if (t === 'lead' && Math.abs(share - state.rules.tlTargetShare) > 1e-9) { audit('Rule changed', 'tlTargetShare', `${state.rules.tlTargetShare} → ${share}`, val('rl-why')); state.rules.tlTargetShare = share; }
+      audit(k ? 'Role updated' : 'Role added', n, (before ? before + ' → ' : '') + `${n} · ${t} · ${share}`, val('rl-why')); touch(); render(); } }]);
 }
 function targetDlg(a) {
-  openDlg('Offer target — ' + a, `<label class="field">Offers per 10 working days<input type="number" step="0.5" id="tg-v" value="${areaTarget(a)}"></label><label class="field">Reason / decision reference<input type="text" id="tg-r"></label>`,
-    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('tg-r'))) return false; const before = areaTarget(a); state.areaTargets[a] = +val('tg-v'); audit('Target changed', a, `${before} → ${val('tg-v')}`, val('tg-r')); touch(); render(); } }]);
+  openDlg('Offer target — ' + a, `<label class="field">Offers per 10 working days (leave blank if not applicable)<input type="number" step="0.5" id="tg-v" value="${state.areaTargets[a] == null ? '' : state.areaTargets[a]}"></label><label class="field">Reason / decision reference<input type="text" id="tg-r"></label>`,
+    [{ label: 'Cancel' }, { label: 'Save', cls: 'pri', onClick: () => { if (!requireReason(val('tg-r'))) return false; const before = state.areaTargets[a]; state.areaTargets[a] = val('tg-v') === '' ? null : +val('tg-v'); audit('Target changed', a, `${before} → ${val('tg-v')}`, val('tg-r')); touch(); render(); } }]);
 }
 function exportBackup() { download(`TA_Performance_backup_${D.fmt(Date.now())}.json`, JSON.stringify(state, null, 1), 'application/json'); audit('Backup exported', 'Workspace', state.employees.length + ' members'); saveState(); }
 function restoreBackup(file) {
   if (!file) return; const rd = new FileReader();
-  rd.onload = () => { try { const s = JSON.parse(rd.result); if (!s.employees || !s.rules) throw new Error('Not a dashboard backup'); confirmDlg('Restore backup', 'Replace the current workspace with ' + file.name + ' (' + s.employees.length + ' members)?', () => { state = s; state.audit.unshift({ at: nowStamp(), who: currentUserLabel(), action: 'Backup restored', object: file.name, detail: s.employees.length + ' members', reason: '' }); touch(); render(); toast('Backup restored'); }); } catch (e) { toast('Could not read backup: ' + e.message); } };
+  rd.onload = () => { try { const s = JSON.parse(rd.result); if (!s.employees || !s.rules) throw new Error('Not a dashboard backup'); migrateState(s); confirmDlg('Restore backup', 'Replace the current workspace with ' + file.name + ' (' + s.employees.length + ' members)?', () => { state = s; state.audit.unshift({ at: nowStamp(), who: currentUserLabel(), action: 'Backup restored', object: file.name, detail: s.employees.length + ' members', reason: '' }); touch(); render(); toast('Backup restored'); }); } catch (e) { toast('Could not read backup: ' + e.message); } };
   rd.readAsText(file);
 }
 function confirmLive() {

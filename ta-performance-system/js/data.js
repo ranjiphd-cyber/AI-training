@@ -11,14 +11,28 @@ const HOLIDAYS = [
   ['2026-12-25', 'Christmas'],
 ];
 
-// TA teams (who a recruiter reports into) and the business areas each team serves.
+// Default TA teams (who a person reports into) and the business areas each team serves.
 // The business area drives the offer cadence target (SYSTEM_DESIGN.md D-14).
-const TEAMS = {
+// Teams are editable per workspace (state.teams); these are only the starting set.
+const DEFAULT_TEAMS = {
   TTI:   { name: 'TTI', areas: ['GTP', 'GTO', 'GTT'] },
   DTOP:  { name: 'DTO+', areas: ['DTO', 'FCA', 'Penta', 'VFS'] },
   URECH: { name: 'University Relations & Early Careers', short: 'UR & Early Careers', areas: ['Early Careers'] },
   VCELH: { name: 'VCE + Leadership Hiring', short: 'VCE + Leadership', areas: ['VCE', 'Leadership Hiring'] },
 };
+// Roles map a person to a scorecard template:
+//   recruiter = hiring deliverables 70 + projects 15 + competency 15
+//   lead      = team goal + own delivery at a share of the area target (TL model, D-21)
+//   support   = no hiring deliverables; projects + competency only until a template is agreed (D-47)
+// share = fraction of the business-area offer target that applies to the role (pending D-20 / D-48).
+const DEFAULT_ROLES = {
+  IC:  { name: 'Recruiter', template: 'recruiter', share: 1 },
+  TL:  { name: 'Team Lead', template: 'lead', share: 0.5 },
+  SRC: { name: 'Sourcer', template: 'recruiter', share: 1 },
+  SUP: { name: 'Support / Operations', template: 'support', share: 0 },
+};
+const ROLE_TEMPLATES = { recruiter: 'Recruiter scorecard', lead: 'Team Lead scorecard', support: 'Support role (no hiring targets)' };
+
 // Offers per 10 working days. status 'brd' = stated in BRD §5.1; 'placeholder' = not in BRD (D-15).
 const AREAS = {
   'GTP': { target: 5, status: 'brd' }, 'GTO': { target: 4, status: 'brd' }, 'GTT': { target: 4, status: 'brd' },

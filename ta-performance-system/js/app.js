@@ -25,8 +25,9 @@ function currentUserLabel() {
   const e = ui.emp && emp(ui.emp); return e ? e.name : 'Employee';
 }
 const isHead = () => ui.role === 'head';
-function teamName(k) { const t = TEAMS[k]; return t ? (t.short || t.name) : k; }
-function sortedEmployees() { return [...state.employees].sort((a, b) => (a.team + (a.type === 'TL' ? '0' : '1') + a.name).localeCompare(b.team + (b.type === 'TL' ? '0' : '1') + b.name)); }
+function teamName(k) { const t = state.teams && state.teams[k]; return t ? (t.short || t.name) : (k || '—'); }
+const sortKey = e => (Object.keys(state.teams).indexOf(e.team) + 100) + (isLead(e) ? '0' : isSupport(e) ? '2' : '1') + e.name;
+function sortedEmployees() { return [...state.employees].sort((a, b) => sortKey(a).localeCompare(sortKey(b))); }
 
 function boot() {
   loadState(); loadUI();
@@ -52,7 +53,7 @@ function render(pushHash = true) {
   if (!role.pages.includes(ui.page)) ui.page = role.pages.find(p => p[0] !== '|');
   // person selector for employee and team-lead roles
   const wrap = document.getElementById('emp-sel-wrap'), es = document.getElementById('emp-sel');
-  const people = ui.role === 'tl' ? state.employees.filter(e => e.type === 'TL') : ui.role === 'employee' ? state.employees.filter(e => e.type === 'IC') : [];
+  const people = ui.role === 'tl' ? state.employees.filter(e => isLead(e)) : ui.role === 'employee' ? state.employees.filter(e => !isLead(e)) : [];
   wrap.style.display = people.length ? '' : 'none';
   if (people.length) {
     if (!people.find(p => p.id === ui.emp)) ui.emp = people[0].id;

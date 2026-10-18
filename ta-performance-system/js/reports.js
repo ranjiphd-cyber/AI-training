@@ -121,7 +121,7 @@ function metaBlock(title, e, v, opts) {
   return `<div class="rdoc-head"><div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start"><h1>${esc(title)}</h1><span class="conf">${v && /CONFIDENTIAL/.test(v.file) ? 'STRICTLY CONFIDENTIAL — TA HEAD ONLY' : 'CONFIDENTIAL — PEOPLE &amp; CULTURE'}</span></div>
    <div class="meta"><div><b>Employee:</b> ${e ? esc(e.name) + ' (' + esc(e.id) + ')' : 'Team'}</div><div><b>Review period:</b> ${esc(opts.period || PERIOD.label)}</div><div><b>Data cut-off:</b> ${D.nice(PERIOD.cutoff)}</div>
    <div><b>Generated:</b> ${esc(v ? v.at : nowStamp())} by ${esc(v ? v.by : currentUserLabel())}</div><div><b>Version:</b> v${v ? v.version : 1} · ${esc(opts.status || 'Draft')}</div><div><b>Manager:</b> TA Head${e && e.type !== 'TL' && teamLead(e.team) ? ' · TL ' + esc(teamLead(e.team).name) : ''}</div>
-   <div><b>Rule version:</b> ${esc(state.rules.version)}</div><div><b>File:</b> ${esc(v ? v.file : '')}</div>${e ? `<div><b>Team / area:</b> ${esc(teamName(e.team))} / ${esc(e.area)} · ${e.type}</div>` : ''}</div>
+   <div><b>Rule version:</b> ${esc(state.rules.version)}</div><div><b>File:</b> ${esc(v ? v.file : '')}</div>${e ? `<div><b>Team / area:</b> ${esc(teamName(e.team))} / ${esc(e.area)} · ${esc(roleOf(e).name)}</div>` : ''}</div>
    ${anyPending() ? '<p class="wm">⧗ PROVISIONAL — one or more scoring rules are awaiting stakeholder approval (see SYSTEM_DESIGN.md §8). Scores may change.</p>' : ''}</div>`;
 }
 function scoreTable(m) {
@@ -134,6 +134,12 @@ function scoreTable(m) {
    <p class="small">Behavioural indicators are a coaching layer and are not weighted. Deliverables are system-calculated and identical in both columns unless overridden.</p>`;
 }
 function kpiTable(b, title) {
+  if (b.mode === 'summary') return `<h3>${esc(title)} — from summary scorecard</h3><table><thead><tr><th>Measure</th><th class="n">Value</th><th class="n">Score</th></tr></thead><tbody>
+   <tr><td>Joiners vs pro-rated target</td><td class="n">${b.actualFormal} / ${fmt(b.expectedFormal)} (${b.expectedFormal ? Math.round(b.actualFormal / b.expectedFormal * 100) : '—'}%)</td><td class="n">Offer score needs offer-level data</td></tr>
+   <tr><td>Offers released</td><td class="n">${b.actualYTD}</td><td></td></tr>
+   <tr><td>Joiners ÷ offers (approximate joining ratio)</td><td class="n">${pct(b.jr)}</td><td class="n">${b.jrScore == null ? '—' : b.jrScore} / 15</td></tr>
+   <tr><td>Avg offer days</td><td class="n">${fmt(b.ctAvg)}</td><td class="n">${b.ctScore == null ? '—' : b.ctScore} / 10</td></tr>
+   <tr><td>Vendor usage</td><td class="n">${pct(b.vendorPct)}</td><td class="n">${b.vendorScore == null ? '—' : b.vendorScore} / 5</td></tr></tbody></table>`;
   return `<h3>${esc(title)}</h3><table><thead><tr><th>Measure</th><th class="n">Value</th><th class="n">Score</th></tr></thead><tbody>
    <tr><td>Offers (closed cycles) vs expected</td><td class="n">${b.actualFormal} / ${fmt(b.expectedFormal)} (${b.expectedFormal ? Math.round(b.actualFormal / b.expectedFormal * 100) : '—'}%)</td><td class="n">${fmt(b.offer.score)} / 40</td></tr>
    <tr><td>Weighted hiring points (closed cycles)</td><td class="n">${fmt(b.pointsFormal)}</td><td class="n"></td></tr>
@@ -142,6 +148,7 @@ function kpiTable(b, title) {
    <tr><td>Vendor usage</td><td class="n">${pct(b.vendorPct)} (${b.vendor}/${b.applicable})</td><td class="n">${b.vendorScore == null ? '—' : b.vendorScore} / 5</td></tr></tbody></table>`;
 }
 function rDeliverables(m, opts, full) {
+  if (m.mode === 'support') return `<h2>Business Deliverables</h2><p>Not applicable: ${esc(m.role.name)} has no hiring targets (support-role template pending, D-47).</p>`;
   let h = `<h2>Business Deliverables</h2>`;
   if (m.isTL && m.team) h += kpiTable(m.team, `Team goal achievement (${m.team.members.length} members, TL excluded)`) + (opts.graphs ? cadenceChart(m.team.cycles, { title: 'Team offers per 10-day cycle vs target' }) : '');
   h += kpiTable(m.own, m.isTL ? `Own delivery (target ${fmt(m.target)} per 10 working days)` : 'Key measures');
@@ -180,6 +187,7 @@ function rOffers(m) { return `<h2>Annex: Offer transactions</h2><table><thead><t
 function rCadence(m) { return `<h2>10-working-day cadence</h2><table><thead><tr><th>Cycle</th><th>Period</th><th class="n">Target</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Variance</th><th>Status</th></tr></thead><tbody>${m.own.cycles.map(c => `<tr><td>${c.n}</td><td>${D.nice(c.from)} – ${D.nice(c.to)}</td><td class="n">${fmt(c.target)}</td><td class="n">${c.offers}</td><td class="n">${fmt(c.points)}</td><td class="n">${fmt(c.offers - c.target)}</td><td>${c.closed ? (c.offers >= c.target ? '✓ Met' : '✕ Missed') : '○ Partial (not scored)'}</td></tr>`).join('')}</tbody></table>`; }
 function rCalc(m) {
   const b = m.own, R = state.rules;
+  if (m.mode !== 'tx') return `<h2>Annex: Calculation detail</h2><p>${m.mode === 'support' ? 'No hiring calculation for support roles.' : `Summary scorecard as of ${D.nice(b.asOf)}: pro-rated target = ${b.target} × ${b.elapsed} ÷ ${b.yearDays} working days = ${fmt(b.expectedFormal)}. Joining ratio = joiners ÷ offers (approximate). Offer Delivery &amp; Complexity (40) needs offer-level data. Source: ${esc(b.sc.source || '')}.`}</p>`;
   return `<h2>Annex: Calculation detail</h2><table><tbody>
    <tr><td>Eligible working days (to cut-off)</td><td>${b.days}${m.e.leave ? ' (approved leave excluded)' : ''}</td></tr><tr><td>Closed 10-day cycles</td><td>${b.nClosed}</td></tr>
    <tr><td>Offer target per 10 days</td><td>${fmt(m.target)}${m.isTL ? ' (' + Math.round(R.tlTargetShare * 100) + '% of team-member target)' : ''}</td></tr>
@@ -192,7 +200,7 @@ function rCalc(m) {
 
 function personDoc(type, id, opts, v) {
   const m = metrics(id), e = m.e; const T = REPORT_TYPES[type];
-  const title = type === 'annual' ? `${PERIOD.year} Annual Performance Report${e.type === 'TL' ? ' — Team Lead' : ''}` : T.label;
+  const title = type === 'annual' ? `${PERIOD.year} Annual Performance Report — ${roleOf(e).name}${isFormer(e) ? ' (former team member)' : ''}` : T.label;
   let h = `<div class="rdoc">` + metaBlock(title, e, v, opts);
   if (type === 'annual' || type === 'full') {
     const r = state.review[id] || {};
@@ -220,20 +228,21 @@ function teamDoc(type, ids, opts, v) {
   let h = `<div class="rdoc">` + metaBlock(REPORT_TYPES[type].label, null, v, opts);
   if (type === 'compare') {
     const ms = ids.map(metrics);
-    const rows = [['Team / area', m => teamName(m.e.team) + ' / ' + m.e.area], ['Role type', m => m.e.type], ['Deliverables /70', m => fmt(m.deliverables)], ['Projects /15', m => m.projects == null ? '—' : m.projects], ['Competency Dev /15', m => m.cdM == null ? '—' : m.cdM], ['Total /100', m => m.total == null ? '(' + fmt(m.partial) + ')' : fmt(m.total)], ['Self total', m => fmt(m.selfTotal)],
+    const rows = [['Team / area', m => teamName(m.e.team) + ' / ' + m.e.area], ['Role', m => m.role.name + (isFormer(m.e) ? ' (former)' : '')], ['Deliverables /70', m => fmt(m.deliverables)], ['Projects /15', m => m.projects == null ? '—' : m.projects], ['Competency Dev /15', m => m.cdM == null ? '—' : m.cdM], ['Total /100', m => m.total == null ? '(' + fmt(m.partial) + ')' : fmt(m.total)], ['Self total', m => fmt(m.selfTotal)],
       ['Offers / expected (closed)', m => m.own.actualFormal + ' / ' + fmt(m.own.expectedFormal)], ['Volume %', m => m.vol == null ? '—' : Math.round(m.vol * 100) + '%'], ['Weighted points', m => fmt(m.own.pointsFormal)], ['Joining ratio', m => pct(m.own.jr)], ['Avg cycle time', m => fmt(m.own.ctAvg)], ['Vendor usage', m => pct(m.own.vendorPct)],
       ...COMPETENCIES.map(c => [c, m => m.latest ? m.latest.mgr[c] : '—'])];
     h += `<table><thead><tr><th>Measure</th>${ms.map(m => `<th class="n">${esc(m.e.name)}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r[0])}</td>${ms.map(m => `<td class="n">${esc(r[1](m))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-    if (new Set(ms.map(m => m.e.type)).size > 1) h += '<p class="small">Note: individual contributors and team leads use different deliverables templates.</p>';
+    if (new Set(ms.map(m => m.role.template + m.mode)).size > 1) h += '<p class="small">Note: the selection mixes scorecard templates or data sources (offer-level vs summary scorecard); deliverables are not like-for-like.</p>';
     if (opts.graphs) h += hbars(ms.map(m => ({ label: m.e.name, value: m.total != null ? m.total : m.partial })), { title: 'Total score', max: 100 });
     h += '<p class="small">For calibration consistency, not forced ranking. Consider business area, eligible working days and role type.</p>';
   } else if (type === 'calibration') {
     const list = sortedEmployees().map(e => metrics(e.id));
-    for (const grp of [['IC', 'Individual contributors'], ['TL', 'Team leads']]) {
-      const g = list.filter(m => m.e.type === grp[0]).sort((a, b) => (b.total || b.partial) - (a.total || a.partial));
+    for (const grp of [['recruiter', 'Recruiters & sourcers'], ['lead', 'Team leads'], ['support', 'Support & operations (no hiring targets, /30)']]) {
+      const g = list.filter(m => m.role.template === grp[0]).sort((a, b) => (b.total || b.partial) - (a.total || a.partial));
+      if (!g.length) continue;
       h += `<h2>${grp[1]}</h2><table><thead><tr><th>Employee</th><th>Team / area</th><th class="n">Deliv.</th><th class="n">Proj.</th><th class="n">Dev.</th><th class="n">Total</th><th class="n">Self</th><th class="n">Gap</th><th>Status</th></tr></thead><tbody>${g.map(m => `<tr><td>${esc(m.e.name)}</td><td>${esc(teamName(m.e.team))} / ${esc(m.e.area)}</td><td class="n">${fmt(m.deliverables)}</td><td class="n">${m.projects == null ? '—' : m.projects}</td><td class="n">${m.cdM == null ? '—' : m.cdM}</td><td class="n">${m.total == null ? '(' + fmt(m.partial) + ')' : fmt(m.total)}</td><td class="n">${fmt(m.selfTotal)}</td><td class="n">${m.selfTotal != null && m.total != null ? fmt(m.selfTotal - m.total) : '—'}</td><td>${STATUS[m.status][0]} ${STATUS[m.status][1]}</td></tr>`).join('')}</tbody></table>`;
     }
-    if (opts.graphs) h += histogram(list.filter(m => m.e.type === 'IC').map(m => m.total).filter(x => x != null), { title: 'Distribution of totals — individual contributors' });
+    if (opts.graphs) h += histogram(list.filter(m => m.role.template === 'recruiter').map(m => m.total).filter(x => x != null), { title: 'Distribution of totals — individual contributors' });
     const ex = exceptionsList();
     h += `<h2>Open exceptions (${ex.length})</h2><table><thead><tr><th>Employee</th><th>Exception</th><th>Value</th></tr></thead><tbody>${ex.slice(0, 40).map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.type)}</td><td>${esc(x.value)}</td></tr>`).join('')}</tbody></table>`;
   } else if (type === 'talent') {
@@ -247,7 +256,7 @@ function teamDoc(type, ids, opts, v) {
 function personSheets(type, id, opts, prefix) {
   const m = metrics(id), e = m.e, b = m.own, p = prefix ? e.name.split(' ')[0] + ' ' : '';
   const sheets = [];
-  const summary = [['Employee', e.name], ['Employee ID', e.id], ['Team', teamName(e.team)], ['Business area', e.area], ['Role type', e.type], ['Job level', e.level], ['Period', PERIOD.label], ['Data cut-off', PERIOD.cutoff], ['Rule version', state.rules.version], ['Provisional', anyPending() ? 'Yes — rules pending approval' : 'No'], [],
+  const summary = [['Employee', e.name], ['Employee ID', e.id], ['Team', teamName(e.team)], ['Business area', e.area], ['Role', roleOf(e).name], ['Status', e.status || 'Active'], ['Data source', m.mode === 'summary' ? 'Summary scorecard' : m.mode === 'support' ? 'Not applicable' : 'Offer-level'], ['Job level', e.level], ['Period', PERIOD.label], ['Data cut-off', PERIOD.cutoff], ['Rule version', state.rules.version], ['Provisional', anyPending() ? 'Yes — rules pending approval' : 'No'], [],
     ['Pillar', 'Self', 'TA Head', 'Max'], ['Business Deliverables', m.deliverables, m.deliverables, 70], ['Improvement Projects', m.projectsSelf, m.projects, 15], ['Competency Development', m.cdS, m.cdM, 15], ['Total', m.selfTotal, m.total, 100], [],
     ['Measure', 'Value', 'Score'], ['Offers closed cycles', b.actualFormal, b.offer.score], ['Expected closed cycles', r1(b.expectedFormal)], ['Weighted points', r1(b.pointsFormal)], ['Joining ratio %', r1(b.jr), b.jrScore], ['Avg cycle time', r1(b.ctAvg), b.ctScore], ['Median cycle time', r1(b.ctMedian)], ['Vendor usage %', r1(b.vendorPct), b.vendorScore]];
   if (m.isTL && m.team) summary.push([], ['Team goal (TL excluded)', ''], ['Team offers / expected', m.team.actualFormal, r1(m.team.expectedFormal)], ['Team deliverables /70', m.teamDel.total], ['Team joining %', r1(m.team.jr)], ['Team avg cycle', r1(m.team.ctAvg)], ['Team vendor %', r1(m.team.vendorPct)]);
@@ -265,7 +274,7 @@ function personSheets(type, id, opts, prefix) {
 function teamSheets(type, ids) {
   if (type === 'talent') return [{ name: 'Talent CONFIDENTIAL', rows: [['STRICTLY CONFIDENTIAL — TA HEAD ONLY'], ['Employee', 'Team', 'Job level', 'Years in level', `Rating ${PERIOD.year - 1}`, `Rating ${PERIOD.year - 2}`, `Rating ${PERIOD.year - 3}`, 'Score', 'Readiness (advisory)', 'Criteria met', 'Reasons', 'Decision', 'Note']].concat(sortedEmployees().map(e => { const pr = promotion(e.id), m = metrics(e.id), d = state.promo[e.id] || {}; return [e.name, teamName(e.team), e.level, r1(pr.yrs), ...e.ratings.map(r => r || ''), m.total != null ? m.total : m.partial, pr.level, pr.met, pr.crit.map(c => (c.ok ? 'MET ' : 'NOT MET ') + c.label + ' — ' + c.fact).join(' | '), d.decision || '', d.note || '']; })) }];
   const list = type === 'compare' ? ids.map(metrics) : sortedEmployees().map(e => metrics(e.id));
-  const rows = [['Employee', 'Team', 'Area', 'Role type', 'Deliverables /70', 'Projects /15', 'Competency Dev /15', 'Total', 'Self total', 'Volume %', 'Offers (closed)', 'Expected (closed)', 'Points', 'Joining %', 'Avg cycle', 'Vendor %', ...COMPETENCIES]].concat(list.map(m => [m.e.name, teamName(m.e.team), m.e.area, m.e.type, m.deliverables, m.projects, m.cdM, m.total, m.selfTotal, m.vol == null ? '' : Math.round(m.vol * 100), m.own.actualFormal, r1(m.own.expectedFormal), r1(m.own.pointsFormal), r1(m.own.jr), r1(m.own.ctAvg), r1(m.own.vendorPct), ...COMPETENCIES.map(c => m.latest ? m.latest.mgr[c] : '')]));
+  const rows = [['Employee', 'Team', 'Area', 'Role', 'Deliverables /70', 'Projects /15', 'Competency Dev /15', 'Total', 'Self total', 'Volume %', 'Offers (closed)', 'Expected (closed)', 'Points', 'Joining %', 'Avg cycle', 'Vendor %', ...COMPETENCIES]].concat(list.map(m => [m.e.name, teamName(m.e.team), m.e.area, m.role.name, m.deliverables, m.projects, m.cdM, m.total, m.selfTotal, m.vol == null ? '' : Math.round(m.vol * 100), m.own.actualFormal, r1(m.own.expectedFormal), r1(m.own.pointsFormal), r1(m.own.jr), r1(m.own.ctAvg), r1(m.own.vendorPct), ...COMPETENCIES.map(c => m.latest ? m.latest.mgr[c] : '')]));
   const sheets = [{ name: type === 'compare' ? 'Comparison' : 'Calibration', rows }];
   if (type === 'calibration') sheets.push({ name: 'Exceptions', rows: [['Employee', 'Exception', 'Measure', 'Value', 'Threshold']].concat(exceptionsList().map(x => [x.name, x.type, x.measure, x.value, x.threshold])) });
   return sheets;

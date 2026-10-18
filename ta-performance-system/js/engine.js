@@ -41,14 +41,23 @@ let calcVersion = 0;
 
 function saveState() { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: session-only */ } }
 function loadState() {
-  try { const s = localStorage.getItem(STORE_KEY); if (s) { state = JSON.parse(s); return; } } catch (e) { /* ignore */ }
+  try { const s = localStorage.getItem(STORE_KEY); if (s) { state = migrateState(JSON.parse(s)); return; } } catch (e) { /* ignore */ }
   state = buildSampleState();
+}
+// Older saves and backups predate editable teams/roles and summary scorecards.
+function migrateState(s) {
+  s.teams = s.teams || JSON.parse(JSON.stringify(DEFAULT_TEAMS));
+  s.roles = s.roles || JSON.parse(JSON.stringify(DEFAULT_ROLES));
+  s.scorecards = s.scorecards || {};
+  for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; }
+  return s;
 }
 function resetState() { state = buildSampleState(); calcVersion++; saveState(); }
 // Empty workspace for real use: same structure, no people or transactions.
 function emptyState() {
   return {
     mode: 'live', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)),
+    teams: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), roles: JSON.parse(JSON.stringify(DEFAULT_ROLES)), scorecards: {},
     areaTargets: Object.fromEntries(Object.entries(AREAS).map(([k, v]) => [k, v.target])),
     employees: [], offers: [], assessments: {}, projects: [], learning: [], compDev: {}, idp: {}, afi: {}, requests: [], batches: [],
     audit: [{ at: nowStamp(), who: 'TA Head', action: 'Workspace created', object: 'Live workspace', detail: 'Started without sample data', reason: '' }],
@@ -58,8 +67,9 @@ function emptyState() {
 function startLive() { state = emptyState(); calcVersion++; saveState(); }
 function areaTarget(a) { const t = state.areaTargets[a]; return t == null ? 0 : Number(t); }
 function addEmployee(o) {
-  const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level || JOB_LEVELS[0], since: o.since || PERIOD.start,
-    ratings: o.ratings || [null, null, null], start: o.start || null, leave: null, targets: Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
+  const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
+    ratings: o.ratings || [null, null, null], start: o.start || null, end: o.end || null, status: o.status || 'Active', alsoTeams: o.alsoTeams || [], flags: o.flags || [],
+    leave: null, targets: o.targets || Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
   state.employees.push(e);
   state.assessments[e.id] = state.assessments[e.id] || [];
   state.compDev[e.id] = state.compDev[e.id] || { mgr: null, self: null };
@@ -67,8 +77,15 @@ function addEmployee(o) {
   return e;
 }
 function emp(id) { return state.employees.find(e => e.id === id); }
-function teamMembers(team, includeTL = true) { return state.employees.filter(e => e.team === team && (includeTL || e.type !== 'TL')); }
-function teamLead(team) { return state.employees.find(e => e.team === team && e.type === 'TL'); }
+function roleOf(e) { return (state.roles && state.roles[e.type]) || { name: e.type, template: 'recruiter', share: 1 }; }
+const isLead = e => roleOf(e).template === 'lead';
+const isSupport = e => roleOf(e).template === 'support';
+const isRecruiter = e => roleOf(e).template === 'recruiter';
+const isFormer = e => e.status === 'Former';
+// Team goal counts primary-team members only; "also supports" members are shown but not double-counted (D-49).
+function teamMembers(team, includeTL = true) { return state.employees.filter(e => e.team === team && !isSupport(e) && (includeTL || !isLead(e))); }
+function teamLead(team) { return state.employees.find(e => e.team === team && isLead(e) && !isFormer(e)) || state.employees.find(e => e.team === team && isLead(e)); }
+function teamAreas(team) { return (state.teams[team] && state.teams[team].areas) || []; }
 
 function audit(action, object, detail, reason = '', who = null) {
   state.audit.unshift({ at: nowStamp(), who: who || currentUserLabel(), action, object, detail, reason });
@@ -82,8 +99,9 @@ function buildSampleState() {
   const wpick = (pairs) => { let r = rnd() * sum(pairs.map(p => p[1])); for (const [v, w] of pairs) { r -= w; if (r <= 0) return v; } return pairs[pairs.length - 1][0]; };
   const s = {
     mode: 'sample', rules: JSON.parse(JSON.stringify(DEFAULT_RULES)),
+    teams: JSON.parse(JSON.stringify(DEFAULT_TEAMS)), roles: JSON.parse(JSON.stringify(DEFAULT_ROLES)), scorecards: {},
     areaTargets: Object.fromEntries(Object.entries(AREAS).map(([k, v]) => [k, v.target])),
-    employees: EMPLOYEES.map(e => ({ id: e.id, name: e.name, team: e.team, area: e.area, type: e.type, level: e.level, since: e.since, ratings: [...e.ratings], start: e.start || null, leave: e.leave || null })),
+    employees: EMPLOYEES.map(e => ({ id: e.id, name: e.name, team: e.team, area: e.area, type: e.type, level: e.level, since: e.since, ratings: [...e.ratings], start: e.start || null, end: null, status: 'Active', alsoTeams: [], flags: [], leave: e.leave || null })),
     offers: [], assessments: {}, projects: [], learning: [], compDev: {}, idp: {}, afi: {}, requests: [], batches: [],
     audit: [], reports: [], overrides: [], promo: {}, review: {}, comments: {}, breakGlass: [],
   };
@@ -222,9 +240,10 @@ function buildSampleState() {
   return s;
 }
 
-function eligibleDaysRaw(start, leave) {
+function eligibleDaysRaw(start, leave, end) {
   const from = start > PERIOD.start ? start : PERIOD.start;
-  let days = workingDays(from, PERIOD.cutoff);
+  const to = end && end < PERIOD.cutoff ? end : PERIOD.cutoff;
+  let days = workingDays(from, to);
   if (leave) days = days.filter(d => d < leave[0] || d > leave[1]);
   return days;
 }
@@ -305,14 +324,44 @@ function deliveryBlock(offers, days, target) {
     mix, offers: inPeriod, missRun: run,
   };
 }
-function deliverablesTotal(b, ov) {
+function deliverablesTotal(b, ov, noRescale = false) {
   const parts = [['offer', b.offer.score, 40], ['jr', b.jrScore, 15], ['ct', b.ctScore, 10], ['vendor', b.vendorScore, 5]].map(([k, v, max]) => {
     const o = ov && ov.find(x => x.measure === k);
     return { k, v: o ? o.revised : v, max, overridden: !!o, original: v };
   });
   const avail = parts.filter(p => p.v != null);
   const raw = sum(avail.map(p => p.v)), maxAvail = sum(avail.map(p => p.max));
-  return { total: maxAvail ? r1(raw * 70 / maxAvail) : null, rescaled: maxAvail < 70 && maxAvail > 0, parts };
+  if (noRescale && maxAvail < 70) return { total: null, rescaled: false, parts, raw: r1(raw), maxAvail };
+  return { total: maxAvail ? r1(raw * 70 / maxAvail) : null, rescaled: maxAvail < 70 && maxAvail > 0, parts, raw: r1(raw), maxAvail };
+}
+
+/* Summary-scorecard mode: YTD totals per recruiter (target, offers, joiners, offer days, vendor %) when
+   offer-level data is not available. Attainment follows the source scorecard (joiners vs target), pro-rated
+   to the scorecard date (D-46). The 40-point offer score needs offer-level data, so it stays empty unless
+   the TA Head records an override with a reason. */
+function summaryBlock(sc, e) {
+  const yearDays = workingDays(PERIOD.start, PERIOD.end).length;
+  const asOf = e.end && e.end < sc.asOf ? e.end : sc.asOf;
+  const from = e.start && e.start > PERIOD.start ? e.start : PERIOD.start;
+  const elapsed = workingDays(from, asOf).length;
+  const proRata = sc.target != null ? sc.target * elapsed / yearDays : null;
+  const jr = sc.offers ? sc.joiners / sc.offers * 100 : null;
+  return { mode: 'summary', sc, asOf, elapsed, yearDays, target: sc.target, days: elapsed, cycles: [], nClosed: 0, lastDay: asOf,
+    expectedFormal: proRata, actualFormal: sc.joiners, pointsFormal: null,
+    offer: { score: null, how: 'Not calculable from a summary scorecard: needs offer-level category, SG and gender, or a TA Head override with reason.' },
+    expectedYTD: proRata, actualYTD: sc.offers, pointsYTD: null, bonusYTD: null,
+    matured: sc.offers, joined: sc.joiners, declined: null, noshow: null, pending: null, jr, jrScore: jrScore(jr),
+    ctAvg: sc.offerDays, ctMedian: null, ctCount: null, ctExcluded: 0, ctScore: ctScore(sc.offerDays), ctBands: [0, 0, 0],
+    applicable: null, vendor: null, vendorPct: sc.vendorPct, vendorScore: vendorScore(sc.vendorPct), mix: {}, offers: [], missRun: 0 };
+}
+function aggregateSummary(blocks, members) {
+  const S = k => sum(blocks.map(b => b[k] || 0));
+  const offers = S('actualYTD'), joiners = S('actualFormal');
+  const wavg = k => { const w = blocks.filter(b => b[k] != null && b.actualYTD); const tw = sum(w.map(b => b.actualYTD)); return tw ? sum(w.map(b => b[k] * b.actualYTD)) / tw : null; };
+  const jr = offers ? joiners / offers * 100 : null, ct = wavg('ctAvg'), vp = wavg('vendorPct');
+  return { mode: 'summary', members: members.map(m => m.id), cycles: [], expectedFormal: S('expectedFormal'), actualFormal: joiners, pointsFormal: null,
+    offer: { score: null, how: 'Team offer score needs offer-level data.' }, expectedYTD: S('expectedYTD'), actualYTD: offers, pointsYTD: null,
+    matured: offers, joined: joiners, jr, jrScore: jrScore(jr), ctAvg: ct, ctMedian: null, ctScore: ctScore(ct), applicable: null, vendor: null, vendorPct: vp, vendorScore: vendorScore(vp), offers: [] };
 }
 
 const _cache = {};
@@ -320,20 +369,27 @@ function metrics(id) {
   const key = id + ':' + calcVersion;
   if (_cache[key]) return _cache[key];
   const e = emp(id);
-  const isTL = e.type === 'TL';
-  const target = areaTarget(e.area) * (isTL ? state.rules.tlTargetShare : 1);
-  const days = eligibleDaysRaw(e.start || PERIOD.start, e.leave);
-  const own = deliveryBlock(state.offers.filter(o => o.emp === id), days, target);
+  const role = roleOf(e), isTL = role.template === 'lead', isSup = role.template === 'support';
+  const target = areaTarget(e.area) * (isTL ? state.rules.tlTargetShare : role.share);
+  const days = eligibleDaysRaw(e.start || PERIOD.start, e.leave, e.end);
+  const txOffers = state.offers.filter(o => o.emp === id);
+  const sc = state.scorecards && state.scorecards[id];
+  const mode = isSup ? 'support' : (!txOffers.length && sc ? 'summary' : 'tx');
+  const own = mode === 'summary' ? summaryBlock(sc, e) : deliveryBlock(txOffers, days, target);
   const ov = state.overrides.filter(o => o.emp === id);
-  const ownDel = deliverablesTotal(own, ov);
-  let team = null, teamDel = null, deliverables = ownDel.total;
+  const ownDel = deliverablesTotal(own, ov, mode === 'summary');
+  let team = null, teamDel = null, deliverables = isSup ? null : ownDel.total;
   if (isTL) {
     const members = teamMembers(e.team, false);
-    // Team goal: members' offers against members' combined expected (TL's own offers excluded, D-23)
+    // Team goal: members' results against members' combined expectation (TL's own excluded, D-23)
     const blocks = members.map(m => metrics(m.id).own);
-    team = aggregateBlocks(blocks, members);
-    teamDel = deliverablesTotal(team, []);
-    deliverables = state.rules.tlModel === 'TL-A' ? r1((teamDel.total || 0) * 35 / 70 + (ownDel.total || 0) * 35 / 70) : r1((teamDel.total || 0) * 40 / 70 + (ownDel.total || 0) * 20 / 70);
+    if (blocks.length) {
+      const anySummary = blocks.some(b => b.mode === 'summary');
+      team = anySummary ? aggregateSummary(blocks, members) : aggregateBlocks(blocks, members);
+      teamDel = deliverablesTotal(team, [], anySummary);
+    }
+    const w = state.rules.tlModel === 'TL-A' ? [35, 35] : [40, 20];
+    deliverables = teamDel && teamDel.total != null && ownDel.total != null ? r1(teamDel.total * w[0] / 70 + ownDel.total * w[1] / 70) : null;
   }
   // projects
   const projs = state.projects.filter(p => p.owner === id);
@@ -356,7 +412,8 @@ function metrics(id) {
     selfTotal = deliverables != null && projectsSelf != null && cdS != null ? r1(deliverables + projectsSelf + cdS) : null;
     model = isTL ? 'TL-A' : 'IC';
   }
-  const partial = r1((deliverables || 0) + (projects || 0) + (cdM || 0));
+  const delPartial = deliverables != null ? deliverables : (isSup ? 0 : (ownDel.raw || 0));
+  const partial = r1(delPartial + (projects || 0) + (cdM || 0));
   // ratings
   const histAll = state.assessments[id] || [];
   // a period counts once the TA Head has rated it; a missing self-rating shows as "—"
@@ -368,8 +425,9 @@ function metrics(id) {
   const vol = own.expectedFormal ? own.actualFormal / own.expectedFormal : null;
   const teamVol = team && team.expectedFormal ? team.actualFormal / team.expectedFormal : null;
   const statusVol = isTL ? (teamVol != null && vol != null ? Math.min(teamVol, vol) : vol) : vol;
-  const status = statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
-  const res = { e, isTL, target, own, ownDel, team, teamDel, deliverables, projects, projectsSelf, cdM, cdS, cd, total, selfTotal, partial, model,
+  const noData = mode === 'tx' && !txOffers.length && !(isTL && team && team.actualYTD);
+  const status = isSup || noData || statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
+  const res = { e, role, mode, isSup, isTL, target, own, ownDel, team, teamDel, deliverables, projects, projectsSelf, cdM, cdS, cd, total, selfTotal, partial, model,
     projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, status, provisional: anyPending() };
   _cache[key] = res;
   return res;
@@ -408,7 +466,10 @@ function exceptionsList() {
     if (b.jr != null && b.jr < R.jrException) add(e, 'Joining ratio below threshold', 'Joining ratio', r1(b.jr) + '%', '< ' + R.jrException + '%', 'Review declines and no-shows', 2);
     if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) add(e, 'Cycle time > 55 days', 'Avg req-to-offer', r1(b.ctAvg) + ' days', '> ' + R.ctBands.acceptable, 'Check ageing reqs and exception requests', 2);
     if (b.vendorPct != null && b.vendorPct > R.vendorBands.high) add(e, 'Vendor usage > 20%', 'Vendor share', r1(b.vendorPct) + '%', '> ' + R.vendorBands.high + '%', 'Review sourcing mix', 3);
-    for (const p of m.projs) if (p.stage < 4 && D.diff(PERIOD.cutoff, p.lastValidated) > R.stalledDays) add(e, 'Stalled DMAIC project', p.title, D.diff(PERIOD.cutoff, p.lastValidated) + ' days since validation', '> ' + R.stalledDays + ' days', 'Agree next stage evidence', 2);
+    for (const p of m.projs) if (p.planEnd && p.planEnd < PERIOD.cutoff && p.stage < 4 && !/complete/i.test(p.reported || '')) add(e, 'Project past planned end', p.title, 'Planned end ' + D.nice(p.planEnd), p.reported || 'Not complete', 'Agree a revised date or close-out', 2);
+    for (const f of e.flags || []) add(e, 'Data to confirm', f, '', '', 'Confirm or correct in Team Setup', 3);
+    if (isFormer(e) && !e.end) add(e, 'Leaving date missing', 'Former team member', '—', '', 'Add leaving date so targets are pro-rated', 2);
+    for (const p of m.projs) if (p.lastValidated && p.stage < 4 && D.diff(PERIOD.cutoff, p.lastValidated) > R.stalledDays) add(e, 'Stalled DMAIC project', p.title, D.diff(PERIOD.cutoff, p.lastValidated) + ' days since validation', '> ' + R.stalledDays + ' days', 'Agree next stage evidence', 2);
     if (m.latest) COMPETENCIES.forEach(c => {
       const t = e.targets[c], v = m.latest.mgr[c];
       if (t - v > R.belowTargetBy) add(e, 'Competency below target', c, 'Rating ' + v, 'Target ' + t, 'Add IDP action', 3);
@@ -434,18 +495,20 @@ function promotion(id) {
   crit.push({ ok: score >= 80, label: 'Current-year score ≥ 80 (provisional)', fact: (m.total != null ? 'Total ' : 'Partial total ') + score + ' / 100' });
   const strong = m.latest ? COMPETENCIES.filter(c => m.latest.mgr[c] >= 4) : [];
   crit.push({ ok: strong.length >= 3, label: '≥ 3 competencies at next-level expectation (TA Head rating ≥ 4)', fact: strong.length ? strong.length + ': ' + strong.join(', ') : 'None at 4 or above' });
-  const yrs = D.diff(PERIOD.cutoff, e.since) / 365.25;
-  crit.push({ ok: yrs >= 2, label: '≥ 2 years in current level', fact: r1(yrs) + ' years in ' + e.level });
+  const yrs = e.since ? D.diff(PERIOD.cutoff, e.since) / 365.25 : null;
+  crit.push({ ok: yrs != null && yrs >= 2, label: '≥ 2 years in current level', fact: yrs == null ? 'Job level / date in level not recorded' : r1(yrs) + ' years in ' + e.level });
   const lead = (m.latest && m.latest.mgr['Collaboration & Leadership'] >= 4) || m.projs.some(p => p.stage >= 3 && p.mgrScore);
   crit.push({ ok: lead, label: 'Leadership evidence (Collaboration & Leadership ≥ 4, or project validated to Improve)', fact: 'Collab & Leadership ' + (m.latest ? m.latest.mgr['Collaboration & Leadership'] : 'n/a') + '; best project stage ' + (m.projs.length ? DMAIC[Math.max(...m.projs.map(p => p.stage))] : 'none') });
   const met = crit.filter(c => c.ok).length;
   let level, rank;
-  if (ratingsKnown.length < 2) { level = 'Insufficient evidence'; rank = 4; }
+  if (isFormer(e)) { level = 'Not assessed (former team member)'; rank = 5; }
+  else if (isSupport(e) && m.total == null && m.partial === 0) { level = 'Insufficient evidence'; rank = 4; }
+  else if (ratingsKnown.length < 2) { level = 'Insufficient evidence'; rank = 4; }
   else if (met === 5) { level = 'Ready now'; rank = 1; }
   else if (met >= 4 || (met === 3 && strongRatings)) { level = 'Ready in 6–12 months'; rank = 2; }
   else { level = 'Develop in current role'; rank = 3; }
   if (e.level === JOB_LEVELS[JOB_LEVELS.length - 1]) { level += ' (top of framework)'; }
-  const nextLevel = JOB_LEVELS[JOB_LEVELS.indexOf(e.level) + 1] || '—';
+  const nextLevel = JOB_LEVELS.includes(e.level) ? (JOB_LEVELS[JOB_LEVELS.indexOf(e.level) + 1] || '—') : '—';
   return { crit, met, level, rank, nextLevel, yrs };
 }
 

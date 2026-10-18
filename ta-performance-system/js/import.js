@@ -25,7 +25,10 @@ const IMPORT_DATASETS = {
   profile: { label: 'Employee profile & ratings (TA Head only)', roles: ['head'], fields: [
     ['id', 'Employee ID', true, ['employee id', 'emp id', 'id']], ['name', 'Employee Name', true, ['employee name', 'name', 'full name']],
     ['team', 'TA Team', true, ['ta team', 'team']], ['area', 'Business Area', true, ['business area', 'area', 'bu']],
-    ['type', 'Role Type', true, ['role type', 'role', 'ic/tl', 'type']], ['level', 'Job Level', false, ['job level', 'level', 'grade']],
+    ['type', 'Role', true, ['role type', 'role', 'ic/tl', 'type']], ['level', 'Job Level', false, ['job level', 'level', 'grade']],
+    ['also', 'Also Supports (teams, ; separated)', false, ['also supports', 'also supports teams', 'secondary team', 'secondary teams']],
+    ['status', 'Status (Active / Former)', false, ['status', 'employment status']], ['end', 'Leaving Date', false, ['leaving date', 'end date', 'exit date', 'last working day']],
+    ['flags', 'Notes to Confirm', false, ['notes to confirm', 'to confirm', 'notes']],
     ['since', 'Date In Current Level', false, ['date in current level', 'in level since', 'level since']],
     ['start', 'Start Date (if mid-year)', false, ['start date', 'joining date', 'doj']],
     ['r1', 'Rating Year-1', false, ['rating year-1', 'rating y-1', 'rating ' + (PERIOD.year - 1), 'last year rating']],
@@ -37,6 +40,16 @@ const IMPORT_DATASETS = {
     ['comp', 'Competency', true, ['competency']], ['by', 'Rated By (Self / TA Head)', true, ['rated by', 'rater', 'by']],
     ['rating', 'Rating (1-5)', true, ['rating', 'ta head rating', 'self rating', 'score']], ['target', 'Target Rating', false, ['target rating', 'target']],
     ['evidence', 'Evidence / Comment', false, ['evidence / comment', 'evidence', 'comment']],
+  ] },
+  scorecard: { label: 'Recruiter scorecard (YTD summary per person)', roles: ['head', 'importer'], fields: [
+    ['emp', 'Employee ID', true, ['employee id', 'emp id', 'recruiter', 'employee', 'name']], ['asOf', 'As Of Date', true, ['as of date', 'as of', 'data cut-off', 'cutoff']],
+    ['target', 'Annual Target', false, ['annual target', 'target']], ['offers', 'Offers', true, ['offers', 'offers released', 'total offers']], ['joiners', 'Joiners', true, ['joiners', 'joined', 'total joiners']],
+    ['offerDays', 'Offer Days (avg req-to-offer)', false, ['offer days', 'days to offer', 'avg offer days', 'cycle time']], ['joinDays', 'Join Days', false, ['join days', 'days to join']],
+    ['declinedPct', 'Declined %', false, ['declined %', 'declined', 'decline %']], ['diversityPct', 'Diversity %', false, ['diversity %', 'diversity', 'gender diversity %']],
+    ['vendorPct', 'Vendor %', false, ['vendor %', 'vendor', 'vendor usage %']], ['referralPct', 'Referral %', false, ['referral %', 'referral', 'referrals %']],
+    ['oCore', 'Offers Core / Campus', false, ['offers core / campus', 'offers core']], ['oNats', 'Offers NATS', false, ['offers nats']], ['oExcel', 'Offers ExcelHER', false, ['offers excelher']], ['oOther', 'Offers Other', false, ['offers other']],
+    ['jCore', 'Joiners Core / Campus', false, ['joiners core / campus', 'joiners core']], ['jNats', 'Joiners NATS', false, ['joiners nats']], ['jExcel', 'Joiners ExcelHER', false, ['joiners excelher']], ['jOther', 'Joiners Other', false, ['joiners other']],
+    ['source', 'Source', false, ['source']], ['note', 'Note', false, ['note', 'notes']],
   ] },
   learning: { label: 'Learning records (LMS export)', roles: ['head', 'importer'], fields: [
     ['emp', 'Employee ID', true, ['employee id', 'emp id', 'employee', 'name']], ['programme', 'Programme', true, ['programme', 'program', 'course', 'course name']],
@@ -141,7 +154,7 @@ function impValidate() {
   if (!im.records) {
     im.records = im.rows.map((r, i) => { const v = {}; ds.fields.forEach(([k]) => { v[k] = im.mapping[k] != null ? (r[im.mapping[k]] || '') : ''; }); return { n: i + 2, v, excluded: false }; });
   }
-  const fn = { offers: validateOffer, profile: validateProfile, ratings: validateRating, learning: validateLearning }[im.dataset];
+  const fn = { offers: validateOffer, profile: validateProfile, ratings: validateRating, learning: validateLearning, scorecard: validateScorecard }[im.dataset];
   const seen = {};
   for (const rec of im.records) { rec.msgs = []; rec.norm = {}; fn(rec, seen); rec.status = rec.msgs.some(m => m[0] === 'E') ? 'error' : rec.msgs.length ? 'warn' : 'ok'; }
 }
@@ -201,14 +214,20 @@ function validateProfile(rec, seen) {
   if (!v.id) E('Employee ID missing'); if (!v.name) E('Name missing');
   if (seen[v.id]) E('V1 Duplicate employee ID in file'); seen[v.id] = 1;
   if (emp(v.id)) W('Existing member — will update');
-  const t = Object.entries(TEAMS).find(([k, x]) => [k, x.name, x.short || ''].map(s => s.toLowerCase()).includes(String(v.team).toLowerCase()));
-  if (!t) E('Unknown team "' + v.team + '" (use ' + Object.values(TEAMS).map(x => x.name).join(', ') + ')'); else n.team = t[0];
+  const findTeam = x => Object.entries(state.teams).find(([k, t]) => [k, t.name, t.short || ''].map(s => s.toLowerCase()).includes(String(x).trim().toLowerCase()));
+  const t = findTeam(v.team);
+  if (!t) E('Unknown team "' + v.team + '" (add it in Team Setup, or use ' + Object.values(state.teams).map(x => x.name).join(', ') + ')'); else n.team = t[0];
   const a = t && t[1].areas.find(x => x.toLowerCase() === String(v.area).toLowerCase());
-  if (t && !a) E('Business area "' + v.area + '" is not in ' + t[1].name + ' (' + t[1].areas.join(', ') + ')'); n.area = a;
-  const ty = String(v.type).toUpperCase(); n.type = ty.startsWith('T') ? 'TL' : ty.startsWith('I') ? 'IC' : null; if (!n.type) E('Role type must be IC or TL');
+  if (t && !a) { if (v.area) E('Business area "' + v.area + '" is not in ' + t[1].name + ' (' + t[1].areas.join(', ') + ')'); else { n.area = t[1].areas[0]; W('Business area missing — set to ' + n.area); } } else n.area = a;
+  const rk = Object.entries(state.roles).find(([k, r]) => [k.toLowerCase(), r.name.toLowerCase()].includes(String(v.type).trim().toLowerCase()) || (String(v.type).trim().toUpperCase() === 'TL' && r.template === 'lead'));
+  n.type = rk ? rk[0] : null; if (!n.type) E('Unknown role "' + v.type + '" (use ' + Object.values(state.roles).map(r => r.name).join(', ') + ' or add the role in Team Setup)');
+  n.alsoTeams = String(v.also || '').split(/[;|]/).map(x => x.trim()).filter(Boolean).map(x => { const f = findTeam(x); if (!f) W('Unknown supported team "' + x + '" — ignored'); return f && f[0]; }).filter(x => x && x !== n.team);
+  n.status = /former|left|exit/i.test(v.status || '') ? 'Former' : 'Active';
+  n.flags = String(v.flags || '').split(/[;|]/).map(x => x.trim()).filter(Boolean);
   n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : JOB_LEVELS[0]);
   if (v.level && !JOB_LEVELS.includes(n.level)) W('Job level not in list — kept as entered (D-30)');
-  for (const k of ['since', 'start']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
+  for (const k of ['since', 'start', 'end']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
+  if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
   n.ratings = ['r1', 'r2', 'r3'].map(k => { if (!v[k]) return null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
   n.id = v.id; n.name = v.name;
 }
@@ -221,6 +240,23 @@ function validateRating(rec, seen) {
   const r = parseInt(v.rating); if (!(r >= 1 && r <= 5)) E('Rating must be 1–5'); n.rating = r;
   const t = parseInt(v.target); n.target = t >= 1 && t <= 5 ? t : null; n.evidence = v.evidence;
   const key = [v.emp, per, c, n.by].join('|'); if (seen[key]) E('V1 Duplicate rating in file'); seen[key] = 1;
+}
+function validateScorecard(rec, seen) {
+  const v = rec.v, n = rec.norm, E = m => rec.msgs.push(['E', m]), W = m => rec.msgs.push(['W', m]);
+  const e = findEmp(v.emp); if (!e) E('Unknown employee "' + v.emp + '" (add them in Team Setup first)'); else n.emp = e.id;
+  if (seen[v.emp]) E('V1 Duplicate person in file'); seen[v.emp] = 1;
+  const d = normDate(v.asOf); if (!d || d.startsWith('INVALID')) E('As Of Date missing or unreadable'); else n.asOf = d;
+  const num = (k, req) => { const raw = String(v[k] ?? '').replace(/[%,\s]/g, ''); if (raw === '' || raw === '—' || raw === '-') { if (req) E(k + ' missing'); return null; } const x = parseFloat(raw); if (isNaN(x) || x < 0) { E('Not a number: ' + k + ' "' + v[k] + '"'); return null; } return x; };
+  for (const k of ['target', 'offers', 'joiners', 'offerDays', 'joinDays', 'declinedPct', 'diversityPct', 'vendorPct', 'referralPct']) n[k] = num(k, ['offers', 'joiners'].includes(k));
+  n.streams = { core: num('oCore'), nats: num('oNats'), excelher: num('oExcel'), other: num('oOther') };
+  n.joinStreams = { core: num('jCore'), nats: num('jNats'), excelher: num('jExcel'), other: num('jOther') };
+  const so = sum(Object.values(n.streams).filter(x => x != null)), sj = sum(Object.values(n.joinStreams).filter(x => x != null));
+  if (so && n.offers != null && so !== n.offers) W(`Offers by stream add up to ${so}, not ${n.offers}`);
+  if (sj && n.joiners != null && sj !== n.joiners) W(`Joiners by stream add up to ${sj}, not ${n.joiners}`);
+  if (n.target == null) W('No annual target — attainment cannot be shown');
+  if (n.offers != null && n.joiners != null && n.joiners > n.offers) W('More joiners than offers (joiners can include earlier offers) — joining ratio is approximate');
+  if (e && state.offers.some(o => o.emp === e.id)) W('Offer-level data already loaded for this person — the dashboard uses offer-level data and keeps this summary for reference');
+  n.source = v.source || 'Recruiter scorecard'; n.note = v.note || '';
 }
 function validateLearning(rec) {
   const v = rec.v, n = rec.norm, E = m => rec.msgs.push(['E', m]), W = m => rec.msgs.push(['W', m]);
@@ -303,7 +339,7 @@ function impPublish() {
     }
   } else if (im.dataset === 'profile') {
     for (const r of recs) { const n = r.norm, e = emp(n.id);
-      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || PERIOD.start, start: n.start || null, ratings: n.ratings };
+      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || PERIOD.start, start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings };
       if (e) { updated.push({ id: e.id, prev: JSON.parse(JSON.stringify(e)) }); Object.assign(e, data); } else { addEmployee(Object.assign({ id: n.id }, data)); added.push(n.id); } }
   } else if (im.dataset === 'ratings') {
     for (const r of recs) { const n = r.norm; const h = state.assessments[n.emp] = state.assessments[n.emp] || [];
@@ -314,6 +350,9 @@ function impPublish() {
       rec.mgrPending = COMPETENCIES.some(c => rec.mgr[c] == null); rec.selfPending = COMPETENCIES.some(c => rec.self[c] == null);
       if (!rec.mgrPending) delete rec.mgrPending; if (!rec.selfPending) delete rec.selfPending;
       added.push(n.emp + ':' + n.period + ':' + n.comp); }
+  } else if (im.dataset === 'scorecard') {
+    for (const r of recs) { const n = r.norm; if (state.scorecards[n.emp]) updated.push({ id: n.emp, prev: JSON.parse(JSON.stringify(state.scorecards[n.emp])) }); else added.push(n.emp);
+      const { emp: _e, ...rest } = n; state.scorecards[n.emp] = Object.assign(rest, { batch: b.id }); }
   } else if (im.dataset === 'learning') {
     for (const r of recs) { const n = r.norm; const l = { id: 'L-' + Date.now().toString(36) + added.length, emp: n.emp, programme: n.programme, provider: n.provider, type: n.type, skill: n.skill, start: n.start, completion: n.completion, cert: n.cert, status: n.status, application: n.application, validated: false, batch: b.id }; state.learning.push(l); added.push(l.id); }
   }
@@ -354,6 +393,7 @@ function doReverse(id, b, reason) {
   if (b.dsKey === 'offers' || b.dataset.startsWith('Offers')) { state.offers = state.offers.filter(o => !added.has(o.id)); for (const u of b.records.updated || []) { const o = state.offers.find(x => x.id === u.id); if (o) Object.assign(o, u.prev); } }
   else if (b.dsKey === 'profile') { state.employees = state.employees.filter(e => !added.has(e.id)); for (const u of b.records.updated || []) { const e = emp(u.id); if (e) Object.assign(e, u.prev); } }
   else if (b.dsKey === 'learning') state.learning = state.learning.filter(l => !added.has(l.id));
+  else if (b.dsKey === 'scorecard') { added.forEach(id => delete state.scorecards[id]); for (const u of b.records.updated || []) state.scorecards[u.id] = u.prev; }
   else { toast('Rating imports are reversed by re-importing corrected ratings (history is kept).'); return; }
   b.status = 'Reversed';
   state.batches.push({ id: newBatchId(), dataset: 'Reversal of ' + id, source: id, by: currentUserLabel(), approver: currentUserLabel(), at: nowStamp(), status: 'Published', added: 0, updated: (b.records.updated || []).length, excluded: 0, errors: 0, rule: state.rules.version, removed: added.size });
@@ -369,8 +409,8 @@ function batchHistory() {
 function rejectBatch(id) { askText('Reject ' + id, 'Reason for rejecting this batch:', r => { const b = state.batches.find(x => x.id === id); b.status = 'Rejected'; delete b.pending; audit('Import rejected', id, b.dataset, r); touch(); render(); }); }
 
 function sampleImportText() {
-  const e1 = state.employees.find(e => e.type === 'IC') || { id: 'E0000', area: 'DTO' };
-  const e2 = state.employees.filter(e => e.type === 'IC')[1] || e1;
+  const e1 = state.employees.find(isRecruiter) || { id: 'E0000', area: 'DTO' };
+  const e2 = state.employees.filter(isRecruiter)[1] || e1;
   return ['Recruiter Employee ID\tCandidate ID\tRequisition ID\tBusiness Area\tHiring Category\tSG Level\tGender\tRequisition Created Date\tOffer Release Date\tExpected Joining Date\tActual Joining Date\tJoining Status\tSource\tVendor Name\tTotal Points',
     `${e1.id}\tC-99001\tR-9901\t${e1.area}\tLateral SG5-SG8\tSG6\tF\t02/08/2026\t10/10/2026\t15/11/2026\t\tPending\tDirect\t\t2.5`,
     `${e1.id}\tC-99002\tR-9902\t${e1.area}\tSG9+\tSG10\tFemale\t2026-07-01\t2026-10-08\t2026-12-01\t\t\tAgency\t\t3.5`,

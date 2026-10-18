@@ -17,6 +17,16 @@ A working dashboard for the India Talent Acquisition team. It covers continuous 
 6. Rate competencies, score projects and competency development, and build next-year development plans in **Member View**. You can also paste self and TA Head ratings in Data Import → Competency ratings.
 7. Use **Reports** for annual reports (2–4 pages plus annexures), section reports, member comparisons, the calibration pack and the confidential talent report. PDF opens the print dialog (choose *Save as PDF*); Excel downloads a workbook.
 
+## Teams, roles and assignments
+
+Open **Team Setup** to:
+- change any person's **team, business area or role** directly in the table (a reason is required and logged);
+- **add or edit teams** and the business areas each one serves;
+- **add or edit roles**. Each role uses a scorecard template: Recruiter, Team Lead, or Support / Operations (no hiring targets);
+- mark people who **also support** other teams, record **former members** with a leaving date, and keep **notes to confirm**.
+
+If you only have YTD recruiter scorecards (target, offers, joiners, offer days, vendor %), import them in **Data Import → Recruiter scorecard**. The dashboard shows attainment and the joining, cycle-time and vendor scores from them. The 40-point offer score needs offer-level data, or a TA Head override with a reason.
+
 ## Teams and targets
 
 | TA team | Business areas | Target per 10 working days |
