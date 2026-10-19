@@ -25,6 +25,14 @@ The dashboard is seeded only with the reference data in the brief:
 
 Anything not supplied is shown as **Not provided**, including definitions, populations, targets, roles, financial inputs, projects, feedback and development records. The brief's open questions are pre-loaded under Data Quality & Evidence → Open questions.
 
+## Process-improvement projects (2026)
+
+The 12 initiatives from the *TA year plan India – Strategic Alignment 2026* deck are added once to each dashboard (after any account copy loads, so newer saved data is never overwritten). Each project has its India P&C priority, owner, what has been completed, what remains and the planned completion as written in the deck. Stage dates become milestones.
+
+- Change a project's status directly from the dropdown in the Projects table. The change is dated, and every change is kept in the project's status history.
+- Use **+ Add project**, **Edit** and **Delete** (deleted projects go to the recycle bin).
+- Slide conflicts and missing dates are listed as open questions. Decisions named in the deck are listed under Feedback & Actions → Decisions & support.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.

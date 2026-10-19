@@ -105,6 +105,16 @@
       '<li><div class="li-main"><div class="li-title">Succession</div><div class="li-sub">' + team.filter(t => t.successionReadiness && t.successionReadiness !== 'Not assessed').length + ' assessed · ' + team.filter(t => t.backupCoverage).length + ' with backup coverage recorded</div></div></li></ul>');
     h += '</div>';
 
+    // Process-improvement projects
+    const prj = S.list('projects');
+    if (prj.length) {
+      const order = TA.ENTITIES.projects.fields.find(f => f.k === 'status').o;
+      h += card('Process-improvement projects', prj.filter(x => x.agreement === 'Agreed commitment').length + ' of ' + prj.length + ' recorded as agreed commitments. Delivery status only; benefits are tracked separately.',
+        '<div class="btn-row" style="margin-bottom:8px">' + order.filter(s => prj.some(x => x.status === s)).map(s => badge(prj.filter(x => x.status === s).length + ' ' + s, TA.statusKind(s))).join(' ') + '</div>' +
+        '<ul class="list">' + prj.filter(x => ['At risk', 'Delayed', 'On hold'].indexOf(x.status) >= 0).map(x => '<li><div class="li-main"><button class="rowtitle" data-act="view" data-entity="projects" data-id="' + x.id + '">' + esc(x.name) + '</button><div class="li-sub">' + (x.statusComment ? esc(x.statusComment) : 'No status comment') + (x.statusAsOf ? ' · as of ' + TA.fmtDate(x.statusAsOf) : '') + '</div></div>' + badge(x.status) + '</li>').join('') + '</ul>' +
+        '<button class="linklike" data-act="nav" data-sec="projects">Open projects</button>');
+      h += '<div style="height:14px"></div>';
+    }
     // Contribution lens
     h += card('Contribution lens', 'Separates the TA Head\'s leadership contribution, team execution and shared business outcomes (as classified on each record).', contributionLens(p), { cls: '' });
 
@@ -320,7 +330,11 @@
       [c(p => p.revisedDeadline && p.originalDeadline && p.revisedDeadline > p.originalDeadline), 'Deadline revised']]);
     h += '<div style="height:12px"></div>' + tabs('projects', [['table', 'Table'], ['timeline', 'Timeline'], ['milestones', 'Milestones']], 'table');
     const t = tab('projects', 'table');
-    if (t === 'table') h += table('projects', 'projects', { filters: ['status', 'benefitStatus', 'attribution'], empty: 'No projects recorded yet. Add a project with its business problem, owner, baseline and deadlines.' });
+    if (t === 'table') {
+      h += '<p class="small muted">Change a project\'s delivery status directly in the table; it is dated today and kept in the project\'s status history. Use Edit to add a status comment, deadlines and evidence.</p>';
+      h += table('projects', 'projects', { filters: ['status', 'agreement', 'benefitStatus'], inline: ['status'], defaults: { agreement: 'Agreed commitment', status: 'Not started', statusAsOf: TA.todayIso(), benefitStatus: 'Not started' },
+        empty: 'No projects recorded yet. Use "+ Add project", or import a CSV of projects from Settings / Backup → Import records.' });
+    }
     else if (t === 'timeline') h += card('Project timeline', 'Planned span, original vs revised deadlines, completion and milestones.', TA.chartTimeline(projects, S.list('milestones')));
     else h += table('milestones', 'milestones', { filters: ['projectId', 'status'] });
     return h;
@@ -455,7 +469,7 @@
 
   /* ================= Reports ================= */
   const REPORT_SECTIONS = [['summary', 'Executive summary'], ['trends', 'Delivery trends'], ['value', 'Business contribution and financial value'], ['pipeline', 'Talent-pipeline outcomes'],
-    ['team', 'Team development'], ['process', 'Process-improvement benefits'], ['feedback', 'Leadership-feedback response'], ['priorities', 'Priorities and decisions required']];
+    ['team', 'Team development'], ['process', 'Process-improvement projects and benefits'], ['feedback', 'Leadership-feedback response'], ['priorities', 'Priorities and decisions required']];
   function reportPrefs() {
     const d = { periodId: curPeriod() ? curPeriod().id : null, sections: REPORT_SECTIONS.map(s => s[0]), includeConfidential: false, preparedBy: S.state.meta.owner };
     return Object.assign(d, S.state.meta.reportPrefs || {});
@@ -577,6 +591,7 @@
     body += calcPanel(entity, r);
     body += '<dl class="kv">' + def.fields.map(f => '<dt>' + esc(f.l) + '</dt><dd>' + TA.cell(entity, r, f.k).replace(/…$/, '') + (f.t === 'textarea' && r[f.k] && String(r[f.k]).length > 140 ? '<div>' + esc(r[f.k]) + '</div>' : '') + '</dd>').join('') +
       '<dt>Record origin</dt><dd>' + esc(r.origin || 'Not provided') + '</dd><dt>Created</dt><dd>' + TA.fmtDateTime(r.createdAt) + '</dd><dt>Last updated</dt><dd>' + TA.fmtDateTime(r.updatedAt) + '</dd></dl>';
+    if (entity === 'projects' && (r.statusHistory || []).length) body += '<h4 style="margin-top:14px">Status history</h4><ul class="list">' + r.statusHistory.slice().reverse().map(x => '<li><div class="li-main"><div class="li-title">' + (x.from ? esc(x.from) + ' → ' : '') + esc(x.to || 'Not provided') + '</div><div class="li-sub">Recorded ' + TA.fmtDateTime(x.ts) + (x.asOf ? ' · as of ' + TA.fmtDate(x.asOf) : '') + (x.comment ? ' · ' + esc(x.comment) : '') + '</div></div></li>').join('') + '</ul>';
     if (entity === 'projects' && (r.deadlineRevisions || []).length) body += '<h4 style="margin-top:14px">Deadline revisions</h4><ul class="list">' + r.deadlineRevisions.map(x => '<li><span>' + TA.fmtDateTime(x.ts) + ': ' + esc(TA.fmtDate(x.from)) + ' → ' + esc(TA.fmtDate(x.to)) + (x.reason ? ' – ' + esc(x.reason) : '') + '</span></li>').join('') + '</ul>';
     body += linked(entity, r);
     body += '<h4 style="margin-top:14px">Evidence</h4><ul class="list">' + ((r.evidence || []).length ? r.evidence.map(x => '<li><div class="li-main">' + evidenceLink(x) + '<div class="li-sub">' + esc(x.kind || 'Link') + ' · added ' + TA.fmtDateTime(x.addedAt) + (x.note ? ' · ' + esc(x.note) : '') + '</div></div><button class="btn sm danger" data-act="ev-remove" data-entity="' + entity + '" data-id="' + id + '" data-ev="' + x.id + '">Remove</button></li>').join('') : '<li class="small muted">No evidence attached.</li>') + '</ul>' +
@@ -636,8 +651,9 @@
   }
 
   /* ================= Form dialog ================= */
-  function openForm(entity, id, defaults) {
-    const rec = id ? S.get(entity, id) : null;
+  function openForm(entity, id, defaults, overrides) {
+    const stored = id ? S.get(entity, id) : null;
+    const rec = stored && overrides ? Object.assign({}, stored, overrides) : stored;
     const def = TA.ENTITIES[entity];
     TA.openDialog('dlg-form', '<form id="rec-form" novalidate><div class="dlg-head"><h3>' + (rec ? 'Edit ' : 'Add ') + esc(def.singular.toLowerCase()) + '</h3><button type="button" class="btn sm" data-act="close" data-dlg="dlg-form">Cancel</button></div>' +
       '<div class="dlg-body"><div id="form-msgs"></div>' + (def.confidential ? '<div class="notice warn" style="margin-bottom:10px">Confidential individual record – excluded from leadership outputs unless selected.</div>' : '') + TA.formHTML(entity, rec, defaults) + '</div>' +
@@ -787,6 +803,14 @@
     if (t.id === 'period') { S.setMeta({ selectedPeriodId: t.value }); ui.cmpPeriod = ''; return; }
     if (t.dataset.tblF) { TA.tstate(t.dataset.tblF).filters[t.dataset.field] = t.value; render(); return; }
     if (t.dataset.tblA) { TA.tstate(t.dataset.tblA).archived = t.checked; render(); return; }
+    if (t.dataset.act === 'inline-set') {
+      const en = t.dataset.entity, id = t.dataset.id, f = t.dataset.field, rec = S.get(en, id);
+      const patch = { [f]: t.value };
+      if (en === 'projects' && f === 'status') patch.statusAsOf = TA.todayIso();
+      const v = TA.validate(en, Object.assign({}, rec, patch), rec);
+      if (v.errors.length) { openForm(en, id, null, patch); TA.toast('Complete the required details to save this status'); render(); return; }
+      S.update(en, id, patch); TA.toast(TA.recordTitle(en, rec) + ': status set to ' + t.value); return;
+    }
     if (t.dataset.act === 'toggle-allper') { ui.showAllPeriods = t.checked; render(); return; }
     if (t.dataset.act === 'toggle-scenario') { ui.showScenario = t.checked; render(); return; }
     if (t.dataset.act === 'toggle-dismissed') { ui.showDismissed = t.checked; render(); return; }
@@ -904,7 +928,8 @@
     window.addEventListener('beforeunload', () => S.flush());
     render();
     if (info.seeded) TA.toast('Loaded initial reference data. Download backups regularly from Settings / Backup.');
-    TA.Sync.init(info.seeded).then(() => render());
+    // Data packs are applied after the account copy has loaded, so they never overwrite newer saved data.
+    TA.Sync.init(info.seeded).then(() => { if (TA.applyDataPacks) TA.applyDataPacks(); render(); });
     S.scheduleSave();
     window.TA_READY = true;
   }

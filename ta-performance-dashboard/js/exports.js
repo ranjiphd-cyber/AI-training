@@ -133,10 +133,11 @@
     }
     if (want('process')) {
       const prj = st.list('projects');
-      const blocks = prj.length ? [{ type: 'table', head: ['Project', 'Owner', 'Delivery status', 'Benefit status', 'Original deadline', 'Revised deadline'], rows: prj.map(x => [x.name, x.owner || 'Not provided', x.status, x.benefitStatus || 'Not provided', TA.fmtDate(x.originalDeadline), x.revisedDeadline ? TA.fmtDate(x.revisedDeadline) : '–']) },
+      prj.forEach(x => { if (x.origin && x.origin.indexOf('Import: ') === 0) m.sources.add(x.origin.slice(8)); });
+      const blocks = prj.length ? [{ type: 'table', head: ['Project', 'P&C priority', 'Owner', 'Status', 'Completed to date', 'What remains', 'Planned completion'], rows: prj.map(x => [x.name, x.pillar || 'Not provided', x.owner || 'Not provided', x.status, x.completedToDate || 'Not provided', x.remainingWork || 'Not provided', x.plannedCompletionText || (x.revisedDeadline || x.originalDeadline ? TA.fmtDate(x.revisedDeadline || x.originalDeadline) : 'Not provided')]) },
         { type: 'text', text: 'Project completion is reported separately from benefit realisation. Completed: ' + prj.filter(x => x.status === 'Completed').length + '; benefits validated (full or partial): ' + prj.filter(x => /validated$/.test(x.benefitStatus || '')).length + '.' }]
         : [{ type: 'text', text: 'No process-improvement or strategic projects have been recorded. No project benefits are reported.' }];
-      m.sections.push({ key: 'process', title: 'Process-improvement benefits', blocks });
+      m.sections.push({ key: 'process', title: 'Process-improvement projects and benefits', blocks });
     }
     if (want('feedback')) {
       const fb = st.list('feedback');
@@ -246,15 +247,21 @@
           if (b.note) { s.addText(b.note, { x: X0, y, w: CW, h: 0.3, fontFace: FONT, fontSize: 9, color: SLATE, italic: true }); y += 0.3; }
         } else if (b.type === 'table') {
           const rows = b.rows.length ? b.rows : [b.head.map((_, i) => i ? '' : 'None recorded')];
-          const chunk = Math.max(1, Math.floor((YMAX - 1.25 - (b.label ? 0.35 : 0)) / 0.42) - 1);
-          for (let i = 0; i < rows.length; i += chunk) {
-            const part = rows.slice(i, i + chunk);
-            const h = (part.length + 1) * 0.42 + (b.label ? 0.35 : 0);
+          // Estimate each row's wrapped height so long text rows split across slides instead of overflowing.
+          const perCell = Math.max(8, Math.floor(CW / b.head.length * 13));
+          const rowH = (r) => 0.14 + 0.17 * Math.max(1, ...r.map(v => Math.ceil(String(v).length / perCell)));
+          const room = YMAX - 1.25 - (b.label ? 0.35 : 0) - 0.4;
+          const chunks = []; let cur = [], used = 0;
+          rows.forEach(r => { const h = rowH(r); if (cur.length && used + h > room) { chunks.push(cur); cur = []; used = 0; } cur.push(r); used += h; });
+          if (cur.length) chunks.push(cur);
+          for (let ci = 0, i = 0; ci < chunks.length; ci++, i += chunks[ci - 1].length) {
+            const part = chunks[ci];
+            const h = 0.4 + part.reduce((t, r) => t + rowH(r), 0) + (b.label ? 0.35 : 0);
             ensure(Math.min(h, YMAX - 1.25));
             if (b.label) { s.addText(b.label + (i ? ' (continued)' : ''), { x: X0, y, w: CW, h: 0.3, fontFace: FONT, fontSize: 12, bold: true, color: NAVY }); y += 0.35; }
             const head = b.head.map(t => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: NAVY } } }));
             s.addTable([head].concat(part.map(r => r.map(v => ({ text: String(v) })))), { x: X0, y, w: CW, fontFace: FONT, fontSize: 9.5, color: '0F1B2D', border: { type: 'solid', color: LINE, pt: 0.75 }, valign: 'middle', autoPage: false, rowH: 0.3 });
-            y += (part.length + 1) * 0.42 + 0.15;
+            y += h - (b.label ? 0.35 : 0) + 0.15;
           }
         } else if (b.type === 'commentary') {
           ensure(1.1);

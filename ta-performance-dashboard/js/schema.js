@@ -163,8 +163,12 @@
       label: 'Projects & process improvement', singular: 'Project', title: 'name', dupKeys: ['name'],
       fields: [
         { k: 'name', l: 'Project', t: 'text', req: true, full: true },
+        { k: 'pillar', l: 'India P&C priority', t: 'select', o: ['Unleash Human Potential', 'People Experience', 'Data-Driven Insights', 'Sustainable Operational Excellence', 'Other'] },
         { k: 'businessProblem', l: 'Business problem', t: 'textarea', full: true },
         { k: 'intendedOutcome', l: 'Intended outcome', t: 'textarea', full: true },
+        { k: 'agreement', l: 'Agreement', t: 'select', o: ['Agreed commitment', 'Proposal', 'Not recorded'], help: 'Record who agreed it and when for an agreed commitment.' },
+        { k: 'agreedWith', l: 'Agreed with', t: 'text' },
+        { k: 'agreedDate', l: 'Agreed date', t: 'date' },
         { k: 'commitmentId', l: 'Linked commitment', t: 'ref', ref: 'commitments' },
         { k: 'attribution', l: 'Contribution type', t: 'select', o: ATTRIBUTION },
         { k: 'sponsor', l: 'Sponsor', t: 'text' },
@@ -177,7 +181,12 @@
         { k: 'originalDeadline', l: 'Original deadline', t: 'date', help: 'Preserved; later changes are recorded as revisions.' },
         { k: 'revisedDeadline', l: 'Current revised deadline', t: 'date' },
         { k: 'revisionReason', l: 'Reason for latest revision', t: 'text' },
-        { k: 'status', l: 'Delivery status', t: 'select', req: true, o: ['Proposed', 'Not started', 'On track', 'At risk', 'Delayed', 'On hold', 'Completed', 'Cancelled'] },
+        { k: 'status', l: 'Delivery status', t: 'select', req: true, o: ['Proposed', 'Not started', 'In progress (RAG not assessed)', 'On track', 'At risk', 'Delayed', 'On hold', 'Completed', 'Cancelled'] },
+        { k: 'completedToDate', l: 'What has been completed', t: 'textarea', full: true },
+        { k: 'remainingWork', l: 'What remains', t: 'textarea', full: true },
+        { k: 'plannedCompletionText', l: 'Planned completion (as stated)', t: 'text', full: true, help: 'The completion date as written in the source; dated deadlines go in the deadline fields.' },
+        { k: 'statusAsOf', l: 'Status as of', t: 'date' },
+        { k: 'statusComment', l: 'Status update / comment', t: 'textarea', full: true, help: 'Latest progress note. Every status change is kept in the project\'s status history.' },
         { k: 'completionDate', l: 'Completion date', t: 'date' },
         { k: 'completionEvidence', l: 'Completion evidence', t: 'textarea', full: true },
         { k: 'benefitStatus', l: 'Benefit realisation status', t: 'select', o: ['Not started', 'Expected – not yet measurable', 'Measuring', 'Partially realised – validated', 'Realised – validated', 'Not realised'],
@@ -190,7 +199,7 @@
         { k: 'decisions', l: 'Decisions', t: 'textarea' },
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
       ],
-      cols: ['name', 'owner', 'sponsor', 'status', 'benefitStatus', 'originalDeadline', 'revisedDeadline', 'attribution']
+      cols: ['name', 'pillar', 'owner', 'status', 'remainingWork', 'plannedCompletionText', 'originalDeadline', 'benefitStatus']
     },
     milestones: {
       label: 'Project milestones', singular: 'Milestone', title: 'name',
@@ -200,7 +209,7 @@
         { k: 'plannedDate', l: 'Planned date', t: 'date' },
         { k: 'revisedDate', l: 'Revised date', t: 'date' },
         { k: 'actualDate', l: 'Actual date', t: 'date' },
-        { k: 'status', l: 'Status', t: 'select', o: ['Planned', 'In progress', 'Done', 'Missed', 'Cancelled'] },
+        { k: 'status', l: 'Status', t: 'select', o: ['Planned', 'In progress', 'Done', 'Status not reported', 'Missed', 'Cancelled'] },
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
       ],
       cols: ['projectId', 'name', 'plannedDate', 'revisedDate', 'actualDate', 'status']

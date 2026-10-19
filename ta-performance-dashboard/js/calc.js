@@ -340,6 +340,10 @@
     st.list('projects').forEach(p => {
       if (p.status === 'Completed' && ['Realised – validated', 'Partially realised – validated'].indexOf(p.benefitStatus) < 0) add('R15 Completion ≠ benefit', 'Info', p.name + ': completed; benefits ' + (p.benefitStatus || 'not assessed'), 'Project completion is tracked separately from benefit realisation.', { entity: 'projects', id: p.id });
       if (p.status === 'Completed' && !p.completionEvidence && !(p.evidence || []).length) add('R16 Missing evidence', 'Missing', p.name + ': completed without completion evidence', 'Attach or describe completion evidence.', { entity: 'projects', id: p.id });
+      st.list('milestones').filter(m => m.projectId === p.id).forEach(m => {
+        const due = m.revisedDate || m.plannedDate;
+        if (due && due < todayIso() && ['Done', 'Cancelled', 'Missed'].indexOf(m.status) < 0) add('R22 Milestone status missing', 'Missing', p.name + ': "' + m.name + '" was due ' + fmtDate(due) + '; status ' + (m.status || 'not recorded'), 'Record whether it was achieved, revised or missed.', { entity: 'milestones', id: m.id });
+      });
       if (p.originalDeadline && p.revisedDeadline && p.revisedDeadline > p.originalDeadline) add('R17 Deadline revised', 'Info', p.name + ': deadline moved from ' + fmtDate(p.originalDeadline) + ' to ' + fmtDate(p.revisedDeadline), p.revisionReason ? 'Reason: ' + p.revisionReason : 'Reason not recorded.', { entity: 'projects', id: p.id });
       if (['Completed', 'Cancelled'].indexOf(p.status) < 0 && (p.revisedDeadline || p.originalDeadline) && (p.revisedDeadline || p.originalDeadline) < todayIso()) add('R12 Overdue action', 'Warning', 'Project past deadline: ' + p.name, 'Current deadline ' + fmtDate(p.revisedDeadline || p.originalDeadline) + '.', { entity: 'projects', id: p.id });
     });

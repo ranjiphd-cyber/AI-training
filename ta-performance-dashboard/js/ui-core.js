@@ -15,7 +15,7 @@
     'In progress', 'Awaiting data owner', 'Mitigating', 'Applied at work – evidence recorded', 'Application in progress', 'Ongoing', 'Edited', 'On hold', 'Warning',
     'Estimated – assumptions stated', 'Measuring', 'Vacancy – replacement hiring underway', 'Converted to action', 'Decision required', 'Support required', 'Essential'];
   const BAD = ['Below target', 'Off track', 'Not achieved', 'Rejected', 'Missed', 'Above target (adverse)', 'Not realised', 'Conflict', 'Overdue', 'Left'];
-  const INFO = ['Open', 'Planned', 'Not started', 'Proposed', 'New', 'Proposed – not validated', 'Expected – not yet measurable', 'Info', 'Missing', 'On track'];
+  const INFO = ['Open', 'Planned', 'In progress (RAG not assessed)', 'Not started', 'Proposed', 'New', 'Proposed – not validated', 'Expected – not yet measurable', 'Info', 'Missing', 'On track'];
   function statusKind(t) {
     if (GOOD.indexOf(t) >= 0) return 'good';
     if (WARN.indexOf(t) >= 0) return 'warn';
@@ -145,6 +145,12 @@
       html += '<tr class="' + (r.archived ? 'archived' : '') + '">';
       cols.forEach((c, i) => {
         const content = cell(entity, r, c);
+        if (o.inline && o.inline.indexOf(c) >= 0 && !r.archived) {
+          const f = fieldDef(entity, c);
+          html += '<td><label style="position:absolute;left:-9999px" for="inl-' + r.id + '-' + c + '">' + esc(f.l) + ' for ' + esc(TA.recordTitle(entity, r)) + '</label><select id="inl-' + r.id + '-' + c + '" data-act="inline-set" data-entity="' + entity + '" data-id="' + r.id + '" data-field="' + c + '" style="width:auto;min-width:120px">' +
+            f.o.map(x => '<option' + (x === r[c] ? ' selected' : '') + '>' + esc(x) + '</option>').join('') + '</select></td>';
+          return;
+        }
         html += '<td class="' + (TA.isNum(rawValue(entity, r, c)) ? 'num' : '') + '">' + (i === 0 ? '<button class="rowtitle" data-act="view" data-entity="' + entity + '" data-id="' + r.id + '">' + content.replace(/<span class="np">Not provided<\/span>/, 'Not provided') + '</button>' + (r.archived ? ' <span class="badge b-neutral">Archived</span>' : '') : content) + '</td>';
       });
       html += '<td class="actions">' + (o.rowActions ? o.rowActions(r) : '') +

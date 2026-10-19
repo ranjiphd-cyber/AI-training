@@ -128,7 +128,7 @@
     add(entity, data, origin) {
       const ts = nowIso();
       const rec = Object.assign({ id: uid(entity.slice(0, 3)), createdAt: ts, updatedAt: ts, archived: false, deletedAt: null, evidence: [], origin: origin || 'User entry' }, data);
-      if (entity === 'projects') rec.deadlineRevisions = [];
+      if (entity === 'projects') { rec.deadlineRevisions = []; rec.statusHistory = rec.status ? [{ ts, from: null, to: rec.status, asOf: rec.statusAsOf || null, comment: rec.statusComment || null }] : []; }
       this.state.data[entity].push(rec);
       this.log(entity, rec, 'create', Object.keys(data).filter(k => data[k] !== null && data[k] !== '').map(k => ({ field: k, from: null, to: data[k] })));
       this.touch(); this.emit({ entity, id: rec.id });
@@ -150,6 +150,12 @@
         rec.deadlineRevisions = rec.deadlineRevisions || [];
         const ch = changes.find(c => c.field === 'revisedDeadline');
         if (ch) rec.deadlineRevisions.push({ ts: nowIso(), from: ch.from, to: ch.to, reason: patch.revisionReason || rec.revisionReason || null });
+        // Status changes (and new status comments) are kept as a dated status history.
+        const sc = changes.find(c => c.field === 'status'), cc = changes.find(c => c.field === 'statusComment');
+        if (sc || cc) {
+          rec.statusHistory = rec.statusHistory || [];
+          rec.statusHistory.push({ ts: nowIso(), from: sc ? sc.from : null, to: sc ? sc.to : (patch.status || rec.status), asOf: patch.statusAsOf !== undefined ? patch.statusAsOf : rec.statusAsOf || null, comment: cc ? cc.to : null });
+        }
       }
       Object.assign(rec, patch, { updatedAt: nowIso() });
       if (!(opts && opts.silent)) this.log(entity, rec, (opts && opts.action) || 'update', changes);
