@@ -125,7 +125,10 @@ function summaryDeliverables(m, head) {
   if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Lateral and fresher hiring (hiring tracker)</h3><div class="grid g4">
     <div class="kpi"><div class="lab">Offers released</div><div class="val">${t.offers ?? '—'}</div><div class="sub">${esc(t.period || '')}</div></div><div class="kpi"><div class="lab">Joined</div><div class="val">${t.joined ?? '—'}</div></div>
     <div class="kpi"><div class="lab">Declined</div><div class="val">${t.declined ?? '—'}</div></div><div class="kpi"><div class="lab">Pending joining</div><div class="val">${t.pending ?? '—'}</div></div></div>
-    <p class="small muted">${esc(t.note || '')}</p>`; }
+    <p class="small muted">${esc(t.note || '')}</p>`;
+    if (t.mix && t.mix.length) h += `<h4>Weighted points by offer category</h4><div class="tbl-wrap"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points each</th><th class="n">Women +0.5</th><th class="n">Points</th></tr></thead><tbody>${t.mix.map(([c, n, base, bonus]) => `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(base / n, 1)}</td><td class="n">${fmt(bonus, 1)}</td><td class="n">${fmt(base + bonus, 1)}</td></tr>`).join('')}
+      <tr><td><b>Total</b></td><td class="n"><b>${t.offers}</b></td><td></td><td class="n">${fmt(t.pointsBonus, 1)}</td><td class="n"><b>${fmt(t.points, 1)}</b></td></tr></tbody></table></div>
+      <p class="small muted">${t.pointsExclDeclined != null ? 'Excluding declined offers: ' + fmt(t.pointsExclDeclined, 1) + ' points. ' : ''}${esc(sc.pointsSource || '')}</p>`; }
   h += `<div class="grid g4" style="margin-top:10px"><div class="kpi"><div class="lab">Days to join</div><div class="val">${sc.joinDays ?? '—'}</div></div><div class="kpi"><div class="lab">Offers declined</div><div class="val">${pct(sc.declinedPct)}</div></div><div class="kpi"><div class="lab">Gender diversity</div><div class="val">${pct(sc.diversityPct)}</div><div class="sub">denominator not stated in source</div></div><div class="kpi"><div class="lab">Referral share</div><div class="val">${pct(sc.referralPct)}</div></div></div></section>`;
   return h;
 }

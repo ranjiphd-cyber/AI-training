@@ -61,14 +61,15 @@ const OLD_RATING_LABELS = { 'Outstanding': 'Exceptional', 'Exceeds': 'High', 'Me
 const JOB_LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
 
 /* Hiring point rules. The BRD has two conflicting tables (D-01). */
+// FTC = 2 points in both tables: TA Head decision, 19 Oct 2026 (D-53).
 const POINT_TABLES = {
   S53: { label: 'BRD §5.3 (detailed rules)', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, false], 'Contract Conversion': [1, false],
-    'FTC': [1, true], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
+    'FTC': [2, true], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, false], 'AICTE Professor': [2, false] } },
   A3: { label: 'BRD Appendix A3', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, true], 'Contract Conversion': [1, true],
-    'FTC': [1, true], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
+    'FTC': [2, true], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, true], 'AICTE Professor': [2, false] } },
 };
 const CATEGORIES = Object.keys(POINT_TABLES.S53.rows);
