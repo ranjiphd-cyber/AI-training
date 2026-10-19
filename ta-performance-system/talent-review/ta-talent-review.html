@@ -302,7 +302,11 @@ const chip = (s, text) => `<span class="chip ${s}">${ICON[s]}${esc(text || ST[s]
 const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below';
 
 /* ===================== store ===================== */
-const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings'];
+const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes'];
+const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
+const PILLARS = ['Unleash Human Potential', 'People Experience', 'Data-Driven Insights', 'Sustainable Operational Excellence'];
+const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PGET', 'Campus GET / PGET'], ['Internship (no points rule)', 'Interns'], ['AICTE Professor', 'AICTE professors'], ['PhD Internship', 'PhD'], ['NATS Conversion', 'NATS conversions'], ['ExcelHER Conversion', 'ExcelHER conversions']];
+const projStatusClass = st => ({ 'Completed': 'good', 'On track': 'good', 'On hold': 'watch', 'To confirm': 'watch' }[st] || 'none');
 const isIntern = c => /^Internship/.test(c);
 const internPts = () => num((S.settings.scoring || {}).internPts) ?? 0;
 const scaleText = (comp, n) => { const sc = S.settings.behaviourScale || {}; return ((sc.byComp || {})[comp] || {})[n] || (sc.general || {})[n] || ''; };
@@ -419,7 +423,7 @@ function ringSvg(a, stat) {
   const col = { good: 'var(--good)', watch: 'var(--watch)', below: 'var(--bad)', none: 'var(--rail-muted)' }[stat];
   return `<svg class="ring" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="${r}" fill="none" stroke="var(--rail-line)" stroke-width="3"/><circle cx="14" cy="14" r="${r}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 14 14)"/></svg>`;
 }
-const NAV = [['team', 'Team overview', '<path d="M3 13h4v5H3zM8 8h4v10H8zM13 3h4v15h-4z" fill="currentColor"/>'], ['promotion', 'Promotion board', '<path d="M10 2l3 6 6 .9-4.5 4.3 1 6.3L10 16.5 4.5 19.5l1-6.3L1 8.9 7 8z" fill="currentColor"/>'], ['manage', 'People & teams', '<circle cx="7" cy="7" r="3.2" fill="currentColor"/><circle cx="14.5" cy="8" r="2.6" fill="currentColor"/><path d="M1.5 17c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5zM12.5 17c.3-1.9.1-3.4-.8-4.6 2.5-.5 5.2.8 6.3 4.6z" fill="currentColor"/>'], ['log', 'Change log', '<path d="M4 3h12v14H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.6"/>']];
+const NAV = [['team', 'Team overview', '<path d="M3 13h4v5H3zM8 8h4v10H8zM13 3h4v15h-4z" fill="currentColor"/>'], ['programmes', 'Programmes & projects', '<path d="M10 2l8 4-8 4-8-4z" fill="currentColor"/><path d="M2 10l8 4 8-4M2 14l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['promotion', 'Promotion board', '<path d="M10 2l3 6 6 .9-4.5 4.3 1 6.3L10 16.5 4.5 19.5l1-6.3L1 8.9 7 8z" fill="currentColor"/>'], ['manage', 'People & teams', '<circle cx="7" cy="7" r="3.2" fill="currentColor"/><circle cx="14.5" cy="8" r="2.6" fill="currentColor"/><path d="M1.5 17c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5zM12.5 17c.3-1.9.1-3.4-.8-4.6 2.5-.5 5.2.8 6.3 4.6z" fill="currentColor"/>'], ['log', 'Change log', '<path d="M4 3h12v14H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.6"/>']];
 function renderRail() {
   $('#rnav').innerHTML = NAV.filter(([k]) => canWrite || k !== 'log').map(([k, t, ic]) => `<button class="rbtn ${route.view === k ? 'on' : ''}" data-nav="${k}" type="button"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true">${ic}</svg>${t}</button>`).join('');
   const ppl = peopleList(), groups = [];
@@ -507,7 +511,7 @@ function viewTeam() {
   const sorted = [...dl].sort((x, y) => (y.own.att ?? 0) - (x.own.att ?? 0));
   const att = attention(ev);
   let h = `<div class="phead"><div><h2>Team overview</h2><div class="meta"><span>Performance year ${YEAR}</span><span>Hiring data to ${nice(CUTOFF)}</span><span>${ev.length} people in review</span></div></div><div class="sp"></div>
-    <div class="btns">${canWrite ? '<button class="btn" data-act="export" type="button">Export review sheet</button><button class="btn pri" data-act="addPerson" type="button">Add person</button>' : ''}</div></div>`;
+    <div class="btns"><button class="btn pri" data-act="ppt" type="button">Download PowerPoint</button>${canWrite ? '<button class="btn" data-act="export" type="button">Export review sheet (CSV)</button><button class="btn" data-act="addPerson" type="button">Add person</button>' : ''}</div></div>`;
   h += `<div class="grid c5">
     <div class="card fig"><div class="l">Weighted points</div><div class="v">${fmt(pts, 0)}<small>of ${fmt(tgt, 0)}</small></div><div class="f">${pct(a * 100)} of the target to date ${chip(statusOf(a), ' ')}</div></div>
     <div class="card fig"><div class="l">Offers released</div><div class="v">${fmt(offers, 0)}</div><div class="f">${fmt(joined, 0)} joined so far</div></div>
@@ -528,7 +532,7 @@ function viewTeam() {
 }
 
 /* ===================== PERSON ===================== */
-const TABS = [['overview', 'Overview'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
+const TABS = [['overview', 'Overview'], ['comments', 'Comments & contribution'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
 function viewPerson(id) {
   const p0 = S.people[id]; if (!p0) return `<div class="state"><h2>Person not found</h2><p>They may have been deleted. <button class="btn link" data-nav="team" type="button">Back to the team</button></p></div>`;
   const E = evalPerson({ id, ...p0 }), p = E.p;
@@ -537,7 +541,7 @@ function viewPerson(id) {
   let h = `<div class="phead"><div><h2>${esc(p.name)}</h2><div class="meta"><span>${esc(p.jobTitle || p.role || '')}</span><span>${esc(p.role || '')} · ${esc(p.team || 'no team')}${p.area && p.area !== p.team ? ' (' + esc(p.area) + ')' : ''}</span><span class="mono">${esc(p.level || 'level —')}</span>${p.vcnid ? `<span class="mono">${esc(p.vcnid)}</span>` : ''}${p.end ? `<span>Leaving ${nice(p.end)}</span>` : ''}${!inReview(p) ? '<span class="tag">Not in this year\'s review</span>' : ''}</div></div><div class="sp"></div>
     <div class="btns">${!E.sup && E.own ? chip(E.stat, E.att != null ? `${ST[E.stat]} · ${pct(E.att * 100)}` : null) : ''}${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(id)}" type="button">Edit details</button>` : ''}</div></div>`;
   h += `<div class="tabs" role="tablist">${tabs.map(([k, t]) => `<button class="tab ${tab === k ? 'on' : ''}" role="tab" aria-selected="${tab === k}" data-tab="${k}" data-person-tab="${esc(id)}" type="button">${t}</button>`).join('')}</div>`;
-  h += ({ overview: pOverview, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
+  h += ({ overview: pOverview, comments: pComments, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
   return h;
 }
 function scoreLine(label, v, max, why) {
@@ -560,6 +564,8 @@ function pOverview(E) {
   h += `<div class="grid c3 sec"><div class="card pad"><div class="sec-h"><h3>Development plan</h3><span class="hint">${E.plans.length} items</span></div>${openPlans.length ? `<div class="items">${openPlans.slice(0, 3).map(x => `<div class="item"><div class="t">${esc(x.action)}</div><div class="d">${esc(x.type || '')}${x.competency ? ' · ' + esc(x.competency) : ''}${x.due ? ' · due ' + nice(x.due) : ''}</div></div>`).join('')}</div>` : '<div class="empty-note">No open development actions yet.</div>'}</div>
     <div class="card pad"><div class="sec-h"><h3>Training</h3><span class="hint">${E.learn.length} records</span></div>${E.learn.length ? `<div class="items">${E.learn.slice(0, 4).map(x => `<div class="item"><div class="t">${esc(x.programme)} <span class="tag">${esc(x.status || '')}</span></div></div>`).join('')}</div>` : '<div class="empty-note">No training recorded.</div>'}</div>
     <div class="card pad"><div class="sec-h"><h3>Projects</h3><span class="hint">${E.projs.length}</span></div>${E.projs.length ? `<div class="items">${E.projs.slice(0, 3).map(x => `<div class="item"><div class="t">${esc(x.title)} <span class="tag">${esc(x.status || 'In progress')}</span></div></div>`).join('')}</div>` : '<div class="empty-note">No projects recorded.</div>'}</div></div>`;
+  const cm = commentsOf(p.id);
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Contribution highlights</h3><span class="hint">${cm.length} comments</span><span class="sp"></span><button class="btn link" data-tab="comments" data-person-tab="${esc(p.id)}" type="button">All comments</button></div>${cm.length ? `<div class="items">${cm.filter(c => c.theme !== 'Role').slice(0, 4).map(c => `<div class="item"><div class="t"><span class="tag acc">${esc(c.theme)}</span></div><div class="d" style="color:var(--ink)">${esc(c.text)}</div></div>`).join('')}</div>` : '<div class="empty-note">No comments yet.</div>'}</div>`;
   h += `<div class="card pad sec"><div class="sec-h"><h3>Promotion readiness</h3><span class="hint">advisory</span><span class="sp"></span><button class="btn link" data-tab="promotion" data-person-tab="${esc(p.id)}" type="button">Details</button></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>${esc(pr.level)}</b><span class="sub" style="color:var(--muted)">${pr.met} of 5 criteria met</span>${E.rv.promoDecision ? `<span class="tag acc">Your decision: ${esc(E.rv.promoDecision)}</span>` : ''}</div></div>`;
   if ((p.notes || []).length) h += `<div class="note warn sec"><b>Data notes.</b> ${p.notes.map(esc).join(' · ')}</div>`;
   return h;
@@ -691,6 +697,234 @@ function pProfile(E) {
     ${canWrite ? `<div style="margin-top:16px"><button class="btn danger sm" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete ${esc(p.name)}</button></div>` : ''}</div></div>`;
 }
 
+/* ===================== COMMENTS ===================== */
+function commentsOf(id) { return ((S.comments[id] || {}).items || []).map((c, i) => ({ ...c, idx: i })); }
+function pipelineOf(E) {
+  const mix = (E.own && E.own.d.mix) || [];
+  return PIPE_CATS.map(([c, l]) => { const m = mix.find(x => x[0] === c); return m ? { label: l, n: m[1], pts: isIntern(c) ? m[1] * internPts() : m[2] } : null; }).filter(Boolean);
+}
+function programmesFor(p) {
+  const names = [p.name, ...(p.aliases || '').split(',').map(x => x.trim()).filter(Boolean)].map(x => x.toLowerCase());
+  const hit = s => s && names.some(n => n.length > 2 && String(s).toLowerCase().split(/,\s*/).some(t => t.replace(' (left)', '') === n));
+  return Object.entries(S.programmes).map(([k, v]) => ({ id: k, ...v })).filter(x => hit(x.owner) || hit(x.responsible)).map(x => ({ ...x, as: hit(x.owner) && hit(x.responsible) ? 'Owner and responsible' : hit(x.owner) ? 'Owner' : 'Responsible' }));
+}
+function pComments(E) {
+  const p = E.p, cm = commentsOf(p.id), pipe = pipelineOf(E), progs = programmesFor(p);
+  let h = `<div class="grid c2"><div class="card pad"><div class="sec-h"><h3>University relations and talent pipeline</h3><span class="hint">offers in the 2026 trackers</span></div>
+    ${pipe.length ? `<div class="tw"><table><thead><tr><th>Programme</th><th class="n">Offers</th><th class="n">Points</th></tr></thead><tbody>${pipe.map(x => `<tr><td>${esc(x.label)}</td><td class="n">${x.n}</td><td class="n">${fmt(x.pts)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">No programme offers in the trackers.</div>'}
+    <h4 style="font-size:13px;margin:16px 0 6px">Programmes in the 2026 calendar</h4>${progs.length ? `<div class="tw"><table><thead><tr><th>Programme</th><th>Role</th><th class="n">Planned</th><th>Status</th></tr></thead><tbody>${progs.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.as)}</td><td class="n">${x.expected ?? '—'}</td><td><span class="tag">${esc(x.status || '')}</span></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">Not named as owner or responsible for a calendar programme.</div>'}</div>
+    <div class="card pad"><div class="sec-h"><h3>Qualitative comments</h3><span class="hint">from your decks, year plan and trackers</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-comment" data-id="${esc(p.id)}" type="button">Add comment</button>` : ''}</div>
+    ${cm.length ? `<div class="items">${cm.map(c => `<div class="item"><div class="t"><span class="tag acc">${esc(c.theme || 'Other')}</span>${canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Edit</button><button class="btn sm danger" data-act="del-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Delete</button></span>` : ''}</div><div style="font-size:13.5px">${esc(c.text)}</div>${c.source ? `<div class="d">Source: ${esc(c.source)}</div>` : ''}</div>`).join('')}</div>` : '<div class="empty-note">No comments yet.</div>'}</div></div>`;
+  if (E.rv.strengths || E.rv.focus || E.rv.comments) h += `<div class="card pad sec"><div class="sec-h"><h3>Your review notes</h3></div><dl class="kv"><dt>Strengths</dt><dd>${esc(E.rv.strengths || '—')}</dd><dt>Development focus</dt><dd>${esc(E.rv.focus || '—')}</dd><dt>Comments</dt><dd>${esc(E.rv.comments || '—')}</dd></dl></div>`;
+  return h;
+}
+function commentForm(emp, idx) {
+  const items = commentsOf(emp).map(({ idx, ...c }) => c), cur = idx != null ? items[idx] : { theme: 'Other', source: 'TA Head' };
+  openForm({ title: idx != null ? 'Edit comment' : 'Add comment', values: cur, fields: [{ k: 'theme', label: 'Theme', type: 'select', options: THEMES, blank: false }, { k: 'source', label: 'Source' }, { k: 'text', label: 'Comment', type: 'textarea', full: true, req: true }],
+    save: async v => { if (!v.text) return 'Write the comment.'; const next = [...items]; if (idx != null) next[idx] = v; else next.push(v); return write('comments/' + emp, { items: next }, `${idx != null ? 'Edited' : 'Added'} a comment for ${S.people[emp]?.name}`); } });
+}
+function delComment(emp, idx) {
+  const items = commentsOf(emp).map(({ idx, ...c }) => c);
+  confirmBox('Delete this comment?', esc(items[idx]?.text || ''), 'Delete', () => write('comments/' + emp, { items: items.filter((_, i) => i !== Number(idx)) }, `Deleted a comment for ${S.people[emp]?.name}`));
+}
+
+/* ===================== PROGRAMMES & PROJECTS ===================== */
+const ownerName = x => x.owner && S.people[x.owner] ? S.people[x.owner].name : (x.ownerText || '—');
+function allProjects() { return Object.entries(S.projects).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => (PILLARS.indexOf(a.pillar) - PILLARS.indexOf(b.pillar)) || String(a.title).localeCompare(b.title)); }
+function resultsChart(rows) {
+  const W = cw(true), L = 110, R = 70, rowH = 30, top = 22, max = Math.max(...rows.map(r => Math.max(r[1], r[2]))) * 1.05, x = v => L + (W - L - R) * v / max, H = top + rows.length * rowH + 4;
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Programme joiners against target">`;
+  rows.forEach(([n, t, j], i) => { const y = top + i * rowH, a = j / t, col = { good: 'var(--good)', watch: 'var(--watch)', below: 'var(--bad)' }[statusOf(a)];
+    s += `<g data-tip="${esc(`<b>${esc(n)}</b>` + tipRows([['Target', t], ['Joined', j], ['Attainment', pct(a * 100)]]))}"><text class="nm" x="${L - 10}" y="${y + 16}" text-anchor="end">${esc(n)}</text><rect x="${L}" y="${y + 4}" width="${x(t) - L}" height="16" rx="3" fill="var(--line)"/><rect x="${L}" y="${y + 8}" width="${Math.max(2, x(j) - L)}" height="8" rx="2" fill="${col}"/><rect x="${x(t) - 1.5}" y="${y + 1}" width="3" height="22" fill="var(--ink)"/><text class="vl" x="${Math.max(x(t), x(j)) + 7}" y="${y + 16}">${pct(a * 100)}</text></g>`; });
+  return s + '</svg>';
+}
+function trendSmall(name, vals, years, cur) {
+  const W = 220, H = 90, L = 26, R = 12, T = 14, B = 18, mx = Math.max(...vals, cur ?? 0) * 1.15, x = i => L + (W - L - R) * i / (years.length), y = v => T + (H - T - B) * (1 - v / mx);
+  const pts = vals.map((v, i) => [x(i), y(v)]); if (cur != null) pts.push([x(years.length), y(cur)]);
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(name)} 2020 to 2026"><text class="mu" x="${L}" y="10">${esc(name)} %</text>`;
+  s += `<path d="${pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="var(--accent)" stroke-width="2"/>`;
+  pts.forEach((p, i) => { const last = i === pts.length - 1; s += `<circle cx="${p[0]}" cy="${p[1]}" r="${last ? 4.5 : 2.5}" fill="${last ? 'var(--accent)' : 'var(--card)'}" stroke="var(--accent)" stroke-width="1.5"><title>${i < years.length ? years[i] : '2026 YTD'}: ${i < vals.length ? vals[i] : cur}%</title></circle>`; });
+  s += `<text class="vl" x="${pts[pts.length - 1][0] - 4}" y="${pts[pts.length - 1][1] - 8}" text-anchor="end">${cur ?? vals[vals.length - 1]}%</text><text class="mu" x="${x(0)}" y="${H - 3}">2020</text><text class="mu" x="${x(years.length)}" y="${H - 3}" text-anchor="end">2026</text>`;
+  return s + '</svg>';
+}
+function viewProgrammes() {
+  const pf = S.settings.portfolio || {}, rows = pf.rows || [], tr = pf.trend || {};
+  const tot = rows.reduce((a, r) => [a[0] + r[1], a[1] + r[2]], [0, 0]);
+  let h = `<div class="phead"><div><h2>Programmes and projects</h2><div class="meta"><span>University relations, talent pipeline programmes and process improvement</span>${pf.asOf ? `<span>Programme results to ${nice(pf.asOf)}</span>` : ''}</div></div><div class="sp"></div><div class="btns"><button class="btn pri" data-act="ppt" type="button">Download PowerPoint</button></div></div>`;
+  if (rows.length) {
+    h += `<div class="grid c5"><div class="card fig"><div class="l">Joiners, all streams</div><div class="v">${fmt(pf.totalJoined, 0)}</div><div class="f">${pct(tot[1] / tot[0] * 100)} of ${fmt(tot[0], 0)} across programmes</div></div><div class="card fig"><div class="l">Vendor usage</div><div class="v">${pct(pf.vendorPct)}</div><div class="f">lowest since 2020</div></div><div class="card fig"><div class="l">Employee referrals</div><div class="v">${pct(pf.referralPct)}</div></div><div class="card fig"><div class="l">Gender diversity</div><div class="v">${pct(pf.diversityPct)}</div></div><div class="card fig"><div class="l">Days to offer · to join</div><div class="v">${fmt(pf.offerDays, 0)} · ${fmt(pf.joinDays, 0)}</div></div></div>`;
+    h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Programme results</h3><span class="hint">joined against target · tick = target</span></div>${resultsChart(rows)}<p class="sub" style="font-size:12px;color:var(--muted);margin:6px 0 0">${esc(pf.source || '')}. Over-delivery in one stream doesn't close another stream's gap.</p></div>
+      <div class="card pad"><div class="sec-h"><h3>Highlights and priorities</h3></div><ul style="margin:0 0 10px;padding-left:18px;font-size:13px">${(pf.highlights || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul><h4 style="font-size:13px;margin:6px 0">Priorities to close</h4><ul style="margin:0;padding-left:18px;font-size:13px">${(pf.priorities || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
+      ${tr.years ? `<h4 style="font-size:13px;margin:14px 0 6px">Lateral hiring trends, 2020 to 2026 YTD</h4><div class="grid c3">${[['Gender diversity', pf.diversityPct], ['Vendor usage', pf.vendorPct], ['Employee referrals', pf.referralPct]].map(([k, c]) => `<div>${trendSmall(k, tr[k] || [], tr.years, c)}</div>`).join('')}</div>` : ''}</div></div>`;
+  }
+  const progs = Object.entries(S.programmes).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  for (const cat of ['Talent pipeline', 'University relations']) {
+    const list = progs.filter(x => x.category === cat);
+    h += `<div class="card pad sec"><div class="sec-h"><h3>${cat === 'Talent pipeline' ? 'Talent pipeline programmes' : 'University relations programmes'}</h3><span class="hint">2026 calendar · ${list.length} programmes</span><span class="sp"></span>${canWrite && cat === 'Talent pipeline' ? '<button class="btn sm" data-act="add-prog" type="button">Add programme</button>' : ''}</div><div class="tw"><table><thead><tr><th>Programme</th><th>Batch</th><th>Owner</th><th>Responsible</th><th class="n">Planned</th><th>Status</th><th></th></tr></thead><tbody>${list.map(x => `<tr><td><b>${esc(x.name)}</b></td><td>${esc(x.batch || '—')}</td><td>${esc(x.owner || '—')}</td><td>${esc(x.responsible || '—')}</td><td class="n">${x.expected ?? '—'}</td><td><span class="chip ${x.status === 'On hold' ? 'watch' : 'none'}">${ICON[x.status === 'On hold' ? 'watch' : 'none']}${esc(x.status || '')}</span></td><td class="n">${canWrite ? `<button class="btn sm" data-act="edit-prog" data-id="${esc(x.id)}" type="button">Edit</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="sub">None recorded.</td></tr>'}</tbody></table></div></div>`;
+  }
+  const projs = allProjects(), cnt = st => projs.filter(x => (x.status || 'In progress') === st).length;
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Process improvement and strategic projects</h3><span class="hint">${projs.length} projects · ${cnt('Completed')} completed · ${cnt('On track')} on track · ${cnt('In progress')} in progress</span><span class="sp"></span>${canWrite ? '<button class="btn sm pri" data-act="add-project" type="button">Add project</button>' : ''}</div><div class="tw"><table><thead><tr><th>Project</th><th>Pillar</th><th>Owner</th><th>Status</th><th>Planned end</th><th>Latest update</th><th></th></tr></thead><tbody>${projs.map(x => `<tr><td><b>${esc(x.title)}</b>${x.milestones ? `<div class="sub">${esc(x.milestones)}</div>` : ''}</td><td class="sub" style="font-size:12px">${esc(x.pillar || '—')}</td><td>${x.owner && S.people[x.owner] ? `<span class="click" data-person="${esc(x.owner)}" data-tab="projects" style="cursor:pointer;text-decoration:underline">${esc(ownerName(x))}</span>` : esc(ownerName(x))}</td><td>${chip(projStatusClass(x.status || 'In progress'), x.status || 'In progress')}</td><td class="nw">${x.planEnd ? nice(x.planEnd) : '—'}</td><td style="max-width:360px;font-size:12.5px;color:var(--ink-2)">${esc(x.reported || '')}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="edit-project" data-id="${esc(x.id)}" type="button">Edit</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
+  return h;
+}
+function progForm(id) {
+  const x = id ? S.programmes[id] : { category: 'Talent pipeline', status: 'In plan', order: Object.keys(S.programmes).length + 1, source: 'TA Head' };
+  openForm({ title: id ? `Edit ${x.name}` : 'Add programme', values: x, del: id ? () => confirmBox(`Delete ${x.name}?`, 'This removes the programme from the calendar list.', 'Delete', () => remove('programmes/' + id, `Deleted programme ${x.name}`)) : null, fields: [
+    { k: 'name', label: 'Programme', full: true, req: true }, { k: 'category', label: 'Category', type: 'select', options: ['Talent pipeline', 'University relations'], blank: false }, { k: 'batch', label: 'Batch' },
+    { k: 'owner', label: 'Programme owner' }, { k: 'responsible', label: 'Responsible' }, { k: 'expected', label: 'Planned number', type: 'number', min: 0 }, { k: 'status', label: 'Status', type: 'select', options: ['In plan', 'In progress', 'Completed', 'On hold', 'Not going ahead'], blank: false },
+    { k: 'notes', label: 'Notes', type: 'textarea', full: true },
+  ], save: async v => { if (!v.name) return 'Enter the programme name.'; return write('programmes/' + (id || uid('PG')), { ...x, ...v }, `${id ? 'Edited' : 'Added'} programme ${v.name}`); } });
+}
+
+/* ===================== POWERPOINT ===================== */
+function loadPptx() {
+  return new Promise((res, rej) => { if (window.PptxGenJS) return res(); const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js'; sc.onload = () => res(); sc.onerror = () => rej(new Error('load')); document.head.appendChild(sc); });
+}
+function pptDialog() {
+  openForm({ title: 'Download PowerPoint', intro: 'A full review deck: portfolio, programmes, projects, each team under its lead, and two slides for every person.', saveLabel: 'Create deck',
+    values: { people: true, support: true, promo: true }, fields: [{ k: 'people', label: 'Individual slides for each person', type: 'check', full: true }, { k: 'support', label: 'Include support and operations roles', type: 'check', full: true }, { k: 'promo', label: 'Include the confidential promotion summary', type: 'check', full: true }],
+    save: async v => { const btn = $('#mform button[type="submit"]'); btn.textContent = 'Creating…'; try { await buildDeck(v); return true; } catch (e) { return e && e.message === 'load' ? 'Couldn\'t load the PowerPoint tool. Check your connection and try again.' : 'Couldn\'t create the deck. Try again.'; } } });
+}
+async function buildDeck(opt) {
+  await loadPptx();
+  const dl = await claude.use('downloads'); if (!dl) throw new Error('dl');
+  const C = { ink: '141821', ink2: '4A5263', mute: '7B8396', acc: '2348C7', soft: 'E4E9FB', line: 'E1E4EB', card: 'F6F7FA', good: '0F8A3C', watch: '9A6400', bad: 'C0312F', rail: '1A1E27' };
+  const F = 'Calibri', pptx = new PptxGenJS(); pptx.layout = 'LAYOUT_WIDE'; pptx.title = `India TA Talent Review ${YEAR}`; pptx.company = 'Volvo Group India';
+  pptx.defineSlideMaster({ title: 'B', background: { color: 'FFFFFF' }, objects: [{ rect: { x: 0, y: 0, w: 13.33, h: 0.1, fill: { color: C.acc } } }, { text: { text: `India Talent Acquisition · Talent Review ${YEAR} · Confidential`, options: { x: 0.5, y: 7.08, w: 9, h: 0.3, fontFace: F, fontSize: 9, color: C.mute } } }], slideNumber: { x: 12.3, y: 7.08, w: 0.6, h: 0.3, fontFace: F, fontSize: 9, color: C.mute } });
+  const stc = st => ({ good: C.good, watch: C.watch, below: C.bad }[st] || C.mute);
+  const cut = (t, n) => { t = String(t ?? ''); return t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t; };
+  const P = v => v == null || isNaN(v) ? '—' : Math.round(v) + '%';
+  const N = (v, d = 1) => fmt(v, d);
+  const head = (s, t, sub) => { s.addText(t, { x: 0.5, y: 0.3, w: 12.3, h: 0.6, fontFace: F, fontSize: 24, bold: true, color: C.ink }); if (sub) s.addText(sub, { x: 0.5, y: 0.88, w: 12.3, h: 0.35, fontFace: F, fontSize: 12, color: C.ink2 }); };
+  const kpi = (s, x, y, w, l, v, f, col) => { s.addShape(pptx.ShapeType.roundRect, { x, y, w, h: 1.05, fill: { color: C.card }, line: { color: C.line }, rectRadius: 0.06 }); s.addText(l, { x: x + 0.15, y: y + 0.08, w: w - 0.3, h: 0.25, fontFace: F, fontSize: 10, color: C.ink2 }); s.addText(String(v), { x: x + 0.15, y: y + 0.32, w: w - 0.3, h: 0.42, fontFace: F, fontSize: 22, bold: true, color: col || C.ink }); if (f) s.addText(f, { x: x + 0.15, y: y + 0.74, w: w - 0.3, h: 0.25, fontFace: F, fontSize: 9, color: C.mute }); };
+  const tbl = (s, hdr, rows, o) => { const H = hdr.map(t => ({ text: t, options: { bold: true, color: 'FFFFFF', fill: { color: C.acc } } })); s.addTable([H, ...rows.map(r => r.map(c => typeof c === 'object' && c !== null && 'text' in c ? c : { text: c == null ? '—' : String(c) }))], { x: o.x, y: o.y, w: o.w, colW: o.colW, fontFace: F, fontSize: o.fs || 10, color: C.ink, border: { type: 'solid', pt: 0.5, color: C.line }, valign: 'middle', margin: 0.05, autoPage: false }); };
+  const bullets = (s, items, o) => s.addText(items.length ? items.map(t => ({ text: t, options: { bullet: { indent: 12 }, breakLine: true } })) : [{ text: o.empty || 'None recorded.', options: { color: C.mute } }], { x: o.x, y: o.y, w: o.w, h: o.h, fontFace: F, fontSize: o.fs || 11, color: C.ink, valign: 'top', paraSpaceAfter: 4 });
+  const sect = (s, t, x, y, w) => s.addText(t, { x, y, w, h: 0.3, fontFace: F, fontSize: 13, bold: true, color: C.acc });
+
+  const all = peopleList().filter(inReview).filter(p => opt.support || !isSupport(p)).map(evalPerson);
+  const dlv = all.filter(E => !E.sup && E.own);
+  const pf = S.settings.portfolio || {};
+  // 1 cover
+  let s = pptx.addSlide(); s.background = { color: C.rail };
+  s.addText('India Talent Acquisition', { x: 0.8, y: 1.6, w: 11, h: 0.4, fontFace: F, fontSize: 14, color: '949CAD', charSpacing: 2 });
+  s.addText(`Talent Review ${YEAR}`, { x: 0.8, y: 2.05, w: 11, h: 1, fontFace: F, fontSize: 44, bold: true, color: 'FFFFFF' });
+  s.addText('Annual performance review: team, teams under their leads, and every TA person', { x: 0.8, y: 3.05, w: 11, h: 0.5, fontFace: F, fontSize: 18, color: 'E9ECF2' });
+  s.addText(`Hiring data to ${nice(CUTOFF)} · Prepared ${nice(new Date().toISOString().slice(0, 10))} · Confidential: TA Head`, { x: 0.8, y: 4.0, w: 11, h: 0.4, fontFace: F, fontSize: 12, color: '949CAD' });
+  // 2 portfolio
+  if (pf.rows) {
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Portfolio at a glance', `Programme results to ${nice(pf.asOf)} · source: ${pf.source || ''}`);
+    const tot = pf.rows.reduce((a, r) => [a[0] + r[1], a[1] + r[2]], [0, 0]);
+    [['Joiners, all streams', N(pf.totalJoined, 0), `${P(tot[1] / tot[0] * 100)} of ${tot[0]} target`], ['Vendor usage', P(pf.vendorPct), 'lowest since 2020'], ['Employee referrals', P(pf.referralPct), ''], ['Gender diversity', P(pf.diversityPct), ''], ['Days to offer / join', `${N(pf.offerDays, 0)} / ${N(pf.joinDays, 0)}`, '']].forEach((k, i) => kpi(s, 0.5 + i * 2.5, 1.45, 2.3, ...k));
+    sect(s, 'Highlights', 0.5, 2.8, 6); bullets(s, pf.highlights || [], { x: 0.5, y: 3.15, w: 6, h: 3.6 });
+    sect(s, 'Priorities to close', 6.9, 2.8, 6); bullets(s, pf.priorities || [], { x: 6.9, y: 3.15, w: 6, h: 3.6 });
+    // 3 programme results
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Programme results against target', 'Over-delivery in one stream does not close another stream\'s gap');
+    s.addChart(pptx.ChartType.bar, [{ name: 'Target', labels: pf.rows.map(r => r[0]), values: pf.rows.map(r => r[1]) }, { name: 'Joined', labels: pf.rows.map(r => r[0]), values: pf.rows.map(r => r[2]) }], { x: 0.5, y: 1.4, w: 7.3, h: 5.4, barDir: 'bar', barGrouping: 'clustered', chartColors: ['CDD2DC', C.acc], showLegend: true, legendPos: 'b', legendFontSize: 10, catAxisLabelFontSize: 11, valAxisLabelFontSize: 9, showValue: true, dataLabelFontSize: 9, catAxisOrientation: 'maxMin', valGridLine: { color: C.line, size: 0.5 } });
+    tbl(s, ['Programme', 'Target', 'Joined', 'Attainment', 'Gap'], pf.rows.map(([n, t, j]) => [n, t, j, { text: P(j / t * 100), options: { color: stc(statusOf(j / t)), bold: true } }, j >= t ? (j > t ? `+${j - t}` : 'Met') : j - t]), { x: 8.1, y: 1.5, w: 4.7, colW: [1.4, 0.75, 0.75, 1.0, 0.8] });
+  }
+  // 4 programmes calendar
+  const progs = Object.entries(S.programmes).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+  for (const cat of ['Talent pipeline', 'University relations']) {
+    const list = progs.filter(x => x.category === cat); if (!list.length) continue;
+    s = pptx.addSlide({ masterName: 'B' }); head(s, cat === 'Talent pipeline' ? 'Talent pipeline programmes, 2026' : 'University relations programmes, 2026', 'From the P&C calendar: owner, responsible person, planned numbers and status');
+    tbl(s, ['Programme', 'Batch', 'Owner', 'Responsible', 'Planned', 'Status'], list.map(x => [x.name, x.batch || '—', x.owner || '—', x.responsible || '—', x.expected ?? '—', x.status || '']), { x: 0.5, y: 1.4, w: 12.3, colW: [4.4, 1.2, 1.6, 2.9, 0.9, 1.3], fs: list.length > 10 ? 9.5 : 10.5 });
+  }
+  // 5 projects
+  const projs = allProjects();
+  for (let i = 0; i < projs.length; i += 8) {
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Process improvement and strategic projects' + (projs.length > 8 ? ` (${i / 8 + 1} of ${Math.ceil(projs.length / 8)})` : ''), `${projs.filter(x => x.status === 'Completed').length} completed · ${projs.filter(x => x.status === 'On track').length} on track · ${projs.filter(x => (x.status || 'In progress') === 'In progress').length} in progress`);
+    tbl(s, ['Project', 'Owner', 'Pillar', 'Status', 'Planned end', 'Latest update'], projs.slice(i, i + 8).map(x => [x.title, ownerName(x), x.pillar || '—', { text: x.status || 'In progress', options: { bold: true, color: stc(projStatusClass(x.status || 'In progress')) } }, x.planEnd ? nice(x.planEnd) : '—', cut((x.milestones ? x.milestones + '. ' : '') + (x.reported || ''), 230)]), { x: 0.5, y: 1.4, w: 12.3, colW: [2.3, 1.4, 1.7, 1.1, 1.1, 4.7], fs: 9 });
+  }
+  // 6 team delivery
+  if (dlv.length) {
+    const srt = [...dlv].sort((a, b) => (b.own.att ?? 0) - (a.own.att ?? 0));
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Delivery against target', 'Weighted points against the points target to date (annual offer target × 2, pro-rated by working days)');
+    s.addChart(pptx.ChartType.bar, [{ name: 'Weighted points', labels: srt.map(E => E.p.name), values: srt.map(E => r1(E.own.points)) }, { name: 'Target to date', labels: srt.map(E => E.p.name), values: srt.map(E => r1(E.own.ptPro)) }], { x: 0.5, y: 1.4, w: 7.4, h: 5.4, barDir: 'bar', barGrouping: 'clustered', chartColors: [C.acc, 'CDD2DC'], showLegend: true, legendPos: 'b', legendFontSize: 10, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, showValue: true, dataLabelFontSize: 8, catAxisOrientation: 'maxMin', valGridLine: { color: C.line, size: 0.5 } });
+    tbl(s, ['Person', 'Points', 'Target', 'Attain.', 'Offers', 'Offer days'], srt.map(E => [E.p.name, N(E.own.points), N(E.own.ptPro), { text: P(E.own.att * 100), options: { bold: true, color: stc(statusOf(E.own.att)) } }, N((E.own.d.tracker || {}).offers, 0), N(E.own.offerDays, 0)]), { x: 8.1, y: 1.5, w: 4.7, colW: [1.45, 0.7, 0.7, 0.65, 0.6, 0.6], fs: 9.5 });
+    // 7 scorecard
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Scorecard', 'Deliverables 70 (offers & complexity 40, joining 15, cycle time 10, vendor 5) + projects 15 + competency development 15');
+    tbl(s, ['Person', 'Role', 'Offers /40', 'Joining /15', 'Cycle /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Comp. dev /15', 'Total', `P4P ${YEAR - 3}·${String(YEAR - 2).slice(2)}·${String(YEAR - 1).slice(2)}`, `${YEAR} rating`],
+      all.map(E => { const o = E.own, r = E.p.ratings || {}; return [E.p.name, E.sup ? 'Support' : E.p.role, o ? N(o.parts.offer) : '—', o ? N(o.parts.jr) : '—', o ? N(o.parts.ct) : '—', o ? N(o.parts.vendor) : '—', E.sup ? 'n/a' : N(E.del), N(E.proj), N(E.comp), E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, [r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · '), E.rv.finalRating || '—']; }),
+      { x: 0.5, y: 1.4, w: 12.3, colW: [1.6, 1.05, 0.85, 0.9, 0.8, 0.8, 1.1, 0.95, 1.05, 1.15, 1.15, 0.9], fs: 9.5 });
+  }
+  // 8 competency & learning
+  s = pptx.addSlide({ masterName: 'B' }); head(s, 'Competency development and learning', 'Training records, development plans and behaviour ratings. Attendance alone never adds points.');
+  const lrn = all.flatMap(E => E.learn.map(l => [E.p.name, l.programme, l.status || '', l.cert ? 'Yes' : '—']));
+  tbl(s, ['Person', 'Programme', 'Status', 'Certificate'], lrn.length ? lrn.slice(0, 14) : [['—', 'No training recorded', '', '']], { x: 0.5, y: 1.4, w: 7.2, colW: [1.7, 3.3, 1.2, 1.0], fs: 9.5 });
+  tbl(s, ['Person', 'Plan items', 'Done', 'Behaviours rated', 'Comp. dev /15'], all.map(E => [E.p.name, E.plans.length, E.plans.filter(x => x.status === 'Done').length, COMPETENCIES.filter(c => (E.beh[c] || {}).head != null).length + ' / 8', N(E.comp)]), { x: 8.0, y: 1.4, w: 4.8, colW: [1.5, 0.8, 0.6, 1.0, 0.9], fs: 9.5 });
+  // person slides
+  const personSlides = E => {
+    const p = E.p, o = E.own, tr = o ? o.d.tracker || {} : {}, r = p.ratings || {};
+    let s1 = pptx.addSlide({ masterName: 'B' });
+    head(s1, p.name, `${p.jobTitle || p.role} · ${p.role}, ${p.team || ''}${p.area && p.area !== p.team ? ' (' + p.area + ')' : ''} · ${p.level || ''} · joined ${nice(p.joined)}${p.end ? ' · leaving ' + nice(p.end) : ''}`);
+    if (o) {
+      [['Weighted points', `${N(o.points)} / ${N(o.ptPro)}`, `${P(o.att * 100)} of target to date`, stc(statusOf(o.att))], ['Offers released', N(tr.offers, 0), `${N(tr.joined, 0)} joined · ${N(tr.declined, 0)} declined`], ['Offer days', N(o.offerDays, 0), ctLabel(o.offerDays)], ['Joining ratio', P(o.jr), 'scorecard joiners ÷ offers'], ['Total score', E.total != null ? `${N(E.total)}` : `${N(E.partial)}`, E.total != null ? `of ${E.max}` : `of ${E.max} so far (provisional)`]].forEach((k, i) => kpi(s1, 0.5 + i * 2.5, 1.4, 2.3, ...k));
+      sect(s1, 'Scores against maximum', 0.5, 2.65, 6);
+      const rows = [['Offers & complexity', o.parts.offer, 40], ['Joining', o.parts.jr, 15], ['Cycle time', o.parts.ct, 10], ['Vendor', o.parts.vendor, 5]];
+      if (E.team) rows.push(['Team goal (deliverables)', E.team.del, 70]);
+      rows.push(['Business deliverables', E.del, 70], ['Projects', E.proj, 15], ['Competency development', E.comp, 15]);
+      tbl(s1, ['Component', 'Score', 'Max', '%'], rows.map(([l, v, m]) => [l, v == null ? 'to score' : N(v), m, v == null ? '—' : P(v / m * 100)]), { x: 0.5, y: 3.0, w: 6, colW: [3.0, 1.0, 0.9, 1.1], fs: 10 });
+      sect(s1, 'Points by offer category', 6.9, 2.65, 6);
+      tbl(s1, ['Category', 'Offers', 'Points'], (o.d.mix || []).map(([c, n, pts]) => isIntern(c) ? [`Internships (${N(internPts())} each)`, n, N(n * internPts())] : [c, n, N(pts)]).concat([[{ text: 'Total', options: { bold: true } }, { text: N(tr.offers, 0), options: { bold: true } }, { text: N(o.points), options: { bold: true } }]]), { x: 6.9, y: 3.0, w: 5.9, colW: [3.5, 1.1, 1.3], fs: 9.5 });
+      s1.addText(`Other measures: days to join ${N(num(o.d.joinDays), 0)} · declined ${P(num(o.d.declinedPct))} · vendor ${P(o.vendorPct)} · referrals ${P(num(o.d.referralPct))} · women hires ${P(num(o.d.diversityPct))}.   P4P: ${YEAR - 3} ${r.y2023 || '—'} · ${YEAR - 2} ${r.y2024 || '—'} · ${YEAR - 1} ${r.y2025 || '—'} · ${YEAR} ${E.rv.finalRating || 'not rated yet'}`, { x: 0.5, y: 6.45, w: 12.3, h: 0.5, fontFace: F, fontSize: 10, color: C.ink2 });
+      if (E.team) s1.addText(`Team goal: members' points ${N(E.team.points)} of ${N(E.team.ptPro)} (${P(E.team.att * 100)}) · team joining ${P(E.team.jr)} · team offer days ${N(E.team.ct, 0)}`, { x: 0.5, y: 6.15, w: 12.3, h: 0.3, fontFace: F, fontSize: 10, bold: true, color: C.acc });
+    } else {
+      [['Projects', E.projs.length, `${E.projs.filter(x => x.status === 'Completed').length} completed`], ['Training records', E.learn.length, ''], ['Plan items', E.plans.length, ''], ['Total score', E.total != null ? N(E.total) : N(E.partial), `of 30${E.total == null ? ' so far' : ''}`]].forEach((k, i) => kpi(s1, 0.5 + i * 3.1, 1.4, 2.9, ...k));
+      sect(s1, 'Role', 0.5, 2.65, 12); s1.addText(p.roleNote || p.role || '', { x: 0.5, y: 3.0, w: 12.3, h: 0.6, fontFace: F, fontSize: 12, color: C.ink, valign: 'top' });
+      sect(s1, 'Scores', 0.5, 3.8, 6); tbl(s1, ['Component', 'Score', 'Max'], [['Projects', E.proj == null ? 'to score' : N(E.proj), 15], ['Competency development', E.comp == null ? 'to score' : N(E.comp), 15]], { x: 0.5, y: 4.15, w: 6, colW: [3.6, 1.2, 1.2] });
+      s1.addText(`P4P: ${YEAR - 3} ${r.y2023 || '—'} · ${YEAR - 2} ${r.y2024 || '—'} · ${YEAR - 1} ${r.y2025 || '—'} · ${YEAR} ${E.rv.finalRating || 'not rated yet'}. No hiring deliverables; scored out of 30.`, { x: 0.5, y: 6.45, w: 12.3, h: 0.4, fontFace: F, fontSize: 10, color: C.ink2 });
+    }
+    let s2 = pptx.addSlide({ masterName: 'B' });
+    head(s2, `${p.name}: contribution and development`, 'Qualitative comments, programmes, projects, learning and development plan');
+    const cm = commentsOf(p.id);
+    sect(s2, 'Qualitative comments', 0.5, 1.35, 6.4);
+    bullets(s2, cm.map(c => `${c.theme}: ${cut(c.text, 260)}`).slice(0, 8), { x: 0.5, y: 1.7, w: 6.4, h: 3.5, fs: 10, empty: 'No comments recorded.' });
+    const pipe = pipelineOf(E), progs2 = programmesFor(p);
+    sect(s2, 'University relations and talent pipeline', 0.5, 5.25, 6.4);
+    s2.addText([pipe.length ? `Offers: ${pipe.map(x => `${x.label} ${x.n}`).join(' · ')}` : 'No programme offers in the trackers.', progs2.length ? `Calendar: ${progs2.map(x => `${x.name} (${x.as.toLowerCase()})`).join('; ')}` : 'Not named on a calendar programme.'].map(t => ({ text: cut(t, 420), options: { breakLine: true } })), { x: 0.5, y: 5.6, w: 6.4, h: 1.35, fontFace: F, fontSize: 9.5, color: C.ink, valign: 'top' });
+    sect(s2, 'Projects', 7.2, 1.35, 5.6);
+    bullets(s2, E.projs.map(x => `${x.title}: ${x.status || 'In progress'}${x.planEnd ? ' (due ' + nice(x.planEnd) + ')' : ''}${projectScore(x) != null ? ' · score ' + N(projectScore(x)) + '/15' : ''}`), { x: 7.2, y: 1.7, w: 5.6, h: 1.5, fs: 10, empty: 'No projects recorded.' });
+    sect(s2, 'Training', 7.2, 3.25, 5.6);
+    bullets(s2, E.learn.map(l => `${l.programme}: ${l.status || ''}${l.cert ? ' (certified)' : ''}`), { x: 7.2, y: 3.6, w: 5.6, h: 1.0, fs: 10, empty: 'No training recorded.' });
+    sect(s2, 'Development plan and review', 7.2, 4.65, 5.6);
+    const dev = E.plans.filter(x => x.status !== 'Dropped').map(x => `${x.action} (${x.status || ''})`);
+    if (E.rv.strengths) dev.push('Strengths: ' + cut(E.rv.strengths, 160)); if (E.rv.focus) dev.push(`Focus for ${YEAR + 1}: ` + cut(E.rv.focus, 160));
+    const rated = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) != null); if (rated.length) dev.push(`Behaviours rated: ${rated.length} of 8; 4+ on ${rated.filter(c => num(E.beh[c].head) >= 4).join(', ') || 'none'}`);
+    bullets(s2, dev.slice(0, 6), { x: 7.2, y: 5.0, w: 5.6, h: 1.95, fs: 10, empty: 'No development plan or review notes yet.' });
+  };
+  const leads = all.filter(E => isLead(E.p));
+  for (const L of leads) {
+    const members = all.filter(E => E.p.team === L.p.team && E !== L && !E.sup);
+    s = pptx.addSlide({ masterName: 'B' }); head(s, `Team: ${L.p.team}`, `Team Lead: ${L.p.name} · ${members.length} member${members.length === 1 ? '' : 's'}`);
+    if (L.team) { [['Team points (members)', `${N(L.team.points)} / ${N(L.team.ptPro)}`, `${P(L.team.att * 100)} of target to date`, stc(statusOf(L.team.att))], ['Team joining ratio', P(L.team.jr), ''], ['Team offer days', N(L.team.ct, 0), 'weighted by offers'], ['Team vendor share', P(L.team.vp), ''], ['Team deliverables', `${N(L.team.del)} / 70`, '35 team + 35 own for the lead']].forEach((k, i) => kpi(s, 0.5 + i * 2.5, 1.4, 2.3, ...k)); }
+    tbl(s, ['Person', 'Role', 'Points', 'Target', 'Attain.', 'Offers', 'Joined', 'Offer days', 'Vendor', 'Deliverables', 'Total'], [L, ...members].map(E => [E.p.name, E.p.role, N(E.own?.points), N(E.own?.ptPro), { text: P(E.own?.att * 100), options: { bold: true, color: stc(statusOf(E.own?.att)) } }, N((E.own?.d.tracker || {}).offers, 0), N((E.own?.d.tracker || {}).joined, 0), N(E.own?.offerDays, 0), P(E.own?.vendorPct), N(E.del), E.total != null ? N(E.total) : N(E.partial) + ' so far']), { x: 0.5, y: 2.75, w: 12.3, colW: [1.7, 1.1, 0.9, 0.9, 0.9, 0.9, 0.9, 1.0, 0.9, 1.2, 1.9], fs: 10 });
+    const lc = commentsOf(L.p.id).filter(c => c.theme !== 'Promotion').slice(0, 4).map(c => `${c.theme}: ${cut(c.text, 200)}`);
+    sect(s, 'Lead contribution', 0.5, 4.65, 12); bullets(s, lc, { x: 0.5, y: 5.0, w: 12.3, h: 1.95, fs: 10, empty: 'No comments recorded.' });
+    if (opt.people) { personSlides(L); members.forEach(personSlides); }
+  }
+  const rest = all.filter(E => !isLead(E.p) && !leads.some(L => L.p.team === E.p.team));
+  if (rest.length) {
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Support and operations', 'No hiring deliverables. Reviewed on projects and competency development (out of 30).');
+    tbl(s, ['Person', 'Team', 'Level', 'Projects', 'Training', 'Plan items', 'Total', `P4P ${YEAR - 1}`], rest.map(E => [E.p.name, E.p.team || '—', E.p.level || '—', E.projs.length, E.learn.length, E.plans.length, E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, (E.p.ratings || {}).y2025 || '—']), { x: 0.5, y: 1.4, w: 12.3, colW: [2.0, 2.6, 0.9, 1.1, 1.1, 1.2, 1.7, 1.7] });
+    if (opt.people) rest.forEach(personSlides);
+  }
+  if (opt.promo) {
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Promotion readiness (confidential)', 'Advisory check from recorded data · the decision stays with the TA Head and HR');
+    tbl(s, ['Person', 'Level', 'Years in role', 'Criteria met', 'Readiness check', 'TA Head recommendation', 'Reasons'], all.map(E => { const pr = promotion(E); return [E.p.name, E.p.level || '—', N(yearsSince(E.p.since)) + (E.p.roleTimeException ? ' (exception)' : ''), `${pr.met} / 5`, pr.level, E.rv.promoDecision || 'Not decided', cut(E.rv.promoReason || '', 140)]; }), { x: 0.5, y: 1.4, w: 12.3, colW: [1.6, 0.8, 1.3, 1.0, 2.1, 2.0, 3.5], fs: 9.5 });
+    s.addText('Criteria: last two P4P ratings High or above · total score 80% or more · three or more behaviours rated 4+ by the TA Head · two or more years in current role · leadership evidence.', { x: 0.5, y: 6.5, w: 12.3, h: 0.4, fontFace: F, fontSize: 9.5, color: C.ink2 });
+  }
+  s = pptx.addSlide({ masterName: 'B' }); head(s, 'How the scores work and where the data comes from');
+  bullets(s, [
+    'Total of 100: business deliverables 70 (offers & complexity 40, joining 15, cycle time 10, vendor 5) + projects 15 + competency development 15. Support roles are scored out of 30. Behaviours are discussed, not scored.',
+    `Offers & complexity: 40 × weighted points ÷ points target to date, capped at 40. Points target = annual offer target × 2, pro-rated by working days. Team Leads carry half a recruiter's offer target; their deliverables are 35 for the team goal + 35 for their own delivery.`,
+    `Points per offer: lateral SG1–SG4 1 · SG5–SG8 2 · SG9+ 3 · new FTC hire 2 · conversion to FTC 1 · NATS 1 · ExcelHER 2 · GET/PGET 1 · AICTE and PhD 2 · conversions 1 · interns ${fmt(internPts())}. +0.5 for women hires where the rule allows (never on FTC or conversions). SG = JL + 2. Declined offers count.`,
+    'Joining: ≥90% 15 · 85–89% 13 · 80–84% 11 · 75–79% 8 · <75% 5. Cycle time: <45 days 10 · 45–55 7 · >55 4. Vendor: <10% 5 · 10–20% 3 · >20% 1.',
+    'Sources: Hiring2026 tracker and NATS & pipeline programmes workbook (offers 1 Jan–16 Oct 2026); recruiter scorecards and programme results from the 2026 Annual Performance Review deck; TA year plan 2026; P&C calendar (talent pipeline & university relations); P4P history, job levels and dates supplied by the TA Head.',
+  ], { x: 0.5, y: 1.3, w: 12.3, h: 5.6, fs: 12 });
+  const blob = await pptx.write({ outputType: 'blob' });
+  try { await dl.save({ filename: `India_TA_Talent_Review_${YEAR}.pptx`, data: blob }); toast('Deck ready'); } catch (e) { if (!e || e.code !== 'declined') throw e; }
+  window.__deckSlides = pptx.slides ? pptx.slides.length : null;
+}
+
 /* ===================== PROMOTION BOARD ===================== */
 function viewPromotion() {
   const ev = peopleList().filter(inReview).map(evalPerson);
@@ -725,7 +959,7 @@ function render() {
   renderRail();
   const v = $('#view');
   if (!Object.keys(S.people).length) { v.innerHTML = `<div class="state"><h2>No team data yet</h2><p>${canWrite ? 'Add the first person to start.' : 'The TA Head hasn\'t added anyone yet.'}</p>${canWrite ? '<button class="btn pri" data-act="addPerson" type="button">Add person</button>' : ''}</div>`; return; }
-  v.innerHTML = route.view === 'person' ? viewPerson(route.id) : route.view === 'promotion' ? viewPromotion() : route.view === 'manage' ? viewManage() : route.view === 'log' ? viewLog() : viewTeam();
+  v.innerHTML = route.view === 'person' ? viewPerson(route.id) : route.view === 'programmes' ? viewProgrammes() : route.view === 'promotion' ? viewPromotion() : route.view === 'manage' ? viewManage() : route.view === 'log' ? viewLog() : viewTeam();
   bindTips(v);
 }
 
@@ -735,7 +969,7 @@ function field(f, val) {
   const id = 'f_' + f.k, req = f.req ? ' required' : '', cls = f.full ? 'full' : '';
   if (f.type === 'check') return `<label class="chk ${cls}"><input id="${id}" type="checkbox" ${val ? 'checked' : ''}> ${esc(f.label)}</label>`;
   let input;
-  if (f.type === 'select') input = `<select id="${id}"${req}>${f.blank !== false ? '<option value="">—</option>' : ''}${f.options.map(o => `<option ${String(val ?? '') === String(o) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+  if (f.type === 'select') input = `<select id="${id}"${req}>${f.blank !== false ? '<option value="">—</option>' : ''}${f.options.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${String(val ?? '') === String(v) ? 'selected' : ''}>${esc(l)}</option>`; }).join('')}</select>`;
   else if (f.type === 'textarea') input = `<textarea id="${id}"${req}>${esc(val ?? '')}</textarea>`;
   else input = `<input id="${id}" type="${f.type || 'text'}" ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''} ${f.step != null ? `step="${f.step}"` : ''} value="${esc(val ?? '')}"${req}${f.ph ? ` placeholder="${esc(f.ph)}"` : ''}>`;
   return `<label class="${cls}">${esc(f.label)}${f.hint ? ` <span style="color:var(--muted);font-weight:400">${esc(f.hint)}</span>` : ''}${input}</label>`;
@@ -877,7 +1111,8 @@ function learnForm(emp, lid) {
 function projectForm(owner, pid) {
   const x = pid ? S.projects[pid] : { owner, status: 'In progress', stage: -1 }, sc = x.scores || {};
   openForm({ title: pid ? 'Edit project' : 'Add project', values: { ...x, stageName: num(x.stage) >= 0 ? DMAIC[num(x.stage)] : '', ...sc }, del: pid ? () => remove('projects/' + pid, `Deleted project ${x.title}`).then(closeModal) : null, fields: [
-    { k: 'title', label: 'Title', full: true, req: true }, { k: 'problem', label: 'Problem or aim', type: 'textarea', full: true },
+    { k: 'title', label: 'Title', full: true, req: true }, { k: 'owner', label: 'Owner', type: 'select', options: peopleList().filter(inReview).sort((a, b) => a.name.localeCompare(b.name)).map(q => [q.id, q.name]) }, { k: 'ownerText', label: 'Or owner not in the team', hint: '(e.g. TA Head)' },
+    { k: 'pillar', label: 'Pillar', type: 'select', options: PILLARS }, { k: 'milestones', label: 'Milestones' }, { k: 'problem', label: 'Problem or aim', type: 'textarea', full: true },
     { k: 'status', label: 'Status', type: 'select', options: PROJECT_STATUS, blank: false }, { k: 'stageName', label: 'Last DMAIC stage you validated', type: 'select', options: DMAIC },
     { k: 'metric', label: 'Measure' }, { k: 'planEnd', label: 'Planned end', type: 'date' }, { k: 'baseline', label: 'Baseline' }, { k: 'target', label: 'Target' }, { k: 'actual', label: 'Current value' },
     { k: 'reported', label: 'Latest update', type: 'textarea', full: true },
@@ -886,8 +1121,8 @@ function projectForm(owner, pid) {
     { k: 'control', label: 'Sustainability and control', hint: '(0–3)', type: 'number', min: 0, max: 3, step: .5 }, { k: 'learning', label: 'Learning and sharing', hint: '(0–2)', type: 'number', min: 0, max: 2, step: .5 },
   ], save: async v => {
     if (!v.title) return 'Enter a title.';
-    const doc = { ...x, title: v.title, problem: v.problem, status: v.status, stage: v.stageName ? DMAIC.indexOf(v.stageName) : -1, metric: v.metric, planEnd: v.planEnd, baseline: v.baseline, target: v.target, actual: v.actual, reported: v.reported, contributing: v.contributing, scores: { discipline: v.discipline, impact: v.impact, control: v.control, learning: v.learning }, owner: x.owner };
-    return write('projects/' + (pid || uid('PR')), doc, `${pid ? 'Edited' : 'Added'} project for ${S.people[x.owner]?.name}: ${v.title}`);
+    const doc = { ...x, title: v.title, owner: v.owner || null, ownerText: v.owner ? null : v.ownerText, pillar: v.pillar, milestones: v.milestones, problem: v.problem, status: v.status, stage: v.stageName ? DMAIC.indexOf(v.stageName) : -1, metric: v.metric, planEnd: v.planEnd, baseline: v.baseline, target: v.target, actual: v.actual, reported: v.reported, contributing: v.contributing, scores: { discipline: v.discipline, impact: v.impact, control: v.control, learning: v.learning } };
+    return write('projects/' + (pid || uid('PR')), doc, `${pid ? 'Edited' : 'Added'} project ${v.title}${v.owner ? ' for ' + S.people[v.owner]?.name : ''}`);
   } });
 }
 /* ---- settings ---- */
@@ -942,7 +1177,7 @@ document.addEventListener('click', e => {
   const tabB = t.closest('[data-person-tab]'); if (tabB) { route.tab = tabB.dataset.tab; render(); return; }
   const act = t.closest('[data-act]');
   if (act) {
-    if (!canWrite && act.dataset.act !== 'export') return;
+    if (!canWrite && act.dataset.act !== 'export' && act.dataset.act !== 'ppt') return;
     const id = act.dataset.id, a = act.dataset.act;
     const curP = route.view === 'person' ? route.id : null;
     ({ addPerson: () => personForm(null), editPerson: () => personForm(id), delPerson: () => askDeletePerson(id), editDelivery: () => deliveryForm(id), editReview: () => reviewForm(id), editPromo: () => promoForm(id), editBehaviours: () => behavioursForm(id),
@@ -950,6 +1185,8 @@ document.addEventListener('click', e => {
       'add-learn': () => learnForm(id), 'edit-learn': () => learnForm(curP, id), 'del-learn': () => confirmBox('Delete this training record?', esc(S.learning[id]?.programme || ''), 'Delete', () => remove('learning/' + id, `Deleted training ${S.learning[id]?.programme}`)),
       'add-project': () => projectForm(id), 'edit-project': () => projectForm(curP, id), 'del-project': () => confirmBox('Delete this project?', esc(S.projects[id]?.title || ''), 'Delete', () => remove('projects/' + id, `Deleted project ${S.projects[id]?.title}`)),
       editScale: () => scaleForm(id), editScoring: () => scoringForm(),
+      'add-comment': () => commentForm(id), 'edit-comment': () => commentForm(id, Number(act.dataset.idx)), 'del-comment': () => delComment(id, Number(act.dataset.idx)),
+      'add-prog': () => progForm(null), 'edit-prog': () => progForm(id), ppt: () => pptDialog(),
       addTeam: () => teamForm(null), editTeam: () => teamForm(id), delTeam: () => { const n = S.teams[id]?.name, c = peopleList().filter(p => p.team === n).length; confirmBox(`Delete team ${n}?`, c ? `${c} people are in this team. They'll show under "No team yet" until you move them.` : 'Nobody is in this team.', 'Delete', () => remove('teams/' + id, `Deleted team ${n}`)); },
       export: exportSheet }[a] || (() => { }))();
     return;
