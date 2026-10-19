@@ -27,6 +27,9 @@ function memberView(id, viewer) {
       ${head && (e.flags || []).length ? `<div class="note warn small"><b>To confirm:</b> ${e.flags.map(esc).join(' · ')}</div>` : ''}
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
       <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
+      ${e.joined ? `<div><dt>With the team since</dt><dd>${D.nice(e.joined)}</dd></div>` : ''}
+      ${head && e.aliases ? `<div><dt>Also known as</dt><dd class="small">${esc(e.aliases)}</dd></div>` : ''}
+      ${e.roleNote ? `<div><dt>Role (org chart)</dt><dd class="small">${esc(e.roleNote)}</dd></div>` : ''}
       ${(e.alsoTeams || []).length ? `<div><dt>Also supports</dt><dd>${e.alsoTeams.map(t => esc(teamName(t))).join(', ')}</dd></div>` : ''}
       <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Points target</dt><dd>${m.mode === 'support' ? 'Not applicable' : fmt(annualPoints(e)) + ' per year' + (e.ptAnnual != null ? ' (personal target)' : m.mode === 'summary' ? ' (' + fmt(m.own.target) + ' offers × ' + m.ppo + ')' : ' (' + fmt(m.target) + ' offers per 10 days × ' + m.ppo + ')')}${head && m.mode !== 'support' ? ` <button class="btn link small" onclick="pointsTargetDlg('${e.id}')">Edit</button>` : ''} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
     </div><div class="actions" style="flex-direction:column;align-items:flex-end">
@@ -119,6 +122,10 @@ function summaryDeliverables(m, head) {
    <p class="small muted">Deliverables: <b>${m.ownDel.total != null ? fmt(m.ownDel.total) + ' / 70' : fmt(m.ownDel.raw) + ' of ' + m.ownDel.maxAvail + ' available (points needed for the 40-point score)'}</b>. ${sc.note ? esc(sc.note) : ''}</p>`;
   const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] != null || (sc.joinStreams || {})[k] != null);
   if (rows.length) h += `<h3>Offers and joiners by stream</h3><div class="tbl-wrap"><table><thead><tr><th>Stream</th><th class="n">Offers</th><th class="n">Joiners</th></tr></thead><tbody>${rows.map(k => `<tr><td>${{ core: 'Core / campus (incl. conversion)', nats: 'NATS', excelher: 'ExcelHER', other: 'Other (interns, PwD, PhD, veterans, SPARK)' }[k]}</td><td class="n">${streams[k] ?? '—'}</td><td class="n">${(sc.joinStreams || {})[k] ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Lateral and fresher hiring (hiring tracker)</h3><div class="grid g4">
+    <div class="kpi"><div class="lab">Offers released</div><div class="val">${t.offers ?? '—'}</div><div class="sub">${esc(t.period || '')}</div></div><div class="kpi"><div class="lab">Joined</div><div class="val">${t.joined ?? '—'}</div></div>
+    <div class="kpi"><div class="lab">Declined</div><div class="val">${t.declined ?? '—'}</div></div><div class="kpi"><div class="lab">Pending joining</div><div class="val">${t.pending ?? '—'}</div></div></div>
+    <p class="small muted">${esc(t.note || '')}</p>`; }
   h += `<div class="grid g4" style="margin-top:10px"><div class="kpi"><div class="lab">Days to join</div><div class="val">${sc.joinDays ?? '—'}</div></div><div class="kpi"><div class="lab">Offers declined</div><div class="val">${pct(sc.declinedPct)}</div></div><div class="kpi"><div class="lab">Gender diversity</div><div class="val">${pct(sc.diversityPct)}</div><div class="sub">denominator not stated in source</div></div><div class="kpi"><div class="lab">Referral share</div><div class="val">${pct(sc.referralPct)}</div></div></div></section>`;
   return h;
 }
@@ -458,7 +465,7 @@ VIEWS.setup = () => {
    ${Object.entries(state.teams).flatMap(([k, t]) => t.areas.map(a => `<tr><td>${esc(t.name)}</td><td>${esc(a)}</td><td class="n">${state.areaTargets[a] == null ? 'n/a' : fmt(areaTarget(a))}</td><td class="n">${state.areaTargets[a] == null ? '' : ppoFor(a) + (state.areaPPO[a] != null ? ' (area)' : '')}</td><td class="n"><b>${state.areaTargets[a] == null ? '' : fmt(areaTarget(a) * ppoFor(a))}</b></td><td>${AREAS[a] ? (AREAS[a].status === 'brd' ? statusChip('brd') : statusChip('pending', true, 'Placeholder — D-15')) : '<span class="chip">Set in workspace</span>'}</td><td>${canEdit ? `<button class="btn sm" onclick="targetDlg('${esc(a)}')">Change</button>` : ''}</td></tr>`)).join('')}</tbody></table></div></section>
   <section class="card"><header><h2>Workspace</h2><span class="chip">${session && session.kind === 'head' ? 'Encrypted · ' + esc(session.email) : 'Demo'}</span></header>
    ${session && session.kind === 'head' ? `<p class="small">Your workspace is <b>encrypted</b> and saved in this browser only. Export an encrypted backup regularly; it opens only with your passphrase.</p>
-   <div class="actions"><button class="btn" onclick="exportBackup()">Export encrypted backup</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label></div>`
+   <div class="actions"><button class="btn" onclick="exportBackup()">Export encrypted backup</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label><label class="btn">Apply update file<input type="file" accept=".json" hidden onchange="applyUpdateFile(this.files[0]);this.value=''"></label></div>`
    : '<p class="small">Demo data is fictional and is not saved.</p>'}</section>`;
 };
 

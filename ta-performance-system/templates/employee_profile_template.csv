@@ -1,5 +1,5 @@
-Employee ID,Employee Name,TA Team,Business Area,Role,Also Supports,Status,Start Date,Leaving Date,Job Level,Date In Current Level,Rating Year-1,Rating Year-2,Rating Year-3,Notes to Confirm
-E1001,Sample Lead,DTO+,DTO,Team Lead,,Active,,,L4 - TA Lead,2023-04-01,Exceeds,Meets,Exceeds,
-E1002,Sample Recruiter,TTI,GTP,Recruiter,VCE + Leadership Hiring,Active,,,L2 - Senior Recruiter,2024-04-01,Meets,Meets,,
-E1003,Sample Former Member,University Relations & Early Careers,Early Careers,Recruiter,,Former,,2026-08-31,L2 - Senior Recruiter,2022-04-01,Exceeds,Meets,,Confirm leaving date
-E1004,Sample Coordinator,DTO+,DTO,Support / Operations,,Active,2026-04-01,,L1 - Recruiter,2026-04-01,,,,
+Employee ID,Employee Name,Also Known As,With Team Since,TA Team,Business Area,Role,Also Supports,Status,Start Date,Leaving Date,Job Level,Date In Current Level,Rating Year-1,Rating Year-2,Rating Year-3,Notes to Confirm
+E1001,Sample Lead,,,DTO+,DTO,Team Lead,,Active,,,L4 - TA Lead,2023-04-01,Exceeds,Meets,Exceeds,
+E1002,Sample Recruiter,,,TTI,GTP,Recruiter,VCE + Leadership Hiring,Active,,,L2 - Senior Recruiter,2024-04-01,Meets,Meets,,
+E1003,Sample Former Member,,,University Relations & Early Careers,Early Careers,Recruiter,,Former,,2026-08-31,L2 - Senior Recruiter,2022-04-01,Exceeds,Meets,,Confirm leaving date
+E1004,Sample Coordinator,,,DTO+,DTO,Support / Operations,,Active,2026-04-01,,L1 - Recruiter,2026-04-01,,,,

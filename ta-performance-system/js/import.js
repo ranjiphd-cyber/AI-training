@@ -26,6 +26,7 @@ const IMPORT_DATASETS = {
     ['id', 'Employee ID', true, ['employee id', 'emp id', 'id']], ['name', 'Employee Name', true, ['employee name', 'name', 'full name']],
     ['team', 'TA Team', true, ['ta team', 'team']], ['area', 'Business Area', true, ['business area', 'area', 'bu']],
     ['type', 'Role', true, ['role type', 'role', 'ic/tl', 'type']], ['level', 'Job Level', false, ['job level', 'level', 'grade']],
+    ['aliases', 'Also Known As', false, ['also known as', 'aliases', 'full name', 'alias']], ['joined', 'With Team Since', false, ['with team since', 'joined team', 'date joined']],
     ['also', 'Also Supports (teams, ; separated)', false, ['also supports', 'also supports teams', 'secondary team', 'secondary teams']],
     ['status', 'Status (Active / Former)', false, ['status', 'employment status']], ['end', 'Leaving Date', false, ['leaving date', 'end date', 'exit date', 'last working day']],
     ['flags', 'Notes to Confirm (separate with |)', false, ['notes to confirm', 'to confirm', 'notes']],
@@ -158,7 +159,11 @@ function impValidate() {
   const seen = {};
   for (const rec of im.records) { rec.msgs = []; rec.norm = {}; fn(rec, seen); rec.status = rec.msgs.some(m => m[0] === 'E') ? 'error' : rec.msgs.length ? 'warn' : 'ok'; }
 }
-function findEmp(v) { v = String(v || '').trim(); return state.employees.find(e => e.id.toLowerCase() === v.toLowerCase() || e.name.toLowerCase() === v.toLowerCase()); }
+function findEmp(v) {
+  v = String(v || '').trim().toLowerCase();
+  const al = e => String(e.aliases || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  return state.employees.find(e => e.id.toLowerCase() === v || e.name.toLowerCase() === v) || state.employees.find(e => al(e).includes(v));
+}
 function validateOffer(rec, seen) {
   const v = rec.v, n = rec.norm, E = m => rec.msgs.push(['E', m]), W = m => rec.msgs.push(['W', m]);
   const e = findEmp(v.emp); if (!e) E('V4 Unknown recruiter "' + v.emp + '"'); else n.emp = e.id;
@@ -226,6 +231,9 @@ function validateProfile(rec, seen) {
   n.flags = String(v.flags || '').split('|').map(x => x.trim()).filter(Boolean);
   n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : (emp(v.id) ? emp(v.id).level : ''));
   if (v.level && !JOB_LEVELS.includes(n.level)) W('Job level not in list — kept as entered (D-30)');
+  const cur = emp(v.id);
+  n.aliases = v.aliases ? v.aliases : (cur ? cur.aliases || '' : '');
+  { const d = normDate(v.joined); if (d.startsWith('INVALID')) E('Unreadable date "' + v.joined + '"'); else n.joined = d || (cur ? cur.joined || null : null); }
   for (const k of ['since', 'start', 'end']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
   n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
@@ -340,7 +348,7 @@ function impPublish() {
     }
   } else if (im.dataset === 'profile') {
     for (const r of recs) { const n = r.norm, e = emp(n.id);
-      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || (e ? e.since : null), start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings };
+      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || (e ? e.since : null), start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings, aliases: n.aliases, joined: n.joined };
       if (e) { updated.push({ id: e.id, prev: JSON.parse(JSON.stringify(e)) }); Object.assign(e, data); } else { addEmployee(Object.assign({ id: n.id }, data)); added.push(n.id); } }
   } else if (im.dataset === 'ratings') {
     for (const r of recs) { const n = r.norm; const h = state.assessments[n.emp] = state.assessments[n.emp] || [];

@@ -40,6 +40,10 @@ People are assessed on **weighted hiring points**, not offer counts:
 
 For people with only a summary scorecard, enter their weighted points with **Enter points** on their Business Deliverables panel, or include a *Weighted Points* column in the recruiter scorecard import.
 
+## Adding new information later
+
+Use **Team Setup → Apply update file** to merge new information (full names and aliases, joining dates, roles, tracker figures, projects) into your workspace. You see a preview of every change first. Nothing you have already entered is replaced, applying the same file twice adds nothing new, and every change is recorded in the audit log. Imports also recognise people by any of their recorded aliases (for example, a full name or a short name used in a tracker).
+
 ## Teams, roles and assignments
 
 Open **Team Setup** to:

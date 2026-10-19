@@ -197,7 +197,7 @@ function draftSummary(id) {
   const strengths = L ? COMPETENCIES.filter(c => L.mgr[c] >= 4) : [];
   const gaps = L ? COMPETENCIES.filter(c => L.mgr[c] < m.e.targets[c]) : [];
   return [`FACT: ${b.pointsFormal == null ? 'weighted points not recorded' : r1(b.pointsFormal) + ' weighted points'} against a points target of ${r1(b.pointsTargetFormal)} (${m.att == null ? '—' : Math.round(m.att * 100) + '%'}); ${b.actualFormal} offers.`,
-    `FACT: Joining ratio ${r1(b.jr)}%; average cycle time ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}); vendor usage ${r1(b.vendorPct)}%.`,
+    `FACT: Joining ratio ${r1(b.jr)}%; average cycle time ${r1(b.ctAvg)} days${b.ctMedian != null ? ' (median ' + r1(b.ctMedian) + ')' : ''}; vendor usage ${r1(b.vendorPct)}%.`,
     m.isTL && m.team ? `FACT: Team (${m.team.members.length} members) delivered ${m.team.pointsFormal == null ? 'n/a' : r1(m.team.pointsFormal)} of ${r1(m.team.pointsTargetFormal)} target points (${m.team.actualFormal} offers).` : '',
     `FACT: Projects ${m.projects == null ? 'not yet scored' : m.projects + '/15'}; competency development ${m.cdM == null ? 'not yet scored' : m.cdM + '/15'}.`,
     strengths.length ? `FACT: TA Head rated 4+ on ${strengths.join(', ')}.` : '',
@@ -285,6 +285,9 @@ function memberDlg(id) {
    <label class="field">Business area<select id="mb-a">${opt(teamAreas(e.team).includes(e.area) || !e.area ? teamAreas(e.team) : [e.area, ...teamAreas(e.team)], e.area)}</select></label>
    <label class="field">Role<select id="mb-ty">${Object.entries(state.roles).map(([k, r]) => `<option value="${k}" ${k === e.type ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
    <label class="field">Status<select id="mb-st2"><option ${e.status !== 'Former' ? 'selected' : ''}>Active</option><option ${e.status === 'Former' ? 'selected' : ''}>Former</option></select></label>
+   <label class="field">Also known as (full name, spellings; comma-separated)<input type="text" id="mb-al" value="${esc(e.aliases || '')}"></label>
+   <label class="field">With the team since<input type="date" id="mb-jn" value="${e.joined || ''}"></label>
+   <label class="field" style="grid-column:1/-1">Role description (org chart)<input type="text" id="mb-rn" value="${esc(e.roleNote || '')}"></label>
    <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label><label class="field">Leaving date (former members)<input type="date" id="mb-end" value="${e.end || ''}"></label>
    ${head ? `<label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS.includes(e.level) ? JOB_LEVELS : [e.level, ...JOB_LEVELS], e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
    ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}` : ''}</div>
@@ -298,7 +301,7 @@ function memberDlg(id) {
       if (id && !val('mb-why')) { toast('Add a reason for the change.'); return false; }
       const role = state.roles[val('mb-ty')];
       if (role.template === 'lead' && val('mb-st2') !== 'Former') { const other = state.employees.find(x => x.team === val('mb-t') && isLead(x) && !isFormer(x) && x.id !== nid); if (other) { toast(other.name + ' is already the active team lead for this team.'); return false; } }
-      const data = { id: nid, name: val('mb-n'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
+      const data = { id: nid, name: val('mb-n'), aliases: val('mb-al'), joined: val('mb-jn') || null, roleNote: val('mb-rn'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
         alsoTeams: [...document.querySelectorAll('.mb-also:checked')].map(x => x.value).filter(t => t !== val('mb-t')), flags: val('mb-f').split('\n').map(x => x.trim()).filter(Boolean) };
       if (head) Object.assign(data, { level: val('mb-l'), since: val('mb-s') || PERIOD.start, ratings: [0, 1, 2].map(i => val('mb-r' + i) || null) });
       const before = id ? `${teamName(e.team)} · ${e.area} · ${roleOf(e).name} · ${e.status || 'Active'}` : '';

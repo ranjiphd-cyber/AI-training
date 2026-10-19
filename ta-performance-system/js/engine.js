@@ -536,7 +536,7 @@ function promotion(id) {
   const yrs = e.since ? D.diff(PERIOD.cutoff, e.since) / 365.25 : null;
   crit.push({ ok: yrs != null && yrs >= 2, label: '≥ 2 years in current level', fact: yrs == null ? 'Job level / date in level not recorded' : r1(yrs) + ' years in ' + e.level });
   const lead = (m.latest && m.latest.mgr['Collaboration & Leadership'] >= 4) || m.projs.some(p => p.stage >= 3 && p.mgrScore);
-  crit.push({ ok: lead, label: 'Leadership evidence (Collaboration & Leadership ≥ 4, or project validated to Improve)', fact: 'Collab & Leadership ' + (m.latest ? m.latest.mgr['Collaboration & Leadership'] : 'n/a') + '; best project stage ' + (m.projs.length ? DMAIC[Math.max(...m.projs.map(p => p.stage))] : 'none') });
+  crit.push({ ok: lead, label: 'Leadership evidence (Collaboration & Leadership ≥ 4, or project validated to Improve)', fact: 'Collab & Leadership ' + (m.latest ? m.latest.mgr['Collaboration & Leadership'] : 'n/a') + '; best validated project stage ' + (m.projs.length && Math.max(...m.projs.map(p => p.stage)) >= 0 ? DMAIC[Math.max(...m.projs.map(p => p.stage))] : 'none') });
   const met = crit.filter(c => c.ok).length;
   let level, rank;
   if (isFormer(e)) { level = 'Not assessed (former team member)'; rank = 5; }
@@ -555,7 +555,7 @@ function recommendations(id) {
   const m = metrics(id), b = m.own, out = [];
   const R = state.rules;
   if (m.att != null && m.att < .85) out.push({ area: 'Delivery', fact: pointsBasis() ? `Weighted points are ${Math.round(m.att * 100)}% of the points target (${r1(b.pointsFormal)} of ${r1(b.pointsTargetFormal)}; ${b.actualFormal} offers).` : `Volume attainment is ${Math.round(m.att * 100)}% of the closed-cycle target (${b.actualFormal} of ${r1(b.expectedFormal)} offers).`, suggestion: pointsBasis() && b.actualYTD && b.pointsYTD / b.actualYTD < state.rules.pointsPerOffer ? `Average ${r1(b.pointsYTD / b.actualYTD)} points per offer, below the ${state.rules.pointsPerOffer} assumed in the target: discuss the hiring mix and whether the area's points-per-offer should differ.` : 'Agree a 2-cycle recovery plan: weekly pipeline review and early escalation of stalled requisitions.', vis: 'all' });
-  if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) out.push({ area: 'Cycle time', fact: `Average req-to-offer cycle time is ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}).`, suggestion: 'Consider a requisition-ageing improvement project; record approved exceptions for genuine business holds.', vis: 'all' });
+  if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) out.push({ area: 'Cycle time', fact: `Average req-to-offer cycle time is ${r1(b.ctAvg)} days${b.ctMedian != null ? ' (median ' + r1(b.ctMedian) + ')' : ''}.`, suggestion: 'Consider a requisition-ageing improvement project; record approved exceptions for genuine business holds.', vis: 'all' });
   if (b.jr != null && b.jr < R.jrException) out.push({ area: 'Joining', fact: `Joining ratio is ${r1(b.jr)}% (${b.joined} of ${b.matured} matured offers).`, suggestion: 'Introduce pre-joining engagement touchpoints and review decline reasons monthly.', vis: 'all' });
   if (b.vendorPct != null && b.vendorPct > R.vendorBands.high) out.push({ area: 'Sourcing', fact: `Vendor usage is ${r1(b.vendorPct)}% of applicable hires.`, suggestion: 'Build direct-sourcing pipelines (referrals, talent communities) for repeat roles.', vis: 'all' });
   if (m.latest) {

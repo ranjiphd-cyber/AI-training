@@ -936,7 +936,7 @@ function promotion(id) {
   const yrs = e.since ? D.diff(PERIOD.cutoff, e.since) / 365.25 : null;
   crit.push({ ok: yrs != null && yrs >= 2, label: '≥ 2 years in current level', fact: yrs == null ? 'Job level / date in level not recorded' : r1(yrs) + ' years in ' + e.level });
   const lead = (m.latest && m.latest.mgr['Collaboration & Leadership'] >= 4) || m.projs.some(p => p.stage >= 3 && p.mgrScore);
-  crit.push({ ok: lead, label: 'Leadership evidence (Collaboration & Leadership ≥ 4, or project validated to Improve)', fact: 'Collab & Leadership ' + (m.latest ? m.latest.mgr['Collaboration & Leadership'] : 'n/a') + '; best project stage ' + (m.projs.length ? DMAIC[Math.max(...m.projs.map(p => p.stage))] : 'none') });
+  crit.push({ ok: lead, label: 'Leadership evidence (Collaboration & Leadership ≥ 4, or project validated to Improve)', fact: 'Collab & Leadership ' + (m.latest ? m.latest.mgr['Collaboration & Leadership'] : 'n/a') + '; best validated project stage ' + (m.projs.length && Math.max(...m.projs.map(p => p.stage)) >= 0 ? DMAIC[Math.max(...m.projs.map(p => p.stage))] : 'none') });
   const met = crit.filter(c => c.ok).length;
   let level, rank;
   if (isFormer(e)) { level = 'Not assessed (former team member)'; rank = 5; }
@@ -955,7 +955,7 @@ function recommendations(id) {
   const m = metrics(id), b = m.own, out = [];
   const R = state.rules;
   if (m.att != null && m.att < .85) out.push({ area: 'Delivery', fact: pointsBasis() ? `Weighted points are ${Math.round(m.att * 100)}% of the points target (${r1(b.pointsFormal)} of ${r1(b.pointsTargetFormal)}; ${b.actualFormal} offers).` : `Volume attainment is ${Math.round(m.att * 100)}% of the closed-cycle target (${b.actualFormal} of ${r1(b.expectedFormal)} offers).`, suggestion: pointsBasis() && b.actualYTD && b.pointsYTD / b.actualYTD < state.rules.pointsPerOffer ? `Average ${r1(b.pointsYTD / b.actualYTD)} points per offer, below the ${state.rules.pointsPerOffer} assumed in the target: discuss the hiring mix and whether the area's points-per-offer should differ.` : 'Agree a 2-cycle recovery plan: weekly pipeline review and early escalation of stalled requisitions.', vis: 'all' });
-  if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) out.push({ area: 'Cycle time', fact: `Average req-to-offer cycle time is ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}).`, suggestion: 'Consider a requisition-ageing improvement project; record approved exceptions for genuine business holds.', vis: 'all' });
+  if (b.ctAvg != null && b.ctAvg > R.ctBands.acceptable) out.push({ area: 'Cycle time', fact: `Average req-to-offer cycle time is ${r1(b.ctAvg)} days${b.ctMedian != null ? ' (median ' + r1(b.ctMedian) + ')' : ''}.`, suggestion: 'Consider a requisition-ageing improvement project; record approved exceptions for genuine business holds.', vis: 'all' });
   if (b.jr != null && b.jr < R.jrException) out.push({ area: 'Joining', fact: `Joining ratio is ${r1(b.jr)}% (${b.joined} of ${b.matured} matured offers).`, suggestion: 'Introduce pre-joining engagement touchpoints and review decline reasons monthly.', vis: 'all' });
   if (b.vendorPct != null && b.vendorPct > R.vendorBands.high) out.push({ area: 'Sourcing', fact: `Vendor usage is ${r1(b.vendorPct)}% of applicable hires.`, suggestion: 'Build direct-sourcing pipelines (referrals, talent communities) for repeat roles.', vis: 'all' });
   if (m.latest) {
@@ -1314,6 +1314,9 @@ function memberView(id, viewer) {
       ${head && (e.flags || []).length ? `<div class="note warn small"><b>To confirm:</b> ${e.flags.map(esc).join(' · ')}</div>` : ''}
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
       <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
+      ${e.joined ? `<div><dt>With the team since</dt><dd>${D.nice(e.joined)}</dd></div>` : ''}
+      ${head && e.aliases ? `<div><dt>Also known as</dt><dd class="small">${esc(e.aliases)}</dd></div>` : ''}
+      ${e.roleNote ? `<div><dt>Role (org chart)</dt><dd class="small">${esc(e.roleNote)}</dd></div>` : ''}
       ${(e.alsoTeams || []).length ? `<div><dt>Also supports</dt><dd>${e.alsoTeams.map(t => esc(teamName(t))).join(', ')}</dd></div>` : ''}
       <div><dt>Review period</dt><dd>${PERIOD.label}</dd></div><div><dt>Points target</dt><dd>${m.mode === 'support' ? 'Not applicable' : fmt(annualPoints(e)) + ' per year' + (e.ptAnnual != null ? ' (personal target)' : m.mode === 'summary' ? ' (' + fmt(m.own.target) + ' offers × ' + m.ppo + ')' : ' (' + fmt(m.target) + ' offers per 10 days × ' + m.ppo + ')')}${head && m.mode !== 'support' ? ` <button class="btn link small" onclick="pointsTargetDlg('${e.id}')">Edit</button>` : ''} ${m.mode === 'tx' && AREAS[e.area] && AREAS[e.area].status === 'placeholder' ? statusChip('pending', true, 'Placeholder') : ''}</dd></div></dl>
     </div><div class="actions" style="flex-direction:column;align-items:flex-end">
@@ -1406,6 +1409,10 @@ function summaryDeliverables(m, head) {
    <p class="small muted">Deliverables: <b>${m.ownDel.total != null ? fmt(m.ownDel.total) + ' / 70' : fmt(m.ownDel.raw) + ' of ' + m.ownDel.maxAvail + ' available (points needed for the 40-point score)'}</b>. ${sc.note ? esc(sc.note) : ''}</p>`;
   const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] != null || (sc.joinStreams || {})[k] != null);
   if (rows.length) h += `<h3>Offers and joiners by stream</h3><div class="tbl-wrap"><table><thead><tr><th>Stream</th><th class="n">Offers</th><th class="n">Joiners</th></tr></thead><tbody>${rows.map(k => `<tr><td>${{ core: 'Core / campus (incl. conversion)', nats: 'NATS', excelher: 'ExcelHER', other: 'Other (interns, PwD, PhD, veterans, SPARK)' }[k]}</td><td class="n">${streams[k] ?? '—'}</td><td class="n">${(sc.joinStreams || {})[k] ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
+  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Lateral and fresher hiring (hiring tracker)</h3><div class="grid g4">
+    <div class="kpi"><div class="lab">Offers released</div><div class="val">${t.offers ?? '—'}</div><div class="sub">${esc(t.period || '')}</div></div><div class="kpi"><div class="lab">Joined</div><div class="val">${t.joined ?? '—'}</div></div>
+    <div class="kpi"><div class="lab">Declined</div><div class="val">${t.declined ?? '—'}</div></div><div class="kpi"><div class="lab">Pending joining</div><div class="val">${t.pending ?? '—'}</div></div></div>
+    <p class="small muted">${esc(t.note || '')}</p>`; }
   h += `<div class="grid g4" style="margin-top:10px"><div class="kpi"><div class="lab">Days to join</div><div class="val">${sc.joinDays ?? '—'}</div></div><div class="kpi"><div class="lab">Offers declined</div><div class="val">${pct(sc.declinedPct)}</div></div><div class="kpi"><div class="lab">Gender diversity</div><div class="val">${pct(sc.diversityPct)}</div><div class="sub">denominator not stated in source</div></div><div class="kpi"><div class="lab">Referral share</div><div class="val">${pct(sc.referralPct)}</div></div></div></section>`;
   return h;
 }
@@ -1745,7 +1752,7 @@ VIEWS.setup = () => {
    ${Object.entries(state.teams).flatMap(([k, t]) => t.areas.map(a => `<tr><td>${esc(t.name)}</td><td>${esc(a)}</td><td class="n">${state.areaTargets[a] == null ? 'n/a' : fmt(areaTarget(a))}</td><td class="n">${state.areaTargets[a] == null ? '' : ppoFor(a) + (state.areaPPO[a] != null ? ' (area)' : '')}</td><td class="n"><b>${state.areaTargets[a] == null ? '' : fmt(areaTarget(a) * ppoFor(a))}</b></td><td>${AREAS[a] ? (AREAS[a].status === 'brd' ? statusChip('brd') : statusChip('pending', true, 'Placeholder — D-15')) : '<span class="chip">Set in workspace</span>'}</td><td>${canEdit ? `<button class="btn sm" onclick="targetDlg('${esc(a)}')">Change</button>` : ''}</td></tr>`)).join('')}</tbody></table></div></section>
   <section class="card"><header><h2>Workspace</h2><span class="chip">${session && session.kind === 'head' ? 'Encrypted · ' + esc(session.email) : 'Demo'}</span></header>
    ${session && session.kind === 'head' ? `<p class="small">Your workspace is <b>encrypted</b> and saved in this browser only. Export an encrypted backup regularly; it opens only with your passphrase.</p>
-   <div class="actions"><button class="btn" onclick="exportBackup()">Export encrypted backup</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label></div>`
+   <div class="actions"><button class="btn" onclick="exportBackup()">Export encrypted backup</button><label class="btn">Restore backup<input type="file" accept=".json" hidden onchange="restoreBackup(this.files[0])"></label><label class="btn">Apply update file<input type="file" accept=".json" hidden onchange="applyUpdateFile(this.files[0]);this.value=''"></label></div>`
    : '<p class="small">Demo data is fictional and is not saved.</p>'}</section>`;
 };
 
@@ -2009,7 +2016,7 @@ function draftSummary(id) {
   const strengths = L ? COMPETENCIES.filter(c => L.mgr[c] >= 4) : [];
   const gaps = L ? COMPETENCIES.filter(c => L.mgr[c] < m.e.targets[c]) : [];
   return [`FACT: ${b.pointsFormal == null ? 'weighted points not recorded' : r1(b.pointsFormal) + ' weighted points'} against a points target of ${r1(b.pointsTargetFormal)} (${m.att == null ? '—' : Math.round(m.att * 100) + '%'}); ${b.actualFormal} offers.`,
-    `FACT: Joining ratio ${r1(b.jr)}%; average cycle time ${r1(b.ctAvg)} days (median ${r1(b.ctMedian)}); vendor usage ${r1(b.vendorPct)}%.`,
+    `FACT: Joining ratio ${r1(b.jr)}%; average cycle time ${r1(b.ctAvg)} days${b.ctMedian != null ? ' (median ' + r1(b.ctMedian) + ')' : ''}; vendor usage ${r1(b.vendorPct)}%.`,
     m.isTL && m.team ? `FACT: Team (${m.team.members.length} members) delivered ${m.team.pointsFormal == null ? 'n/a' : r1(m.team.pointsFormal)} of ${r1(m.team.pointsTargetFormal)} target points (${m.team.actualFormal} offers).` : '',
     `FACT: Projects ${m.projects == null ? 'not yet scored' : m.projects + '/15'}; competency development ${m.cdM == null ? 'not yet scored' : m.cdM + '/15'}.`,
     strengths.length ? `FACT: TA Head rated 4+ on ${strengths.join(', ')}.` : '',
@@ -2097,6 +2104,9 @@ function memberDlg(id) {
    <label class="field">Business area<select id="mb-a">${opt(teamAreas(e.team).includes(e.area) || !e.area ? teamAreas(e.team) : [e.area, ...teamAreas(e.team)], e.area)}</select></label>
    <label class="field">Role<select id="mb-ty">${Object.entries(state.roles).map(([k, r]) => `<option value="${k}" ${k === e.type ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</select></label>
    <label class="field">Status<select id="mb-st2"><option ${e.status !== 'Former' ? 'selected' : ''}>Active</option><option ${e.status === 'Former' ? 'selected' : ''}>Former</option></select></label>
+   <label class="field">Also known as (full name, spellings; comma-separated)<input type="text" id="mb-al" value="${esc(e.aliases || '')}"></label>
+   <label class="field">With the team since<input type="date" id="mb-jn" value="${e.joined || ''}"></label>
+   <label class="field" style="grid-column:1/-1">Role description (org chart)<input type="text" id="mb-rn" value="${esc(e.roleNote || '')}"></label>
    <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label><label class="field">Leaving date (former members)<input type="date" id="mb-end" value="${e.end || ''}"></label>
    ${head ? `<label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS.includes(e.level) ? JOB_LEVELS : [e.level, ...JOB_LEVELS], e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
    ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}` : ''}</div>
@@ -2110,7 +2120,7 @@ function memberDlg(id) {
       if (id && !val('mb-why')) { toast('Add a reason for the change.'); return false; }
       const role = state.roles[val('mb-ty')];
       if (role.template === 'lead' && val('mb-st2') !== 'Former') { const other = state.employees.find(x => x.team === val('mb-t') && isLead(x) && !isFormer(x) && x.id !== nid); if (other) { toast(other.name + ' is already the active team lead for this team.'); return false; } }
-      const data = { id: nid, name: val('mb-n'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
+      const data = { id: nid, name: val('mb-n'), aliases: val('mb-al'), joined: val('mb-jn') || null, roleNote: val('mb-rn'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
         alsoTeams: [...document.querySelectorAll('.mb-also:checked')].map(x => x.value).filter(t => t !== val('mb-t')), flags: val('mb-f').split('\n').map(x => x.trim()).filter(Boolean) };
       if (head) Object.assign(data, { level: val('mb-l'), since: val('mb-s') || PERIOD.start, ratings: [0, 1, 2].map(i => val('mb-r' + i) || null) });
       const before = id ? `${teamName(e.team)} · ${e.area} · ${roleOf(e).name} · ${e.status || 'Active'}` : '';
@@ -2251,6 +2261,7 @@ const IMPORT_DATASETS = {
     ['id', 'Employee ID', true, ['employee id', 'emp id', 'id']], ['name', 'Employee Name', true, ['employee name', 'name', 'full name']],
     ['team', 'TA Team', true, ['ta team', 'team']], ['area', 'Business Area', true, ['business area', 'area', 'bu']],
     ['type', 'Role', true, ['role type', 'role', 'ic/tl', 'type']], ['level', 'Job Level', false, ['job level', 'level', 'grade']],
+    ['aliases', 'Also Known As', false, ['also known as', 'aliases', 'full name', 'alias']], ['joined', 'With Team Since', false, ['with team since', 'joined team', 'date joined']],
     ['also', 'Also Supports (teams, ; separated)', false, ['also supports', 'also supports teams', 'secondary team', 'secondary teams']],
     ['status', 'Status (Active / Former)', false, ['status', 'employment status']], ['end', 'Leaving Date', false, ['leaving date', 'end date', 'exit date', 'last working day']],
     ['flags', 'Notes to Confirm (separate with |)', false, ['notes to confirm', 'to confirm', 'notes']],
@@ -2383,7 +2394,11 @@ function impValidate() {
   const seen = {};
   for (const rec of im.records) { rec.msgs = []; rec.norm = {}; fn(rec, seen); rec.status = rec.msgs.some(m => m[0] === 'E') ? 'error' : rec.msgs.length ? 'warn' : 'ok'; }
 }
-function findEmp(v) { v = String(v || '').trim(); return state.employees.find(e => e.id.toLowerCase() === v.toLowerCase() || e.name.toLowerCase() === v.toLowerCase()); }
+function findEmp(v) {
+  v = String(v || '').trim().toLowerCase();
+  const al = e => String(e.aliases || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+  return state.employees.find(e => e.id.toLowerCase() === v || e.name.toLowerCase() === v) || state.employees.find(e => al(e).includes(v));
+}
 function validateOffer(rec, seen) {
   const v = rec.v, n = rec.norm, E = m => rec.msgs.push(['E', m]), W = m => rec.msgs.push(['W', m]);
   const e = findEmp(v.emp); if (!e) E('V4 Unknown recruiter "' + v.emp + '"'); else n.emp = e.id;
@@ -2451,6 +2466,9 @@ function validateProfile(rec, seen) {
   n.flags = String(v.flags || '').split('|').map(x => x.trim()).filter(Boolean);
   n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : (emp(v.id) ? emp(v.id).level : ''));
   if (v.level && !JOB_LEVELS.includes(n.level)) W('Job level not in list — kept as entered (D-30)');
+  const cur = emp(v.id);
+  n.aliases = v.aliases ? v.aliases : (cur ? cur.aliases || '' : '');
+  { const d = normDate(v.joined); if (d.startsWith('INVALID')) E('Unreadable date "' + v.joined + '"'); else n.joined = d || (cur ? cur.joined || null : null); }
   for (const k of ['since', 'start', 'end']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
   n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
@@ -2565,7 +2583,7 @@ function impPublish() {
     }
   } else if (im.dataset === 'profile') {
     for (const r of recs) { const n = r.norm, e = emp(n.id);
-      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || (e ? e.since : null), start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings };
+      const data = { name: n.name, team: n.team, area: n.area, type: n.type, level: n.level, since: n.since || (e ? e.since : null), start: n.start || null, end: n.end || null, status: n.status, alsoTeams: n.alsoTeams, flags: n.flags, ratings: n.ratings, aliases: n.aliases, joined: n.joined };
       if (e) { updated.push({ id: e.id, prev: JSON.parse(JSON.stringify(e)) }); Object.assign(e, data); } else { addEmployee(Object.assign({ id: n.id }, data)); added.push(n.id); } }
   } else if (im.dataset === 'ratings') {
     for (const r of recs) { const n = r.norm; const h = state.assessments[n.emp] = state.assessments[n.emp] || [];
@@ -3193,6 +3211,56 @@ function mergeResponses(r, fname) {
   if (d.compDevSelf) { (state.compDev[id] = state.compDev[id] || {}).self = d.compDevSelf; }
   audit('Employee responses imported', e.name, changes.join('; ') || 'No new changes', fname); touch(); render();
   toast(changes.length ? `Imported for ${e.name}: ${changes.length} change(s)` : 'No new changes in this file');
+}
+
+// ---------- update files (merge new information without replacing the workspace) ----------
+// Format: { format: 'ta-pdms-update', source, people: [{ id, set, addFlags, removeFlags }], scorecards: { id: fields },
+//           projects: [{ owner, match, set } | { owner, add }] }. Preview first; every change is audited.
+async function applyUpdateFile(file) {
+  if (!file) return;
+  let u; try { u = JSON.parse(await readFileText(file)); } catch (e) { toast('Not a valid update file.'); return; }
+  const go2 = obj => { if (obj.format !== 'ta-pdms-update') { toast('Not an update file.'); return; } previewUpdate(obj, file.name); };
+  if (isEncrypted(u)) askPass('Apply update', 'Passphrase for this file', async p => { try { go2((await openEnvelope(u, p)).obj); } catch (e) { toast(e.message); } }); else go2(u);
+}
+function updatePlan(u) {
+  const plan = [];
+  for (const p of u.people || []) { const e = emp(p.id); if (!e) { plan.push(['Skipped', p.id, 'Not in this workspace']); continue; }
+    const ch = Object.entries(p.set || {}).filter(([k, v]) => JSON.stringify(e[k]) !== JSON.stringify(v)).map(([k, v]) => k + ': ' + (Array.isArray(v) ? v.join(', ') : v));
+    const rm = (e.flags || []).filter(f => (p.removeFlags || []).some(x => f.includes(x)));
+    const add = (p.addFlags || []).filter(f => !(e.flags || []).includes(f));
+    if (ch.length || rm.length || add.length) plan.push(['Person', e.name, [...ch, ...rm.map(f => 'resolved: ' + f), ...add.map(f => 'to confirm: ' + f)].join(' · ')]); }
+  for (const [id, f] of Object.entries(u.scorecards || {})) { const e = emp(id); if (!e) { plan.push(['Skipped', id, 'Not in this workspace']); continue; }
+    plan.push(['Scorecard', e.name, Object.keys(f).join(', ') + (state.scorecards[id] ? '' : ' (new scorecard)')]); }
+  for (const p of u.projects || []) { const e = emp(p.owner); if (!e) { plan.push(['Skipped', p.owner, 'Project owner not in this workspace']); continue; }
+    const ex = p.match && state.projects.find(x => x.owner === p.owner && x.title.toLowerCase().includes(p.match.toLowerCase()));
+    if (p.add && state.projects.some(x => x.owner === p.owner && x.title.toLowerCase() === p.add.title.toLowerCase())) { plan.push(['Skipped', e.name, 'Project already present: ' + p.add.title]); continue; }
+    plan.push(['Project', e.name, ex ? 'update "' + ex.title + '"' + (p.set.title && p.set.title !== ex.title ? ' → "' + p.set.title + '"' : '') : p.add ? 'add "' + p.add.title + '"' : 'no match for "' + p.match + '" (skipped)']); }
+  return plan;
+}
+function previewUpdate(u, fname) {
+  const plan = updatePlan(u);
+  openDlg('Apply update', `<p class="small">Source: ${esc(u.source || fname)}. Nothing is replaced wholesale; only the items below change, and each change is recorded in the audit log.</p>
+   <div class="tbl-wrap"><table><thead><tr><th>Type</th><th>Who</th><th>Change</th></tr></thead><tbody>${plan.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="small">${esc(r[2])}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Nothing new in this file.</td></tr>'}</tbody></table></div>`,
+    [{ label: 'Cancel' }, { label: 'Apply', cls: 'pri', onClick: () => { mergeUpdate(u, fname); } }]);
+  document.getElementById('dlg').style.maxWidth = '960px';
+}
+function mergeUpdate(u, fname) {
+  const src = u.source || fname; let n = 0;
+  for (const p of u.people || []) { const e = emp(p.id); if (!e) continue;
+    for (const [k, v] of Object.entries(p.set || {})) if (JSON.stringify(e[k]) !== JSON.stringify(v)) { audit('Updated from file', e.name, k + ': ' + (e[k] ?? '—') + ' → ' + v, src); e[k] = v; n++; }
+    const before = (e.flags || []).length;
+    e.flags = (e.flags || []).filter(f => !(p.removeFlags || []).some(x => f.includes(x)));
+    if (e.flags.length < before) { audit('Resolved from file', e.name, (before - e.flags.length) + ' item(s) to confirm', src); n++; }
+    for (const f of p.addFlags || []) if (!e.flags.includes(f)) { e.flags.push(f); n++; } }
+  for (const [id, f] of Object.entries(u.scorecards || {})) { if (!emp(id)) continue; state.scorecards[id] = Object.assign(state.scorecards[id] || { asOf: PERIOD.cutoff }, f); audit('Scorecard updated from file', emp(id).name, Object.keys(f).join(', '), src); n++; }
+  for (const p of u.projects || []) { if (!emp(p.owner)) continue;
+    const ex = p.match && state.projects.find(x => x.owner === p.owner && x.title.toLowerCase().includes(p.match.toLowerCase()));
+    if (ex) { Object.assign(ex, p.set); audit('Project updated from file', ex.id + ' · ' + emp(p.owner).name, ex.title, src); n++; }
+    else if (p.add && !state.projects.some(x => x.owner === p.owner && x.title.toLowerCase() === p.add.title.toLowerCase())) {
+      const pr = Object.assign({ id: 'P-' + String(state.projects.length + 1).padStart(3, '0'), owner: p.owner, problem: '', metric: '', baseline: '—', target: '—', actual: null, sponsor: 'TA Head', start: '', planEnd: '',
+        stage: -1, inProgress: null, lastValidated: '', planStages: [], history: [], nextAction: '', contributing: false, mgrScore: null, selfScore: null, lessons: '', reported: '' }, p.add);
+      state.projects.push(pr); audit('Project added from file', pr.id + ' · ' + emp(p.owner).name, pr.title, src); n++; } }
+  touch(); render(); toast(n + ' change(s) applied');
 }
 
 </script>

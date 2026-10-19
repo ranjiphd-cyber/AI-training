@@ -235,3 +235,53 @@ function mergeResponses(r, fname) {
   audit('Employee responses imported', e.name, changes.join('; ') || 'No new changes', fname); touch(); render();
   toast(changes.length ? `Imported for ${e.name}: ${changes.length} change(s)` : 'No new changes in this file');
 }
+
+// ---------- update files (merge new information without replacing the workspace) ----------
+// Format: { format: 'ta-pdms-update', source, people: [{ id, set, addFlags, removeFlags }], scorecards: { id: fields },
+//           projects: [{ owner, match, set } | { owner, add }] }. Preview first; every change is audited.
+async function applyUpdateFile(file) {
+  if (!file) return;
+  let u; try { u = JSON.parse(await readFileText(file)); } catch (e) { toast('Not a valid update file.'); return; }
+  const go2 = obj => { if (obj.format !== 'ta-pdms-update') { toast('Not an update file.'); return; } previewUpdate(obj, file.name); };
+  if (isEncrypted(u)) askPass('Apply update', 'Passphrase for this file', async p => { try { go2((await openEnvelope(u, p)).obj); } catch (e) { toast(e.message); } }); else go2(u);
+}
+function updatePlan(u) {
+  const plan = [];
+  for (const p of u.people || []) { const e = emp(p.id); if (!e) { plan.push(['Skipped', p.id, 'Not in this workspace']); continue; }
+    const ch = Object.entries(p.set || {}).filter(([k, v]) => JSON.stringify(e[k]) !== JSON.stringify(v)).map(([k, v]) => k + ': ' + (Array.isArray(v) ? v.join(', ') : v));
+    const rm = (e.flags || []).filter(f => (p.removeFlags || []).some(x => f.includes(x)));
+    const add = (p.addFlags || []).filter(f => !(e.flags || []).includes(f));
+    if (ch.length || rm.length || add.length) plan.push(['Person', e.name, [...ch, ...rm.map(f => 'resolved: ' + f), ...add.map(f => 'to confirm: ' + f)].join(' · ')]); }
+  for (const [id, f] of Object.entries(u.scorecards || {})) { const e = emp(id); if (!e) { plan.push(['Skipped', id, 'Not in this workspace']); continue; }
+    plan.push(['Scorecard', e.name, Object.keys(f).join(', ') + (state.scorecards[id] ? '' : ' (new scorecard)')]); }
+  for (const p of u.projects || []) { const e = emp(p.owner); if (!e) { plan.push(['Skipped', p.owner, 'Project owner not in this workspace']); continue; }
+    const ex = p.match && state.projects.find(x => x.owner === p.owner && x.title.toLowerCase().includes(p.match.toLowerCase()));
+    if (p.add && state.projects.some(x => x.owner === p.owner && x.title.toLowerCase() === p.add.title.toLowerCase())) { plan.push(['Skipped', e.name, 'Project already present: ' + p.add.title]); continue; }
+    plan.push(['Project', e.name, ex ? 'update "' + ex.title + '"' + (p.set.title && p.set.title !== ex.title ? ' → "' + p.set.title + '"' : '') : p.add ? 'add "' + p.add.title + '"' : 'no match for "' + p.match + '" (skipped)']); }
+  return plan;
+}
+function previewUpdate(u, fname) {
+  const plan = updatePlan(u);
+  openDlg('Apply update', `<p class="small">Source: ${esc(u.source || fname)}. Nothing is replaced wholesale; only the items below change, and each change is recorded in the audit log.</p>
+   <div class="tbl-wrap"><table><thead><tr><th>Type</th><th>Who</th><th>Change</th></tr></thead><tbody>${plan.map(r => `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td class="small">${esc(r[2])}</td></tr>`).join('') || '<tr><td colspan="3" class="empty">Nothing new in this file.</td></tr>'}</tbody></table></div>`,
+    [{ label: 'Cancel' }, { label: 'Apply', cls: 'pri', onClick: () => { mergeUpdate(u, fname); } }]);
+  document.getElementById('dlg').style.maxWidth = '960px';
+}
+function mergeUpdate(u, fname) {
+  const src = u.source || fname; let n = 0;
+  for (const p of u.people || []) { const e = emp(p.id); if (!e) continue;
+    for (const [k, v] of Object.entries(p.set || {})) if (JSON.stringify(e[k]) !== JSON.stringify(v)) { audit('Updated from file', e.name, k + ': ' + (e[k] ?? '—') + ' → ' + v, src); e[k] = v; n++; }
+    const before = (e.flags || []).length;
+    e.flags = (e.flags || []).filter(f => !(p.removeFlags || []).some(x => f.includes(x)));
+    if (e.flags.length < before) { audit('Resolved from file', e.name, (before - e.flags.length) + ' item(s) to confirm', src); n++; }
+    for (const f of p.addFlags || []) if (!e.flags.includes(f)) { e.flags.push(f); n++; } }
+  for (const [id, f] of Object.entries(u.scorecards || {})) { if (!emp(id)) continue; state.scorecards[id] = Object.assign(state.scorecards[id] || { asOf: PERIOD.cutoff }, f); audit('Scorecard updated from file', emp(id).name, Object.keys(f).join(', '), src); n++; }
+  for (const p of u.projects || []) { if (!emp(p.owner)) continue;
+    const ex = p.match && state.projects.find(x => x.owner === p.owner && x.title.toLowerCase().includes(p.match.toLowerCase()));
+    if (ex) { Object.assign(ex, p.set); audit('Project updated from file', ex.id + ' · ' + emp(p.owner).name, ex.title, src); n++; }
+    else if (p.add && !state.projects.some(x => x.owner === p.owner && x.title.toLowerCase() === p.add.title.toLowerCase())) {
+      const pr = Object.assign({ id: 'P-' + String(state.projects.length + 1).padStart(3, '0'), owner: p.owner, problem: '', metric: '', baseline: '—', target: '—', actual: null, sponsor: 'TA Head', start: '', planEnd: '',
+        stage: -1, inProgress: null, lastValidated: '', planStages: [], history: [], nextAction: '', contributing: false, mgrScore: null, selfScore: null, lessons: '', reported: '' }, p.add);
+      state.projects.push(pr); audit('Project added from file', pr.id + ' · ' + emp(p.owner).name, pr.title, src); n++; } }
+  touch(); render(); toast(n + ' change(s) applied');
+}
