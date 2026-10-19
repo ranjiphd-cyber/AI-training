@@ -122,7 +122,7 @@ function summaryDeliverables(m, head) {
    <p class="small muted">Deliverables: <b>${m.ownDel.total != null ? fmt(m.ownDel.total) + ' / 70' : fmt(m.ownDel.raw) + ' of ' + m.ownDel.maxAvail + ' available (points needed for the 40-point score)'}</b>. ${sc.note ? esc(sc.note) : ''}</p>`;
   const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] != null || (sc.joinStreams || {})[k] != null);
   if (rows.length) h += `<h3>Offers and joiners by stream</h3><div class="tbl-wrap"><table><thead><tr><th>Stream</th><th class="n">Offers</th><th class="n">Joiners</th></tr></thead><tbody>${rows.map(k => `<tr><td>${{ core: 'Core / campus (incl. conversion)', nats: 'NATS', excelher: 'ExcelHER', other: 'Other (interns, PwD, PhD, veterans, SPARK)' }[k]}</td><td class="n">${streams[k] ?? '—'}</td><td class="n">${(sc.joinStreams || {})[k] ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
-  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Lateral and fresher hiring (hiring tracker)</h3><div class="grid g4">
+  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Offers in the hiring trackers</h3><div class="grid g4">
     <div class="kpi"><div class="lab">Offers released</div><div class="val">${t.offers ?? '—'}</div><div class="sub">${esc(t.period || '')}</div></div><div class="kpi"><div class="lab">Joined</div><div class="val">${t.joined ?? '—'}</div></div>
     <div class="kpi"><div class="lab">Declined</div><div class="val">${t.declined ?? '—'}</div></div><div class="kpi"><div class="lab">Pending joining</div><div class="val">${t.pending ?? '—'}</div></div></div>
     <p class="small muted">${esc(t.note || '')}</p>`;

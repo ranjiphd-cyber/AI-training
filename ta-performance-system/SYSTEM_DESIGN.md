@@ -332,7 +332,9 @@ Rule tables with version, effective date, status (**Approved / Pending approval*
 | NATS Hiring | 1 | +0.5 | 1 | +0.5 | No |
 | NATS Conversion | 1 | None | 1 | +0.5 | **Yes — bonus** |
 | Contract Conversion | 1 | None | 1 | +0.5 | **Yes — bonus** |
-| FTC | **2** (TA Head, 19 Oct 2026; BRD said 1) | +0.5 | **2** (same) | +0.5 | No — see D-53 |
+| FTC (new hire) | **2** (TA Head, 19 Oct 2026; BRD said 1) | None | **2** (same) | None | No — see D-53 |
+| FTC Conversion (NATS, ExcelHER or consultant to FTC) | 1 | None | 1 | None | No — see D-53 |
+| ExcelHER Conversion | 1 | None | 1 | None | No — see D-53 |
 | ExcelHER | **2** | +0.5 | **1** | +0.5 | **Yes — base** |
 | PMIS | 1 | +0.5 | 1 | +0.5 | No |
 | Lateral SG1–SG4 | 1 | +0.5 | 1 | +0.5 | No |
@@ -775,8 +777,9 @@ None of these is resolved in this design. Where the prototype needs a value to w
 | D-49 | Members supporting several teams | Someone may serve more than one team (e.g. TTI and VCE) | Count in primary team goal only (current) · split by share of effort | TA Head |
 | D-52 | Personal points targets | TA Head can set a personal annual points target per member or lead (pro-rated across the year and 10-day cycles) | Criteria for when a personal target differs from offer target × 2 | TA Head + HR |
 | D-51 | Points per offer by area | Global ×2 assumption disadvantages areas with mostly 1-point hires (NATS, GET/PGET, PMIS) | Keep ×2 everywhere · set area values from historical points per offer | TA Head |
-| D-53 | FTC points | **Resolved 19 Oct 2026:** FTC offers earn 2 points in both tables (BRD said 1). Remaining: whether the +0.5 women bonus still applies on top (currently yes) | Bonus applies (current) · 2 points flat | TA Head |
-| D-54 | Classifying tracker offers | When points are calculated from the hiring tracker: FTC (any source) → FTC; campus or fresher → GET / PGET; NATS conversion → NATS Conversion; consultant, FTC-to-permanent and other conversions → Contract Conversion; ExcelHER conversion → Contract Conversion (no category in BRD); other laterals by SG band, with JL grades mapped to SG = JL + 2 (from the tracker's own offer stack) or SG taken from the offer stack by requisition. Declined offers count (offers released) | Confirm each mapping; exclude declined offers | TA Head |
+| D-53 | FTC and conversion points | **Resolved 19 Oct 2026 (TA Head):** a new FTC hire is 2 points with no women bonus; a conversion to FTC (NATS, ExcelHER, consultant) is 1 point; an ExcelHER conversion to permanent is 1 point. Declined offers count | — | TA Head |
+| D-54 | Classifying tracker offers | **Resolved 19 Oct 2026:** SG = JL + 2. Hiring tracker: FTC from a conversion source → FTC Conversion, other FTC → FTC; campus or fresher → GET / PGET; NATS conversion → NATS Conversion; ExcelHER conversion → ExcelHER Conversion; other conversions → Contract Conversion; other laterals by SG band. Programmes workbook: NATS sheet → NATS Hiring; ExcelHER sheet → ExcelHER; AICTE sheet → AICTE Professor or PhD Internship. Offers on hold are not counted | — | TA Head |
+| D-55 | Internship offers | Intern offers (B.Tech/M.Tech/CA interns) have no category in the points table, so they count as offers with 0 points | 0 points (current) · 1 point · as PhD Internship (2) | TA Head |
 | D-50 | Former team members | People who left mid-year | Evaluate on pro-rated target to leaving date; exclude from promotion readiness (current) | TA Head + HR |
 | D-43 | Offer definition | Count offers released, or accepted? Re-issued offers to the same candidate? | TA Head |
 

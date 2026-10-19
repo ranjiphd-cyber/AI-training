@@ -52,6 +52,7 @@ function migrateState(s) {
   s.scorecards = s.scorecards || {};
   for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; e.ratings = (e.ratings || [null, null, null]).map(r => OLD_RATING_LABELS[r] || r); }
   s.areaPPO = s.areaPPO || {};
+  if (s.rules && s.rules.vendorExcluded && s.rules.vendorExcluded.includes('Contract Conversion')) for (const c of ['FTC Conversion', 'ExcelHER Conversion']) if (!s.rules.vendorExcluded.includes(c)) s.rules.vendorExcluded.push(c);
   if (s.rules && s.rules.pointsPerOffer == null) {
     // Points-based assessment (TA Head decision, 18 Oct 2026) applied to older workspaces.
     s.rules.pointsPerOffer = 2; s.rules.offerFormula = 'P'; s.rules.gate = Object.assign({}, s.rules.gate, { g: 0 });

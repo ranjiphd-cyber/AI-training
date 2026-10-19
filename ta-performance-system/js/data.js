@@ -61,15 +61,16 @@ const OLD_RATING_LABELS = { 'Outstanding': 'Exceptional', 'Exceeds': 'High', 'Me
 const JOB_LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
 
 /* Hiring point rules. The BRD has two conflicting tables (D-01). */
-// FTC = 2 points in both tables: TA Head decision, 19 Oct 2026 (D-53).
+// FTC (TA Head, 19 Oct 2026, D-53): a new FTC hire is 2 points with no women bonus; a conversion to FTC
+// (NATS, ExcelHER, consultant) is 1 point. ExcelHER conversions to permanent are 1 point, no bonus.
 const POINT_TABLES = {
   S53: { label: 'BRD §5.3 (detailed rules)', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, false], 'Contract Conversion': [1, false],
-    'FTC': [2, true], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
+    'FTC': [2, false], 'FTC Conversion': [1, false], 'ExcelHER Conversion': [1, false], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, false], 'AICTE Professor': [2, false] } },
   A3: { label: 'BRD Appendix A3', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, true], 'Contract Conversion': [1, true],
-    'FTC': [2, true], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
+    'FTC': [2, false], 'FTC Conversion': [1, false], 'ExcelHER Conversion': [1, false], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, true], 'AICTE Professor': [2, false] } },
 };
 const CATEGORIES = Object.keys(POINT_TABLES.S53.rows);
@@ -88,7 +89,7 @@ const DEFAULT_RULES = {
   jrBands: [[90, 15], [85, 13], [80, 11], [75, 8], [0, 5]],
   ctBands: { strong: 45, acceptable: 55 },
   vendorBands: { low: 10, high: 20 },
-  vendorExcluded: ['NATS Conversion', 'Contract Conversion'],
+  vendorExcluded: ['NATS Conversion', 'Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion'],
   repeatMissN: 2, stalledDays: 45, belowTargetBy: 1, gapThreshold: 1, jrException: 85,
   // Decision status per rule (D-numbers from SYSTEM_DESIGN.md §8)
   status: {

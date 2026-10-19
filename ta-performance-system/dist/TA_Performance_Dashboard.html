@@ -308,15 +308,16 @@ const OLD_RATING_LABELS = { 'Outstanding': 'Exceptional', 'Exceeds': 'High', 'Me
 const JOB_LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
 
 /* Hiring point rules. The BRD has two conflicting tables (D-01). */
-// FTC = 2 points in both tables: TA Head decision, 19 Oct 2026 (D-53).
+// FTC (TA Head, 19 Oct 2026, D-53): a new FTC hire is 2 points with no women bonus; a conversion to FTC
+// (NATS, ExcelHER, consultant) is 1 point. ExcelHER conversions to permanent are 1 point, no bonus.
 const POINT_TABLES = {
   S53: { label: 'BRD §5.3 (detailed rules)', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, false], 'Contract Conversion': [1, false],
-    'FTC': [2, true], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
+    'FTC': [2, false], 'FTC Conversion': [1, false], 'ExcelHER Conversion': [1, false], 'ExcelHER': [2, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [2, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, false], 'AICTE Professor': [2, false] } },
   A3: { label: 'BRD Appendix A3', rows: {
     'GET / PGET': [1, true], 'NATS Hiring': [1, true], 'NATS Conversion': [1, true], 'Contract Conversion': [1, true],
-    'FTC': [2, true], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
+    'FTC': [2, false], 'FTC Conversion': [1, false], 'ExcelHER Conversion': [1, false], 'ExcelHER': [1, true], 'PMIS': [1, true], 'Lateral SG1-SG4': [1, true], 'Lateral SG5-SG8': [1.5, true],
     'SG9 and above': [3, true], 'PhD Internship': [2, true], 'AICTE Professor': [2, false] } },
 };
 const CATEGORIES = Object.keys(POINT_TABLES.S53.rows);
@@ -335,7 +336,7 @@ const DEFAULT_RULES = {
   jrBands: [[90, 15], [85, 13], [80, 11], [75, 8], [0, 5]],
   ctBands: { strong: 45, acceptable: 55 },
   vendorBands: { low: 10, high: 20 },
-  vendorExcluded: ['NATS Conversion', 'Contract Conversion'],
+  vendorExcluded: ['NATS Conversion', 'Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion'],
   repeatMissN: 2, stalledDays: 45, belowTargetBy: 1, gapThreshold: 1, jrException: 85,
   // Decision status per rule (D-numbers from SYSTEM_DESIGN.md §8)
   status: {
@@ -456,6 +457,7 @@ function migrateState(s) {
   s.scorecards = s.scorecards || {};
   for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; e.ratings = (e.ratings || [null, null, null]).map(r => OLD_RATING_LABELS[r] || r); }
   s.areaPPO = s.areaPPO || {};
+  if (s.rules && s.rules.vendorExcluded && s.rules.vendorExcluded.includes('Contract Conversion')) for (const c of ['FTC Conversion', 'ExcelHER Conversion']) if (!s.rules.vendorExcluded.includes(c)) s.rules.vendorExcluded.push(c);
   if (s.rules && s.rules.pointsPerOffer == null) {
     // Points-based assessment (TA Head decision, 18 Oct 2026) applied to older workspaces.
     s.rules.pointsPerOffer = 2; s.rules.offerFormula = 'P'; s.rules.gate = Object.assign({}, s.rules.gate, { g: 0 });
@@ -1427,7 +1429,7 @@ function summaryDeliverables(m, head) {
    <p class="small muted">Deliverables: <b>${m.ownDel.total != null ? fmt(m.ownDel.total) + ' / 70' : fmt(m.ownDel.raw) + ' of ' + m.ownDel.maxAvail + ' available (points needed for the 40-point score)'}</b>. ${sc.note ? esc(sc.note) : ''}</p>`;
   const rows = ['core', 'nats', 'excelher', 'other'].filter(k => streams[k] != null || (sc.joinStreams || {})[k] != null);
   if (rows.length) h += `<h3>Offers and joiners by stream</h3><div class="tbl-wrap"><table><thead><tr><th>Stream</th><th class="n">Offers</th><th class="n">Joiners</th></tr></thead><tbody>${rows.map(k => `<tr><td>${{ core: 'Core / campus (incl. conversion)', nats: 'NATS', excelher: 'ExcelHER', other: 'Other (interns, PwD, PhD, veterans, SPARK)' }[k]}</td><td class="n">${streams[k] ?? '—'}</td><td class="n">${(sc.joinStreams || {})[k] ?? '—'}</td></tr>`).join('')}</tbody></table></div>`;
-  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Lateral and fresher hiring (hiring tracker)</h3><div class="grid g4">
+  if (sc.tracker) { const t = sc.tracker; h += `<h3 style="margin-top:12px">Offers in the hiring trackers</h3><div class="grid g4">
     <div class="kpi"><div class="lab">Offers released</div><div class="val">${t.offers ?? '—'}</div><div class="sub">${esc(t.period || '')}</div></div><div class="kpi"><div class="lab">Joined</div><div class="val">${t.joined ?? '—'}</div></div>
     <div class="kpi"><div class="lab">Declined</div><div class="val">${t.declined ?? '—'}</div></div><div class="kpi"><div class="lab">Pending joining</div><div class="val">${t.pending ?? '—'}</div></div></div>
     <p class="small muted">${esc(t.note || '')}</p>`;
@@ -2321,7 +2323,7 @@ const IMPORT_DATASETS = {
   ] },
 };
 const PII_HEADERS = /^(candidate name|name of candidate|applicant name|phone|mobile|email|e-mail|contact|address|pan|aadhaar|dob|date of birth)$/i;
-const CAT_ALIASES = { 'get': 'GET / PGET', 'pget': 'GET / PGET', 'get/pget': 'GET / PGET', 'nats': 'NATS Hiring', 'nats hiring': 'NATS Hiring', 'nats conversion': 'NATS Conversion', 'contract conversion': 'Contract Conversion', 'ftc': 'FTC', 'fixed term contract': 'FTC', 'excelher': 'ExcelHER', 'pmis': 'PMIS', 'lateral sg1-sg4': 'Lateral SG1-SG4', 'lateral sg1-4': 'Lateral SG1-SG4', 'lateral sg5-sg8': 'Lateral SG5-SG8', 'lateral sg5-8': 'Lateral SG5-SG8', 'sg9 and above': 'SG9 and above', 'sg9+': 'SG9 and above', 'lateral sg9+': 'SG9 and above', 'phd internship': 'PhD Internship', 'phd internship hiring': 'PhD Internship', 'aicte professor': 'AICTE Professor', 'aicte professor hiring': 'AICTE Professor' };
+const CAT_ALIASES = { 'get': 'GET / PGET', 'pget': 'GET / PGET', 'get/pget': 'GET / PGET', 'nats': 'NATS Hiring', 'nats hiring': 'NATS Hiring', 'nats conversion': 'NATS Conversion', 'contract conversion': 'Contract Conversion', 'ftc': 'FTC', 'ftc conversion': 'FTC Conversion', 'conversion to ftc': 'FTC Conversion', 'excelher conversion': 'ExcelHER Conversion', 'fixed term contract': 'FTC', 'excelher': 'ExcelHER', 'pmis': 'PMIS', 'lateral sg1-sg4': 'Lateral SG1-SG4', 'lateral sg1-4': 'Lateral SG1-SG4', 'lateral sg5-sg8': 'Lateral SG5-SG8', 'lateral sg5-8': 'Lateral SG5-SG8', 'sg9 and above': 'SG9 and above', 'sg9+': 'SG9 and above', 'lateral sg9+': 'SG9 and above', 'phd internship': 'PhD Internship', 'phd internship hiring': 'PhD Internship', 'aicte professor': 'AICTE Professor', 'aicte professor hiring': 'AICTE Professor' };
 const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 
 function normDate(v) {
