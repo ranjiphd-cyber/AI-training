@@ -89,6 +89,7 @@ function areaTarget(a) { const t = state.areaTargets[a]; return t == null ? 0 : 
 function addEmployee(o) {
   const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
     ratings: o.ratings || [null, null, null], start: o.start || null, end: o.end || null, status: o.status || 'Active', alsoTeams: o.alsoTeams || [], flags: o.flags || [],
+    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', ptAnnual: o.ptAnnual ?? null,
     leave: null, targets: o.targets || Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
   state.employees.push(e);
   state.assessments[e.id] = state.assessments[e.id] || [];
