@@ -89,7 +89,56 @@
     return true;
   }
 
+  /* Update 1 (TA Head, 19 Oct 2026): vendor usage 2026 YTD confirmed as 6.6% at the 14 Oct cut-off; lateral hiring volume 2017–2026. */
+  const UPD1 = 'lateral-trends-2026-upd1';
+  const VOLUME = { 2017: 690, 2018: 383, 2019: 379, 2020: 229, 2021: 659, 2022: 1078, 2023: 787, 2024: 653, 2025: 610 };
+  const VOL_2026 = 353;
+  const SRC_VOL = 'Lateral Hiring Trend table supplied by the TA Head (19 Oct 2026)';
+  function applyUpdate1() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(UPD1) >= 0 || applied.indexOf(PACK) < 0) return false;
+    S.recoveryPoint('Before applying lateral-hiring volume and the vendor-usage confirmation');
+    const origin = 'Import: ' + SRC_VOL;
+    const today = TA.todayIso();
+    const metric = (name) => S.list('metrics', { archived: true }).find(m => m.name === name);
+    // Vendor usage: data owner's confirmation replaces the rounded 6%; the change history keeps the original value.
+    const ven = metric('Vendor usage');
+    const vo = ven && S.list('observations').find(o => o.metricId === ven.id && o.periodId === 'per_biz_2026ytd');
+    if (vo && vo.actualReported === 6) S.update('observations', vo.id, { actualReported: 6.6, numerator: 23, denominator: 351,
+      calcNote: '23 vendor-sourced lateral joiners ÷ 351 lateral joiners, 1 Jan–14 Oct 2026.',
+      notes: (vo.notes ? vo.notes + ' ' : '') + 'Confirmed as 6.6% at the 14 Oct cut-off by the TA Head (19 Oct 2026); originally reported as 6% (see change history).' });
+    const vq = S.list('questions').find(x => x.title === 'Vendor usage: slide 6% vs tracker 6.6% for lateral joiners');
+    if (vq && vq.status !== 'Resolved') S.update('questions', vq.id, { status: 'Resolved', resolvedDate: today, resolution: 'Use 6.6% – hiring tracker at the 14 Oct cut-off (TA Head, 19 Oct 2026). The original 6% is kept in the change history.' });
+    // Lateral hiring volume.
+    for (let yr = 2017; yr <= 2019; yr++) {
+      const id = 'per_lat_' + yr;
+      if (!S.get('periods', id)) S.add('periods', { id, label: yr + ' – Lateral hiring', type: 'Annual', scope: 'Lateral hiring', start: yr + '-01-01', end: yr + '-12-31', cutoff: yr + '-12-31', source: SRC_VOL, notes: 'Full calendar year.' }, origin);
+    }
+    let m = metric('Lateral hires');
+    if (!m) m = S.add('metrics', { name: 'Lateral hires', category: 'Hiring volume', unit: 'count', direction: 'Context-dependent', definition: 'Lateral joiners in the period.', definitionStatus: 'Proposed – to confirm',
+      calculation: 'Source-reported count.', owner: null, source: SRC_VOL, notes: 'Volume follows business demand; more is not automatically better.' }, origin);
+    const add = (pid, v, note) => { if (!S.list('observations').some(o => o.metricId === m.id && o.periodId === pid && o.population === POP))
+      S.add('observations', { metricId: m.id, periodId: pid, population: POP, target: null, actualReported: v, numerator: null, denominator: null, calcNote: note, attribution: 'Shared business outcome', source: SRC_VOL, owner: null, dataDate: null, notes: null }, origin); };
+    Object.keys(VOLUME).forEach(yr => add('per_lat_' + yr, VOLUME[yr], 'Source-reported annual count.'));
+    add('per_biz_2026ytd', VOL_2026, 'Source-reported year-to-date count (cut-off not stated).');
+    if (!S.list('questions').some(x => x.title === 'Lateral hires 2026: 353 (trend table) vs 351 (scorecard and tracker)'))
+      S.add('questions', { title: 'Lateral hires 2026: 353 (trend table) vs 351 (scorecard and tracker)', type: 'Data conflict', priority: 'Nice to have', relatedTo: 'Lateral hires',
+        detail: 'The lateral hiring trend table gives 353 for 2026. The scorecard (Lateral programme) and the hiring tracker both give 351 lateral joiners to 14 Oct. Is the table at a later cut-off? Both values are kept.',
+        valueA: 'Trend table: 353', valueB: 'Scorecard / tracker: 351 (to 14 Oct)', owner: 'TA Head / data owner', raisedDate: today, status: 'Open', resolution: null, resolvedDate: null }, origin);
+    const title = 'Lateral hires peaked at 1,078 in 2022 and have fallen each full year since';
+    if (!S.list('insights', { archived: true }).some(i => i.title === title))
+      S.add('insights', { title, type: 'Descriptive finding', observation: 'Lateral hires: 690 (2017), 383, 379, 229 (2020), 659, 1,078 (2022), 787, 653, 610 (2025); 353 in 2026 to mid-October.',
+        supportingData: SRC_VOL + '; full calendar years except 2026 (year-to-date).', method: 'Year-on-year change in counts.',
+        interpretation: 'Volume reflects business demand as well as TA delivery; a lower count is not by itself a performance signal.', uncertainty: '2026 is year-to-date and not comparable with full years. Demand (requisitions) by year is not recorded, so fulfilment cannot be assessed.',
+        recommendedAction: 'Add yearly requisition demand to show volume against demand.', owner: null, reviewDate: null, status: 'New', generatedBy: 'Rule-free entry from the TA Head\'s trend table' }, origin);
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([UPD1]) });
+    TA.toast('Added lateral hiring volume 2017–2026; vendor usage set to 6.6%');
+    return true;
+  }
+
   const prev = TA.applyDataPacks;
-  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); const c = applyUpdate1(); return a || b || c; };
   TA.LATERAL_TREND_METRICS = ['Gender diversity', 'Vendor usage', 'Employee referrals'];
+  TA.LATERAL_VOLUME_METRIC = 'Lateral hires';
 })();

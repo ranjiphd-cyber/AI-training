@@ -300,8 +300,19 @@
     const names = TA.LATERAL_TREND_METRICS || [];
     const sets = names.map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
     if (!sets.length) return '';
+    const vol = TA.LATERAL_VOLUME_METRIC ? TA.annualWithYtd(TA.LATERAL_VOLUME_METRIC, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd') : null;
+    let volHtml = '';
+    if (vol && vol.points.length >= 2) {
+      const full = vol.points.filter(p => !p.partial), ytd = vol.points.find(p => p.partial), a = full[full.length - 2], b = full[full.length - 1];
+      const peak = full.reduce((x, p) => p.value > x.value ? p : x, full[0]);
+      volHtml = '<div style="margin-bottom:14px"><h4>Lateral hires (number)</h4>' + TA.chartLine(vol.points, 'count', { labels: true, zero: true, h: 220, aria: 'Lateral hires 2017 to 2026 year to date', seriesLabel: 'Lateral hires' }) +
+        '<ul class="small" style="margin:4px 0 0 16px;padding:0"><li>' + esc(a.short + ' → ' + b.short + ': ' + TA.deltaText('count', a.value, b.value)) + '</li><li>' + esc('Peak: ' + TA.fmtInt(peak.value) + ' (' + peak.short + '); full years have fallen each year since.') + '</li>' +
+        (ytd ? '<li>' + esc(ytd.short + ': ' + TA.fmtInt(ytd.value)) + ' <span class="muted">(year-to-date; not comparable with full years)</span></li>' : '') + '</ul>' +
+        '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">Lateral hires</th><th scope="col">Source</th></tr></thead><tbody>' +
+        vol.points.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + TA.fmtInt(p.value) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
+    }
     const pp = (a, b) => TA.deltaText('%', a, b).replace(' (percentage points)', '');
-    const body = '<div class="grid g3">' + sets.map(s => {
+    const body = volHtml + '<div class="grid g3">' + sets.map(s => {
       const pts = s.points, full = pts.filter(p => !p.partial), ytd = pts.find(p => p.partial);
       const a = full[full.length - 2], b = full[full.length - 1];
       const hi = full.reduce((x, p) => p.value > x.value ? p : x, full[0]), lo = full.reduce((x, p) => p.value < x.value ? p : x, full[0]);
@@ -312,8 +323,8 @@
         '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">Value</th><th scope="col">Source</th></tr></thead><tbody>' +
         pts.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + esc(TA.fmtPct(p.value)) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
     }).join('') + '</div>';
-    return card('Lateral hiring – key parameters 2020–2026', 'Lateral joiners. 2020–2025 are full years; 2026 is year-to-date to 14 Oct (hollow point, dashed line). Source: Business Review Meeting (Oct) slide; 2026 values match the scorecard.', body +
-      commentary('Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'These three measures shape cost, inclusion and sourcing mix for lateral hiring. 2026 is not yet a full year.',
+    return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring trend table and Business Review Meeting (Oct) slide; 2026 vendor usage 6.6% confirmed at the 14 Oct cut-off.', body +
+      commentary('Lateral hires peaked in 2022 and have fallen each full year since. Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'These three measures shape cost, inclusion and sourcing mix for lateral hiring. 2026 is not yet a full year.',
         'Track the planned diversity pipeline and the referral module redesign (see Actions); compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
   }
 

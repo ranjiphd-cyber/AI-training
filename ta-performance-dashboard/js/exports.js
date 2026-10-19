@@ -86,10 +86,16 @@
       if (lat.length) {
         const cats = lat[0].points.map(p => p.short);
         if (lat.every(s => s.points.map(p => p.short).join() === cats.join())) {
-          blocks.push({ type: 'chart', kind: 'line', title: 'Lateral hiring – key parameters (%), 2020–2026 YTD', categories: cats, series: lat.map((s, i) => ({ name: s.metric.name, values: s.points.map(p => TA.round(p.value, 1)), color: [ACCENT, AMBER, '7A5BC4'][i] })),
+          blocks.push({ type: 'chart', kind: 'line', unit: '%', title: 'Lateral hiring – key parameters (%), 2020–2026 YTD', categories: cats, series: lat.map((s, i) => ({ name: s.metric.name, values: s.points.map(p => TA.round(p.value, 1)), color: [ACCENT, AMBER, '7A5BC4'][i] })),
             note: '2026 is year-to-date (to 14 Oct); compare with full years with care. Source: Business Review Meeting (Oct) slide.' });
         }
         lat.forEach(s => s.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
+      }
+      const vol = TA.LATERAL_VOLUME_METRIC ? TA.annualWithYtd(TA.LATERAL_VOLUME_METRIC, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd') : null;
+      if (vol && vol.points.length >= 2) {
+        blocks.push({ type: 'chart', kind: 'line', unit: 'count', title: 'Lateral hires (number), ' + vol.points[0].short + '–' + vol.points[vol.points.length - 1].short, categories: vol.points.map(p => p.short), series: [{ name: 'Lateral hires', values: vol.points.map(p => p.value), color: NAVY }],
+          note: 'Full calendar years; the last point is year-to-date and not comparable with full years.' });
+        vol.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); });
       }
       const trendRows = [];
       TA.availableTrends().forEach(t => { trendRows.push([t.metric.name, t.population || 'Not provided', t.a.period.label + ': ' + TA.fmtVal(t.a.value, t.metric.unit), t.b.period.label + ': ' + TA.fmtVal(t.b.value, t.metric.unit), TA.deltaText(t.metric.unit, t.a.value, t.b.value)]); if (t.b.obs.source) m.sources.add(t.b.obs.source); });
@@ -424,7 +430,7 @@
           y += th + 14;
         } else if (b.type === 'chart' && b.kind === 'line') {
           text(b.title, 11, { bold: true, color: NAVY, after: 2 });
-          doc.autoTable({ startY: y, head: [['Measure'].concat(b.categories).map(pdfSafe)], body: b.series.map(se => [se.name].concat(se.values.map(v => v + '%')).map(pdfSafe)), margin: { left: M, right: M, bottom: 50 },
+          doc.autoTable({ startY: y, head: [['Measure'].concat(b.categories).map(pdfSafe)], body: b.series.map(se => [se.name].concat(se.values.map(v => b.unit === '%' ? v + '%' : TA.fmtInt(v))).map(pdfSafe)), margin: { left: M, right: M, bottom: 50 },
             styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 4, textColor: rgb('0F1B2D'), lineColor: rgb(LINE), lineWidth: 0.5 }, headStyles: { fillColor: rgb(NAVY), textColor: 255 } });
           y = doc.lastAutoTable.finalY + 6;
           if (b.note) text(b.note, 8.5, { italic: true, color: SLATE });

@@ -330,16 +330,22 @@
   function chartLine(points, unit, o) {
     const opt = o || {};
     if (!points.length) return '<div class="empty">No data points.</div>';
-    const W = opt.w || 700, H = opt.h || 240, L = opt.w ? 36 : 56, R = opt.w ? 30 : 44, T = 16, B = 40;
+    const W = opt.w || 700, H = opt.h || 240, L = opt.w ? 44 : 56, R = opt.w ? 30 : 44, T = 16, B = 40;
     const vals = points.map(p => p.value).concat(points.map(p => p.target).filter(TA.isNum));
     let lo = Math.min(...vals), hi = Math.max(...vals);
     if (lo === hi) { lo = lo - 1; hi = hi + 1; }
     const pad = (hi - lo) * .15; lo = Math.max(unit === '%' || unit === 'count' || unit === 'days' ? 0 : -Infinity, lo - pad); hi = hi + pad;
-    if (opt.zero) { lo = 0; hi = Math.ceil(Math.max(...vals) * 1.15 / 5) * 5; }
+    let nT = 4;
+    if (opt.zero) {
+      // Tightest round step (1, 2, 2.5 or 5 × 10^n) that covers the maximum in at most five intervals.
+      const top = Math.max(...vals) * 1.08, mag = Math.pow(10, Math.floor(Math.log10(top / 5 || 1)));
+      const step = [1, 2, 2.5, 5, 10, 20].map(f => f * mag).find(x => Math.ceil(top / x) <= 5);
+      nT = Math.ceil(top / step); lo = 0; hi = step * nT;
+    }
     const xs = (i) => points.length === 1 ? L + (W - L - R) / 2 : L + i * (W - L - R) / (points.length - 1);
     const ys = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
     let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opt.aria || 'Trend') + '">';
-    for (let k = 0; k <= 4; k++) { const v = lo + k * (hi - lo) / 4; svg += '<line class="gridline" x1="' + L + '" x2="' + (W - R) + '" y1="' + ys(v) + '" y2="' + ys(v) + '"/><text class="lbl-muted" x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + esc(TA.round(v, hi - lo >= 10 ? 0 : 1)) + '</text>'; }
+    for (let k = 0; k <= nT; k++) { const v = lo + k * (hi - lo) / nT; svg += '<line class="gridline" x1="' + L + '" x2="' + (W - R) + '" y1="' + ys(v) + '" y2="' + ys(v) + '"/><text class="lbl-muted" x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + esc(TA.round(v, hi - lo >= 10 ? 0 : 1)) + '</text>'; }
     const tgt = points.filter(p => TA.isNum(p.target));
     if (tgt.length) svg += '<polyline fill="none" stroke="var(--target)" stroke-width="2" stroke-dasharray="5 4" points="' + points.map((p, i) => TA.isNum(p.target) ? xs(i) + ',' + ys(p.target) : '').filter(Boolean).join(' ') + '"/>';
     // A partial (e.g. year-to-date) final point is drawn hollow and joined by a dashed segment: it is not a like-for-like value.
@@ -349,7 +355,7 @@
     points.forEach((p, i) => {
       svg += '<g data-tip="' + esc(p.label + ': ' + TA.fmtVal(p.value, unit) + (p.partial ? ' (partial period)' : '') + (TA.isNum(p.target) ? ' (target ' + TA.fmtVal(p.target, unit) + ')' : '')) + '"><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="12" fill="transparent"/><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="4.5" fill="' + (p.partial ? '#fff' : 'var(--series-1)') + '" stroke="' + (p.partial ? 'var(--series-1)' : '#fff') + '" stroke-width="2"/></g>';
       svg += '<text class="lbl-muted" x="' + xs(i) + '" y="' + (H - 18) + '" text-anchor="middle">' + esc(p.short || p.label) + '</text>';
-      if (labelIdx.indexOf(i) >= 0) svg += '<text class="lbl" x="' + xs(i) + '" y="' + (ys(p.value) - 10) + '" text-anchor="middle">' + esc(TA.fmtVal(p.value, unit)) + '</text>';
+      if (labelIdx.indexOf(i) >= 0) svg += '<text class="lbl" x="' + (xs(i) + (i === 0 ? 6 : 0)) + '" y="' + (ys(p.value) - 10) + '" text-anchor="' + (i === 0 ? 'start' : 'middle') + '">' + esc(TA.fmtVal(p.value, unit)) + '</text>';
     });
     svg += '</svg>';
     return '<div class="legend"><span><i class="swatch" style="background:var(--series-1)"></i>' + esc(opt.seriesLabel || 'Actual') + '</span>' + (points.some(p => p.partial) ? '<span><i class="swatch" style="background:#fff;border:2px solid var(--series-1);border-radius:50%"></i>Partial period (not a full year)</span>' : '') + (tgt.length ? '<span><i class="swatch" style="border-top:2px dashed var(--target);height:0;border-radius:0"></i>Target</span>' : '') + '</div><div class="chart">' + svg + '</div>';

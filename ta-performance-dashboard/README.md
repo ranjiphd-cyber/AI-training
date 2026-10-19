@@ -54,9 +54,13 @@ The candidate-level tracker is **not** stored in the dashboard. Only aggregates 
 
 Lateral (351) and fresher (62) joiners reconcile with the scorecard. Cohorts with offers still pending are marked incomplete and left out of trend comparisons.
 
-## Lateral-hiring key parameters 2020–2026
+## Lateral hiring – volume and key parameters
 
-Gender diversity, vendor usage and employee referral share for lateral joiners, taken from the Business Review Meeting (Oct) slide.
+Two series for lateral joiners:
+- Lateral hires 2017–2026, from the TA Head's trend table.
+- Gender diversity, vendor usage and employee referral share 2020–2026, from the Business Review Meeting (Oct) slide. The 2026 vendor share is confirmed as 6.6% at the 14 Oct cut-off.
+
+About the periods:
 - 2020–2025 are full years (annual periods, scope "Lateral hiring").
 - 2026 is year-to-date. It is drawn as a hollow point, and its change from 2025 is labelled as not like-for-like.
 - Lateral-only values recalculated from the hiring tracker sit alongside for comparison.
