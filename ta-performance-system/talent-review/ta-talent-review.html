@@ -381,7 +381,8 @@ function promotion(E) {
   const strongB = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) >= 4);
   crit.push({ ok: strongB.length >= 3, label: 'Three or more behaviours rated 4+ by the TA Head', fact: strongB.length ? strongB.join(', ') : 'None rated 4 or above yet' });
   const yrs = yearsSince(p.since);
-  crit.push({ ok: yrs != null && yrs >= 2, label: 'Two or more years in current role', fact: yrs == null ? 'Date in current role not recorded' : `${fmt(yrs)} years in ${p.level || 'current level'} (since ${nice(p.since)})` });
+  const exc = p.roleTimeException;
+  crit.push({ ok: !!exc || (yrs != null && yrs >= 2), label: 'Two or more years in current role', fact: (yrs == null ? 'Date in current role not recorded' : `${fmt(yrs)} years in ${p.level || 'current level'} (since ${nice(p.since)})`) + (exc ? ` · Exception: ${p.roleTimeReason || 'approved by the TA Head'}` : '') });
   const lead = num((E.beh['Collaboration & Leadership'] || {}).head) >= 4 || E.projs.some(x => num(x.stage) >= 3 && projectScore(x) != null);
   crit.push({ ok: lead, label: 'Leadership evidence', fact: 'Collaboration & Leadership rated 4+, or a scored project validated to Improve or Control' });
   const met = crit.filter(c => c.ok).length, known = [r.y2025, r.y2024, r.y2023].filter(Boolean).length;
@@ -683,7 +684,7 @@ function pProfile(E) {
   return `<div class="grid c2"><div class="card pad"><div class="sec-h"><h3>Details</h3><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button>` : ''}</div><dl class="kv">
     <dt>Name</dt><dd>${esc(p.name)}</dd><dt>Also known as</dt><dd>${esc(p.aliases || '—')}</dd><dt>Employee ID</dt><dd class="mono">${esc(p.vcnid || '—')}</dd><dt>Job title</dt><dd>${esc(p.jobTitle || '—')}</dd>
     <dt>Role</dt><dd>${esc(p.role || '—')}</dd><dt>Team</dt><dd>${esc(p.team || '—')}${p.area ? ' · ' + esc(p.area) : ''}</dd><dt>Job level</dt><dd class="mono">${esc(p.level || '—')}</dd>
-    <dt>Date of joining</dt><dd>${nice(p.joined)}</dd><dt>In current role since</dt><dd>${nice(p.since)}</dd><dt>Status</dt><dd>${esc(p.status || 'Active')}${p.end ? ' · last day ' + nice(p.end) : ''}</dd><dt>In this year's review</dt><dd>${inReview(p) ? 'Yes' : 'No'}</dd>
+    <dt>Date of joining</dt><dd>${nice(p.joined)}</dd><dt>In current role since</dt><dd>${nice(p.since)}${p.roleTimeException ? ` <span class="tag acc">Time-in-role exception</span><div class="sub" style="color:var(--muted);font-size:12px">${esc(p.roleTimeReason || '')}</div>` : ''}</dd><dt>Status</dt><dd>${esc(p.status || 'Active')}${p.end ? ' · last day ' + nice(p.end) : ''}</dd><dt>In this year's review</dt><dd>${inReview(p) ? 'Yes' : 'No'}</dd>
     <dt>Responsibilities</dt><dd>${esc(p.roleNote || '—')}</dd></dl></div>
     <div class="card pad"><div class="sec-h"><h3>P4P ratings</h3></div><dl class="kv"><dt>${YEAR - 3}</dt><dd>${esc(r.y2023 || '—')}</dd><dt>${YEAR - 2}</dt><dd>${esc(r.y2024 || '—')}</dd><dt>${YEAR - 1}</dt><dd>${esc(r.y2025 || '—')}</dd><dt>${YEAR}</dt><dd>${esc(E.rv.finalRating || 'Not rated yet')}</dd></dl>
     ${(p.notes || []).length ? `<h4 style="font-size:13px;margin:16px 0 6px">Data notes</h4><ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:13px">${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
@@ -778,6 +779,7 @@ const personFields = () => [
   { k: 'joined', label: 'Date of joining', type: 'date' }, { k: 'since', label: 'In current role since', type: 'date' },
   { k: 'status', label: 'Status', type: 'select', options: ['Active', 'Left'], blank: false }, { k: 'end', label: 'Last working day', type: 'date' },
   { k: 'inReview', label: 'Include in this year\'s review', type: 'check', full: true },
+  { k: 'roleTimeException', label: 'Treat time in role as met for promotion (exception)', type: 'check', full: true }, { k: 'roleTimeReason', label: 'Reason for the exception', full: true },
   { section: 'P4P ratings' },
   { k: 'y2023', label: String(YEAR - 3), type: 'select', options: RATINGS }, { k: 'y2024', label: String(YEAR - 2), type: 'select', options: RATINGS },
   { k: 'y2025', label: String(YEAR - 1), type: 'select', options: RATINGS },
@@ -792,7 +794,7 @@ function personForm(id) {
       if (!v.name) return 'Enter a name.';
       const nid = id || (v.vcnid && /^[A-Za-z0-9_-]+$/.test(v.vcnid) ? v.vcnid : uid('P'));
       if (!id && S.people[nid]) return 'Someone with this employee ID already exists.';
-      const doc = { ...(id ? S.people[id] : {}), name: v.name, aliases: v.aliases, vcnid: v.vcnid, jobTitle: v.jobTitle, role: v.role, team: v.team, area: v.area, level: v.level, joined: v.joined, since: v.since, status: v.status, end: v.end, inReview: v.inReview && v.status !== 'Left', roleNote: v.roleNote, ratings: { y2023: v.y2023, y2024: v.y2024, y2025: v.y2025 } };
+      const doc = { ...(id ? S.people[id] : {}), name: v.name, aliases: v.aliases, vcnid: v.vcnid, jobTitle: v.jobTitle, role: v.role, team: v.team, area: v.area, level: v.level, joined: v.joined, since: v.since, status: v.status, end: v.end, inReview: v.inReview && v.status !== 'Left', roleTimeException: v.roleTimeException, roleTimeReason: v.roleTimeException ? v.roleTimeReason : null, roleNote: v.roleNote, ratings: { y2023: v.y2023, y2024: v.y2024, y2025: v.y2025 } };
       const ok = await write('people/' + nid, doc, `${id ? 'Edited' : 'Added'} ${v.name}`);
       if (ok && !id) go('person', nid, 'profile');
       return ok;
