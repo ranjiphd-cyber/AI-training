@@ -317,6 +317,7 @@ let db = null, canWrite = false, loaded = new Set(), ready = false;
 function peopleList() { return Object.entries(S.people).map(([id, p]) => ({ id, ...p })); }
 function inReview(p) { return p.inReview !== false && p.status !== 'Left'; }
 const isSupport = p => p.role === 'Support / Operations';
+const isCompare = p => !inReview(p) && !!p.compare;
 const isLead = p => p.role === 'Team Lead';
 function teamNames() { const t = Object.values(S.teams).sort((a, b) => (a.order ?? 99) - (b.order ?? 99)).map(t => t.name); peopleList().forEach(p => { if (p.team && !t.includes(p.team)) t.push(p.team); }); return t; }
 
@@ -489,6 +490,26 @@ function mixChart(list) {
   });
   return s + '</svg>';
 }
+function compareRows() {
+  const ppl = peopleList().filter(p => !isSupport(p) && (inReview(p) || isCompare(p)));
+  return ppl.map(p => { const b = ownBlock(p.id); if (!b) return null; const t = b.d.tracker || {}; return { p, left: !inReview(p), points: b.points, offers: num(t.offers), joined: num(t.joined), declined: num(t.declined), ppo: t.offers ? b.points / t.offers : null, jr: t.offers ? num(t.joined) / t.offers * 100 : null, dec: t.offers ? num(t.declined) / t.offers * 100 : null, bonus: num(t.pointsBonus), att: inReview(p) ? b.att : null, offerDays: b.offerDays, mix: b.d.mix || [] }; })
+    .filter(Boolean).sort((a, b) => (b.points ?? 0) - (a.points ?? 0));
+}
+function compareChart(rows) {
+  const W = cw(false), L = W < 520 ? 110 : 160, R = 60, rowH = 30, top = 22, max = Math.max(...rows.map(r => r.points || 0)) * 1.05 || 1, step = max > 150 ? 50 : 25, axMax = Math.ceil(max / step) * step, x = v => L + (W - L - R) * v / axMax, H = top + rows.length * rowH + 4;
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weighted points for the current team and people who left this year">`;
+  for (let t = 0; t <= axMax; t += step) s += `<line class="gl" x1="${x(t)}" x2="${x(t)}" y1="${top - 6}" y2="${H - 2}"/><text class="mu" x="${x(t)}" y="${top - 10}" text-anchor="middle">${t}</text>`;
+  rows.forEach((r, i) => { const y = top + i * rowH;
+    s += `<g class="row" data-person="${esc(r.p.id)}" data-tip="${esc(`<b>${esc(r.p.name)}</b>${r.left ? ' · left this year' : ''}` + tipRows([['Weighted points', fmt(r.points)], ['Offers released', fmt(r.offers, 0)], ['Joined', fmt(r.joined, 0)], ['Points per offer', fmt(r.ppo, 2)]]))}"><rect class="hl" x="0" y="${y}" width="${W}" height="${rowH - 3}" rx="5" fill="transparent"/><text class="nm" x="${L - 10}" y="${y + 17}" text-anchor="end">${esc(r.p.name)}${r.left ? ' (left)' : ''}</text>
+      <rect x="${L}" y="${y + 6}" width="${Math.max(2, x(r.points || 0) - L)}" height="15" rx="3" fill="${r.left ? 'var(--line-2)' : 'var(--accent)'}" ${r.left ? 'stroke="var(--muted)" stroke-dasharray="3 2"' : ''}/><text class="vl" x="${x(r.points || 0) + 7}" y="${y + 18}">${fmt(r.points)}</text></g>`; });
+  return s + '</svg>';
+}
+function viewCompare() {
+  const rows = compareRows(); if (!rows.some(r => r.left)) return '';
+  return `<div class="card pad sec"><div class="sec-h"><h3>Comparison with people who left this year</h3><span class="hint">2026 to date · leavers have no target, so they're compared on volume and quality only · dashed bars = left</span></div>${compareChart(rows)}
+    <div class="tw sec"><table><thead><tr><th>Person</th><th>Status</th><th class="n">Weighted points</th><th class="n">Offers</th><th class="n">Joined</th><th class="n">Declined</th><th class="n">Joined ÷ offers</th><th class="n">Points per offer</th><th class="n">Women bonus pts</th><th class="n">Against target</th></tr></thead><tbody>${rows.map(r => `<tr class="click" data-person="${esc(r.p.id)}"><td class="who"><b>${esc(r.p.name)}</b><div class="sub">${esc(r.p.team || '')}</div></td><td>${r.left ? `<span class="tag">Left${r.p.end ? ' ' + nice(r.p.end) : ''}</span>` : esc(r.p.role)}</td><td class="n">${fmt(r.points)}</td><td class="n">${fmt(r.offers, 0)}</td><td class="n">${fmt(r.joined, 0)}</td><td class="n">${fmt(r.declined, 0)}</td><td class="n">${pct(r.jr)}</td><td class="n">${fmt(r.ppo, 2)}</td><td class="n">${fmt(r.bonus)}</td><td class="n">${r.left ? '<span class="sub">no target</span>' : chip(statusOf(r.att), pct(r.att * 100))}</td></tr>`).join('')}</tbody></table></div>
+    <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0 0">Offers and points come from the 2026 trackers (offers released 1 Jan–${nice(CUTOFF)}). Leaving dates aren't recorded for everyone, so totals for leavers cover only the months they were here.</p></div>`;
+}
 function attention(evals) {
   const out = [];
   for (const E of evals) {
@@ -524,6 +545,7 @@ function viewTeam() {
       <td>${E.sup ? '<div class="sub" style="text-align:center">no deliverables</div>' : heatCell(E.del, 70, 'Deliverables')}</td><td>${heatCell(E.proj, 15, 'Projects')}</td><td>${heatCell(E.comp, 15, 'Competency development')}</td>
       <td class="n">${E.total != null ? `<b>${fmt(E.total)}</b><span class="sub"> /${E.max}</span>` : `<span class="sub nw">${fmt(E.partial)} so far</span>`}</td>
       <td class="mono nw" title="${esc([r.y2023, r.y2024, r.y2025].map((x, i) => (YEAR - 3 + i) + ': ' + (x || 'no rating')).join(', '))}">${[r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · ')}</td><td>${E.rv.finalRating ? `<span class="tag acc">${esc(E.rv.finalRating)}</span>` : '<span class="sub">not rated</span>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
+  h += viewCompare();
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Cycle time</h3><span class="hint">average requisition-to-offer days</span></div>${cycleChart([...dl].sort((x, y) => (x.own.offerDays ?? 999) - (y.own.offerDays ?? 999)))}</div>
     <div class="card pad"><div class="sec-h"><h3>Where the points came from</h3></div><div class="legend">${MIX_GROUPS.map(G => `<span><i style="background:var(--${G.c})"></i>${G.label}</span>`).join('')}</div>${mixChart([...dl].sort((x, y) => (y.own.points ?? 0) - (x.own.points ?? 0)))}</div></div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Teams</h3></div><div class="tw"><table><thead><tr><th>Team</th><th>Lead</th><th class="n">Members</th><th class="n">Team points</th><th class="n">Target to date</th><th>Status</th></tr></thead><tbody>${ev.filter(E => isLead(E.p)).map(E => { const t = E.team; return `<tr class="click" data-person="${esc(E.p.id)}"><td><b>${esc(E.p.team)}</b></td><td>${esc(E.p.name)}</td><td class="n">${t ? t.members.length : 0}</td><td class="n">${t ? fmt(t.points) : '—'}</td><td class="n">${t ? fmt(t.ptPro) : '—'}</td><td>${t ? chip(statusOf(t.att), pct(t.att * 100)) : chip('none', 'No members')}</td></tr>`; }).join('')}</tbody></table></div><p class="sub" style="margin:8px 0 0;font-size:12px;color:var(--muted)">Team points exclude the lead's own offers.</p></div>
@@ -840,6 +862,12 @@ async function buildDeck(opt) {
     s = pptx.addSlide({ masterName: 'B' }); head(s, 'Delivery against target', 'Weighted points against the points target to date (annual offer target × 2, pro-rated by working days)');
     s.addChart(pptx.ChartType.bar, [{ name: 'Weighted points', labels: srt.map(E => E.p.name), values: srt.map(E => r1(E.own.points)) }, { name: 'Target to date', labels: srt.map(E => E.p.name), values: srt.map(E => r1(E.own.ptPro)) }], { x: 0.5, y: 1.4, w: 7.4, h: 5.4, barDir: 'bar', barGrouping: 'clustered', chartColors: [C.acc, 'CDD2DC'], showLegend: true, legendPos: 'b', legendFontSize: 10, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, showValue: true, dataLabelFontSize: 8, catAxisOrientation: 'maxMin', valGridLine: { color: C.line, size: 0.5 } });
     tbl(s, ['Person', 'Points', 'Target', 'Attain.', 'Offers', 'Offer days'], srt.map(E => [E.p.name, N(E.own.points), N(E.own.ptPro), { text: P(E.own.att * 100), options: { bold: true, color: stc(statusOf(E.own.att)) } }, N((E.own.d.tracker || {}).offers, 0), N(E.own.offerDays, 0)]), { x: 8.1, y: 1.5, w: 4.7, colW: [1.45, 0.7, 0.7, 0.65, 0.6, 0.6], fs: 9.5 });
+    const cr = compareRows();
+    if (cr.some(r => r.left)) {
+      s = pptx.addSlide({ masterName: 'B' }); head(s, 'Comparison with people who left this year', 'Leavers have no target, so they are compared on volume and quality. Totals for leavers cover only the months they were here.');
+      s.addChart(pptx.ChartType.bar, [{ name: 'Weighted points', labels: cr.map(r => r.p.name + (r.left ? ' (left)' : '')), values: cr.map(r => r1(r.points)) }], { x: 0.5, y: 1.4, w: 5.6, h: 5.5, barDir: 'bar', chartColors: [C.acc], showLegend: false, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, showValue: true, dataLabelFontSize: 8, catAxisOrientation: 'maxMin', valGridLine: { color: C.line, size: 0.5 } });
+      tbl(s, ['Person', 'Status', 'Points', 'Offers', 'Joined', 'Declined', 'Joined ÷ offers', 'Pts / offer', 'Against target'], cr.map(r => [r.p.name, r.left ? 'Left' : r.p.role, N(r.points), N(r.offers, 0), N(r.joined, 0), N(r.declined, 0), P(r.jr), N(r.ppo, 2), r.left ? 'no target' : { text: P(r.att * 100), options: { bold: true, color: stc(statusOf(r.att)) } }]), { x: 6.3, y: 1.45, w: 6.5, colW: [1.35, 0.7, 0.6, 0.55, 0.55, 0.6, 0.7, 0.6, 0.85], fs: 9 });
+    }
     // 7 scorecard
     s = pptx.addSlide({ masterName: 'B' }); head(s, 'Scorecard', 'Deliverables 70 (offers & complexity 40, joining 15, cycle time 10, vendor 5) + projects 15 + competency development 15');
     tbl(s, ['Person', 'Role', 'Offers /40', 'Joining /15', 'Cycle /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Comp. dev /15', 'Total', `P4P ${YEAR - 3}·${String(YEAR - 2).slice(2)}·${String(YEAR - 1).slice(2)}`, `${YEAR} rating`],
@@ -1013,6 +1041,7 @@ const personFields = () => [
   { k: 'joined', label: 'Date of joining', type: 'date' }, { k: 'since', label: 'In current role since', type: 'date' },
   { k: 'status', label: 'Status', type: 'select', options: ['Active', 'Left'], blank: false }, { k: 'end', label: 'Last working day', type: 'date' },
   { k: 'inReview', label: 'Include in this year\'s review', type: 'check', full: true },
+  { k: 'compare', label: 'Show in the comparison with people who left (for people not in this year\'s review)', type: 'check', full: true },
   { k: 'roleTimeException', label: 'Treat time in role as met for promotion (exception)', type: 'check', full: true }, { k: 'roleTimeReason', label: 'Reason for the exception', full: true },
   { section: 'P4P ratings' },
   { k: 'y2023', label: String(YEAR - 3), type: 'select', options: RATINGS }, { k: 'y2024', label: String(YEAR - 2), type: 'select', options: RATINGS },
@@ -1028,7 +1057,7 @@ function personForm(id) {
       if (!v.name) return 'Enter a name.';
       const nid = id || (v.vcnid && /^[A-Za-z0-9_-]+$/.test(v.vcnid) ? v.vcnid : uid('P'));
       if (!id && S.people[nid]) return 'Someone with this employee ID already exists.';
-      const doc = { ...(id ? S.people[id] : {}), name: v.name, aliases: v.aliases, vcnid: v.vcnid, jobTitle: v.jobTitle, role: v.role, team: v.team, area: v.area, level: v.level, joined: v.joined, since: v.since, status: v.status, end: v.end, inReview: v.inReview && v.status !== 'Left', roleTimeException: v.roleTimeException, roleTimeReason: v.roleTimeException ? v.roleTimeReason : null, roleNote: v.roleNote, ratings: { y2023: v.y2023, y2024: v.y2024, y2025: v.y2025 } };
+      const doc = { ...(id ? S.people[id] : {}), name: v.name, aliases: v.aliases, vcnid: v.vcnid, jobTitle: v.jobTitle, role: v.role, team: v.team, area: v.area, level: v.level, joined: v.joined, since: v.since, status: v.status, end: v.end, inReview: v.inReview && v.status !== 'Left', compare: v.compare, roleTimeException: v.roleTimeException, roleTimeReason: v.roleTimeException ? v.roleTimeReason : null, roleNote: v.roleNote, ratings: { y2023: v.y2023, y2024: v.y2024, y2025: v.y2025 } };
       const ok = await write('people/' + nid, doc, `${id ? 'Edited' : 'Added'} ${v.name}`);
       if (ok && !id) go('person', nid, 'profile');
       return ok;
