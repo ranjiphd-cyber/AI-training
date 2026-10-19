@@ -96,6 +96,23 @@
       ],
       cols: ['metricId', 'periodId', 'population', 'target', 'actualReported', '_recalc', 'source', 'dataDate']
     },
+    talentPrograms: {
+      label: 'TA programme calendar', singular: 'Programme', title: 'name', dupKeys: ['name', 'batch'], dupExact: true,
+      fields: [
+        { k: 'name', l: 'Programme', t: 'text', req: true, full: true },
+        { k: 'category', l: 'Category', t: 'select', o: ['Key process', 'Key program', 'Key initiative', 'Other'] },
+        { k: 'batch', l: 'Batch / year', t: 'text' },
+        { k: 'status', l: 'Status', t: 'select', req: true, o: ['In plan', 'In progress', 'On hold', 'Completed', 'Cancelled'] },
+        { k: 'programOwner', l: 'Programme owner', t: 'text' },
+        { k: 'responsible', l: 'Responsible', t: 'text' },
+        { k: 'expectedNumber', l: 'Expected numbers (tracker plan)', t: 'number', min: 0 },
+        { k: 'scorecardProgramme', l: 'Scorecard programme', t: 'text', help: 'Name of the scorecard programme this feeds (e.g. NATS). Plan and target are compared only for a one-to-one match.' },
+        { k: 'cost', l: 'Service charge / unit costs (as stated)', t: 'textarea', full: true, help: 'Recorded as stated in the tracker; not treated as approved financial inputs.' },
+        { k: 'source', l: 'Source', t: 'text', full: true },
+        { k: 'notes', l: 'Notes', t: 'textarea', full: true }
+      ],
+      cols: ['name', 'category', 'batch', 'status', 'programOwner', 'responsible', 'expectedNumber', '_scTarget']
+    },
     team: {
       label: 'Team members', singular: 'Team member', title: 'name', dupKeys: ['name'], confidential: true,
       fields: [
@@ -206,13 +223,14 @@
       fields: [
         { k: 'projectId', l: 'Project', t: 'ref', ref: 'projects', req: true },
         { k: 'name', l: 'Milestone', t: 'text', req: true },
+        { k: 'owner', l: 'Responsible', t: 'text' },
         { k: 'plannedDate', l: 'Planned date', t: 'date' },
         { k: 'revisedDate', l: 'Revised date', t: 'date' },
         { k: 'actualDate', l: 'Actual date', t: 'date' },
         { k: 'status', l: 'Status', t: 'select', o: ['Planned', 'In progress', 'Done', 'Status not reported', 'Missed', 'Cancelled'] },
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
       ],
-      cols: ['projectId', 'name', 'plannedDate', 'revisedDate', 'actualDate', 'status']
+      cols: ['projectId', 'name', 'owner', 'plannedDate', 'revisedDate', 'actualDate', 'status']
     },
     feedback: {
       label: 'Leadership feedback', singular: 'Feedback item', title: '_fbTitle',
@@ -376,7 +394,7 @@
     }
   };
 
-  const ENTITY_ORDER = ['periods', 'commitments', 'programmes', 'metrics', 'observations', 'team', 'recruiterResults', 'devItems',
+  const ENTITY_ORDER = ['periods', 'commitments', 'programmes', 'talentPrograms', 'metrics', 'observations', 'team', 'recruiterResults', 'devItems',
     'projects', 'milestones', 'feedback', 'actions', 'benefits', 'risks', 'decisions', 'questions', 'insights', 'reviewNotes'];
 
   /* ---------------- Seed ---------------- */

@@ -43,7 +43,7 @@
 
   /* ---------- Field display ---------- */
   const COMPUTED_LABELS = { _attain: 'Attainment (recalc.)', _gap: 'Gap vs target (recalc.)', _recalc: 'Recalculated actual', _offerRecalc: 'Offer attainment (recalc.)',
-    _joinRecalc: 'Join attainment (recalc.)', _gross: 'Gross value (calc.)', _net: 'Net value (calc.)' };
+    _joinRecalc: 'Join attainment (recalc.)', _scTarget: 'Scorecard target (selected period)', _gross: 'Gross value (calc.)', _net: 'Net value (calc.)' };
   function fieldDef(entity, key) { return TA.ENTITIES[entity].fields.find(f => f.k === key); }
   function colLabel(entity, key) { if (COMPUTED_LABELS[key]) return COMPUTED_LABELS[key]; const f = fieldDef(entity, key); return f ? f.l : key; }
   function fieldUnit(entity, rec, key) {
@@ -61,6 +61,7 @@
       case '_joinRecalc': return TA.rrCalc(rec).joinRecalc;
       case '_gross': return TA.benefitCalc(rec).gross;
       case '_net': return TA.benefitCalc(rec).net;
+      case '_scTarget': { const p = TA.scorecardMatch(rec); return p ? p.target : null; }
     }
     const f = fieldDef(entity, key);
     const v = rec[key];
@@ -75,6 +76,11 @@
     if (key === '_attain' || key === '_offerRecalc' || key === '_joinRecalc') return TA.isNum(v) ? TA.fmtPct(v) : '<span class="np">Cannot calculate</span>';
     if (key === '_gap') return TA.isNum(v) ? (v > 0 ? '+' : '') + v : '<span class="np">Cannot calculate</span>';
     if (key === '_recalc') { const c = TA.obsCalc(rec); return c.recalc !== null ? esc(TA.fmtVal(c.recalc, c.unit)) + (c.conflict ? ' ' + badge('Conflict') : '') : '<span class="np">Not applicable</span>'; }
+    if (key === '_scTarget') {
+      const p = TA.scorecardMatch(rec);
+      if (!p) return '<span class="np">' + (rec.scorecardProgramme ? 'No match in selected period' : 'Not linked') + '</span>';
+      return esc(TA.fmtInt(p.target)) + (TA.isNum(rec.expectedNumber) && TA.isNum(p.target) && rec.expectedNumber !== p.target ? ' ' + badge('Differs from plan', 'warn') : '');
+    }
     if (key === '_gross' || key === '_net') { const c = TA.benefitCalc(rec); if (!TA.isNum(v)) return '<span class="np">Cannot calculate</span>'; return esc(key === '_gross' && c.unit === 'hours' ? TA.fmtVal(v, 'hours') : TA.fmtINR(v)); }
     if (v === null || v === undefined || v === '') return np();
     if (!f) return esc(v);

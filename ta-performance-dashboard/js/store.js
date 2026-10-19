@@ -308,7 +308,7 @@
       if (exact.some(k => (r[k] || null) !== (data[k] || null))) return false;
       const a = r[nameKey], b = data[nameKey];
       if (TA.ENTITIES[entity].fields.find(f => f.k === nameKey && f.t === 'ref')) return a === b;
-      return similarNames(a, b);
+      return def.dupExact ? normName(a) === normName(b) : similarNames(a, b);
     });
   }
 

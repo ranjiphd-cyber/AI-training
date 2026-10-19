@@ -224,6 +224,8 @@
   function secTrends() {
     const p = curPeriod();
     let h = '<div class="section-head"><div><h2>Trends & Programme Results</h2><p>Monthly, quarterly, annual and YTD views appear where data exists. Missing periods are not interpolated, and incompatible periods or populations are not compared.</p></div></div>';
+    h += tabs('trends', [['results', 'Programme results & trends'], ['calendar', 'Programme calendar 2026']], 'results');
+    if (tab('trends', 'results') === 'calendar') return h + calendarView();
     h += '<div class="tabs" role="tablist" aria-label="Period granularity">' + ['Month', 'Quarter', 'Annual', 'YTD'].map(tp => {
       const n = S.list('periods').filter(x => x.type === tp).length;
       return '<button role="tab" aria-selected="' + (ui.trendType === tp) + '" data-act="trend-type" data-type="' + tp + '">' + ({ Month: 'Monthly', Quarter: 'Quarterly', Annual: 'Annual', YTD: 'YTD' })[tp] + ' (' + n + ')</button>';
@@ -288,6 +290,74 @@
       h += '<div style="height:14px"></div>' + card('Measure trend – ' + ui.trendType, 'Only observations with the same population as the latest one are joined into a trend.', body, { tools });
     }
     return h;
+  }
+
+  /* ================= Programme calendar ================= */
+  const PHASES = { req: ['Rq', 'Requirement gathering, nominations or communication from managers'], ta: ['TA', 'Job posting, sourcing, interviews and offers by the TA team'],
+    onb: ['On', 'Onboarding, post-onboarding engagement or training programmes'], other: ['•', 'Other activity (colour not in the tracker legend)'] };
+  const PHASE_ORDER = [null, 'req', 'ta', 'onb', 'other'];
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const fortnightIdx = (iso) => { const d = new Date(iso + 'T00:00:00'); return d.getMonth() * 2 + (d.getDate() > 15 ? 1 : 0); };
+  const legend = () => '<div class="legend">' + Object.keys(PHASES).map(k => '<span><i class="cal-key ph-' + k + '">' + PHASES[k][0] + '</i>' + esc(PHASES[k][1]) + '</span>').join('') + '<span><i class="cal-key cal-now-key"></i>Current fortnight</span></div>';
+  function calendarView() {
+    const progs = S.list('talentPrograms');
+    let h = '<p class="muted" style="max-width:860px">Talent-acquisition programmes for the year, with owners, expected numbers and fortnightly schedule (1st–15th and 16th–end of each month). Change a programme\'s status in the table, use Edit for details, and "Edit schedule" to change its activities and fortnights.</p>';
+    h += table('talentPrograms', 'talentPrograms', { filters: ['category', 'status'], inline: ['status'], defaults: { status: 'In plan', category: 'Key program' },
+      rowActions: (r) => '<button class="btn sm" data-act="sched-edit" data-id="' + r.id + '">Edit schedule</button> ', empty: 'No programmes recorded yet.' });
+    if (!progs.length) return h;
+    const nowIdx = TA.todayIso().slice(0, 4) === '2026' ? fortnightIdx(TA.todayIso()) : -1;
+    let g = '<div class="table-wrap" style="margin-top:14px"><table class="data cal"><caption class="small muted" style="text-align:left;padding:8px 10px;caption-side:top">2026 schedule by fortnight. Labels such as B1–B4 are batch markers from the tracker.</caption><thead><tr><th scope="col" rowspan="2" class="cal-name">Programme / activity</th>' +
+      MONTHS.map(m => '<th scope="colgroup" colspan="2" class="cal-m">' + m + '</th>').join('') + '</tr><tr>' + MONTHS.map((m, i) => [0, 1].map(f => '<th scope="col" class="cal-f' + (i * 2 + f === nowIdx ? ' cal-now' : '') + '" title="' + m + (f ? ' 16th–end' : ' 1st–15th') + '">' + (f ? '2' : '1') + '</th>').join('')).join('') + '</tr></thead><tbody>';
+    progs.forEach(p => {
+      g += '<tr class="cal-prog"><th scope="rowgroup" colspan="25"><button class="rowtitle" data-act="view" data-entity="talentPrograms" data-id="' + p.id + '">' + esc(p.name) + '</button> ' + badge(p.status) +
+        ' <span class="small muted">' + esc([p.batch, p.programOwner ? 'Owner: ' + p.programOwner : null, p.responsible ? 'Responsible: ' + p.responsible : null, TA.isNum(p.expectedNumber) ? 'Plan: ' + p.expectedNumber : null].filter(Boolean).join(' · ')) + '</span>' +
+        ' <button class="btn sm" data-act="sched-edit" data-id="' + p.id + '">Edit schedule</button></th></tr>';
+      (p.schedule || []).forEach(a => {
+        g += '<tr><td class="cal-name">' + esc(a.name) + '</td>';
+        for (let i = 0; i < 24; i++) {
+          const c = (a.cells || {})[i]; const ph = c && c.p;
+          const tip = MONTHS[i >> 1] + (i % 2 ? ' 16th–end' : ' 1st–15th') + ': ' + a.name + (ph ? ' – ' + PHASES[ph][1] : '') + (c && c.t ? ' (' + c.t + ')' : '');
+          g += '<td class="cal-c' + (ph ? ' ph-' + ph : '') + (i === nowIdx ? ' cal-now' : '') + '"' + (c ? ' data-tip="' + esc(tip) + '"' : '') + '>' + (c ? esc(c.t || PHASES[ph] && PHASES[ph][0] || '') : '') + '</td>';
+        }
+        g += '</tr>';
+      });
+      if (!(p.schedule || []).length) g += '<tr><td class="cal-name small muted" colspan="25">No schedule recorded.</td></tr>';
+    });
+    g += '</tbody></table></div>';
+    return h + card('Programme calendar 2026', 'From the P&C calendar tracker; edit any programme\'s schedule with "Edit schedule".', legend() + g);
+  }
+  function openScheduleEditor(id) {
+    const p = S.get('talentPrograms', id);
+    const sched = TA.clone(p.schedule || []);
+    const draw = () => {
+      const body = '<p class="small muted">Click a fortnight to cycle: empty → Rq → TA → On → • → empty. Batch labels (e.g. B1) are kept.</p>' + legend() +
+        '<div class="table-wrap"><table class="data cal"><thead><tr><th scope="col" class="cal-name">Activity</th>' + MONTHS.map(m => '<th scope="colgroup" colspan="2" class="cal-m">' + m + '</th>').join('') + '<th scope="col"></th></tr></thead><tbody>' +
+        sched.map((a, ai) => '<tr><td class="cal-name"><label style="position:absolute;left:-9999px" for="sa-' + ai + '">Activity name</label><input type="text" id="sa-' + ai + '" data-sched-name="' + ai + '" value="' + esc(a.name) + '"></td>' +
+          Array.from({ length: 24 }, (_, i) => { const c = (a.cells || {})[i]; const ph = c && c.p; return '<td class="cal-c' + (ph ? ' ph-' + ph : '') + '"><button type="button" class="cal-btn" data-sched-cell="' + ai + ':' + i + '" aria-label="' + esc(a.name + ', ' + MONTHS[i >> 1] + (i % 2 ? ' second' : ' first') + ' fortnight: ' + (ph ? PHASES[ph][1] : 'empty')) + '">' + (c ? esc(c.t || (ph ? PHASES[ph][0] : '')) : '') + '</button></td>'; }).join('') +
+          '<td><button type="button" class="btn sm danger" data-sched-del="' + ai + '">Remove</button></td></tr>').join('') +
+        '</tbody></table></div><div class="btn-row" style="margin-top:8px"><button type="button" class="btn sm" data-sched-add="1">+ Add activity</button></div>';
+      TA.openDialog('dlg-form', '<div class="dlg-head"><h3>Schedule – ' + esc(p.name) + '</h3><button type="button" class="btn sm" data-act="close" data-dlg="dlg-form">Cancel</button></div><div class="dlg-body" id="sched-body">' + body +
+        '</div><div class="dlg-foot"><button type="button" class="btn" data-act="close" data-dlg="dlg-form">Cancel</button><button type="button" class="btn primary" id="sched-save">Save schedule</button></div>');
+    };
+    draw();
+    const dlg = document.getElementById('dlg-form');
+    const onClick = (e) => {
+      const t = e.target.closest('[data-sched-cell],[data-sched-del],[data-sched-add],#sched-save');
+      if (!t) return;
+      dlg.querySelectorAll('[data-sched-name]').forEach(inp => { sched[+inp.dataset.schedName].name = inp.value.trim() || 'Activity'; });
+      if (t.id === 'sched-save') { dlg.removeEventListener('click', onClick); S.update('talentPrograms', id, { schedule: sched }); TA.closeDialog('dlg-form'); TA.toast('Schedule saved'); return; }
+      if (t.dataset.schedAdd) sched.push({ name: 'New activity', cells: {} });
+      else if (t.dataset.schedDel) sched.splice(+t.dataset.schedDel, 1);
+      else {
+        const [ai, i] = t.dataset.schedCell.split(':').map(Number); const a = sched[ai]; a.cells = a.cells || {};
+        const c = a.cells[i] || { p: null, t: null }; const next = PHASE_ORDER[(PHASE_ORDER.indexOf(c.p || null) + 1) % PHASE_ORDER.length];
+        if (!next && !c.t) delete a.cells[i]; else a.cells[i] = { p: next, t: c.t };
+      }
+      const focusKey = t.dataset.schedCell; draw();
+      if (focusKey) { const b = dlg.querySelector('[data-sched-cell="' + focusKey + '"]'); if (b) b.focus(); }
+    };
+    dlg.addEventListener('click', onClick);
+    dlg.addEventListener('close', () => dlg.removeEventListener('click', onClick), { once: true });
   }
 
   /* ================= Team & Development ================= */
@@ -591,6 +661,7 @@
     body += calcPanel(entity, r);
     body += '<dl class="kv">' + def.fields.map(f => '<dt>' + esc(f.l) + '</dt><dd>' + TA.cell(entity, r, f.k).replace(/…$/, '') + (f.t === 'textarea' && r[f.k] && String(r[f.k]).length > 140 ? '<div>' + esc(r[f.k]) + '</div>' : '') + '</dd>').join('') +
       '<dt>Record origin</dt><dd>' + esc(r.origin || 'Not provided') + '</dd><dt>Created</dt><dd>' + TA.fmtDateTime(r.createdAt) + '</dd><dt>Last updated</dt><dd>' + TA.fmtDateTime(r.updatedAt) + '</dd></dl>';
+    if (entity === 'talentPrograms') body += '<h4 style="margin-top:14px">Schedule</h4>' + ((r.schedule || []).length ? '<ul class="list">' + r.schedule.map(a => { const ks = Object.keys(a.cells || {}).map(Number).sort((x, y) => x - y); return '<li><div class="li-main"><div class="li-title">' + esc(a.name) + '</div><div class="li-sub">' + (ks.length ? ks.map(i => MONTHS[i >> 1] + (i % 2 ? ' (16th–end)' : ' (1st–15th)') + (a.cells[i].p ? ' ' + PHASES[a.cells[i].p][0] : '') + (a.cells[i].t ? ' ' + esc(a.cells[i].t) : '')).join(', ') : 'No fortnights marked') + '</div></div></li>'; }).join('') + '</ul>' : '<p class="small muted">No schedule recorded.</p>') + '<button class="btn sm" data-act="sched-edit" data-id="' + id + '">Edit schedule</button>';
     if (entity === 'projects' && (r.statusHistory || []).length) body += '<h4 style="margin-top:14px">Status history</h4><ul class="list">' + r.statusHistory.slice().reverse().map(x => '<li><div class="li-main"><div class="li-title">' + (x.from ? esc(x.from) + ' → ' : '') + esc(x.to || 'Not provided') + '</div><div class="li-sub">Recorded ' + TA.fmtDateTime(x.ts) + (x.asOf ? ' · as of ' + TA.fmtDate(x.asOf) : '') + (x.comment ? ' · ' + esc(x.comment) : '') + '</div></div></li>').join('') + '</ul>';
     if (entity === 'projects' && (r.deadlineRevisions || []).length) body += '<h4 style="margin-top:14px">Deadline revisions</h4><ul class="list">' + r.deadlineRevisions.map(x => '<li><span>' + TA.fmtDateTime(x.ts) + ': ' + esc(TA.fmtDate(x.from)) + ' → ' + esc(TA.fmtDate(x.to)) + (x.reason ? ' – ' + esc(x.reason) : '') + '</span></li>').join('') + '</ul>';
     body += linked(entity, r);
@@ -769,6 +840,7 @@
       case 'save-narrative': S.setNarrative(id, document.getElementById('narrative').value); TA.toast('Narrative saved'); break;
       case 'draft-narrative': { const ta = document.getElementById('narrative'); ta.value = (ta.value ? ta.value.trim() + '\n\n' : '') + TA.narrativeDraft(id); ta.focus(); TA.toast('Draft inserted – edit and save'); break; }
       case 'trend-type': ui.trendType = b.dataset.type; render(); break;
+      case 'sched-edit': TA.closeDialog('dlg-drawer'); openScheduleEditor(id); break;
       case 'pick-restore': document.getElementById('restore-file').click(); break;
       case 'insight-status': S.update('insights', id, { status: b.dataset.status }); TA.toast('Insight ' + b.dataset.status.toLowerCase()); break;
       case 'insight-latest': { const i = S.get('insights', id); const patch = { dataChanged: false }; ['title', 'type', 'observation', 'supportingData', 'method', 'interpretation', 'uncertainty', 'recommendedAction'].forEach(k => { patch[k] = i.latest[k]; }); S.update('insights', id, patch); break; }

@@ -11,7 +11,7 @@ const URL = process.argv[2] || 'http://localhost:8765/index.html';
 const OUT = fs.mkdtempSync(path.join(os.tmpdir(), 'ta-dash-'));
 const results = [];
 const check = (name, ok, detail) => { results.push({ name, ok: !!ok, detail }); console.log((ok ? 'PASS ' : 'FAIL ') + name + (detail ? ' – ' + detail : '')); };
-const zipText = (file, re) => execFileSync('python3', ['-I', '-c', 'import sys,zipfile,re\nz=zipfile.ZipFile(sys.argv[1])\nprint("\\n".join(n+"\\t"+z.read(n).decode("utf-8","ignore") for n in z.namelist() if re.search(sys.argv[2],n)))', file, re]).toString();
+const zipText = (file, re) => execFileSync('python3', ['-I', '-c', 'import sys,zipfile,re\nz=zipfile.ZipFile(sys.argv[1])\nprint("\\n".join(n+"\\t"+z.read(n).decode("utf-8","ignore") for n in z.namelist() if re.search(sys.argv[2],n)))', file, re], { maxBuffer: 256 * 1024 * 1024 }).toString();
 
 (async () => {
   const browser = await pw.chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });

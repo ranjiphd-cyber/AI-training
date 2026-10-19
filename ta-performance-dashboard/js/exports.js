@@ -112,6 +112,12 @@
         { type: 'commentary', changed: 'Position at cut-off; no prior period.', matters: rows.filter(r => r.status === 'Below target').map(r => r.p.name + ' ' + r.gap).join(', ') ? 'Below target: ' + rows.filter(r => r.status === 'Below target').map(r => r.p.name + ' (' + r.gap + ')').join(', ') + '. Above target: ' + (rows.filter(r => r.status === 'Above target').map(r => r.p.name + ' (+' + r.gap + ')').join(', ') || 'none') + '.' : 'All pipeline programmes at or above target.', follows: 'Review cohort timing and remaining-year plans for shortfall programmes; confirm whether over-target volumes were requested.' }]
         : [{ type: 'text', text: 'No programmes are classified as talent-pipeline programmes for this period.' }];
       blocks.push({ type: 'text', text: 'Programme grouping is a reporting assumption awaiting confirmation.' });
+      const tps = st.list('talentPrograms');
+      if (tps.length) {
+        blocks.push({ type: 'table', label: 'TA programme calendar 2026 (tracker plan)', head: ['Programme', 'Category', 'Batch', 'Status', 'Owner', 'Responsible', 'Plan (tracker)', 'Scorecard target'],
+          rows: tps.map(t => { const sc = TA.scorecardMatch(t); return [t.name, t.category || 'Not provided', t.batch || '–', t.status, t.programOwner || 'Not provided', t.responsible || 'Not provided', TA.isNum(t.expectedNumber) ? String(t.expectedNumber) : 'Not provided', sc ? TA.fmtInt(sc.target) + (TA.isNum(t.expectedNumber) && sc.target !== t.expectedNumber ? ' (differs)' : '') : '–']; }) });
+        tps.forEach(t => { if (t.origin && t.origin.indexOf('Import: ') === 0) m.sources.add(t.origin.slice(8)); });
+      }
       m.sections.push({ key: 'pipeline', title: 'Talent-pipeline outcomes', blocks });
     }
     if (want('team')) {
@@ -180,10 +186,19 @@
     if (!m.sources.length) m.sources.push('Not provided');
     return m;
   }
+  /* Replaces team members' names with "a team member": full names first, then name parts and close variants
+     (e.g. "Padmavathy" for Padma, "Kathir" for Kathiresaprabu), so unconfirmed spellings are hidden too. */
   function anonymise(text) {
     let t = text;
-    S().list('team', { archived: true }).forEach(mb => { if (mb.name) t = t.replace(new RegExp('\\b' + mb.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'g'), 'a team member'); });
-    return t;
+    const team = S().list('team', { archived: true }).filter(mb => mb.name);
+    team.forEach(mb => { t = t.replace(new RegExp('\\b' + mb.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), 'a team member'); });
+    const parts = Array.from(new Set(team.flatMap(mb => mb.name.toLowerCase().split(/[^a-z]+/).filter(x => x.length >= 4))));
+    t = t.replace(/\b[A-Za-z]+\b/g, (w) => {
+      const lw = w.toLowerCase();
+      if (lw === 'team' || lw === 'member') return w;
+      return parts.some(p => lw.startsWith(p) || (lw.length >= 5 && p.startsWith(lw))) ? 'a team member' : w;
+    });
+    return t.replace(/a team member( a team member)+/g, 'a team member').replace(/a team member(?: [A-Z]\.?)+(?![A-Za-z])/g, 'a team member');
   }
   const fileBase = (m, ext) => 'TA-India-Performance-' + m.period.label.replace(/[^A-Za-z0-9]+/g, '-').replace(/-+$/, '') + '-' + TA.todayIso() + '.' + ext;
   const footerText = (m) => 'Reporting period: ' + m.periodLine + '  |  Generated: ' + TA.fmtDateTime(m.generatedAt) + '  |  Sources: ' + m.sources.join('; ') + '  |  ' + (m.confidential ? 'CONFIDENTIAL – includes individual details' : 'Individual details excluded');

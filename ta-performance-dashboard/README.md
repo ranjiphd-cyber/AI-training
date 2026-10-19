@@ -33,6 +33,16 @@ The 12 initiatives from the *TA year plan India – Strategic Alignment 2026* de
 - Use **+ Add project**, **Edit** and **Delete** (deleted projects go to the recycle bin).
 - Slide conflicts and missing dates are listed as open questions. Decisions named in the deck are listed under Feedback & Actions → Decisions & support.
 
+## TA programme calendar 2026
+
+**Trends & Programme Results → Programme calendar 2026** lists the 21 programmes from the *P&C Calendar ver1.0* tracker (sheet "Talent Pipeline & University Relations Calendar"). Each shows its owner, the person responsible, expected numbers, service charges as stated, and a fortnightly schedule taken from the tracker's colour legend.
+
+- Use **+ Add programme**, **Edit**, **Delete** and the status dropdown.
+- **Edit schedule** changes a programme's activities and fortnights.
+- Tracker numbers are a plan. The scorecard targets stay official; differences are flagged (rule R23).
+- New team members from the org chart are added. Possible name matches are not merged until confirmed.
+- With confidential details excluded, exports also hide team members' name variants.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.

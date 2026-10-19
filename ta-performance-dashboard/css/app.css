@@ -247,3 +247,22 @@ dialog.drawer .dlg-body { max-height: calc(100vh - 64px); }
   .app { display: block; }
   .card { box-shadow: none; break-inside: avoid; }
 }
+
+/* ---------- Programme calendar ---------- */
+table.cal { font-size: 12px; }
+table.cal th, table.cal td { padding: 4px 3px; }
+table.cal .cal-name { min-width: 200px; max-width: 280px; padding-left: 10px; position: sticky; left: 0; background: #fff; z-index: 1; }
+table.cal thead .cal-name { background: #F1F4F8; }
+table.cal .cal-m { text-align: center; border-left: 1px solid var(--line); }
+table.cal .cal-f { text-align: center; font-weight: 500; color: var(--faint); min-width: 26px; }
+table.cal .cal-c { text-align: center; min-width: 26px; height: 24px; font-size: 10.5px; font-weight: 650; border-left: 1px solid #EEF1F5; white-space: nowrap; }
+table.cal tr.cal-prog th { background: #F7F9FB; text-align: left; font-weight: 500; padding: 8px 10px; position: static; }
+table.cal .cal-now { box-shadow: inset 0 0 0 2px var(--accent); }
+.ph-req { background: #CFEAF7; color: #0B4A66; }
+.ph-ta { background: #FBEA9A; color: #5A4500; }
+.ph-onb { background: #CFE7C4; color: #1E5212; }
+.ph-other { background: #DDD6EE; color: #3B2B6B; }
+.cal-key { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 16px; border-radius: 3px; font-style: normal; font-size: 10px; font-weight: 700; padding: 0 3px; }
+.cal-now-key { box-shadow: inset 0 0 0 2px var(--accent); background: #fff; }
+.cal-btn { width: 100%; height: 22px; border: 0; background: transparent; font: inherit; font-size: 10.5px; font-weight: 650; color: inherit; cursor: pointer; }
+.cal-btn:hover { outline: 1px solid var(--slate); }

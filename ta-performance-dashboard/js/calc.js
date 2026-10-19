@@ -104,6 +104,12 @@
     const na = a.rows.map(r => String(r.p.name).toLowerCase()).sort().join('|'), nb = b.rows.map(r => String(r.p.name).toLowerCase()).sort().join('|');
     return na === nb;
   }
+  /* Scorecard programme (in the selected period) that a tracker programme feeds, matched by name. */
+  function scorecardMatch(tp) {
+    if (!tp || !tp.scorecardProgramme) return null;
+    const pid = S().state.meta.selectedPeriodId;
+    return S().list('programmes').find(p => p.periodId === pid && String(p.name).toLowerCase() === String(tp.scorecardProgramme).toLowerCase()) || null;
+  }
   function totalJoinedObs(periodId) {
     const m = S().list('metrics').find(x => x.role === 'totalJoined');
     if (!m) return null;
@@ -325,6 +331,11 @@
       const f = freshness(p);
       if (f.stale) add('R10 Data freshness', 'Warning', p.label + ': ' + f.label, 'Refresh source data before leadership use.', { entity: 'periods', id: p.id });
     });
+    st.list('talentPrograms').forEach(tp => {
+      const p = scorecardMatch(tp);
+      if (p && isNum(tp.expectedNumber) && isNum(p.target) && tp.expectedNumber !== p.target) add('R23 Plan vs scorecard target', 'Warning', tp.name + ': tracker plan ' + tp.expectedNumber + ' vs scorecard target ' + p.target + ' (' + p.name + ')',
+        'Both values retained; the scorecard target stays the official target until confirmed.', { entity: 'talentPrograms', id: tp.id });
+    });
     const team = st.list('team', { archived: true });
     for (let i = 0; i < team.length; i++) for (let j = i + 1; j < team.length; j++)
       if (TA.similarNames(team[i].name, team[j].name)) add('R09 Possible duplicate', 'Warning', 'Team members "' + team[i].name + '" and "' + team[j].name + '" may be the same person', 'Confirm identity before merging records. Records are never merged automatically.', { entity: 'team', id: team[j].id });
@@ -479,7 +490,7 @@
 
   Object.assign(TA, {
     NP, isNum, pct, round, todayIso, daysBetween, fmtInt, fmtINR, fmtPct, fmtVal, fmtDate, fmtDateTime, deltaText,
-    period, periodLabel, metric, member, subjectLabel, recordTitle, progRow, programmeSummary, programmeSetsMatch, obsCalc, rrCalc,
+    period, periodLabel, metric, member, subjectLabel, recordTitle, progRow, programmeSummary, programmeSetsMatch, scorecardMatch, obsCalc, rrCalc,
     priorPeriod, comparability, freshness, metricTrend, runRateScenario, benefitCalc, benefitTotals, BENEFIT_CATS,
     isOverdue, fbOverdue, dataChecks, computeInsights, syncInsights
   });

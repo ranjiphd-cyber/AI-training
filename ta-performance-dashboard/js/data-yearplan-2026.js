@@ -109,5 +109,42 @@
     return true;
   }
 
-  TA.applyDataPacks = apply;
+  /* Update 1 – TA Head's answers of 19 Oct 2026 to the open questions on the deck. */
+  const UPD1 = 'ta-yearplan-2026-upd1';
+  const ANSWERED = 'TA Head, 19 Oct 2026';
+  function applyUpdate1() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(UPD1) >= 0 || applied.indexOf(PACK) < 0) return false;
+    S.recoveryPoint('Before applying the TA Head\'s answers on the 2026 projects');
+    const prj = (name) => S.list('projects', { archived: true }).find(p => p.name === name);
+    const q = (title) => S.list('questions', { archived: true }).find(x => x.title === title);
+    const today = TA.todayIso();
+    let p = prj('ExcelHER · PwD · Veterans Diversity Pipeline');
+    if (p) S.update('projects', p.id, { status: 'Completed', owner: 'Padma', statusAsOf: today, plannedCompletionText: 'December 2026',
+      completionEvidence: 'Confirmed as completed by the TA Head (' + ANSWERED + '). Completion date not provided.',
+      statusComment: 'Marked completed by the TA Head on ' + TA.fmtDate(today) + '. The deck had listed decisions on PwD and Veteran officer hiring as remaining.' });
+    p = prj('Automation Roadmap for TA');
+    if (p) S.update('projects', p.id, { status: 'Completed', statusAsOf: today,
+      completionEvidence: 'Confirmed as completed by the TA Head (' + ANSWERED + '). Completion date not provided.',
+      statusComment: 'Considered completed by the TA Head on ' + TA.fmtDate(today) + '. The deck had listed "evaluation of tools" as remaining.' });
+    p = prj('University Relations');
+    if (p) S.update('projects', p.id, { plannedCompletionText: 'By December 2026 (except app & portal)', originalDeadline: '2026-12-31',
+      notes: (p.notes ? p.notes + ' ' : '') + 'Deadline set to 31 Dec 2026 from "by Dec 2026" (' + ANSWERED + ').' });
+    p = prj('Market/Talent Intelligence'); if (p) S.update('projects', p.id, { owner: 'Kathir' });
+    p = prj('TA Process Manual & Standardisation'); if (p) S.update('projects', p.id, { owner: 'Mikki' });
+    p = prj('Welcome Experience');
+    if (p) { const m = S.list('milestones').find(x => x.projectId === p.id && x.name === 'Stage 3'); if (m) S.update('milestones', m.id, { owner: 'Lincy Mathew' }); }
+    const resolve = (title, text) => { const x = q(title); if (x && x.status !== 'Resolved') S.update('questions', x.id, { status: 'Resolved', resolution: text, resolvedDate: today }); };
+    resolve('ExcelHER · PwD · Veterans: marked "completed" on the overview slide, but work remains', 'Treat as completed; owned by Padma (' + ANSWERED + ').');
+    resolve('Automation Roadmap: marked "completed" on the overview slide, but tool evaluation remains', 'Consider as completed (' + ANSWERED + ').');
+    resolve('Who now owns the ExcelHER · PwD · Veterans project?', 'Owned by Padma (' + ANSWERED + ').');
+    const dates = q('Planned completion dates to confirm');
+    if (dates && dates.status !== 'Resolved') S.update('questions', dates.id, { status: 'Awaiting data owner',
+      detail: 'Answered: University Relations – by Dec 2026; ExcelHER "Dec 26" = December 2026; Welcome Experience Stage 3 – responsible Lincy Mathew. Still no planned dates for Market/Talent Intelligence (Kathir), TA Process Manual (Mikki) and Welcome Experience Stage 3.' });
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([UPD1]) });
+    return true;
+  }
+
+  TA.applyDataPacks = function () { const a = apply(); const b = applyUpdate1(); return a || b; };
 })();
