@@ -206,6 +206,17 @@
     }));
     return out;
   }
+  /* Annual series for a measure in one data scope, plus the current-year YTD value with the same population (marked partial). */
+  function annualWithYtd(metricName, scope, population, ytdPeriodId) {
+    const m = S().list('metrics').find(x => x.name === metricName);
+    if (!m) return null;
+    const t = metricTrend(m.id, 'Annual', scope, population);
+    const pts = t.included.map(x => ({ label: x.period.label, short: x.period.start.slice(0, 4), value: x.value, period: x.period, obs: x.obs }));
+    const yo = S().list('observations').find(o => o.metricId === m.id && o.periodId === ytdPeriodId && o.population === population);
+    const yc = yo ? obsCalc(yo) : null;
+    if (yc && yc.value !== null) { const p = period(ytdPeriodId); pts.push({ label: p.label, short: p.start.slice(0, 4) + ' YTD', value: yc.value, partial: true, period: p, obs: yo }); }
+    return { metric: m, points: pts, excluded: t.excluded };
+  }
   /* Team member matched by name or confirmed alias (case-insensitive). */
   function findMember(name) {
     if (!name) return null;
@@ -513,7 +524,7 @@
   Object.assign(TA, {
     NP, isNum, pct, round, todayIso, daysBetween, fmtInt, fmtINR, fmtPct, fmtVal, fmtDate, fmtDateTime, deltaText,
     period, periodLabel, metric, member, subjectLabel, recordTitle, progRow, programmeSummary, programmeSetsMatch, scorecardMatch, obsCalc, rrCalc,
-    priorPeriod, comparability, freshness, metricTrend, availableTrends, findMember, runRateScenario, benefitCalc, benefitTotals, BENEFIT_CATS,
+    priorPeriod, comparability, freshness, metricTrend, availableTrends, annualWithYtd, findMember, runRateScenario, benefitCalc, benefitTotals, BENEFIT_CATS,
     isOverdue, fbOverdue, dataChecks, computeInsights, syncInsights
   });
 })();

@@ -224,6 +224,7 @@
     let h = '<div class="section-head"><div><h2>Trends & Programme Results</h2><p>Monthly, quarterly, annual and YTD views appear where data exists. Missing periods are not interpolated, and incompatible periods or populations are not compared.</p></div></div>';
     h += tabs('trends', [['results', 'Programme results & trends'], ['calendar', 'Programme calendar 2026']], 'results');
     if (tab('trends', 'results') === 'calendar') return h + calendarView();
+    h += keyParamsCard();
     h += '<div class="tabs" role="tablist" aria-label="Period granularity">' + ['Month', 'Quarter', 'Annual', 'YTD'].map(tp => {
       const n = S.list('periods').filter(x => x.type === tp).length;
       return '<button role="tab" aria-selected="' + (ui.trendType === tp) + '" data-act="trend-type" data-type="' + tp + '">' + ({ Month: 'Monthly', Quarter: 'Quarterly', Annual: 'Annual', YTD: 'YTD' })[tp] + ' (' + n + ')</button>';
@@ -292,6 +293,28 @@
       h += '<div style="height:14px"></div>' + card('Measure trend – ' + ui.trendType, 'Only observations with the same population as the latest one are joined into a trend.', body, { tools });
     }
     return h;
+  }
+
+  /* Lateral-hiring key parameters: annual 2020–2025 plus 2026 YTD (drawn as a partial point). */
+  function keyParamsCard() {
+    const names = TA.LATERAL_TREND_METRICS || [];
+    const sets = names.map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+    if (!sets.length) return '';
+    const pp = (a, b) => TA.deltaText('%', a, b).replace(' (percentage points)', '');
+    const body = '<div class="grid g3">' + sets.map(s => {
+      const pts = s.points, full = pts.filter(p => !p.partial), ytd = pts.find(p => p.partial);
+      const a = full[full.length - 2], b = full[full.length - 1];
+      const hi = full.reduce((x, p) => p.value > x.value ? p : x, full[0]), lo = full.reduce((x, p) => p.value < x.value ? p : x, full[0]);
+      return '<div><h4>' + esc(s.metric.name) + ' %</h4>' + TA.chartLine(pts, '%', { labels: true, w: 380, h: 220, zero: true, aria: s.metric.name + ' for lateral joiners, 2020 to 2026 year to date', seriesLabel: 'Lateral joiners' }) +
+        '<ul class="small" style="margin:4px 0 0 16px;padding:0">' + (a && b ? '<li>' + esc(a.short + ' → ' + b.short + ': ' + pp(a.value, b.value)) + '</li>' : '') +
+        (ytd && b ? '<li>' + esc(b.short + ' → ' + ytd.short + ': ' + pp(b.value, ytd.value)) + ' <span class="muted">(year-to-date vs full year; not like-for-like)</span></li>' : '') +
+        '<li>' + esc('Full-year range: ' + TA.fmtPct(lo.value) + ' (' + lo.short + ') to ' + TA.fmtPct(hi.value) + ' (' + hi.short + ')') + '</li></ul>' +
+        '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">Value</th><th scope="col">Source</th></tr></thead><tbody>' +
+        pts.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + esc(TA.fmtPct(p.value)) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
+    }).join('') + '</div>';
+    return card('Lateral hiring – key parameters 2020–2026', 'Lateral joiners. 2020–2025 are full years; 2026 is year-to-date to 14 Oct (hollow point, dashed line). Source: Business Review Meeting (Oct) slide; 2026 values match the scorecard.', body +
+      commentary('Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'These three measures shape cost, inclusion and sourcing mix for lateral hiring. 2026 is not yet a full year.',
+        'Track the planned diversity pipeline and the referral module redesign (see Actions); compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
   }
 
   function breakdownsCard() {

@@ -330,26 +330,29 @@
   function chartLine(points, unit, o) {
     const opt = o || {};
     if (!points.length) return '<div class="empty">No data points.</div>';
-    const W = 700, H = 240, L = 56, R = 44, T = 16, B = 40;
+    const W = opt.w || 700, H = opt.h || 240, L = opt.w ? 36 : 56, R = opt.w ? 30 : 44, T = 16, B = 40;
     const vals = points.map(p => p.value).concat(points.map(p => p.target).filter(TA.isNum));
     let lo = Math.min(...vals), hi = Math.max(...vals);
     if (lo === hi) { lo = lo - 1; hi = hi + 1; }
     const pad = (hi - lo) * .15; lo = Math.max(unit === '%' || unit === 'count' || unit === 'days' ? 0 : -Infinity, lo - pad); hi = hi + pad;
+    if (opt.zero) { lo = 0; hi = Math.ceil(Math.max(...vals) * 1.15 / 5) * 5; }
     const xs = (i) => points.length === 1 ? L + (W - L - R) / 2 : L + i * (W - L - R) / (points.length - 1);
     const ys = (v) => T + (1 - (v - lo) / (hi - lo)) * (H - T - B);
     let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(opt.aria || 'Trend') + '">';
-    for (let k = 0; k <= 4; k++) { const v = lo + k * (hi - lo) / 4; svg += '<line class="gridline" x1="' + L + '" x2="' + (W - R) + '" y1="' + ys(v) + '" y2="' + ys(v) + '"/><text class="lbl-muted" x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + esc(TA.round(v, 1)) + '</text>'; }
+    for (let k = 0; k <= 4; k++) { const v = lo + k * (hi - lo) / 4; svg += '<line class="gridline" x1="' + L + '" x2="' + (W - R) + '" y1="' + ys(v) + '" y2="' + ys(v) + '"/><text class="lbl-muted" x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + esc(TA.round(v, hi - lo >= 10 ? 0 : 1)) + '</text>'; }
     const tgt = points.filter(p => TA.isNum(p.target));
     if (tgt.length) svg += '<polyline fill="none" stroke="var(--target)" stroke-width="2" stroke-dasharray="5 4" points="' + points.map((p, i) => TA.isNum(p.target) ? xs(i) + ',' + ys(p.target) : '').filter(Boolean).join(' ') + '"/>';
-    svg += '<polyline fill="none" stroke="var(--series-1)" stroke-width="2" points="' + points.map((p, i) => xs(i) + ',' + ys(p.value)).join(' ') + '"/>';
+    // A partial (e.g. year-to-date) final point is drawn hollow and joined by a dashed segment: it is not a like-for-like value.
+    svg += '<polyline fill="none" stroke="var(--series-1)" stroke-width="2" points="' + points.map((p, i) => p.partial ? '' : xs(i) + ',' + ys(p.value)).filter(Boolean).join(' ') + '"/>';
+    points.forEach((p, i) => { if (p.partial && i > 0) svg += '<line x1="' + xs(i - 1) + '" y1="' + ys(points[i - 1].value) + '" x2="' + xs(i) + '" y2="' + ys(p.value) + '" stroke="var(--series-1)" stroke-width="2" stroke-dasharray="4 4"/>'; });
+    const labelIdx = opt.labels ? points.map((_, i) => i).filter(i => i === 0 || i >= points.length - 2 || points[i].value === Math.max(...points.map(x => x.value)) || points[i].value === Math.min(...points.map(x => x.value))) : [points.length - 1];
     points.forEach((p, i) => {
-      svg += '<g data-tip="' + esc(p.label + ': ' + TA.fmtVal(p.value, unit) + (TA.isNum(p.target) ? ' (target ' + TA.fmtVal(p.target, unit) + ')' : '')) + '"><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="12" fill="transparent"/><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="4.5" fill="var(--series-1)" stroke="#fff" stroke-width="2"/></g>';
+      svg += '<g data-tip="' + esc(p.label + ': ' + TA.fmtVal(p.value, unit) + (p.partial ? ' (partial period)' : '') + (TA.isNum(p.target) ? ' (target ' + TA.fmtVal(p.target, unit) + ')' : '')) + '"><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="12" fill="transparent"/><circle cx="' + xs(i) + '" cy="' + ys(p.value) + '" r="4.5" fill="' + (p.partial ? '#fff' : 'var(--series-1)') + '" stroke="' + (p.partial ? 'var(--series-1)' : '#fff') + '" stroke-width="2"/></g>';
       svg += '<text class="lbl-muted" x="' + xs(i) + '" y="' + (H - 18) + '" text-anchor="middle">' + esc(p.short || p.label) + '</text>';
+      if (labelIdx.indexOf(i) >= 0) svg += '<text class="lbl" x="' + xs(i) + '" y="' + (ys(p.value) - 10) + '" text-anchor="middle">' + esc(TA.fmtVal(p.value, unit)) + '</text>';
     });
-    const last = points[points.length - 1];
-    svg += '<text class="lbl" x="' + (xs(points.length - 1) + (points.length === 1 ? 10 : -6)) + '" y="' + (ys(last.value) - 10) + '" text-anchor="' + (points.length === 1 ? 'start' : 'end') + '">' + esc(TA.fmtVal(last.value, unit)) + '</text>';
     svg += '</svg>';
-    return '<div class="legend"><span><i class="swatch" style="background:var(--series-1)"></i>Actual</span>' + (tgt.length ? '<span><i class="swatch" style="border-top:2px dashed var(--target);height:0;border-radius:0"></i>Target</span>' : '') + '</div><div class="chart">' + svg + '</div>';
+    return '<div class="legend"><span><i class="swatch" style="background:var(--series-1)"></i>' + esc(opt.seriesLabel || 'Actual') + '</span>' + (points.some(p => p.partial) ? '<span><i class="swatch" style="background:#fff;border:2px solid var(--series-1);border-radius:50%"></i>Partial period (not a full year)</span>' : '') + (tgt.length ? '<span><i class="swatch" style="border-top:2px dashed var(--target);height:0;border-radius:0"></i>Target</span>' : '') + '</div><div class="chart">' + svg + '</div>';
   }
   function chartTimeline(projects, milestones) {
     const dated = projects.filter(p => p.startDate || p.originalDeadline || p.revisedDeadline);

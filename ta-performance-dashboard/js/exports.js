@@ -82,6 +82,15 @@
         else blocks.push({ type: 'text', text: 'Prior-period series not charted: some programmes have no value in ' + prior.label + ' (missing is not shown as zero).' });
         blocks.push({ type: 'text', text: TA.programmeSetsMatch(priorPs, ps) ? 'Comparison with ' + prior.label + ': total ' + TA.deltaText('count', priorPs.joinedSum, ps.joinedSum) + '.' : 'Totals not compared with ' + prior.label + ': the periods hold different programme sets.' });
       } else if (prior) blocks.push({ type: 'text', text: 'Prior period ' + prior.label + ' is not comparable: ' + TA.comparability(prior, p).reasons.join(' ') });
+      const lat = (TA.LATERAL_TREND_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+      if (lat.length) {
+        const cats = lat[0].points.map(p => p.short);
+        if (lat.every(s => s.points.map(p => p.short).join() === cats.join())) {
+          blocks.push({ type: 'chart', kind: 'line', title: 'Lateral hiring – key parameters (%), 2020–2026 YTD', categories: cats, series: lat.map((s, i) => ({ name: s.metric.name, values: s.points.map(p => TA.round(p.value, 1)), color: [ACCENT, AMBER, '7A5BC4'][i] })),
+            note: '2026 is year-to-date (to 14 Oct); compare with full years with care. Source: Business Review Meeting (Oct) slide.' });
+        }
+        lat.forEach(s => s.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
+      }
       const trendRows = [];
       TA.availableTrends().forEach(t => { trendRows.push([t.metric.name, t.population || 'Not provided', t.a.period.label + ': ' + TA.fmtVal(t.a.value, t.metric.unit), t.b.period.label + ': ' + TA.fmtVal(t.b.value, t.metric.unit), TA.deltaText(t.metric.unit, t.a.value, t.b.value)]); if (t.b.obs.source) m.sources.add(t.b.obs.source); });
       if (trendRows.length) blocks.push({ type: 'table', label: 'Latest change between comparable periods (descriptive; causes not inferred)', head: ['Measure', 'Population', 'Prior', 'Latest', 'Change'], rows: trendRows });
@@ -255,7 +264,13 @@
           y += th + 0.25;
         } else if (b.type === 'chart') {
           ensure(3.0);
-          if (b.categories.length) {
+          if (b.kind === 'line' && b.categories.length) {
+            s.addChart(pres.ChartType.line, b.series.map(se => ({ name: se.name, labels: b.categories, values: se.values })), {
+              x: X0, y, w: CW, h: 2.85, chartColors: b.series.map(se => se.color), lineSize: 2, lineDataSymbol: 'circle', lineDataSymbolSize: 6, showLegend: true, legendPos: 'b', legendFontSize: 10, legendFontFace: FONT,
+              showValue: true, dataLabelFontSize: 8, dataLabelPosition: 't', catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, valGridLine: { color: 'E6EAF0', size: 0.5 },
+              showTitle: true, title: b.title, titleFontSize: 12, titleColor: NAVY, titleFontFace: FONT
+            });
+          } else if (b.categories.length) {
             s.addChart(pres.ChartType.bar, b.series.map(se => ({ name: se.name, labels: b.categories, values: se.values })), {
               x: X0, y, w: CW, h: 2.85, barDir: 'bar', barGrouping: 'clustered', chartColors: b.series.map(se => se.color), showLegend: true, legendPos: 'b', legendFontSize: 10, legendFontFace: FONT,
               showValue: true, dataLabelFontSize: 9, dataLabelColor: '0F1B2D', catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, catAxisLabelFontFace: FONT, valGridLine: { color: 'E6EAF0', size: 0.5 },
@@ -338,7 +353,7 @@
         if (b.type === 'kpis') children.push(tbl(['Measure', 'Value', 'Basis'], b.items.map(k => [k.label, k.value, k.note || ''])));
         else if (b.type === 'chart') {
           children.push(H(b.title + ' (chart data)', D.HeadingLevel.HEADING_3));
-          children.push(tbl(['Programme'].concat(b.series.map(s => s.name)), b.categories.map((c, i) => [c].concat(b.series.map(s => String(s.values[i]))))));
+          children.push(tbl([b.kind === 'line' ? 'Year' : 'Programme'].concat(b.series.map(s => s.name)), b.categories.map((c, i) => [c].concat(b.series.map(s => String(s.values[i]))))));
           if (b.note) children.push(P(b.note, { run: { italics: true, color: SLATE } }));
           else children.push(P(''));
         } else if (b.type === 'table') { if (b.label) children.push(H(b.label, D.HeadingLevel.HEADING_3)); children.push(tbl(b.head, b.rows)); children.push(P('')); }
@@ -407,6 +422,12 @@
             doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...rgb(SLATE)); doc.text(doc.splitTextToSize(pdfSafe(k.note || ''), tw - 12).slice(0, 2), x + 6, y + 45);
           });
           y += th + 14;
+        } else if (b.type === 'chart' && b.kind === 'line') {
+          text(b.title, 11, { bold: true, color: NAVY, after: 2 });
+          doc.autoTable({ startY: y, head: [['Measure'].concat(b.categories).map(pdfSafe)], body: b.series.map(se => [se.name].concat(se.values.map(v => v + '%')).map(pdfSafe)), margin: { left: M, right: M, bottom: 50 },
+            styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 4, textColor: rgb('0F1B2D'), lineColor: rgb(LINE), lineWidth: 0.5 }, headStyles: { fillColor: rgb(NAVY), textColor: 255 } });
+          y = doc.lastAutoTable.finalY + 6;
+          if (b.note) text(b.note, 8.5, { italic: true, color: SLATE });
         } else if (b.type === 'chart') {
           const rowH = 18, labelW = 110, h = 24 + b.categories.length * rowH * Math.max(1, b.series.length * 0.6) + 30;
           ensure(h);

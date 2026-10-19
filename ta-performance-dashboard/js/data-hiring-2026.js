@@ -101,7 +101,7 @@
     obs(mR2O, ytd, y.r2o.sum, y.r2o.n, 'Joiners in period with requisition approval and offer dates (Hiring tracker)', 'Mean of ' + y.r2o.n + ' joiners (median ' + y.r2o.median + ' days); ' + y.r2o.missing + ' joiners without a requisition approval date and ' + y.r2o.excludedNegative + ' with an offer date before approval are excluded.');
     obs(mR2J, ytd, y.r2j.sum, y.r2j.n, 'Joiners in period with requisition approval and joining dates (Hiring tracker)', 'Mean of ' + y.r2j.n + ' joiners (median ' + y.r2j.median + ' days); ' + y.r2j.missing + ' joiners without a requisition approval date are excluded.');
     obs(mVen, ytd, src('Vendor'), y.joiners, J, 'Vendor-sourced joiners ÷ all external joiners.');
-    obs(mRef, ytd, src('Employee Referral'), y.joiners, J, 'Referral joiners ÷ all external joiners. As a share of lateral joiners only: ' + TA.fmtPct(TA.pct(src('Employee Referral'), y.byType.Lateral)) + '.');
+    obs(mRef, ytd, src('Employee Referral'), y.joiners, J, 'Referral joiners ÷ all external joiners.');
     obs(mGen, ytd, y.gender.Female || 0, y.joiners, J, 'Female joiners ÷ all external joiners.');
     obs(mDir, ytd, src('Direct/SF/Social Media/Job Portal'), y.joiners, J, 'Direct joiners ÷ all external joiners.');
     obs(mPend, ytd, y.pendingCount, 1, 'Offers with status Offered at the tracker date', 'Expected joining: ' + Object.keys(y.pending).sort().map(k => ym(k) + ': ' + y.pending[k]).join(', ') + '.');
@@ -139,7 +139,7 @@
     Q('Adarsh offers: recruiter reference 117 vs hiring tracker 78', 'Data conflict', 'Essential', 'Recruiter results – Adarsh',
       'The recruiter reference (1 Jan–12 Oct) shows 117 offers against a target of 85. The hiring tracker shows 78 lateral/fresher offers released by Adarsh 1 Jan–14 Oct (82 including offers released in 2025). Does the reference include other hiring (e.g. NATS, internal, interns) or a different date basis?', 'Recruiter reference: 117', 'Hiring tracker: 78');
     Q('Employee referral share: 15% (scorecard) vs 12.8% (tracker)', 'Population / compatibility', 'Important', 'Employee referrals',
-      'The tracker gives ' + src('Employee Referral') + ' referral joiners: ' + TA.fmtPct(TA.pct(src('Employee Referral'), y.joiners)) + ' of all ' + y.joiners + ' external joiners, or ' + TA.fmtPct(TA.pct(src('Employee Referral'), y.byType.Lateral)) + ' of ' + y.byType.Lateral + ' lateral joiners. Is the scorecard 15% a share of lateral hires?', 'Scorecard: 15%', 'Tracker: 12.8% of all / 15.1% of lateral');
+      'The tracker gives ' + src('Employee Referral') + ' referral joiners: ' + TA.fmtPct(TA.pct(src('Employee Referral'), y.joiners)) + ' of all ' + y.joiners + ' external joiners. Is the scorecard 15% a share of lateral hires only?', 'Scorecard: 15%', 'Tracker: 12.8% of all external joiners');
     Q('Cycle times: scorecard 53 / 89 days vs tracker 51.7 / 90.0 days', 'Definition to confirm', 'Important', 'Requisition-to-offer / requisition-to-join',
       'From the tracker (joiners 1 Jan–14 Oct, requisition approval date to offer / joining date): mean ' + y.r2o.mean + ' / ' + y.r2j.mean + ' days, median ' + y.r2o.median + ' / ' + y.r2j.median + ' days; ' + y.r2o.missing + ' joiners lack an approval date. Which population and start date does the scorecard use?', 'Scorecard: 53 / 89', 'Tracker mean: ' + y.r2o.mean + ' / ' + y.r2j.mean);
     Q('Hiring tracker data gaps', 'Missing data', 'Nice to have', 'Hiring tracker',
