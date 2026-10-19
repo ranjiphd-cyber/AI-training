@@ -83,8 +83,8 @@
         blocks.push({ type: 'text', text: TA.programmeSetsMatch(priorPs, ps) ? 'Comparison with ' + prior.label + ': total ' + TA.deltaText('count', priorPs.joinedSum, ps.joinedSum) + '.' : 'Totals not compared with ' + prior.label + ': the periods hold different programme sets.' });
       } else if (prior) blocks.push({ type: 'text', text: 'Prior period ' + prior.label + ' is not comparable: ' + TA.comparability(prior, p).reasons.join(' ') });
       const trendRows = [];
-      st.list('metrics').forEach(mt => { const t = TA.metricTrend(mt.id, p.type, p.scope); if (t.included.length >= 2) { const a = t.included[t.included.length - 2], b = t.included[t.included.length - 1]; trendRows.push([mt.name, a.period.label + ': ' + TA.fmtVal(a.value, mt.unit), b.period.label + ': ' + TA.fmtVal(b.value, mt.unit), TA.deltaText(mt.unit, a.value, b.value)]); } });
-      if (trendRows.length) blocks.push({ type: 'table', head: ['Measure', 'Prior', 'Current', 'Change'], rows: trendRows });
+      TA.availableTrends().forEach(t => { trendRows.push([t.metric.name, t.population || 'Not provided', t.a.period.label + ': ' + TA.fmtVal(t.a.value, t.metric.unit), t.b.period.label + ': ' + TA.fmtVal(t.b.value, t.metric.unit), TA.deltaText(t.metric.unit, t.a.value, t.b.value)]); if (t.b.obs.source) m.sources.add(t.b.obs.source); });
+      if (trendRows.length) blocks.push({ type: 'table', label: 'Latest change between comparable periods (descriptive; causes not inferred)', head: ['Measure', 'Population', 'Prior', 'Latest', 'Change'], rows: trendRows });
       else blocks.push({ type: 'text', text: 'Trend: not available. Each measure has a single ' + p.type + ' observation for this scope; no prior-period data has been supplied. Missing periods are not interpolated.' });
       blocks.push({ type: 'commentary', changed: priorPs && priorPs.count && cmpOk && TA.programmeSetsMatch(priorPs, ps) ? 'Total joined ' + TA.deltaText('count', priorPs.joinedSum, ps.joinedSum) + ' vs ' + prior.label + '.' : 'No comparable prior period; position at cut-off shown.',
         matters: ps.shortfalls.length ? ps.shortfallSum + ' joiners short in ' + ps.shortfalls.length + ' programme(s) while the aggregate is ' + TA.fmtPct(ps.aggregateAttain) + '.' : 'No programme shortfalls.',
@@ -99,6 +99,8 @@
         { type: 'table', label: 'Business contribution by programme group (shared business outcome)', head: ['Group', 'Target', 'Joined', 'Share of joiners', 'Attainment'], rows: Object.keys(groups).map(g => [g, String(groups[g].t), String(groups[g].j), TA.fmtPct(TA.pct(groups[g].j, ps.joinedSum)), TA.fmtPct(TA.pct(groups[g].j, groups[g].t))]) },
         { type: 'table', label: 'Financial and non-financial value (categories are not combined)', head: ['Category', 'Records', 'Validated', 'Validated gross', 'Validated net', 'Unvalidated / estimated (not claimed)'],
           rows: TA.BENEFIT_CATS.map(c => [c, String(bt[c].count), String(bt[c].validated), bt[c].validated ? TA.fmtVal(bt[c].validatedGross, bt[c].unit) : '–', bt[c].validated && c !== 'Productivity capacity released' ? (bt[c].netKnown ? TA.fmtINR(bt[c].validatedNet) : 'Not calculable') : '–', bt[c].unvalidatedGross ? TA.fmtVal(bt[c].unvalidatedGross, bt[c].unit) : '–']) },
+        ...st.list('breakdowns').filter(bd => bd.dimension === 'Business area').map(bd => ({ type: 'table', label: bd.title + ' – ' + TA.periodLabel(bd.periodId), head: ['Business area', 'Joined', 'Share of joiners', 'Offers released', 'Declined'],
+          rows: (bd.rows || []).filter(r => r.joined || r.offers).map(r => { const tot = (bd.rows || []).reduce((s, x) => s + (x.joined || 0), 0); return [r.label, String(r.joined), TA.fmtPct(TA.pct(r.joined, tot)), String(r.offers), String(r.declined)]; }) })),
         { type: 'text', text: st.list('benefits').length ? 'Only validated benefits with approved inputs are counted as verified. Vacancy-duration value is notional.' : 'No benefits or financial inputs have been supplied, so no savings, cost avoidance or capacity release is reported. Reduced vendor usage alone is not a monetary saving.' }
       ];
       const vb = st.list('benefits').map(b => ({ b, c: TA.benefitCalc(b) }));
@@ -191,8 +193,10 @@
   function anonymise(text) {
     let t = text;
     const team = S().list('team', { archived: true }).filter(mb => mb.name);
+    const names = (mb) => [mb.name].concat(String(mb.aliases || '').split(',').map(x => x.trim()).filter(Boolean));
+    team.forEach(mb => names(mb).sort((a, b) => b.length - a.length).forEach(nm => { t = t.replace(new RegExp('\\b' + nm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), 'a team member'); }));
     team.forEach(mb => { t = t.replace(new RegExp('\\b' + mb.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi'), 'a team member'); });
-    const parts = Array.from(new Set(team.flatMap(mb => mb.name.toLowerCase().split(/[^a-z]+/).filter(x => x.length >= 4))));
+    const parts = Array.from(new Set(team.flatMap(mb => names(mb).join(' ').toLowerCase().split(/[^a-z]+/).filter(x => x.length >= 4))));
     t = t.replace(/\b[A-Za-z]+\b/g, (w) => {
       const lw = w.toLowerCase();
       if (lw === 'team' || lw === 'member') return w;

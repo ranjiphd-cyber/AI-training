@@ -43,6 +43,17 @@ The 12 initiatives from the *TA year plan India – Strategic Alignment 2026* de
 - New team members from the org chart are added. Possible name matches are not merged until confirmed.
 - With confidential details excluded, exports also hide team members' name variants.
 
+## 2026 hiring data (Hiring2026 tracker)
+
+The candidate-level tracker is **not** stored in the dashboard. Only aggregates are loaded, computed outside the page:
+- **YTD period:** 1 Jan–14 Oct 2026, aligned to the scorecard cut-off.
+- **Monthly periods:** Jan–Sep, plus a partial October that isn't compared with full months.
+- **Measures:** external joiners, offers, decline and acceptance rates, cycle times (mean, with median noted), and vendor, referral, direct and gender shares.
+- **Breakdowns:** by business area, source, hiring type, employment type and decline reason, plus pending joiners.
+- **Recruiter-level counts:** confidential, and only for confirmed names.
+
+Lateral (351) and fresher (62) joiners reconcile with the scorecard. Cohorts with offers still pending are marked incomplete and left out of trend comparisons.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.

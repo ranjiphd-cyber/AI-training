@@ -78,13 +78,11 @@
 
     h += '<div class="grid g3" style="margin-bottom:14px">';
     // Key trends
-    const trendItems = [];
-    S.list('metrics').forEach(m => {
-      const t = TA.metricTrend(m.id, p.type, p.scope);
-      if (t.included.length >= 2) { const a = t.included[t.included.length - 2], b = t.included[t.included.length - 1]; trendItems.push('<li><div class="li-main"><div class="li-title">' + esc(m.name) + '</div><div class="li-sub">' + esc(a.period.label) + ' ' + esc(TA.fmtVal(a.value, m.unit)) + ' → ' + esc(b.period.label) + ' ' + esc(TA.fmtVal(b.value, m.unit)) + ': ' + esc(TA.deltaText(m.unit, a.value, b.value)) + '</div></div></li>'); }
-    });
+    const trendItems = TA.availableTrends().map(t => '<li><div class="li-main"><div class="li-title">' + esc(t.metric.name) + ' <span class="small muted">(' + esc(t.type === 'Month' ? 'monthly' : t.type) + ', ' + esc(t.scope || 'Not provided') + ')</span></div><div class="li-sub">' +
+      esc(t.a.period.label.replace(/ – .*$/, '')) + ' ' + esc(TA.fmtVal(t.a.value, t.metric.unit)) + ' → ' + esc(t.b.period.label.replace(/ – .*$/, '')) + ' ' + esc(TA.fmtVal(t.b.value, t.metric.unit)) + ': ' + esc(TA.deltaText(t.metric.unit, t.a.value, t.b.value)) + '</div></div></li>');
     h += card('Key trends', 'Only comparable periods (same type, scope and population) are compared.',
-      trendItems.length ? '<ul class="list">' + trendItems.join('') + '</ul>' : '<p class="muted">No trend available: each measure has one ' + esc(p.type) + ' observation for this scope. Add comparable prior-period results to show change over time.</p><button class="linklike" data-act="nav" data-sec="trends">Open trends</button>');
+      trendItems.length ? '<ul class="list">' + trendItems.slice(0, 7).join('') + '</ul>' + (trendItems.length > 7 ? '<p class="small muted">' + (trendItems.length - 7) + ' more in Trends.</p>' : '') + '<p class="small muted">Latest full period vs the one before; partial months are not compared. Changes are descriptive.</p><button class="linklike" data-act="nav" data-sec="trends">Open trends</button>'
+        : '<p class="muted">No trend available: no measure has two comparable periods yet. Add comparable prior-period results to show change over time.</p><button class="linklike" data-act="nav" data-sec="trends">Open trends</button>');
     // Verified financial benefits
     const bt = TA.benefitTotals();
     const vb = TA.BENEFIT_CATS.filter(c => bt[c].validated > 0);
@@ -274,7 +272,9 @@
     const mId = ui.trendMetric && TA.metric(ui.trendMetric) ? ui.trendMetric : (mets[0] ? mets[0].id : null);
     if (mId) {
       const m = TA.metric(mId);
-      const tr = TA.metricTrend(mId, ui.trendType, p ? p.scope : null);
+      const scopes = Array.from(new Set(S.list('observations').filter(o => o.metricId === mId).map(o => TA.period(o.periodId)).filter(x => x && x.type === ui.trendType).map(x => x.scope || '')));
+      const scope = scopes.indexOf(ui.trendScope) >= 0 ? ui.trendScope : (scopes.indexOf(p ? p.scope : '') >= 0 ? p.scope : (scopes[0] || (p ? p.scope : '')));
+      const tr = TA.metricTrend(mId, ui.trendType, scope);
       let body = '';
       if (tr.included.length >= 2) {
         body += TA.chartLine(tr.included.map(x => ({ label: x.period.label, short: x.period.label.replace(/ – .*$/, ''), value: x.value, target: x.obs.target })), m.unit, { aria: m.name + ' trend' });
@@ -286,10 +286,30 @@
       if (tr.excluded.length) body += '<p class="small muted" style="margin-top:6px">Excluded from trend: ' + tr.excluded.map(x => esc(x.x.p.label + ' – ' + x.reason)).join('; ') + '</p>';
       body += '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Period</th><th scope="col">Population</th><th scope="col" class="num">Target</th><th scope="col" class="num">Reported</th><th scope="col" class="num">Recalculated</th><th scope="col">Evidence</th></tr></thead><tbody>' +
         tr.included.map(x => '<tr><td>' + esc(x.period.label) + '</td><td>' + esc(x.obs.population || 'Not provided') + '</td><td class="num">' + esc(TA.fmtVal(x.obs.target, m.unit)) + '</td><td class="num">' + esc(TA.fmtVal(x.calc.reported, m.unit)) + '</td><td class="num">' + esc(TA.fmtVal(x.calc.recalc, m.unit)) + '</td><td><button class="linklike" data-act="view" data-entity="observations" data-id="' + x.obs.id + '">Open</button></td></tr>').join('') + '</tbody></table></div></details>';
-      const tools = '<label for="trend-metric" class="small muted">Measure</label><select id="trend-metric" data-act="trend-metric" style="width:auto">' + mets.map(x => '<option value="' + x.id + '"' + (x.id === mId ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select>';
+      const tools = '<label for="trend-metric" class="small muted">Measure</label><select id="trend-metric" data-act="trend-metric" style="width:auto">' + mets.map(x => '<option value="' + x.id + '"' + (x.id === mId ? ' selected' : '') + '>' + esc(x.name) + '</option>').join('') + '</select>' +
+        (scopes.length > 1 ? '<label for="trend-scope" class="small muted">Data scope</label><select id="trend-scope" data-act="trend-scope" style="width:auto">' + scopes.map(sc => '<option' + (sc === scope ? ' selected' : '') + '>' + esc(sc) + '</option>').join('') + '</select>' : (scope ? '<span class="small muted">Data scope: ' + esc(scope) + '</span>' : ''));
+      h += breakdownsCard();
       h += '<div style="height:14px"></div>' + card('Measure trend – ' + ui.trendType, 'Only observations with the same population as the latest one are joined into a trend.', body, { tools });
     }
     return h;
+  }
+
+  function breakdownsCard() {
+    const bds = S.list('breakdowns');
+    if (!bds.length) return '';
+    const body = bds.map(bd => {
+      const rows = (bd.rows || []).filter(r => r.joined || r.offers || r.count);
+      const tot = rows.reduce((s, r) => s + (r.joined || r.count || 0), 0);
+      const isCount = rows.some(r => r.count !== undefined);
+      return '<h4 style="margin:12px 0 6px">' + esc(bd.title) + '</h4><div class="table-wrap"><table class="data"><thead><tr><th scope="col">' + esc(bd.dimension || 'Category') + '</th>' +
+        (isCount ? '<th scope="col" class="num">Count</th><th scope="col" class="num">Share</th>' : '<th scope="col" class="num">Joined</th><th scope="col" class="num">Share of joiners</th><th scope="col" class="num">Offers released</th><th scope="col" class="num">Declined</th><th scope="col" class="num">Decline rate</th>') + '</tr></thead><tbody>' +
+        rows.map(r => isCount ? '<tr><td>' + esc(r.label) + '</td><td class="num">' + r.count + '</td><td class="num">' + TA.fmtPct(TA.pct(r.count, tot)) + '</td></tr>'
+          : '<tr><td>' + esc(r.label) + '</td><td class="num">' + r.joined + '</td><td class="num">' + TA.fmtPct(TA.pct(r.joined, tot)) + '</td><td class="num">' + r.offers + '</td><td class="num">' + r.declined + '</td><td class="num">' + (r.offers ? TA.fmtPct(TA.pct(r.declined, r.offers)) : 'Cannot calculate') + '</td></tr>').join('') +
+        '</tbody></table></div>' + (bd.notes ? '<p class="small muted" style="margin-top:4px">' + esc(bd.notes) + '</p>' : '');
+    }).join('');
+    const p0 = TA.period(bds[0].periodId);
+    return '<div style="height:14px"></div>' + card('Hiring breakdowns – ' + (p0 ? p0.label : ''), 'Recalculated from the hiring tracker (aggregates only; no candidate data is stored). Joiners by joining date; offers and declines by offer date.', body +
+      commentary('Position at ' + (p0 ? TA.fmtDate(p0.end) : 'cut-off') + '.', 'Shows where hiring volume and offer declines concentrate by business area and source.', 'Use alongside programme targets; causes of declines are only as recorded in the tracker.'));
   }
 
   /* ================= Programme calendar ================= */
@@ -377,7 +397,7 @@
     } else {
       const team = S.list('team', { archived: true });
       h += '<div class="table-wrap"><table class="data"><thead><tr><th scope="col">Team member</th><th scope="col">Status</th><th scope="col">Business coverage</th><th scope="col">Backup coverage</th><th scope="col">Succession readiness</th><th scope="col">Projects owned</th><th scope="col">Development items</th></tr></thead><tbody>' +
-        team.map(m => '<tr><td><button class="rowtitle" data-act="view" data-entity="team" data-id="' + m.id + '">' + esc(m.name) + '</button></td><td>' + badge(m.employmentStatus) + '</td><td>' + (m.businessCoverage ? esc(m.businessCoverage) : np()) + '</td><td>' + (m.backupCoverage ? esc(m.backupCoverage) : np()) + '</td><td>' + badge(m.successionReadiness || 'Not assessed', 'neutral') + '</td><td>' + S.list('projects').filter(p => p.owner && TA.similarNames(p.owner, m.name)).length + '</td><td>' + S.list('devItems').filter(d => d.subject === m.id).length + '</td></tr>').join('') +
+        team.map(m => '<tr><td><button class="rowtitle" data-act="view" data-entity="team" data-id="' + m.id + '">' + esc(m.name) + '</button></td><td>' + badge(m.employmentStatus) + '</td><td>' + (m.businessCoverage ? esc(m.businessCoverage) : np()) + '</td><td>' + (m.backupCoverage ? esc(m.backupCoverage) : np()) + '</td><td>' + badge(m.successionReadiness || 'Not assessed', 'neutral') + '</td><td>' + S.list('projects').filter(p => p.owner && (TA.similarNames(p.owner, m.name) || String(p.owner).split('/').some(o => TA.findMember(o) === m))).length + '</td><td>' + S.list('devItems').filter(d => d.subject === m.id).length + '</td></tr>').join('') +
         '</tbody></table></div><p class="small muted" style="margin-top:8px">Shared business coverage is listed per person and not summed, to avoid double counting. Projects owned are matched by owner name.</p>';
     }
     return h;
@@ -889,6 +909,7 @@
     if (t.dataset.act === 'imp-skipdup') { ui.importSt.skipDup = t.checked; render(); return; }
     if (t.dataset.act === 'cmp-period') { ui.cmpPeriod = t.value; render(); return; }
     if (t.dataset.act === 'trend-metric') { ui.trendMetric = t.value; render(); return; }
+    if (t.dataset.act === 'trend-scope') { ui.trendScope = t.value; render(); return; }
     if (t.dataset.act === 'hist-entity') { ui.histEntity = t.value; render(); return; }
     if (t.dataset.rp || t.dataset.rpSec) {
       const rp = reportPrefs();

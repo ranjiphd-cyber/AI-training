@@ -88,6 +88,7 @@
         { k: 'numerator', l: 'Numerator (for recalculation)', t: 'number' },
         { k: 'denominator', l: 'Denominator (for recalculation)', t: 'number' },
         { k: 'calcNote', l: 'Calculation note', t: 'text', full: true },
+        { k: 'incomplete', l: 'Incomplete (e.g. outcomes still pending) – exclude from trend comparisons', t: 'bool', full: true },
         { k: 'attribution', l: 'Contribution type', t: 'select', o: ATTRIBUTION },
         { k: 'source', l: 'Source', t: 'text' },
         { k: 'owner', l: 'Data owner', t: 'text' },
@@ -117,6 +118,7 @@
       label: 'Team members', singular: 'Team member', title: 'name', dupKeys: ['name'], confidential: true,
       fields: [
         { k: 'name', l: 'Name', t: 'text', req: true },
+        { k: 'aliases', l: 'Also known as', t: 'text', help: 'Confirmed other spellings or short names, comma-separated. Used to match tracker names and to hide names in exports.' },
         { k: 'role', l: 'Role', t: 'text' },
         { k: 'employmentStatus', l: 'Employment status', t: 'select', o: ['Active', 'Left', 'On leave', 'Vacancy – replacement hiring underway', 'Not provided'], req: true },
         { k: 'businessCoverage', l: 'Business coverage', t: 'textarea', help: 'Shared coverage is recorded per person; totals are not summed across people.' },
@@ -150,6 +152,8 @@
         { k: 'joinTarget', l: 'Joining target', t: 'number', min: 0 },
         { k: 'joins', l: 'Joins (source-reported)', t: 'number', min: 0 },
         { k: 'joinAttainmentReported', l: 'Joining attainment % (source-reported)', t: 'number' },
+        { k: 'declined', l: 'Offers declined', t: 'number', min: 0 },
+        { k: 'pendingJoin', l: 'Offers pending joining', t: 'number', min: 0 },
         { k: 'source', l: 'Source', t: 'text' },
         { k: 'dataDate', l: 'Data update date', t: 'date' },
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
@@ -175,6 +179,17 @@
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
       ],
       cols: ['subject', 'kind', 'title', 'learningStatus', 'capabilityStage', 'reviewDate', 'nextReviewDate']
+    },
+    breakdowns: {
+      label: 'Hiring breakdowns', singular: 'Hiring breakdown', title: 'title',
+      fields: [
+        { k: 'title', l: 'Breakdown', t: 'text', req: true, full: true },
+        { k: 'periodId', l: 'Reporting period', t: 'ref', ref: 'periods', req: true },
+        { k: 'dimension', l: 'Dimension', t: 'text' },
+        { k: 'source', l: 'Source', t: 'text', full: true },
+        { k: 'notes', l: 'Notes', t: 'textarea', full: true }
+      ],
+      cols: ['title', 'periodId', 'dimension', 'source']
     },
     projects: {
       label: 'Projects & process improvement', singular: 'Project', title: 'name', dupKeys: ['name'],
@@ -394,7 +409,7 @@
     }
   };
 
-  const ENTITY_ORDER = ['periods', 'commitments', 'programmes', 'talentPrograms', 'metrics', 'observations', 'team', 'recruiterResults', 'devItems',
+  const ENTITY_ORDER = ['periods', 'commitments', 'programmes', 'talentPrograms', 'metrics', 'observations', 'team', 'recruiterResults', 'breakdowns', 'devItems',
     'projects', 'milestones', 'feedback', 'actions', 'benefits', 'risks', 'decisions', 'questions', 'insights', 'reviewNotes'];
 
   /* ---------------- Seed ---------------- */

@@ -330,7 +330,7 @@
   function chartLine(points, unit, o) {
     const opt = o || {};
     if (!points.length) return '<div class="empty">No data points.</div>';
-    const W = 700, H = 240, L = 56, R = 20, T = 16, B = 40;
+    const W = 700, H = 240, L = 56, R = 44, T = 16, B = 40;
     const vals = points.map(p => p.value).concat(points.map(p => p.target).filter(TA.isNum));
     let lo = Math.min(...vals), hi = Math.max(...vals);
     if (lo === hi) { lo = lo - 1; hi = hi + 1; }

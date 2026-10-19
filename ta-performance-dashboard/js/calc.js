@@ -182,13 +182,35 @@
     obs.sort((a, b) => a.p.start.localeCompare(b.p.start));
     const pop = population !== undefined ? population : (obs.length ? (obs[obs.length - 1].o.population || null) : null);
     const included = [], excluded = [];
+    const lastDay = (iso) => { const d = new Date(iso + 'T00:00:00'); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); };
     obs.forEach(x => {
       const c = obsCalc(x.o);
-      if ((x.o.population || null) !== pop) excluded.push({ x, reason: 'Population differs ("' + (x.o.population || NP) + '" vs "' + (pop || NP) + '")' });
+      const partial = (type === 'Month' || type === 'Quarter') && (x.p.start.slice(8) !== '01' || +x.p.end.slice(8) !== lastDay(x.p.end));
+      if (x.o.incomplete) excluded.push({ x, reason: 'Incomplete cohort (' + (x.o.calcNote || 'outcomes pending') + ')' });
+      else if (partial) excluded.push({ x, reason: 'Partial ' + type.toLowerCase() + ' (' + fmtDate(x.p.start) + '–' + fmtDate(x.p.end) + ') is not compared with full ones' });
+      else if ((x.o.population || null) !== pop) excluded.push({ x, reason: 'Population differs ("' + (x.o.population || NP) + '" vs "' + (pop || NP) + '")' });
       else if (c.value === null) excluded.push({ x, reason: 'No value (missing is not treated as zero)' });
       else included.push({ period: x.p, obs: x.o, value: c.value, calc: c });
     });
     return { included, excluded, population: pop };
+  }
+
+  /* Latest valid change for every measure, across each period type and data scope that has at least two comparable values. */
+  function availableTrends() {
+    const combos = {};
+    S().list('periods').forEach(p => { combos[p.type + '|' + (p.scope || '')] = { type: p.type, scope: p.scope || '' }; });
+    const out = [];
+    S().list('metrics').forEach(m => Object.values(combos).forEach(cb => {
+      const t = metricTrend(m.id, cb.type, cb.scope);
+      if (t.included.length >= 2) { const a = t.included[t.included.length - 2], b = t.included[t.included.length - 1]; out.push({ metric: m, type: cb.type, scope: cb.scope, a, b, population: t.population }); }
+    }));
+    return out;
+  }
+  /* Team member matched by name or confirmed alias (case-insensitive). */
+  function findMember(name) {
+    if (!name) return null;
+    const n = String(name).trim().toLowerCase();
+    return S().list('team', { archived: true }).find(t => String(t.name).toLowerCase() === n || String(t.aliases || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean).indexOf(n) >= 0) || null;
   }
 
   /* Linear run-rate scenario. Assumptions are returned with the result and must be shown. */
@@ -306,7 +328,7 @@
       if (c.conflict) add('R01 Reported vs recalculated', 'Conflict', recordTitle('observations', o) + ': reported ' + fmtVal(c.reported, c.unit) + ' vs recalculated ' + fmtVal(c.recalc, c.unit),
         'Method: ' + c.recalcMethod + '. Both values retained; confirm with data owner.', { entity: 'observations', id: o.id });
       if (c.unit === '%' && c.value !== null && (c.value < 0 || c.value > 100)) add('R02 Percentage range', 'Conflict', recordTitle('observations', o) + ' is outside 0–100%', 'Check the unit or the source value.', { entity: 'observations', id: o.id });
-      if (c.value !== null && !isNum(o.target) && c.m.role !== 'totalJoined') add('R03 Missing target', 'Missing', recordTitle('observations', o) + ': target not provided', 'Attainment cannot be assessed.', { entity: 'observations', id: o.id });
+      if (c.value !== null && !isNum(o.target) && c.m.role !== 'totalJoined' && (period(o.periodId) || {}).scope === 'Business scorecard') add('R03 Missing target', 'Missing', recordTitle('observations', o) + ': target not provided', 'Attainment cannot be assessed.', { entity: 'observations', id: o.id });
       if (c.value !== null && !o.population) add('R04 Missing population', 'Missing', recordTitle('observations', o) + ': population not provided', 'Without a defined population, results cannot be compared across periods.', { entity: 'observations', id: o.id });
     });
     st.list('metrics').forEach(m => {
@@ -430,7 +452,7 @@
       supportingData: 'Metric results register.', method: 'Count of observations per metric.',
       interpretation: 'No direction of change can be stated for these measures.', uncertainty: 'Prior-period data may exist outside this dashboard.',
       recommendedAction: 'Add comparable prior-period results (same definition and population) to enable trends.' });
-    const noTarget = st.list('observations').filter(o => !isNum(o.target) && isNum(o.actualReported) && (metric(o.metricId) || {}).role !== 'totalJoined');
+    const noTarget = st.list('observations').filter(o => !isNum(o.target) && isNum(o.actualReported) && (metric(o.metricId) || {}).role !== 'totalJoined' && (period(o.periodId) || {}).scope === 'Business scorecard');
     if (noTarget.length) I('no-target', 'R03 missing target', {
       title: noTarget.length + ' reported measure(s) have no target', type: 'Rule-based alert',
       observation: noTarget.map(o => recordTitle('observations', o) + ' = ' + fmtVal(o.actualReported, (metric(o.metricId) || {}).unit)).join('; ') + '.',
@@ -491,7 +513,7 @@
   Object.assign(TA, {
     NP, isNum, pct, round, todayIso, daysBetween, fmtInt, fmtINR, fmtPct, fmtVal, fmtDate, fmtDateTime, deltaText,
     period, periodLabel, metric, member, subjectLabel, recordTitle, progRow, programmeSummary, programmeSetsMatch, scorecardMatch, obsCalc, rrCalc,
-    priorPeriod, comparability, freshness, metricTrend, runRateScenario, benefitCalc, benefitTotals, BENEFIT_CATS,
+    priorPeriod, comparability, freshness, metricTrend, availableTrends, findMember, runRateScenario, benefitCalc, benefitTotals, BENEFIT_CATS,
     isOverdue, fbOverdue, dataChecks, computeInsights, syncInsights
   });
 })();
