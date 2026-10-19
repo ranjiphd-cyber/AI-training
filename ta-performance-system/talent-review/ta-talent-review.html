@@ -302,7 +302,9 @@ const chip = (s, text) => `<span class="chip ${s}">${ICON[s]}${esc(text || ST[s]
 const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below';
 
 /* ===================== store ===================== */
-const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes'];
+const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis'];
+const OPS_LABELS = { 5: ['Outstanding', 'Exceptional'], 4: ['Exceeds Expectations', 'High'], 3: ['Meets Expectations', 'Good'], 2: ['Needs Improvement', 'Adequate'], 1: ['Unsatisfactory', 'Low'] };
+const OPS_KEYS = ['timely', 'errors', 'volume', 'experience'];
 const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
 const PILLARS = ['Unleash Human Potential', 'People Experience', 'Data-Driven Insights', 'Sustainable Operational Excellence'];
 const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PGET', 'Campus GET / PGET'], ['Internship (no points rule)', 'Interns'], ['AICTE Professor', 'AICTE professors'], ['PhD Internship', 'PhD'], ['NATS Conversion', 'NATS conversions'], ['ExcelHER Conversion', 'ExcelHER conversions']];
@@ -401,6 +403,14 @@ function promotion(E) {
   return { crit, met, level, next };
 }
 
+function opsRating(id) {
+  const k = S.opsKpis[id]; if (!k) return null;
+  const pl = ((S.reviews[id] || {}).pillars) || {}, breach = !!pl.breach;
+  const vals = OPS_KEYS.map(key => { let v = num(pl[key]); if (v != null && key === 'errors' && breach) v = Math.min(v, 2); return v; });
+  const all = vals.every(v => v != null);
+  let overall = all ? Math.round(sum(vals) / 4) : null; if (overall != null && breach) overall = Math.min(overall, 3);
+  return { k, pl, vals, breach, overall, avg: all ? sum(vals) / 4 : null, rated: vals.filter(v => v != null).length };
+}
 /* ===================== tooltip / toast ===================== */
 const tip = $('#tip');
 function bindTips(root) {
@@ -542,7 +552,7 @@ function viewTeam() {
   h += `<div class="grid c2 sec"><div class="card pad span2"><div class="sec-h"><h3>Delivery against target</h3><span class="hint">bar = weighted points · grey track = full-year target · black tick = target to date</span></div>${bulletChart(sorted)}</div></div>`;
   h += `<div class="card pad sec"><div class="sec-h"><h3>Scores against maximum</h3><span class="hint">darker = closer to full marks · hatched = still to score · click a row to open the review</span></div><div class="tw"><table><thead><tr><th>Person</th><th>Role</th><th class="n">Offers &amp; complexity</th><th class="n">Joining</th><th class="n">Cycle time</th><th class="n">Vendor</th><th class="n">Deliverables</th><th class="n">Projects</th><th class="n">Competency dev.</th><th class="n">Total</th><th title="Ex Exceptional · Hi High · Go Good · Ad Adequate · Lo Low">P4P ${YEAR - 3}–${String(YEAR - 1).slice(2)}</th><th>${YEAR} rating</th></tr></thead><tbody>${[...ev].sort((x, y) => (x.sup - y.sup) || ((y.own?.att ?? -1) - (x.own?.att ?? -1))).map(E => { const o = E.own, r = E.p.ratings || {}; return `<tr class="click" data-person="${esc(E.p.id)}"><td class="who"><b>${esc(E.p.name)}</b><div class="sub">${esc(E.p.team || '')}</div></td><td class="nw">${esc(E.p.role === 'Support / Operations' ? 'Support' : E.p.role)}</td>
       <td>${E.sup ? '' : heatCell(o?.parts.offer, 40, 'Offers & complexity')}</td><td>${E.sup ? '' : heatCell(o?.parts.jr, 15, 'Joining')}</td><td>${E.sup ? '' : heatCell(o?.parts.ct, 10, 'Cycle time')}</td><td>${E.sup ? '' : heatCell(o?.parts.vendor, 5, 'Vendor')}</td>
-      <td>${E.sup ? '<div class="sub" style="text-align:center">no deliverables</div>' : heatCell(E.del, 70, 'Deliverables')}</td><td>${heatCell(E.proj, 15, 'Projects')}</td><td>${heatCell(E.comp, 15, 'Competency development')}</td>
+      <td>${E.sup ? (() => { const o = opsRating(E.p.id); return o && o.overall != null ? heatCell(o.overall, 5, 'Operational rating (KPI & SLA)') : `<div class="sub" style="text-align:center">${o ? 'KPI & SLA to rate' : 'no deliverables'}</div>`; })() : heatCell(E.del, 70, 'Deliverables')}</td><td>${heatCell(E.proj, 15, 'Projects')}</td><td>${heatCell(E.comp, 15, 'Competency development')}</td>
       <td class="n">${E.total != null ? `<b>${fmt(E.total)}</b><span class="sub"> /${E.max}</span>` : `<span class="sub nw">${fmt(E.partial)} so far</span>`}</td>
       <td class="mono nw" title="${esc([r.y2023, r.y2024, r.y2025].map((x, i) => (YEAR - 3 + i) + ': ' + (x || 'no rating')).join(', '))}">${[r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · ')}</td><td>${E.rv.finalRating ? `<span class="tag acc">${esc(E.rv.finalRating)}</span>` : '<span class="sub">not rated</span>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   h += viewCompare();
@@ -554,16 +564,16 @@ function viewTeam() {
 }
 
 /* ===================== PERSON ===================== */
-const TABS = [['overview', 'Overview'], ['comments', 'Comments & contribution'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
+const TABS = [['overview', 'Overview'], ['ops', 'KPI & SLA'], ['comments', 'Comments & contribution'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
 function viewPerson(id) {
   const p0 = S.people[id]; if (!p0) return `<div class="state"><h2>Person not found</h2><p>They may have been deleted. <button class="btn link" data-nav="team" type="button">Back to the team</button></p></div>`;
   const E = evalPerson({ id, ...p0 }), p = E.p;
-  const tabs = TABS.filter(([k]) => !(E.sup && k === 'delivery'));
+  const tabs = TABS.filter(([k]) => !(E.sup && k === 'delivery') && !(k === 'ops' && !S.opsKpis[id]));
   const tab = tabs.some(([k]) => k === route.tab) ? route.tab : 'overview';
   let h = `<div class="phead"><div><h2>${esc(p.name)}</h2><div class="meta"><span>${esc(p.jobTitle || p.role || '')}</span><span>${esc(p.role || '')} · ${esc(p.team || 'no team')}${p.area && p.area !== p.team ? ' (' + esc(p.area) + ')' : ''}</span><span class="mono">${esc(p.level || 'level —')}</span>${p.vcnid ? `<span class="mono">${esc(p.vcnid)}</span>` : ''}${p.end ? `<span>Leaving ${nice(p.end)}</span>` : ''}${!inReview(p) ? '<span class="tag">Not in this year\'s review</span>' : ''}</div></div><div class="sp"></div>
     <div class="btns">${!E.sup && E.own ? chip(E.stat, E.att != null ? `${ST[E.stat]} · ${pct(E.att * 100)}` : null) : ''}${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(id)}" type="button">Edit details</button>` : ''}</div></div>`;
   h += `<div class="tabs" role="tablist">${tabs.map(([k, t]) => `<button class="tab ${tab === k ? 'on' : ''}" role="tab" aria-selected="${tab === k}" data-tab="${k}" data-person-tab="${esc(id)}" type="button">${t}</button>`).join('')}</div>`;
-  h += ({ overview: pOverview, comments: pComments, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
+  h += ({ overview: pOverview, ops: pOps, comments: pComments, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
   return h;
 }
 function scoreLine(label, v, max, why) {
@@ -577,7 +587,7 @@ function pOverview(E) {
     h += `<div class="card fig"><div class="l">Weighted points</div><div class="v">${fmt(o.points)}<small>of ${fmt(o.ptPro)}</small></div><div class="f">${pct(o.att * 100)} of target to date · full year ${fmt(o.ptFull, 0)}</div></div>
       <div class="card fig"><div class="l">Offers released</div><div class="v">${fmt(tr.offers, 0)}</div><div class="f">${fmt(tr.joined, 0)} joined · ${fmt(tr.declined, 0)} declined · ${fmt(tr.pending, 0)} pending</div></div>
       <div class="card fig"><div class="l">Average offer days</div><div class="v">${fmt(o.offerDays, 0)}</div><div class="f">${ctLabel(o.offerDays)}</div></div>`;
-  } else h += `<div class="card fig span2"><div class="l">Role</div><div class="f" style="font-size:13px;color:var(--ink-2)">${esc(p.roleNote || p.role || '')}</div><div class="f">No hiring deliverables. Scored on Projects and Competency Development (out of 30).</div></div><div class="card fig"><div class="l">Projects</div><div class="v">${E.projs.length}</div><div class="f">${E.projs.filter(x => x.status === 'Completed').length} completed</div></div>`;
+  } else h += `<div class="card fig span2"><div class="l">Role</div><div class="f" style="font-size:13px;color:var(--ink-2)">${esc(p.roleNote || p.role || '')}</div><div class="f">No hiring deliverables. Scored on Projects and Competency Development (out of 30).</div></div>${(() => { const o = opsRating(p.id); return o ? `<div class="card fig" data-tab="ops" data-person-tab="${esc(p.id)}" style="cursor:pointer"><div class="l">Operational rating (KPI & SLA)</div><div class="v">${o.overall != null ? o.overall + '<small>of 5</small>' : '—'}</div><div class="f">${o.overall != null ? esc(OPS_LABELS[o.overall][0]) : o.rated + ' of 4 pillars rated'}</div></div>` : `<div class="card fig"><div class="l">Projects</div><div class="v">${E.projs.length}</div><div class="f">${E.projs.filter(x => x.status === 'Completed').length} completed</div></div>`; })()}`;
   h += `<div class="card fig"><div class="l">Total score</div><div class="v">${E.total != null ? fmt(E.total) : fmt(E.partial)}<small>of ${E.max}</small></div><div class="f">${E.total != null ? 'complete' : 'provisional: some parts not scored'}</div></div></div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Score summary</h3><span class="sp"></span><button class="btn link" data-tab="scores" data-person-tab="${esc(p.id)}" type="button">Details</button></div>
     ${E.sup ? '' : scoreLine('Business deliverables', E.del, 70, isLead(p) ? 'Half team goal, half own delivery' : '')}${scoreLine('Projects', E.proj, 15)}${scoreLine('Competency development', E.comp, 15)}</div>
@@ -717,6 +727,40 @@ function pProfile(E) {
     <div class="card pad"><div class="sec-h"><h3>P4P ratings</h3></div><dl class="kv"><dt>${YEAR - 3}</dt><dd>${esc(r.y2023 || '—')}</dd><dt>${YEAR - 2}</dt><dd>${esc(r.y2024 || '—')}</dd><dt>${YEAR - 1}</dt><dd>${esc(r.y2025 || '—')}</dd><dt>${YEAR}</dt><dd>${esc(E.rv.finalRating || 'Not rated yet')}</dd></dl>
     ${(p.notes || []).length ? `<h4 style="font-size:13px;margin:16px 0 6px">Data notes</h4><ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:13px">${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
     ${canWrite ? `<div style="margin-top:16px"><button class="btn danger sm" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete ${esc(p.name)}</button></div>` : ''}</div></div>`;
+}
+
+/* ===================== KPI & SLA (support roles) ===================== */
+function pOps(E) {
+  const o = opsRating(E.p.id); if (!o) return '<div class="empty-note">No KPI and SLA scorecard for this person.</div>';
+  const k = o.k, pl = o.pl, first = E.p.name.split(' ')[0];
+  let h = `<div class="note" style="margin-bottom:14px">Operational appraisal for ${esc(E.p.name)}: four pillars rated 1 to 5 against the scorecard below. SLA targets and bands are <b>${esc(k.status || 'Proposed')}</b> until you confirm them.${k.docUrl ? ` Full write-up: <a href="${esc(k.docUrl)}" target="_blank" rel="noopener">${esc(k.source || 'appraisal document')}</a>.` : ''}</div>`;
+  h += `<div class="grid c5"><div class="card fig"><div class="l">Operational rating</div><div class="v">${o.overall != null ? o.overall + '<small>of 5</small>' : '—'}</div><div class="f">${o.overall != null ? `${esc(OPS_LABELS[o.overall][0])} · P4P ${esc(OPS_LABELS[o.overall][1])} (proposed)` : `${o.rated} of 4 pillars rated`}${o.breach ? ' · compliance breach recorded' : ''}</div></div>`;
+  h += k.pillars.map((pp, i) => { const v = o.vals[i]; return `<div class="card fig"><div class="l">${esc(pp.name)}</div><div class="v">${v != null ? v + '<small>of 5</small>' : '—'}</div><div class="f">${v != null ? esc(pp.bands[5 - v]) : 'Not rated yet'}${pp.key === 'errors' && o.breach ? ' (capped at 2)' : ''}</div></div>`; }).join('') + '</div>';
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Pillar ratings</h3><span class="hint">overall = average of the four, rounded; a compliance breach caps error-free at 2 and the overall at 3</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="ratePillars" data-id="${esc(E.p.id)}" type="button">Rate pillars</button>` : ''}</div>
+    <div class="tw"><table><thead><tr><th>Pillar</th><th>What is measured</th><th>Evidence to collect</th><th class="n">Rating</th><th>Your evidence</th></tr></thead><tbody>${k.pillars.map((pp, i) => `<tr><td><b>${esc(pp.name)}</b></td><td style="font-size:12.5px">${esc(pp.measured)}</td><td style="font-size:12.5px;color:var(--ink-2)">${esc(pp.evidence)}</td><td class="n"><b>${o.vals[i] ?? '—'}</b></td><td style="font-size:12.5px">${esc(pl[pp.key + 'Note'] || '—')}</td></tr>`).join('')}</tbody></table></div>
+    <h4 style="font-size:13px;margin:14px 0 6px">Rating bands</h4><div class="tw"><table><thead><tr><th>Pillar</th>${[5, 4, 3, 2, 1].map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>${k.pillars.map(pp => `<tr><td><b>${esc(pp.name)}</b></td>${pp.bands.map(b => `<td style="font-size:12px;min-width:120px">${esc(b)}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>`;
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Operational KPI and SLA scorecard</h3><span class="hint">${k.rows.length} activities · ${esc(k.scope || '')}</span><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="add-opsrow" data-id="${esc(E.p.id)}" type="button">Add activity</button>` : ''}</div>
+    <div class="tw"><table><thead><tr><th>Domain</th><th>Activity</th><th>SLA (turnaround)</th><th>Quality / accuracy target</th><th>Volume metric</th><th>Experience metric</th><th></th></tr></thead><tbody>${k.rows.map((r, i) => `<tr><td class="nw" style="font-size:12.5px"><b>${esc(r.domain)}</b></td><td style="font-size:12.5px">${esc(r.activity)}</td><td style="font-size:12.5px">${esc(r.sla)}</td><td style="font-size:12.5px">${esc(r.quality)}</td><td style="font-size:12.5px">${esc(r.volume)}</td><td style="font-size:12.5px">${esc(r.experience)}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="edit-opsrow" data-id="${esc(E.p.id)}" data-idx="${i}" type="button">Edit</button> <button class="btn sm danger" data-act="del-opsrow" data-id="${esc(E.p.id)}" data-idx="${i}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Annual rating scale for ${esc(first)}</h3></div><div class="tw"><table><thead><tr><th class="n">Rating</th><th>Label</th><th>P4P (proposed)</th><th>What it looks like</th></tr></thead><tbody>${[5, 4, 3, 2, 1].map((n, i) => `<tr ${o.overall === n ? 'style="background:var(--accent-soft)"' : ''}><td class="n"><b>${n}</b></td><td class="nw">${OPS_LABELS[n][0]}</td><td>${OPS_LABELS[n][1]}</td><td style="font-size:12.5px">${esc((k.scale || [])[i] || '')}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card pad"><div class="sec-h"><h3>Year-end review questions</h3></div><ol style="margin:0;padding-left:20px;font-size:13px;display:grid;gap:8px">${(k.questions || []).map(q => `<li>${esc(q)}</li>`).join('')}</ol>
+    <h4 style="font-size:13px;margin:16px 0 6px">Open items to confirm before scoring</h4><ul style="margin:0;padding-left:18px;font-size:12.5px;color:var(--ink-2);display:grid;gap:4px">${(k.openItems || []).map(q => `<li>${esc(q)}</li>`).join('')}</ul></div></div>`;
+  return h;
+}
+function pillarForm(id) {
+  const k = S.opsKpis[id], rv = S.reviews[id] || {}, pl = rv.pillars || {};
+  const fields = []; k.pillars.forEach(pp => { fields.push({ k: pp.key, label: pp.name, type: 'select', options: [5, 4, 3, 2, 1].map(n => [n, `${n} · ${pp.bands[5 - n]}`]) }); fields.push({ k: pp.key + 'Note', label: 'Evidence', full: false }); });
+  fields.push({ k: 'breach', label: 'A compliance breach happened this year (caps error-free at 2 and the overall at 3)', type: 'check', full: true });
+  openForm({ title: `Rate pillars: ${S.people[id].name}`, intro: 'Pick the band each pillar met, and note the evidence.', values: pl, fields,
+    save: async v => { const pillars = { ...pl }; OPS_KEYS.forEach(key => { pillars[key] = num(v[key]); pillars[key + 'Note'] = v[key + 'Note']; }); pillars.breach = !!v.breach; return write('reviews/' + id, { ...rv, pillars }, `Rated KPI & SLA pillars for ${S.people[id].name}`); } });
+}
+function opsRowForm(id, idx) {
+  const k = S.opsKpis[id], rows = [...k.rows], cur = idx != null ? rows[idx] : {};
+  openForm({ title: idx != null ? 'Edit activity' : 'Add activity', values: cur, fields: [{ k: 'domain', label: 'Category / domain', req: true }, { k: 'activity', label: 'Activity scope', req: true }, { k: 'sla', label: 'Defined SLA (turnaround)', full: true }, { k: 'quality', label: 'Quality / accuracy target', full: true }, { k: 'volume', label: 'Volume / throughput metric' }, { k: 'experience', label: 'Experience metric' }],
+    save: async v => { if (!v.domain || !v.activity) return 'Enter the domain and the activity.'; if (idx != null) rows[idx] = v; else rows.push(v); return write('opsKpis/' + id, { ...k, rows }, `${idx != null ? 'Edited' : 'Added'} KPI activity for ${S.people[id].name}: ${v.activity}`); } });
+}
+function delOpsRow(id, idx) {
+  const k = S.opsKpis[id];
+  confirmBox('Delete this activity?', esc(k.rows[idx]?.activity || ''), 'Delete', () => write('opsKpis/' + id, { ...k, rows: k.rows.filter((_, i) => i !== idx) }, `Deleted KPI activity for ${S.people[id].name}`));
 }
 
 /* ===================== COMMENTS ===================== */
@@ -918,6 +962,22 @@ async function buildDeck(opt) {
     if (E.rv.strengths) dev.push('Strengths: ' + cut(E.rv.strengths, 160)); if (E.rv.focus) dev.push(`Focus for ${YEAR + 1}: ` + cut(E.rv.focus, 160));
     const rated = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) != null); if (rated.length) dev.push(`Behaviours rated: ${rated.length} of 8; 4+ on ${rated.filter(c => num(E.beh[c].head) >= 4).join(', ') || 'none'}`);
     bullets(s2, dev.slice(0, 6), { x: 7.2, y: 5.0, w: 5.6, h: 1.95, fs: 10, empty: 'No development plan or review notes yet.' });
+    const ops = opsRating(p.id);
+    if (ops) {
+      const k = ops.k, per = 9;
+      for (let i = 0; i < k.rows.length; i += per) {
+        const s3 = pptx.addSlide({ masterName: 'B' });
+        head(s3, `${p.name}: KPI and SLA scorecard${k.rows.length > per ? ` (${i / per + 1} of ${Math.ceil(k.rows.length / per)})` : ''}`, `Operational appraisal · targets ${(k.status || 'Proposed').toLowerCase()} until confirmed · ${cut(k.scope || '', 80)}`);
+        tbl(s3, ['Domain', 'Activity', 'SLA (turnaround)', 'Quality / accuracy target', 'Volume metric', 'Experience metric'], k.rows.slice(i, i + per).map(r => [r.domain, cut(r.activity, 110), cut(r.sla, 90), cut(r.quality, 110), cut(r.volume, 70), cut(r.experience, 100)]), { x: 0.5, y: 1.4, w: 12.3, colW: [1.6, 2.4, 1.9, 2.5, 1.6, 2.3], fs: 8.5 });
+      }
+      const s4 = pptx.addSlide({ masterName: 'B' });
+      head(s4, `${p.name}: pillar ratings and review`, ops.overall != null ? `Operational rating ${ops.overall} of 5: ${OPS_LABELS[ops.overall][0]} (P4P ${OPS_LABELS[ops.overall][1]}, proposed)${ops.breach ? ' · compliance breach recorded' : ''}` : `${ops.rated} of 4 pillars rated so far`);
+      tbl(s4, ['Pillar', 'Rating', 'Band met', 'Evidence'], k.pillars.map((pp, j) => [pp.name, ops.vals[j] ?? 'to rate', ops.vals[j] != null ? cut(pp.bands[5 - ops.vals[j]], 90) : '—', cut(ops.pl[pp.key + 'Note'] || pp.evidence, 120)]), { x: 0.5, y: 1.4, w: 7.4, colW: [1.8, 0.7, 2.3, 2.6], fs: 9 });
+      sect(s4, 'Rating scale', 0.5, 4.3, 7.4);
+      tbl(s4, ['Rating', 'Label', 'P4P'], [5, 4, 3, 2, 1].map(n => [String(n), OPS_LABELS[n][0], OPS_LABELS[n][1]]), { x: 0.5, y: 4.65, w: 4.2, colW: [0.8, 2.0, 1.4], fs: 9 });
+      sect(s4, 'Year-end review questions', 8.2, 1.35, 4.6);
+      bullets(s4, (k.questions || []).map(q => cut(q, 230)), { x: 8.2, y: 1.7, w: 4.6, h: 5.2, fs: 9.5 });
+    }
   };
   const leads = all.filter(E => isLead(E.p));
   for (const L of leads) {
@@ -932,7 +992,7 @@ async function buildDeck(opt) {
   const rest = all.filter(E => !isLead(E.p) && !leads.some(L => L.p.team === E.p.team));
   if (rest.length) {
     s = pptx.addSlide({ masterName: 'B' }); head(s, 'Support and operations', 'No hiring deliverables. Reviewed on projects and competency development (out of 30).');
-    tbl(s, ['Person', 'Team', 'Level', 'Projects', 'Training', 'Plan items', 'Total', `P4P ${YEAR - 1}`], rest.map(E => [E.p.name, E.p.team || '—', E.p.level || '—', E.projs.length, E.learn.length, E.plans.length, E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, (E.p.ratings || {}).y2025 || '—']), { x: 0.5, y: 1.4, w: 12.3, colW: [2.0, 2.6, 0.9, 1.1, 1.1, 1.2, 1.7, 1.7] });
+    tbl(s, ['Person', 'Team', 'Level', 'Projects', 'Training', 'Plan items', 'Total', 'Operational rating', `P4P ${YEAR - 1}`], rest.map(E => { const o = opsRating(E.p.id); return [E.p.name, E.p.team || '—', E.p.level || '—', E.projs.length, E.learn.length, E.plans.length, E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, o ? (o.overall != null ? `${o.overall} / 5 ${OPS_LABELS[o.overall][0]}` : `${o.rated} of 4 pillars rated`) : '—', (E.p.ratings || {}).y2025 || '—']; }), { x: 0.5, y: 1.4, w: 12.3, colW: [1.7, 2.3, 0.7, 0.9, 0.9, 1.0, 1.4, 2.1, 1.3] });
     if (opt.people) rest.forEach(personSlides);
   }
   if (opt.promo) {
@@ -1189,9 +1249,9 @@ async function exportSheet() {
   const dl = await claude.use('downloads');
   if (!dl) { toast('Downloads aren\'t available here.'); return; }
   const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const head = ['Name', 'Role', 'Team', 'Level', 'Annual offer target', 'Points target to date', 'Weighted points', 'Attainment %', 'Offers released', 'Joined', 'Offer days', 'Vendor %', 'Offers & complexity /40', 'Joining /15', 'Cycle time /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Competency /15', 'Total', 'Out of', `P4P ${YEAR - 3}`, `P4P ${YEAR - 2}`, `P4P ${YEAR - 1}`, `${YEAR} rating`, 'Readiness check', 'Promotion recommendation', 'Reasons', 'Strengths', 'Development focus', 'Open plan items', 'Training records'];
+  const head = ['Name', 'Role', 'Team', 'Level', 'Annual offer target', 'Points target to date', 'Weighted points', 'Attainment %', 'Offers released', 'Joined', 'Offer days', 'Vendor %', 'Offers & complexity /40', 'Joining /15', 'Cycle time /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Competency /15', 'Total', 'Out of', `P4P ${YEAR - 3}`, `P4P ${YEAR - 2}`, `P4P ${YEAR - 1}`, `${YEAR} rating`, 'Readiness check', 'Promotion recommendation', 'Reasons', 'Strengths', 'Development focus', 'Open plan items', 'Training records', 'Ops: timely', 'Ops: error-free', 'Ops: volume', 'Ops: experience', 'Operational rating /5'];
   const rows = peopleList().filter(inReview).map(p => { const E = evalPerson(p), o = E.own, r = p.ratings || {}, rv = E.rv, t = o ? o.d.tracker || {} : {};
-    return [p.name, p.role, p.team, p.level, o?.target, r1(o?.ptPro), o?.points, o?.att != null ? Math.round(o.att * 100) : '', t.offers, t.joined, o?.offerDays, o?.vendorPct, o?.parts.offer, o?.parts.jr, o?.parts.ct, o?.parts.vendor, E.del, E.proj, E.comp, E.total, E.max, r.y2023, r.y2024, r.y2025, rv.finalRating, promotion(E).level, rv.promoDecision, rv.promoReason, rv.strengths, rv.focus, E.plans.filter(x => x.status !== 'Done' && x.status !== 'Dropped').length, E.learn.length]; });
+    return [p.name, p.role, p.team, p.level, o?.target, r1(o?.ptPro), o?.points, o?.att != null ? Math.round(o.att * 100) : '', t.offers, t.joined, o?.offerDays, o?.vendorPct, o?.parts.offer, o?.parts.jr, o?.parts.ct, o?.parts.vendor, E.del, E.proj, E.comp, E.total, E.max, r.y2023, r.y2024, r.y2025, rv.finalRating, promotion(E).level, rv.promoDecision, rv.promoReason, rv.strengths, rv.focus, E.plans.filter(x => x.status !== 'Done' && x.status !== 'Dropped').length, E.learn.length, ...(() => { const o = opsRating(p.id); return o ? [...o.vals, o.overall] : ['', '', '', '', '']; })()]; });
   const csv = '﻿' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
   try { await dl.save({ filename: `TA_Talent_Review_${YEAR}.csv`, data: new Blob([csv], { type: 'text/csv' }) }); } catch (e) { if (e && e.code !== 'declined') toast('The download didn\'t start.'); }
 }
@@ -1215,7 +1275,8 @@ document.addEventListener('click', e => {
       'add-project': () => projectForm(id), 'edit-project': () => projectForm(curP, id), 'del-project': () => confirmBox('Delete this project?', esc(S.projects[id]?.title || ''), 'Delete', () => remove('projects/' + id, `Deleted project ${S.projects[id]?.title}`)),
       editScale: () => scaleForm(id), editScoring: () => scoringForm(),
       'add-comment': () => commentForm(id), 'edit-comment': () => commentForm(id, Number(act.dataset.idx)), 'del-comment': () => delComment(id, Number(act.dataset.idx)),
-      'add-prog': () => progForm(null), 'edit-prog': () => progForm(id), ppt: () => pptDialog(),
+      'add-prog': () => progForm(null), 'edit-prog': () => progForm(id),
+      ppt: () => pptDialog(), ratePillars: () => pillarForm(id), 'add-opsrow': () => opsRowForm(id), 'edit-opsrow': () => opsRowForm(id, Number(act.dataset.idx)), 'del-opsrow': () => delOpsRow(id, Number(act.dataset.idx)),
       addTeam: () => teamForm(null), editTeam: () => teamForm(id), delTeam: () => { const n = S.teams[id]?.name, c = peopleList().filter(p => p.team === n).length; confirmBox(`Delete team ${n}?`, c ? `${c} people are in this team. They'll show under "No team yet" until you move them.` : 'Nobody is in this team.', 'Delete', () => remove('teams/' + id, `Deleted team ${n}`)); },
       export: exportSheet }[a] || (() => { }))();
     return;
