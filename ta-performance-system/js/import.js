@@ -239,7 +239,7 @@ function validateProfile(rec, seen) {
   if (!v.status && emp(v.id)) n.status = emp(v.id).status || 'Active';
   if (!v.end && emp(v.id)) n.end = emp(v.id).end || null;
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
-  n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
+  n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).trim().toLowerCase()) || OLD_RATING_LABELS[Object.keys(OLD_RATING_LABELS).find(x => x.toLowerCase() === String(v[k]).trim().toLowerCase())] || RATING_SCALE[5 - Math.round(parseFloat(v[k]))]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
   if (n.ratings.every(Boolean)) n.flags = n.flags.filter(f => !/ratings/i.test(f)); // ratings now recorded
   n.id = v.id; n.name = v.name;
 }

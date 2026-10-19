@@ -50,7 +50,7 @@ function migrateState(s) {
   s.teams = s.teams || JSON.parse(JSON.stringify(DEFAULT_TEAMS));
   s.roles = s.roles || JSON.parse(JSON.stringify(DEFAULT_ROLES));
   s.scorecards = s.scorecards || {};
-  for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; }
+  for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; e.ratings = (e.ratings || [null, null, null]).map(r => OLD_RATING_LABELS[r] || r); }
   s.areaPPO = s.areaPPO || {};
   if (s.rules && s.rules.pointsPerOffer == null) {
     // Points-based assessment (TA Head decision, 18 Oct 2026) applied to older workspaces.
@@ -99,7 +99,7 @@ function renameEmployeeId(oldId, newId) {
 function addEmployee(o) {
   const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
     ratings: o.ratings || [null, null, null], start: o.start || null, end: o.end || null, status: o.status || 'Active', alsoTeams: o.alsoTeams || [], flags: o.flags || [],
-    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', ptAnnual: o.ptAnnual ?? null, inReview: o.inReview !== false,
+    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', jobTitle: o.jobTitle || '', ptAnnual: o.ptAnnual ?? null, inReview: o.inReview !== false,
     leave: null, targets: o.targets || Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
   state.employees.push(e);
   state.assessments[e.id] = state.assessments[e.id] || [];
@@ -542,7 +542,7 @@ function promotion(id) {
   const ratingsKnown = e.ratings.filter(Boolean);
   const last2 = e.ratings.slice(0, 2);
   const strongRatings = last2.every(r => r && RATING_VALUE[r] >= 4);
-  crit.push({ ok: strongRatings, label: 'Last two annual ratings at Exceeds or above', fact: 'Ratings: ' + e.ratings.map((r, i) => (PERIOD.year - 1 - i) + ' ' + (r || 'n/a')).join(' · ') });
+  crit.push({ ok: strongRatings, label: 'Last two P4P ratings High or above', fact: 'Ratings: ' + e.ratings.map((r, i) => (PERIOD.year - 1 - i) + ' ' + (r || 'n/a')).join(' · ') });
   const score = m.total != null ? m.total : m.partial;
   crit.push({ ok: score >= 80, label: 'Current-year score ≥ 80 (provisional)', fact: (m.total != null ? 'Total ' : 'Partial total ') + score + ' / 100' });
   const strong = m.latest ? COMPETENCIES.filter(c => m.latest.mgr[c] >= 4) : [];

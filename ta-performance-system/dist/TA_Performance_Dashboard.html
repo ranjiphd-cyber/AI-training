@@ -299,8 +299,10 @@ const LEVEL_ANCHORS = {
 };
 
 // D-28: corporate rating scale not specified. Placeholder labels.
-const RATING_SCALE = ['Outstanding', 'Exceeds', 'Meets', 'Partially Meets', 'Below'];
-const RATING_VALUE = { 'Outstanding': 5, 'Exceeds': 4, 'Meets': 3, 'Partially Meets': 2, 'Below': 1 };
+// P4P rating scale (5 Exceptional … 2 Adequate as in the P4P data; the label for 1 is assumed).
+const RATING_SCALE = ['Exceptional', 'High', 'Good', 'Adequate', 'Low'];
+const RATING_VALUE = { 'Exceptional': 5, 'High': 4, 'Good': 3, 'Adequate': 2, 'Low': 1 };
+const OLD_RATING_LABELS = { 'Outstanding': 'Exceptional', 'Exceeds': 'High', 'Meets': 'Good', 'Partially Meets': 'Adequate', 'Below': 'Low' };
 // D-30: job-level framework not specified. Placeholder list.
 // Job levels follow the salary-grade (SG) framework; promotion readiness looks at the next SG.
 const JOB_LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
@@ -347,23 +349,23 @@ const DEFAULT_RULES = {
 /* People. profile: vol = volume factor vs target, jr = joining probability, ct = mean cycle days,
    vend = vendor probability, cx = complexity bias. */
 const EMPLOYEES = [
-  { id: 'E1001', name: 'Ananya Rao',       team: 'DTOP',  area: 'DTO',   type: 'TL', level: 'SG7',          since: '2023-04-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.10, jr: .91, ct: 41, vend: .06, cx: .5 } },
-  { id: 'E1002', name: 'Rohan Kulkarni',   team: 'DTOP',  area: 'DTO',   type: 'IC', level: 'SG5', since: '2023-07-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.08, jr: .92, ct: 39, vend: .05, cx: .45 } },
-  { id: 'E1003', name: 'Meera Iyer',       team: 'DTOP',  area: 'FCA',   type: 'IC', level: 'SG5', since: '2024-04-01', ratings: ['Meets', 'Meets', 'Exceeds'],          p: { vol: .93, jr: .86, ct: 47, vend: .12, cx: .3 }, leave: ['2026-06-01', '2026-06-19', 'Approved extended leave'] },
-  { id: 'E1004', name: 'Karthik Menon',    team: 'DTOP',  area: 'VFS',   type: 'IC', level: 'SG4',        since: '2025-01-06', ratings: ['Meets', null, null],                    p: { vol: .74, jr: .78, ct: 58, vend: .24, cx: .15 } },
-  { id: 'E1005', name: 'Neha Gupta',       team: 'DTOP',  area: 'Penta', type: 'IC', level: 'SG5', since: '2024-01-01', ratings: ['Exceeds', 'Meets', 'Meets'],          p: { vol: .97, jr: .88, ct: 45, vend: .10, cx: .35 } },
-  { id: 'E1020', name: 'Kavya Reddy',      team: 'TTI',   area: 'GTP',   type: 'TL', level: 'SG7',          since: '2024-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],           p: { vol: 1.0, jr: .89, ct: 44, vend: .08, cx: .35 } },
-  { id: 'E1021', name: 'Nikhil Joshi',     team: 'TTI',   area: 'GTT',   type: 'IC', level: 'SG5', since: '2022-10-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.0, jr: .90, ct: 43, vend: .07, cx: .4 } },
-  { id: 'E1022', name: 'Farah Khan',       team: 'TTI',   area: 'GTO',   type: 'IC', level: 'SG4',        since: '2024-01-01', ratings: ['Meets', 'Meets', null],                 p: { vol: .88, jr: .84, ct: 50, vend: .14, cx: .25 } },
-  { id: 'E1030', name: 'Deepa Krishnan',   team: 'URECH', area: 'Early Careers', type: 'TL', level: 'SG7',  since: '2021-04-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.05, jr: .87, ct: 31, vend: .02, cx: .5 } },
-  { id: 'E1031', name: 'Aditya Verma',     team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG5', since: '2023-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],   p: { vol: 1.02, jr: .85, ct: 29, vend: .03, cx: .4 } },
-  { id: 'E1032', name: 'Ishita Banerjee',  team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG4', since: '2024-07-01', ratings: ['Meets', 'Meets', null],               p: { vol: .90, jr: .79, ct: 34, vend: .05, cx: .3 } },
+  { id: 'E1001', name: 'Ananya Rao',       team: 'DTOP',  area: 'DTO',   type: 'TL', level: 'SG7',          since: '2023-04-01', ratings: ['High', 'High', 'Good'],         p: { vol: 1.10, jr: .91, ct: 41, vend: .06, cx: .5 } },
+  { id: 'E1002', name: 'Rohan Kulkarni',   team: 'DTOP',  area: 'DTO',   type: 'IC', level: 'SG5', since: '2023-07-01', ratings: ['Exceptional', 'High', 'High'],   p: { vol: 1.08, jr: .92, ct: 39, vend: .05, cx: .45 } },
+  { id: 'E1003', name: 'Meera Iyer',       team: 'DTOP',  area: 'FCA',   type: 'IC', level: 'SG5', since: '2024-04-01', ratings: ['Good', 'Good', 'High'],          p: { vol: .93, jr: .86, ct: 47, vend: .12, cx: .3 }, leave: ['2026-06-01', '2026-06-19', 'Approved extended leave'] },
+  { id: 'E1004', name: 'Karthik Menon',    team: 'DTOP',  area: 'VFS',   type: 'IC', level: 'SG4',        since: '2025-01-06', ratings: ['Good', null, null],                    p: { vol: .74, jr: .78, ct: 58, vend: .24, cx: .15 } },
+  { id: 'E1005', name: 'Neha Gupta',       team: 'DTOP',  area: 'Penta', type: 'IC', level: 'SG5', since: '2024-01-01', ratings: ['High', 'Good', 'Good'],          p: { vol: .97, jr: .88, ct: 45, vend: .10, cx: .35 } },
+  { id: 'E1020', name: 'Kavya Reddy',      team: 'TTI',   area: 'GTP',   type: 'TL', level: 'SG7',          since: '2024-04-01', ratings: ['High', 'Good', 'Good'],           p: { vol: 1.0, jr: .89, ct: 44, vend: .08, cx: .35 } },
+  { id: 'E1021', name: 'Nikhil Joshi',     team: 'TTI',   area: 'GTT',   type: 'IC', level: 'SG5', since: '2022-10-01', ratings: ['High', 'High', 'Good'],         p: { vol: 1.0, jr: .90, ct: 43, vend: .07, cx: .4 } },
+  { id: 'E1022', name: 'Farah Khan',       team: 'TTI',   area: 'GTO',   type: 'IC', level: 'SG4',        since: '2024-01-01', ratings: ['Good', 'Good', null],                 p: { vol: .88, jr: .84, ct: 50, vend: .14, cx: .25 } },
+  { id: 'E1030', name: 'Deepa Krishnan',   team: 'URECH', area: 'Early Careers', type: 'TL', level: 'SG7',  since: '2021-04-01', ratings: ['Exceptional', 'High', 'High'],   p: { vol: 1.05, jr: .87, ct: 31, vend: .02, cx: .5 } },
+  { id: 'E1031', name: 'Aditya Verma',     team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG5', since: '2023-04-01', ratings: ['High', 'Good', 'Good'],   p: { vol: 1.02, jr: .85, ct: 29, vend: .03, cx: .4 } },
+  { id: 'E1032', name: 'Ishita Banerjee',  team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG4', since: '2024-07-01', ratings: ['Good', 'Good', null],               p: { vol: .90, jr: .79, ct: 34, vend: .05, cx: .3 } },
   { id: 'E1033', name: 'Rahul Nair',       team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG4', since: '2026-04-01', ratings: [null, null, null],                     p: { vol: .85, jr: .83, ct: 33, vend: .04, cx: .3 }, start: '2026-04-01' },
-  { id: 'E1010', name: 'Vikram Desai',     team: 'VCELH', area: 'VCE',   type: 'TL', level: 'SG7',          since: '2022-04-01', ratings: ['Meets', 'Exceeds', 'Exceeds'],         p: { vol: .95, jr: .88, ct: 46, vend: .09, cx: .4 } },
-  { id: 'E1011', name: 'Sneha Pillai',     team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG6',   since: '2023-10-01', ratings: ['Exceeds', 'Outstanding', 'Exceeds'],   p: { vol: 1.04, jr: .93, ct: 42, vend: .04, cx: .55 } },
-  { id: 'E1012', name: 'Arjun Bhat',       team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG4',        since: '2024-07-01', ratings: ['Partially Meets', 'Meets', null],       p: { vol: .82, jr: .80, ct: 52, vend: .17, cx: .2 } },
-  { id: 'E1040', name: 'Sanjay Mehta',     team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2022-04-01', ratings: ['Exceeds', 'Meets', 'Exceeds'], p: { vol: 1.0, jr: .90, ct: 68, vend: .35, cx: .8 } },
-  { id: 'E1041', name: 'Pooja Shah',       team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2021-01-01', ratings: ['Exceeds', 'Exceeds', 'Outstanding'], p: { vol: 1.15, jr: .94, ct: 62, vend: .22, cx: .85 } },
+  { id: 'E1010', name: 'Vikram Desai',     team: 'VCELH', area: 'VCE',   type: 'TL', level: 'SG7',          since: '2022-04-01', ratings: ['Good', 'High', 'High'],         p: { vol: .95, jr: .88, ct: 46, vend: .09, cx: .4 } },
+  { id: 'E1011', name: 'Sneha Pillai',     team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG6',   since: '2023-10-01', ratings: ['High', 'Exceptional', 'High'],   p: { vol: 1.04, jr: .93, ct: 42, vend: .04, cx: .55 } },
+  { id: 'E1012', name: 'Arjun Bhat',       team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG4',        since: '2024-07-01', ratings: ['Adequate', 'Good', null],       p: { vol: .82, jr: .80, ct: 52, vend: .17, cx: .2 } },
+  { id: 'E1040', name: 'Sanjay Mehta',     team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2022-04-01', ratings: ['High', 'Good', 'High'], p: { vol: 1.0, jr: .90, ct: 68, vend: .35, cx: .8 } },
+  { id: 'E1041', name: 'Pooja Shah',       team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2021-01-01', ratings: ['High', 'High', 'Exceptional'], p: { vol: 1.15, jr: .94, ct: 62, vend: .22, cx: .85 } },
 ];
 
 const PROJECT_TITLES = [
@@ -451,7 +453,7 @@ function migrateState(s) {
   s.teams = s.teams || JSON.parse(JSON.stringify(DEFAULT_TEAMS));
   s.roles = s.roles || JSON.parse(JSON.stringify(DEFAULT_ROLES));
   s.scorecards = s.scorecards || {};
-  for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; }
+  for (const e of s.employees || []) { e.alsoTeams = e.alsoTeams || []; e.flags = e.flags || []; e.ratings = (e.ratings || [null, null, null]).map(r => OLD_RATING_LABELS[r] || r); }
   s.areaPPO = s.areaPPO || {};
   if (s.rules && s.rules.pointsPerOffer == null) {
     // Points-based assessment (TA Head decision, 18 Oct 2026) applied to older workspaces.
@@ -500,7 +502,7 @@ function renameEmployeeId(oldId, newId) {
 function addEmployee(o) {
   const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
     ratings: o.ratings || [null, null, null], start: o.start || null, end: o.end || null, status: o.status || 'Active', alsoTeams: o.alsoTeams || [], flags: o.flags || [],
-    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', ptAnnual: o.ptAnnual ?? null, inReview: o.inReview !== false,
+    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', jobTitle: o.jobTitle || '', ptAnnual: o.ptAnnual ?? null, inReview: o.inReview !== false,
     leave: null, targets: o.targets || Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
   state.employees.push(e);
   state.assessments[e.id] = state.assessments[e.id] || [];
@@ -943,7 +945,7 @@ function promotion(id) {
   const ratingsKnown = e.ratings.filter(Boolean);
   const last2 = e.ratings.slice(0, 2);
   const strongRatings = last2.every(r => r && RATING_VALUE[r] >= 4);
-  crit.push({ ok: strongRatings, label: 'Last two annual ratings at Exceeds or above', fact: 'Ratings: ' + e.ratings.map((r, i) => (PERIOD.year - 1 - i) + ' ' + (r || 'n/a')).join(' · ') });
+  crit.push({ ok: strongRatings, label: 'Last two P4P ratings High or above', fact: 'Ratings: ' + e.ratings.map((r, i) => (PERIOD.year - 1 - i) + ' ' + (r || 'n/a')).join(' · ') });
   const score = m.total != null ? m.total : m.partial;
   crit.push({ ok: score >= 80, label: 'Current-year score ≥ 80 (provisional)', fact: (m.total != null ? 'Total ' : 'Partial total ') + score + ' / 100' });
   const strong = m.latest ? COMPETENCIES.filter(c => m.latest.mgr[c] >= 4) : [];
@@ -1328,7 +1330,7 @@ function memberView(id, viewer) {
       <h1>${esc(e.name)} <span class="chip">${esc(m.role.name)}</span>${isFormer(e) ? ` <span class="chip st-watch">Former team member${e.end ? ' · left ' + D.nice(e.end) : ''}</span>` : e.end ? ` <span class="chip">Last working day ${D.nice(e.end)}</span>` : ''}${!inReview(e) ? ' <span class="chip">Not in this year\'s evaluation</span>' : ''}</h1>
       ${head && (e.flags || []).length ? `<div class="note warn small"><b>To confirm:</b> ${e.flags.map(esc).join(' · ')}</div>` : ''}
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
-      <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
+      <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div>${e.jobTitle ? `<div><dt>Job title</dt><dd>${esc(e.jobTitle)}</dd></div>` : ''}<div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
       ${e.joined ? `<div><dt>With the team since</dt><dd>${D.nice(e.joined)}</dd></div>` : ''}
       ${head && e.aliases ? `<div><dt>Also known as</dt><dd class="small">${esc(e.aliases)}</dd></div>` : ''}
       ${e.roleNote ? `<div><dt>Role (org chart)</dt><dd class="small">${esc(e.roleNote)}</dd></div>` : ''}
@@ -1720,7 +1722,7 @@ VIEWS.talent = () => {
      <td class="small"><details><summary>View reasons</summary>${pr.crit.map(c => `<div>${c.ok ? '✓' : '✕'} ${esc(c.label)}<br><span class="muted">${esc(c.fact)}</span></div>`).join('')}</details></td>
      <td><select aria-label="Decision for ${esc(e.name)}" onchange="setPromo('${e.id}',this.value)"><option value="">— Not decided —</option>${['Recommend for promotion', 'Revisit in 6 months', 'Develop in role', 'Not this cycle'].map(o => `<option ${d.decision === o ? 'selected' : ''}>${o}</option>`).join('')}</select>
      <button class="btn link small" onclick="promoNoteDlg('${e.id}')">${d.note ? 'Edit note' : 'Add note'}</button><button class="btn link small" onclick="profileDlg('${e.id}')">Edit level/ratings</button></td></tr>`; }).join('')}</tbody></table></div></section>
-   <div class="note"><b>Criteria used (illustrative):</b> last two ratings ≥ Exceeds · current score ≥ 80 · ≥3 competencies at 4+ · ≥2 years in level · leadership evidence. <b>Ready now</b> = all 5; <b>Ready in 6–12 months</b> = 4, or 3 with strong ratings; <b>Insufficient evidence</b> = fewer than two rating years. Monitor outcomes by team and gender at calibration.</div>`;
+   <div class="note"><b>Criteria used (illustrative):</b> last two P4P ratings High or above · current score ≥ 80 · ≥3 competencies at 4+ · ≥2 years in level · leadership evidence. <b>Ready now</b> = all 5; <b>Ready in 6–12 months</b> = 4, or 3 with strong ratings; <b>Insufficient evidence</b> = fewer than two rating years. Monitor outcomes by team and gender at calibration.</div>`;
 };
 
 // ================= REQUESTS / INBOX =================
@@ -2493,7 +2495,7 @@ function validateProfile(rec, seen) {
   if (!v.status && emp(v.id)) n.status = emp(v.id).status || 'Active';
   if (!v.end && emp(v.id)) n.end = emp(v.id).end || null;
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
-  n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
+  n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).trim().toLowerCase()) || OLD_RATING_LABELS[Object.keys(OLD_RATING_LABELS).find(x => x.toLowerCase() === String(v[k]).trim().toLowerCase())] || RATING_SCALE[5 - Math.round(parseFloat(v[k]))]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
   if (n.ratings.every(Boolean)) n.flags = n.flags.filter(f => !/ratings/i.test(f)); // ratings now recorded
   n.id = v.id; n.name = v.name;
 }

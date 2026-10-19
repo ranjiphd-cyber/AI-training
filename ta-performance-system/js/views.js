@@ -26,7 +26,7 @@ function memberView(id, viewer) {
       <h1>${esc(e.name)} <span class="chip">${esc(m.role.name)}</span>${isFormer(e) ? ` <span class="chip st-watch">Former team member${e.end ? ' · left ' + D.nice(e.end) : ''}</span>` : e.end ? ` <span class="chip">Last working day ${D.nice(e.end)}</span>` : ''}${!inReview(e) ? ' <span class="chip">Not in this year\'s evaluation</span>' : ''}</h1>
       ${head && (e.flags || []).length ? `<div class="note warn small"><b>To confirm:</b> ${e.flags.map(esc).join(' · ')}</div>` : ''}
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
-      <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
+      <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div>${e.jobTitle ? `<div><dt>Job title</dt><dd>${esc(e.jobTitle)}</dd></div>` : ''}<div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
       ${e.joined ? `<div><dt>With the team since</dt><dd>${D.nice(e.joined)}</dd></div>` : ''}
       ${head && e.aliases ? `<div><dt>Also known as</dt><dd class="small">${esc(e.aliases)}</dd></div>` : ''}
       ${e.roleNote ? `<div><dt>Role (org chart)</dt><dd class="small">${esc(e.roleNote)}</dd></div>` : ''}
@@ -418,7 +418,7 @@ VIEWS.talent = () => {
      <td class="small"><details><summary>View reasons</summary>${pr.crit.map(c => `<div>${c.ok ? '✓' : '✕'} ${esc(c.label)}<br><span class="muted">${esc(c.fact)}</span></div>`).join('')}</details></td>
      <td><select aria-label="Decision for ${esc(e.name)}" onchange="setPromo('${e.id}',this.value)"><option value="">— Not decided —</option>${['Recommend for promotion', 'Revisit in 6 months', 'Develop in role', 'Not this cycle'].map(o => `<option ${d.decision === o ? 'selected' : ''}>${o}</option>`).join('')}</select>
      <button class="btn link small" onclick="promoNoteDlg('${e.id}')">${d.note ? 'Edit note' : 'Add note'}</button><button class="btn link small" onclick="profileDlg('${e.id}')">Edit level/ratings</button></td></tr>`; }).join('')}</tbody></table></div></section>
-   <div class="note"><b>Criteria used (illustrative):</b> last two ratings ≥ Exceeds · current score ≥ 80 · ≥3 competencies at 4+ · ≥2 years in level · leadership evidence. <b>Ready now</b> = all 5; <b>Ready in 6–12 months</b> = 4, or 3 with strong ratings; <b>Insufficient evidence</b> = fewer than two rating years. Monitor outcomes by team and gender at calibration.</div>`;
+   <div class="note"><b>Criteria used (illustrative):</b> last two P4P ratings High or above · current score ≥ 80 · ≥3 competencies at 4+ · ≥2 years in level · leadership evidence. <b>Ready now</b> = all 5; <b>Ready in 6–12 months</b> = 4, or 3 with strong ratings; <b>Insufficient evidence</b> = fewer than two rating years. Monitor outcomes by team and gender at calibration.</div>`;
 };
 
 // ================= REQUESTS / INBOX =================
