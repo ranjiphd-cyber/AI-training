@@ -23,7 +23,7 @@ function memberView(id, viewer) {
   const reqs = state.requests.filter(r => r.emp === id && ['Sent', 'Viewed'].includes(r.status));
   const tl = teamLead(e.team);
   let h = `<section class="card"><div class="hdr"><div>
-      <h1>${esc(e.name)} <span class="chip">${esc(m.role.name)}</span>${isFormer(e) ? ` <span class="chip st-watch">Former team member${e.end ? ' · left ' + D.nice(e.end) : ''}</span>` : ''}</h1>
+      <h1>${esc(e.name)} <span class="chip">${esc(m.role.name)}</span>${isFormer(e) ? ` <span class="chip st-watch">Former team member${e.end ? ' · left ' + D.nice(e.end) : ''}</span>` : e.end ? ` <span class="chip">Last working day ${D.nice(e.end)}</span>` : ''}${!inReview(e) ? ' <span class="chip">Not in this year\'s evaluation</span>' : ''}</h1>
       ${head && (e.flags || []).length ? `<div class="note warn small"><b>To confirm:</b> ${e.flags.map(esc).join(' · ')}</div>` : ''}
       <dl><div><dt>Team</dt><dd>${esc(teamName(e.team))}</dd></div><div><dt>Business area</dt><dd>${esc(e.area)}</dd></div>
       <div><dt>Job level</dt><dd>${esc(e.level || '—')}</dd></div><div><dt>Reports to</dt><dd>${isLead(e) ? 'TA Head' : tl && tl.id !== e.id ? esc(tl.name) + ' (TL) · TA Head' : e.leadName ? esc(e.leadName) + ' (TL) · TA Head' : 'TA Head'}</dd></div>
@@ -293,14 +293,16 @@ function teamView(tlMode) {
     const row = m => { const g = m.selfTotal != null && m.total != null ? r1(m.selfTotal - m.total) : null;
       const sup = teamF !== 'all' && m.e.team !== teamF ? ' <span class="chip">supports</span>' : '';
       return `<tr class="click" onclick="go('member',{member:'${m.e.id}'})" tabindex="0" onkeydown="if(event.key==='Enter')go('member',{member:'${m.e.id}'})"><td>${esc(m.e.name)}${isFormer(m.e) ? ' <span class="chip st-watch">former</span>' : ''}${sup}<br><span class="muted small">${esc(m.role.name)}${m.mode === 'summary' ? ' · summary scorecard' : ''}</span>${session && session.kind !== 'member' ? ` <button class="btn link small" onclick="event.stopPropagation();previewAs('${m.e.id}')">their dashboard</button>` : ''}</td><td>${esc(teamName(m.e.team))}</td><td>${esc(m.e.area)}</td><td class="n">${m.mode === 'support' ? 'n/a' : m.deliverables == null && m.mode === 'summary' ? '<span class="muted" data-tip="Offer score needs offer-level data">(' + fmt(m.ownDel.raw) + '/30)</span>' : fmt(m.deliverables)}</td><td class="n">${m.projects == null ? '—' : m.projects}</td><td class="n">${m.cdM == null ? '—' : m.cdM}</td><td class="n"><b>${m.total == null ? '<span class="muted" data-tip="Partial — a pillar is not yet scored">(' + fmt(m.partial) + ')</span>' : fmt(m.total)}</b></td><td class="n">${m.selfTotal == null ? '—' : fmt(m.selfTotal)}</td><td class="n">${m.total == null ? '—' : fmt(m.total)}</td><td class="n">${g == null ? '—' : (g > 0 ? '+' : '') + g}</td><td>${statusOf(m)}</td></tr>`; };
-    const ic = ms.filter(m => !m.isTL && !m.isSup), tls = ms.filter(m => m.isTL), sups = ms.filter(m => m.isSup);
+    const out = ms.filter(m => !inReview(m.e)), act = ms.filter(m => inReview(m.e));
+    const ic = act.filter(m => !m.isTL && !m.isSup), tls = act.filter(m => m.isTL), sups = act.filter(m => m.isSup);
     h += `<section class="card"><header><h2>Team scorecard</h2>${provChip()}</header><div class="tbl-wrap"><table><thead><tr><th>Employee</th><th>Team</th><th>Area</th><th class="n">Deliv. /70</th><th class="n">Proj. /15</th><th class="n">Dev. /15</th><th class="n">Total</th><th class="n">Self</th><th class="n">TA Head</th><th class="n">Gap</th><th>Status</th></tr></thead><tbody>
       ${ic.length ? `<tr class="grp"><td colspan="11">Recruiters &amp; sourcers (${ic.length})</td></tr>` + ic.map(row).join('') : ''}
       ${tls.length ? `<tr class="grp"><td colspan="11">Team leads (${tls.length}) — TL scorecard (${state.rules.tlModel}, proposed)</td></tr>` + tls.map(row).join('') : ''}
-      ${sups.length ? `<tr class="grp"><td colspan="11">Support &amp; operations (${sups.length}) — no hiring targets; scored on projects and competency (/30)</td></tr>` + sups.map(row).join('') : ''}</tbody></table></div>
+      ${sups.length ? `<tr class="grp"><td colspan="11">Support &amp; operations (${sups.length}) — no hiring targets; scored on projects and competency (/30)</td></tr>` + sups.map(row).join('') : ''}
+      ${out.length ? `<tr class="grp"><td colspan="11">Not in this year's evaluation (${out.length}) — left the team; hiring history kept, no target or score</td></tr>` + out.map(row).join('') : ''}</tbody></table></div>
       <p class="small muted">Status reflects ${pointsBasis() ? 'weighted points against the points target (offer target × points per offer)' : 'offer volume on closed cycles'}; for team leads, the lower of team and own. Totals in brackets are partial.</p></section>`;
   }
-  const hiring = ms.filter(m => !m.isSup);
+  const hiring = ms.filter(m => !m.isSup && inReview(m.e));
   h += `<div class="grid g2"><section class="card">${hbars(hiring.map(m => ({ label: m.e.name, sub: m.e.area, value: m.att == null ? null : Math.round(m.att * 100), status: m.status, tip: esc(m.e.name) + ': ' + fmt(m.own.pointsFormal) + ' of ' + fmt(m.own.pointsTargetFormal) + ' target points; ' + m.own.actualFormal + ' offers' })).sort((a, b) => (b.value || 0) - (a.value || 0)), { title: pointsBasis() ? 'Points attainment by member (weighted points vs points target)' : 'Volume attainment by member (closed cycles)', ref: 100, refLabel: '100% of target', unit: '%', max: 140 })}</section>
    <section class="card">${cadenceChart(aggregateBlocks(hiring.map(m => m.own), hiring.map(m => m.e)).cycles, { title: 'Combined offers per 10-day cycle vs combined target' })}</section></div>`;
   return h;
@@ -391,7 +393,7 @@ function reviewState(id) {
   return { cutoff: r.cutoff, metrics: r.metrics, selfDone: r.selfDone, mgrDone: !!m.latest, validated: m.projects != null && m.cdM != null, summary: !!r.summary, calibrated: r.calibrated, finalised: r.finalised, empComment: !!r.empComment, idpApproved: (state.idp[id] || []).some(i => i.status === 'Approved') };
 }
 VIEWS.review = () => {
-  const list = sortedEmployees();
+  const list = sortedEmployees().filter(inReview);
   const done = list.filter(e => reviewState(e.id).finalised).length;
   let h = `<div class="pagehead"><div class="grow"><h1>Annual review &amp; calibration</h1><p class="muted">Year-end workflow per BRD §12. Points only — mapping to corporate rating categories is pending (D-13).</p></div>
     <div class="actions"><button class="btn sm" onclick="freezeCutoff()">Freeze cut-off for all</button><button class="btn sm pri" onclick="openReportBuilder(null,'calibration')">Calibration pack</button></div></div>
@@ -404,7 +406,7 @@ VIEWS.review = () => {
 
 // ================= TALENT & PROMOTION =================
 VIEWS.talent = () => {
-  const list = sortedEmployees().map(e => ({ e, pr: promotion(e.id), m: metrics(e.id) })).sort((a, b) => a.pr.rank - b.pr.rank || (b.m.total || 0) - (a.m.total || 0));
+  const list = sortedEmployees().filter(inReview).map(e => ({ e, pr: promotion(e.id), m: metrics(e.id) })).sort((a, b) => a.pr.rank - b.pr.rank || (b.m.total || 0) - (a.m.total || 0));
   return `<div class="pagehead"><div class="grow"><h1>Talent &amp; promotion <span class="conf">Strictly confidential · TA Head only</span></h1>
     <p class="muted">Advisory readiness based on illustrative criteria (pending HR policy, D-30). Not visible to employees, team leads, peers or administrators; never included in employee reports. The TA Head's decision is the only binding field.</p></div>
     <div class="actions"><button class="btn sm" onclick="openReportBuilder(null,'talent')">Download</button></div></div>
@@ -448,7 +450,7 @@ VIEWS.setup = () => {
      <td>${canEdit ? `<select aria-label="Role for ${esc(e.name)}" onchange="assignField('${e.id}','type',this.value)">${roleOpts(e.type)}</select>` : esc(roleOf(e).name)}</td>
      <td class="n">${isSupport(e) ? 'n/a' : fmt(annualPoints(e))}${e.ptAnnual != null ? ' <span class="chip">personal</span>' : ''}${canEdit && !isSupport(e) ? ` <button class="btn link small" onclick="pointsTargetDlg('${e.id}')">Edit</button>` : ''}</td>
      <td class="small">${(e.alsoTeams || []).map(t => esc(teamName(t))).join(', ') || '—'}</td>
-     <td>${isFormer(e) ? `<span class="chip st-watch">Former${e.end ? ' · ' + D.nice(e.end) : ''}</span>` : '<span class="chip st-good">Active</span>'}</td>
+     <td>${isFormer(e) ? `<span class="chip st-watch">Former${e.end ? ' · ' + D.nice(e.end) : ''}</span>` : `<span class="chip st-good">Active${e.end ? ' · until ' + D.nice(e.end) : ''}</span>`}${!inReview(e) ? '<br><span class="chip">Not in evaluation</span>' : ''}</td>
      ${head ? `<td class="small">${esc(e.level || '—')}</td><td class="small">${e.ratings.map(r => esc(r || '—')).join(' · ')}</td>` : ''}
      <td>${canEdit ? `<button class="btn sm" onclick="memberDlg('${e.id}')">Edit</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">No members yet.</td></tr>'}</tbody></table></div></section>
   <div class="grid g2">

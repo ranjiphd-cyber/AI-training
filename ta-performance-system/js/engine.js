@@ -82,14 +82,24 @@ function defaultAnnualPoints(e) {
   if (sc && !state.offers.some(o => o.emp === e.id)) return sc.target != null ? sc.target * ppoFor(e.area) : null;
   return areaTarget(e.area) * (isLead(e) ? state.rules.tlTargetShare : roleOf(e).share) * ppoFor(e.area) * yearWorkingDays() / 10;
 }
-function annualPoints(e) { return e.ptAnnual != null ? e.ptAnnual : defaultAnnualPoints(e); }
+function annualPoints(e) { if (!inReview(e)) return null; return e.ptAnnual != null ? e.ptAnnual : defaultAnnualPoints(e); }
 function ppoFor(a) { return state.areaPPO && state.areaPPO[a] != null ? Number(state.areaPPO[a]) : state.rules.pointsPerOffer; }
 const pointsBasis = () => state.rules.offerFormula === 'P';
 function areaTarget(a) { const t = state.areaTargets[a]; return t == null ? 0 : Number(t); }
+function renameEmployeeId(oldId, newId) {
+  const e = emp(oldId); if (!e || emp(newId)) return false;
+  e.id = newId;
+  const fix = x => { if (x && x.emp === oldId) x.emp = newId; };
+  state.offers.forEach(fix); state.learning.forEach(fix); state.requests.forEach(fix); state.overrides.forEach(fix); state.reports.forEach(fix);
+  state.projects.forEach(p => { if (p.owner === oldId) p.owner = newId; });
+  for (const k of ['scorecards', 'assessments', 'compDev', 'idp', 'afi', 'comments', 'review', 'promo', 'packs', 'teamSnapshots']) {
+    const o = state[k]; if (o && o[oldId] !== undefined) { o[newId] = o[oldId]; delete o[oldId]; } }
+  return true;
+}
 function addEmployee(o) {
   const e = { id: o.id, name: o.name, team: o.team, area: o.area, type: o.type || 'IC', level: o.level ?? JOB_LEVELS[0], since: o.since === undefined ? PERIOD.start : o.since,
     ratings: o.ratings || [null, null, null], start: o.start || null, end: o.end || null, status: o.status || 'Active', alsoTeams: o.alsoTeams || [], flags: o.flags || [],
-    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', ptAnnual: o.ptAnnual ?? null,
+    aliases: o.aliases || '', joined: o.joined || null, roleNote: o.roleNote || '', ptAnnual: o.ptAnnual ?? null, inReview: o.inReview !== false,
     leave: null, targets: o.targets || Object.fromEntries(COMPETENCIES.map(c => [c, 3])) };
   state.employees.push(e);
   state.assessments[e.id] = state.assessments[e.id] || [];
@@ -103,8 +113,10 @@ const isLead = e => roleOf(e).template === 'lead';
 const isSupport = e => roleOf(e).template === 'support';
 const isRecruiter = e => roleOf(e).template === 'recruiter';
 const isFormer = e => e.status === 'Former';
+// People who left before the year-end evaluation can be kept as history but left out of targets and scoring.
+const inReview = e => e.inReview !== false;
 // Team goal counts primary-team members only; "also supports" members are shown but not double-counted (D-49).
-function teamMembers(team, includeTL = true) { return state.employees.filter(e => e.team === team && !isSupport(e) && (includeTL || !isLead(e))); }
+function teamMembers(team, includeTL = true) { return state.employees.filter(e => e.team === team && !isSupport(e) && inReview(e) && (includeTL || !isLead(e))); }
 function teamLead(team) { return state.employees.find(e => e.team === team && isLead(e) && !isFormer(e)) || state.employees.find(e => e.team === team && isLead(e)); }
 function teamAreas(team) { return (state.teams[team] && state.teams[team].areas) || []; }
 
@@ -463,7 +475,7 @@ function metrics(id) {
   const att = attOf(own), teamAtt = attOf(team);
   const statusVol = isTL ? (teamAtt != null && att != null ? Math.min(teamAtt, att) : att) : att;
   const noData = mode === 'tx' && !txOffers.length && !(isTL && team && team.actualYTD);
-  const status = isSup || noData || statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
+  const status = isSup || noData || !inReview(e) || statusVol == null ? 'none' : statusVol >= 1 ? 'good' : statusVol >= .85 ? 'watch' : 'below';
   const res = { e, role, mode, isSup, isTL, target, own, ownDel, team, teamDel, deliverables, projects, projectsSelf, cdM, cdS, cd, total, selfTotal, partial, model,
     projs, hist, inProgress, latest, baseline, gaps, vol, teamVol, att, teamAtt, ppo, ptOverride, status, provisional: anyPending() };
   _cache[key] = res;
@@ -497,6 +509,7 @@ function exceptionsList() {
   const R = state.rules, out = [];
   const add = (e, type, measure, value, threshold, action, sev) => out.push({ emp: e.id, name: e.name, team: e.team, type, measure, value, threshold, action, sev });
   for (const e of state.employees) {
+    if (!inReview(e)) continue;
     const m = metrics(e.id), b = m.own;
     const lastClosed = b.cycles.filter(c => c.closed).slice(-1)[0];
     if (lastClosed && (pointsBasis() ? lastClosed.points < lastClosed.pointsTarget : lastClosed.offers < lastClosed.target)) add(e, 'Below cadence', 'Last closed 10-day cycle', pointsBasis() ? r1(lastClosed.points) + ' points (' + lastClosed.offers + ' offers)' : lastClosed.offers + ' offers', 'Target ' + r1(pointsBasis() ? lastClosed.pointsTarget : lastClosed.target) + (pointsBasis() ? ' points' : ''), 'Review pipeline in next 1:1', 2);

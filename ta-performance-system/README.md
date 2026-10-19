@@ -50,7 +50,10 @@ Open **Team Setup** to:
 - change any person's **team, business area or role** directly in the table (a reason is required and logged);
 - **add or edit teams** and the business areas each one serves;
 - **add or edit roles**. Each role uses a scorecard template: Recruiter, Team Lead, or Support / Operations (no hiring targets);
-- mark people who **also support** other teams, record **former members** with a leaving date, and keep **notes to confirm**.
+- mark people who **also support** other teams, record a **leaving date** (people still working until that date stay active), mark **former members**, and keep **notes to confirm**;
+- untick **Include in this year's evaluation** for people who left before year end: their hiring history stays visible in a separate group, but they get no target, score or exceptions.
+
+Job levels use the **SG grade framework** (SG1–SG12); promotion readiness looks at the next SG. Employee IDs can be your VCNIDs; an update file can rename IDs, and every linked record moves with them.
 
 If you only have YTD recruiter scorecards (target, offers, joiners, offer days, vendor %), import them in **Data Import → Recruiter scorecard**. The dashboard shows attainment and the joining, cycle-time and vendor scores from them. The 40-point offer score needs offer-level data, or a TA Head override with a reason.
 

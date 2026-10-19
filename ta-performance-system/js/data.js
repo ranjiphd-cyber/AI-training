@@ -55,7 +55,8 @@ const LEVEL_ANCHORS = {
 const RATING_SCALE = ['Outstanding', 'Exceeds', 'Meets', 'Partially Meets', 'Below'];
 const RATING_VALUE = { 'Outstanding': 5, 'Exceeds': 4, 'Meets': 3, 'Partially Meets': 2, 'Below': 1 };
 // D-30: job-level framework not specified. Placeholder list.
-const JOB_LEVELS = ['L1 - Recruiter', 'L2 - Senior Recruiter', 'L3 - Lead Recruiter', 'L4 - TA Lead', 'L5 - TA Manager'];
+// Job levels follow the salary-grade (SG) framework; promotion readiness looks at the next SG.
+const JOB_LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
 
 /* Hiring point rules. The BRD has two conflicting tables (D-01). */
 const POINT_TABLES = {
@@ -99,23 +100,23 @@ const DEFAULT_RULES = {
 /* People. profile: vol = volume factor vs target, jr = joining probability, ct = mean cycle days,
    vend = vendor probability, cx = complexity bias. */
 const EMPLOYEES = [
-  { id: 'E1001', name: 'Ananya Rao',       team: 'DTOP',  area: 'DTO',   type: 'TL', level: 'L4 - TA Lead',          since: '2023-04-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.10, jr: .91, ct: 41, vend: .06, cx: .5 } },
-  { id: 'E1002', name: 'Rohan Kulkarni',   team: 'DTOP',  area: 'DTO',   type: 'IC', level: 'L2 - Senior Recruiter', since: '2023-07-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.08, jr: .92, ct: 39, vend: .05, cx: .45 } },
-  { id: 'E1003', name: 'Meera Iyer',       team: 'DTOP',  area: 'FCA',   type: 'IC', level: 'L2 - Senior Recruiter', since: '2024-04-01', ratings: ['Meets', 'Meets', 'Exceeds'],          p: { vol: .93, jr: .86, ct: 47, vend: .12, cx: .3 }, leave: ['2026-06-01', '2026-06-19', 'Approved extended leave'] },
-  { id: 'E1004', name: 'Karthik Menon',    team: 'DTOP',  area: 'VFS',   type: 'IC', level: 'L1 - Recruiter',        since: '2025-01-06', ratings: ['Meets', null, null],                    p: { vol: .74, jr: .78, ct: 58, vend: .24, cx: .15 } },
-  { id: 'E1005', name: 'Neha Gupta',       team: 'DTOP',  area: 'Penta', type: 'IC', level: 'L2 - Senior Recruiter', since: '2024-01-01', ratings: ['Exceeds', 'Meets', 'Meets'],          p: { vol: .97, jr: .88, ct: 45, vend: .10, cx: .35 } },
-  { id: 'E1020', name: 'Kavya Reddy',      team: 'TTI',   area: 'GTP',   type: 'TL', level: 'L4 - TA Lead',          since: '2024-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],           p: { vol: 1.0, jr: .89, ct: 44, vend: .08, cx: .35 } },
-  { id: 'E1021', name: 'Nikhil Joshi',     team: 'TTI',   area: 'GTT',   type: 'IC', level: 'L2 - Senior Recruiter', since: '2022-10-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.0, jr: .90, ct: 43, vend: .07, cx: .4 } },
-  { id: 'E1022', name: 'Farah Khan',       team: 'TTI',   area: 'GTO',   type: 'IC', level: 'L1 - Recruiter',        since: '2024-01-01', ratings: ['Meets', 'Meets', null],                 p: { vol: .88, jr: .84, ct: 50, vend: .14, cx: .25 } },
-  { id: 'E1030', name: 'Deepa Krishnan',   team: 'URECH', area: 'Early Careers', type: 'TL', level: 'L4 - TA Lead',  since: '2021-04-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.05, jr: .87, ct: 31, vend: .02, cx: .5 } },
-  { id: 'E1031', name: 'Aditya Verma',     team: 'URECH', area: 'Early Careers', type: 'IC', level: 'L2 - Senior Recruiter', since: '2023-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],   p: { vol: 1.02, jr: .85, ct: 29, vend: .03, cx: .4 } },
-  { id: 'E1032', name: 'Ishita Banerjee',  team: 'URECH', area: 'Early Careers', type: 'IC', level: 'L1 - Recruiter', since: '2024-07-01', ratings: ['Meets', 'Meets', null],               p: { vol: .90, jr: .79, ct: 34, vend: .05, cx: .3 } },
-  { id: 'E1033', name: 'Rahul Nair',       team: 'URECH', area: 'Early Careers', type: 'IC', level: 'L1 - Recruiter', since: '2026-04-01', ratings: [null, null, null],                     p: { vol: .85, jr: .83, ct: 33, vend: .04, cx: .3 }, start: '2026-04-01' },
-  { id: 'E1010', name: 'Vikram Desai',     team: 'VCELH', area: 'VCE',   type: 'TL', level: 'L4 - TA Lead',          since: '2022-04-01', ratings: ['Meets', 'Exceeds', 'Exceeds'],         p: { vol: .95, jr: .88, ct: 46, vend: .09, cx: .4 } },
-  { id: 'E1011', name: 'Sneha Pillai',     team: 'VCELH', area: 'VCE',   type: 'IC', level: 'L3 - Lead Recruiter',   since: '2023-10-01', ratings: ['Exceeds', 'Outstanding', 'Exceeds'],   p: { vol: 1.04, jr: .93, ct: 42, vend: .04, cx: .55 } },
-  { id: 'E1012', name: 'Arjun Bhat',       team: 'VCELH', area: 'VCE',   type: 'IC', level: 'L1 - Recruiter',        since: '2024-07-01', ratings: ['Partially Meets', 'Meets', null],       p: { vol: .82, jr: .80, ct: 52, vend: .17, cx: .2 } },
-  { id: 'E1040', name: 'Sanjay Mehta',     team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'L3 - Lead Recruiter', since: '2022-04-01', ratings: ['Exceeds', 'Meets', 'Exceeds'], p: { vol: 1.0, jr: .90, ct: 68, vend: .35, cx: .8 } },
-  { id: 'E1041', name: 'Pooja Shah',       team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'L3 - Lead Recruiter', since: '2021-01-01', ratings: ['Exceeds', 'Exceeds', 'Outstanding'], p: { vol: 1.15, jr: .94, ct: 62, vend: .22, cx: .85 } },
+  { id: 'E1001', name: 'Ananya Rao',       team: 'DTOP',  area: 'DTO',   type: 'TL', level: 'SG7',          since: '2023-04-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.10, jr: .91, ct: 41, vend: .06, cx: .5 } },
+  { id: 'E1002', name: 'Rohan Kulkarni',   team: 'DTOP',  area: 'DTO',   type: 'IC', level: 'SG5', since: '2023-07-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.08, jr: .92, ct: 39, vend: .05, cx: .45 } },
+  { id: 'E1003', name: 'Meera Iyer',       team: 'DTOP',  area: 'FCA',   type: 'IC', level: 'SG5', since: '2024-04-01', ratings: ['Meets', 'Meets', 'Exceeds'],          p: { vol: .93, jr: .86, ct: 47, vend: .12, cx: .3 }, leave: ['2026-06-01', '2026-06-19', 'Approved extended leave'] },
+  { id: 'E1004', name: 'Karthik Menon',    team: 'DTOP',  area: 'VFS',   type: 'IC', level: 'SG4',        since: '2025-01-06', ratings: ['Meets', null, null],                    p: { vol: .74, jr: .78, ct: 58, vend: .24, cx: .15 } },
+  { id: 'E1005', name: 'Neha Gupta',       team: 'DTOP',  area: 'Penta', type: 'IC', level: 'SG5', since: '2024-01-01', ratings: ['Exceeds', 'Meets', 'Meets'],          p: { vol: .97, jr: .88, ct: 45, vend: .10, cx: .35 } },
+  { id: 'E1020', name: 'Kavya Reddy',      team: 'TTI',   area: 'GTP',   type: 'TL', level: 'SG7',          since: '2024-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],           p: { vol: 1.0, jr: .89, ct: 44, vend: .08, cx: .35 } },
+  { id: 'E1021', name: 'Nikhil Joshi',     team: 'TTI',   area: 'GTT',   type: 'IC', level: 'SG5', since: '2022-10-01', ratings: ['Exceeds', 'Exceeds', 'Meets'],         p: { vol: 1.0, jr: .90, ct: 43, vend: .07, cx: .4 } },
+  { id: 'E1022', name: 'Farah Khan',       team: 'TTI',   area: 'GTO',   type: 'IC', level: 'SG4',        since: '2024-01-01', ratings: ['Meets', 'Meets', null],                 p: { vol: .88, jr: .84, ct: 50, vend: .14, cx: .25 } },
+  { id: 'E1030', name: 'Deepa Krishnan',   team: 'URECH', area: 'Early Careers', type: 'TL', level: 'SG7',  since: '2021-04-01', ratings: ['Outstanding', 'Exceeds', 'Exceeds'],   p: { vol: 1.05, jr: .87, ct: 31, vend: .02, cx: .5 } },
+  { id: 'E1031', name: 'Aditya Verma',     team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG5', since: '2023-04-01', ratings: ['Exceeds', 'Meets', 'Meets'],   p: { vol: 1.02, jr: .85, ct: 29, vend: .03, cx: .4 } },
+  { id: 'E1032', name: 'Ishita Banerjee',  team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG4', since: '2024-07-01', ratings: ['Meets', 'Meets', null],               p: { vol: .90, jr: .79, ct: 34, vend: .05, cx: .3 } },
+  { id: 'E1033', name: 'Rahul Nair',       team: 'URECH', area: 'Early Careers', type: 'IC', level: 'SG4', since: '2026-04-01', ratings: [null, null, null],                     p: { vol: .85, jr: .83, ct: 33, vend: .04, cx: .3 }, start: '2026-04-01' },
+  { id: 'E1010', name: 'Vikram Desai',     team: 'VCELH', area: 'VCE',   type: 'TL', level: 'SG7',          since: '2022-04-01', ratings: ['Meets', 'Exceeds', 'Exceeds'],         p: { vol: .95, jr: .88, ct: 46, vend: .09, cx: .4 } },
+  { id: 'E1011', name: 'Sneha Pillai',     team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG6',   since: '2023-10-01', ratings: ['Exceeds', 'Outstanding', 'Exceeds'],   p: { vol: 1.04, jr: .93, ct: 42, vend: .04, cx: .55 } },
+  { id: 'E1012', name: 'Arjun Bhat',       team: 'VCELH', area: 'VCE',   type: 'IC', level: 'SG4',        since: '2024-07-01', ratings: ['Partially Meets', 'Meets', null],       p: { vol: .82, jr: .80, ct: 52, vend: .17, cx: .2 } },
+  { id: 'E1040', name: 'Sanjay Mehta',     team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2022-04-01', ratings: ['Exceeds', 'Meets', 'Exceeds'], p: { vol: 1.0, jr: .90, ct: 68, vend: .35, cx: .8 } },
+  { id: 'E1041', name: 'Pooja Shah',       team: 'VCELH', area: 'Leadership Hiring', type: 'IC', level: 'SG6', since: '2021-01-01', ratings: ['Exceeds', 'Exceeds', 'Outstanding'], p: { vol: 1.15, jr: .94, ct: 62, vend: .22, cx: .85 } },
 ];
 
 const PROJECT_TITLES = [

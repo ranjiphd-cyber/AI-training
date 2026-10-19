@@ -247,20 +247,23 @@ async function applyUpdateFile(file) {
 }
 function updatePlan(u) {
   const plan = [];
+  const ren = u.renameIds || {}, back = Object.fromEntries(Object.entries(ren).map(([a, b]) => [b, a]));
+  const empU = id => emp(id) || (back[id] && emp(back[id]));
+  for (const [a, b] of Object.entries(ren)) { const e = emp(a); if (e && !emp(b)) plan.push(['Employee ID', e.name, a + ' → ' + b]); }
   for (const t of u.teams || []) { const ex = state.teams[t.key];
     const add = (t.addAreas || []).filter(a => !(ex ? ex.areas : []).includes(a));
     if (!ex) plan.push(['Team', t.name, 'add team' + (add.length ? ' with areas ' + add.join(', ') : '')]); else if (add.length) plan.push(['Team', ex.name, 'add business area ' + add.join(', ')]); }
   const tName = k => (state.teams[k] && state.teams[k].name) || ((u.teams || []).find(t => t.key === k) || {}).name || k;
   for (const p of u.newPeople || []) { if (emp(p.id)) plan.push(['Skipped', p.name, 'Already in this workspace']); else plan.push(['New person', p.name, [tName(p.team), p.area, (state.roles[p.type] || {}).name || p.type, p.status].filter(Boolean).join(' · ')]); }
-  for (const p of u.people || []) { const e = emp(p.id); if (!e) { plan.push(['Skipped', p.id, 'Not in this workspace']); continue; }
+  for (const p of u.people || []) { const e = empU(p.id); if (!e) { plan.push(['Skipped', p.id, 'Not in this workspace']); continue; }
     const ch = Object.entries(p.set || {}).filter(([k, v]) => JSON.stringify(e[k]) !== JSON.stringify(v)).map(([k, v]) => k + ': ' + (Array.isArray(v) ? v.join(', ') : v));
     const rm = (e.flags || []).filter(f => (p.removeFlags || []).some(x => f.includes(x)));
     const add = (p.addFlags || []).filter(f => !(e.flags || []).includes(f));
     if (ch.length || rm.length || add.length) plan.push(['Person', e.name, [...ch, ...rm.map(f => 'resolved: ' + f), ...add.map(f => 'to confirm: ' + f)].join(' · ')]); }
   const newP = Object.fromEntries((u.newPeople || []).map(p => [p.id, p]));
-  for (const [id, f] of Object.entries(u.scorecards || {})) { const e = emp(id) || newP[id]; if (!e) { plan.push(['Skipped', id, 'Not in this workspace']); continue; }
+  for (const [id, f] of Object.entries(u.scorecards || {})) { const e = empU(id) || newP[id]; if (!e) { plan.push(['Skipped', id, 'Not in this workspace']); continue; }
     plan.push(['Scorecard', e.name, Object.keys(f).join(', ') + (state.scorecards[id] ? '' : ' (new scorecard)')]); }
-  for (const p of u.projects || []) { const e = emp(p.owner); if (!e) { plan.push(['Skipped', p.owner, 'Project owner not in this workspace']); continue; }
+  for (const p of u.projects || []) { const e = empU(p.owner); if (!e) { plan.push(['Skipped', p.owner, 'Project owner not in this workspace']); continue; }
     const ex = p.match && state.projects.find(x => x.owner === p.owner && x.title.toLowerCase().includes(p.match.toLowerCase()));
     if (p.add && state.projects.some(x => x.owner === p.owner && x.title.toLowerCase() === p.add.title.toLowerCase())) { plan.push(['Skipped', e.name, 'Project already present: ' + p.add.title]); continue; }
     plan.push(['Project', e.name, ex ? 'update "' + ex.title + '"' + (p.set.title && p.set.title !== ex.title ? ' → "' + p.set.title + '"' : '') : p.add ? 'add "' + p.add.title + '"' : 'no match for "' + p.match + '" (skipped)']); }
@@ -275,6 +278,7 @@ function previewUpdate(u, fname) {
 }
 function mergeUpdate(u, fname) {
   const src = u.source || fname; let n = 0;
+  for (const [a, b] of Object.entries(u.renameIds || {})) { const e = emp(a); if (e && renameEmployeeId(a, b)) { audit('Employee ID changed from file', e.name, a + ' → ' + b, src); n++; } }
   for (const t of u.teams || []) {
     if (!state.teams[t.key]) { state.teams[t.key] = { name: t.name, areas: [] }; audit('Team added from file', t.name, '', src); n++; }
     for (const a of t.addAreas || []) if (!state.teams[t.key].areas.includes(a)) { state.teams[t.key].areas.push(a); if (!(a in state.areaTargets)) state.areaTargets[a] = t.areaTargets && t.areaTargets[a] != null ? t.areaTargets[a] : null; audit('Business area added from file', state.teams[t.key].name, a, src); n++; } }

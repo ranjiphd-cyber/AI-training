@@ -226,17 +226,21 @@ function validateProfile(rec, seen) {
   if (t && !a) { if (v.area) E('Business area "' + v.area + '" is not in ' + t[1].name + ' (' + t[1].areas.join(', ') + ')'); else { n.area = t[1].areas[0]; W('Business area missing — set to ' + n.area); } } else n.area = a;
   const rk = Object.entries(state.roles).find(([k, r]) => [k.toLowerCase(), r.name.toLowerCase()].includes(String(v.type).trim().toLowerCase()) || (String(v.type).trim().toUpperCase() === 'TL' && r.template === 'lead'));
   n.type = rk ? rk[0] : null; if (!n.type) E('Unknown role "' + v.type + '" (use ' + Object.values(state.roles).map(r => r.name).join(', ') + ' or add the role in Team Setup)');
-  n.alsoTeams = String(v.also || '').split(/[;|]/).map(x => x.trim()).filter(Boolean).map(x => { const f = findTeam(x); if (!f) W('Unknown supported team "' + x + '" — ignored'); return f && f[0]; }).filter(x => x && x !== n.team);
+  n.alsoTeams = !String(v.also || '').trim() && emp(v.id) ? (emp(v.id).alsoTeams || []) : String(v.also || '').split(/[;|]/).map(x => x.trim()).filter(Boolean).map(x => { const f = findTeam(x); if (!f) W('Unknown supported team "' + x + '" — ignored'); return f && f[0]; }).filter(x => x && x !== n.team);
   n.status = /former|left|exit/i.test(v.status || '') ? 'Former' : 'Active';
-  n.flags = String(v.flags || '').split('|').map(x => x.trim()).filter(Boolean);
-  n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).toLowerCase() || l.split(' - ')[0].toLowerCase() === String(v.level).toLowerCase()) || (v.level ? v.level : (emp(v.id) ? emp(v.id).level : ''));
+  n.flags = !String(v.flags || '').trim() && emp(v.id) ? [...(emp(v.id).flags || [])] : String(v.flags || '').split('|').map(x => x.trim()).filter(Boolean);
+  n.level = JOB_LEVELS.find(l => l.toLowerCase() === String(v.level).replace(/\s+/g, '').toLowerCase()) || (v.level ? v.level : (emp(v.id) ? emp(v.id).level : ''));
   if (v.level && !JOB_LEVELS.includes(n.level)) W('Job level not in list — kept as entered (D-30)');
   const cur = emp(v.id);
   n.aliases = v.aliases ? v.aliases : (cur ? cur.aliases || '' : '');
   { const d = normDate(v.joined); if (d.startsWith('INVALID')) E('Unreadable date "' + v.joined + '"'); else n.joined = d || (cur ? cur.joined || null : null); }
   for (const k of ['since', 'start', 'end']) { const d = normDate(v[k]); if (d.startsWith('INVALID')) E('Unreadable date "' + v[k] + '"'); else n[k] = d; }
+  if (!v.start && emp(v.id)) n.start = emp(v.id).start || null;
+  if (!v.status && emp(v.id)) n.status = emp(v.id).status || 'Active';
+  if (!v.end && emp(v.id)) n.end = emp(v.id).end || null;
   if (n.status === 'Former' && !n.end) W('Former member without leaving date — targets cannot be pro-rated');
   n.ratings = ['r1', 'r2', 'r3'].map((k, i) => { if (!v[k]) return emp(v.id) ? emp(v.id).ratings[i] : null; const r = RATING_SCALE.find(x => x.toLowerCase() === String(v[k]).toLowerCase()) || RATING_SCALE[5 - parseInt(v[k])]; if (!r) E('Unknown rating "' + v[k] + '" (use ' + RATING_SCALE.join(', ') + ' or 1–5)'); return r || null; });
+  if (n.ratings.every(Boolean)) n.flags = n.flags.filter(f => !/ratings/i.test(f)); // ratings now recorded
   n.id = v.id; n.name = v.name;
 }
 function validateRating(rec, seen) {

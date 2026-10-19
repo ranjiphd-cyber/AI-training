@@ -291,6 +291,7 @@ function memberDlg(id) {
    <label class="field">Start date (only if joined mid-year)<input type="date" id="mb-st" value="${e.start || ''}"></label><label class="field">Leaving date (former members)<input type="date" id="mb-end" value="${e.end || ''}"></label>
    ${head ? `<label class="field">Job level<select id="mb-l">${opt(JOB_LEVELS.includes(e.level) ? JOB_LEVELS : [e.level, ...JOB_LEVELS], e.level)}</select></label><label class="field">In level since<input type="date" id="mb-s" value="${e.since || ''}"></label>
    ${[0, 1, 2].map(i => `<label class="field">Rating ${PERIOD.year - 1 - i} (TA Head only)<select id="mb-r${i}"><option value="">—</option>${opt(RATING_SCALE, e.ratings[i])}</select></label>`).join('')}` : ''}</div>
+   <label class="small" style="display:block;margin-top:8px"><input type="checkbox" id="mb-rev" ${e.inReview !== false ? 'checked' : ''}> Include in this year's evaluation (targets and scores)</label>
    <fieldset style="border:1px solid var(--line);border-radius:8px;margin:10px 0;padding:6px 12px"><legend class="small">Also supports (shown in these teams; not counted in their team goal)</legend>${Object.entries(state.teams).map(([k, t]) => `<label class="small" style="margin-right:12px"><input type="checkbox" class="mb-also" value="${k}" ${(e.alsoTeams || []).includes(k) ? 'checked' : ''}> ${esc(t.name)}</label>`).join('')}</fieldset>
    <label class="field">Notes to confirm (one per line; shown until cleared)<textarea id="mb-f" rows="3">${esc((e.flags || []).join('\n'))}</textarea></label>
    ${id ? '<label class="field">Reason for change<input type="text" id="mb-why"></label>' : ''}`,
@@ -302,6 +303,7 @@ function memberDlg(id) {
       const role = state.roles[val('mb-ty')];
       if (role.template === 'lead' && val('mb-st2') !== 'Former') { const other = state.employees.find(x => x.team === val('mb-t') && isLead(x) && !isFormer(x) && x.id !== nid); if (other) { toast(other.name + ' is already the active team lead for this team.'); return false; } }
       const data = { id: nid, name: val('mb-n'), aliases: val('mb-al'), joined: val('mb-jn') || null, roleNote: val('mb-rn'), team: val('mb-t'), area: val('mb-a'), type: val('mb-ty'), status: val('mb-st2'), start: val('mb-st') || null, end: val('mb-end') || null,
+        inReview: document.getElementById('mb-rev').checked,
         alsoTeams: [...document.querySelectorAll('.mb-also:checked')].map(x => x.value).filter(t => t !== val('mb-t')), flags: val('mb-f').split('\n').map(x => x.trim()).filter(Boolean) };
       if (head) Object.assign(data, { level: val('mb-l'), since: val('mb-s') || PERIOD.start, ratings: [0, 1, 2].map(i => val('mb-r' + i) || null) });
       const before = id ? `${teamName(e.team)} · ${e.area} · ${roleOf(e).name} · ${e.status || 'Active'}` : '';
