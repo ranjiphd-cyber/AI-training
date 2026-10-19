@@ -58,6 +58,7 @@ Lateral (351) and fresher (62) joiners reconcile with the scorecard. Cohorts wit
 
 Two series for lateral joiners:
 - Lateral hires 2017–2026, from the TA Head's trend table.
+- Requisition-to-offer and requisition-to-join time 2023–2025, from the cycle-time table, plus the 2023–2025 averages (60 and 107 days).
 - Gender diversity, vendor usage and employee referral share 2020–2026, from the Business Review Meeting (Oct) slide. The 2026 vendor share is confirmed as 6.6% at the 14 Oct cut-off.
 
 About the periods:

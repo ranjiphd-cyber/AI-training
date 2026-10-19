@@ -312,7 +312,19 @@
         vol.points.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + TA.fmtInt(p.value) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
     }
     const pp = (a, b) => TA.deltaText('%', a, b).replace(' (percentage points)', '');
-    const body = volHtml + '<div class="grid g3">' + sets.map(s => {
+    const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+    let cycHtml = '';
+    if (cyc.length) {
+      cycHtml = '<div class="grid g2" style="margin-bottom:14px">' + cyc.map(c => {
+        const full = c.points.filter(p => !p.partial), ytd = c.points.find(p => p.partial), a = full[0], b = full[full.length - 1];
+        const avg = S.list('observations').find(o => o.metricId === c.metric.id && o.periodId === 'per_lat_2023_2025');
+        return '<div><h4>' + esc(c.metric.name) + ' (days, lower is better)</h4>' + TA.chartLine(c.points, 'days', { labels: true, w: 560, h: 220, zero: true, aria: c.metric.name + ' by year', seriesLabel: 'Lateral joiners' }) +
+          '<ul class="small" style="margin:4px 0 0 16px;padding:0"><li>' + esc(a.short + ' → ' + b.short + ': ' + TA.deltaText('days', a.value, b.value)) + '</li>' +
+          (ytd ? '<li>' + esc(b.short + ' → ' + ytd.short + ': ' + TA.deltaText('days', b.value, ytd.value)) + ' <span class="muted">(year-to-date vs full year; not like-for-like)</span></li>' : '') +
+          (avg ? '<li>' + esc('2023–2025 average: ' + TA.fmtVal(avg.actualReported, 'days')) + ' <span class="muted">(' + esc(avg.calcNote.replace(/^Source-reported 3-year average\. /, '')) + ')</span></li>' : '') + '</ul></div>';
+      }).join('') + '</div>';
+    }
+    const body = volHtml + cycHtml + '<div class="grid g3">' + sets.map(s => {
       const pts = s.points, full = pts.filter(p => !p.partial), ytd = pts.find(p => p.partial);
       const a = full[full.length - 2], b = full[full.length - 1];
       const hi = full.reduce((x, p) => p.value > x.value ? p : x, full[0]), lo = full.reduce((x, p) => p.value < x.value ? p : x, full[0]);
@@ -323,9 +335,9 @@
         '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">Value</th><th scope="col">Source</th></tr></thead><tbody>' +
         pts.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + esc(TA.fmtPct(p.value)) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
     }).join('') + '</div>';
-    return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring trend table and Business Review Meeting (Oct) slide; 2026 vendor usage 6.6% confirmed at the 14 Oct cut-off.', body +
-      commentary('Lateral hires peaked in 2022 and have fallen each full year since. Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'These three measures shape cost, inclusion and sourcing mix for lateral hiring. 2026 is not yet a full year.',
-        'Track the planned diversity pipeline and the referral module redesign (see Actions); compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
+    return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring and cycle-time trend tables and Business Review Meeting (Oct) slide; 2026 vendor usage 6.6% confirmed at the 14 Oct cut-off.', body +
+      commentary('Lateral hires peaked in 2022 and have fallen each full year since. Requisition-to-join time fell from 115 days (2023) to 94 (2025). Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'Together these show the volume, speed, cost, inclusion and sourcing mix of lateral hiring. 2026 is not yet a full year.',
+        'Track the planned diversity pipeline and the referral module redesign (see Actions); use 2025 full-year cycle times as the baseline for targets; compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
   }
 
   function breakdownsCard() {

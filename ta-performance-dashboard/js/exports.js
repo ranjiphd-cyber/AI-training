@@ -97,6 +97,12 @@
           note: 'Full calendar years; the last point is year-to-date and not comparable with full years.' });
         vol.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); });
       }
+      const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+      if (cyc.length && cyc.every(c => c.points.map(p => p.short).join() === cyc[0].points.map(p => p.short).join())) {
+        blocks.push({ type: 'chart', kind: 'line', unit: 'days', title: 'Lateral hiring cycle time (days), ' + cyc[0].points[0].short + '–' + cyc[0].points[cyc[0].points.length - 1].short, categories: cyc[0].points.map(p => p.short),
+          series: cyc.map((c, i) => ({ name: c.metric.name, values: c.points.map(p => p.value), color: [ACCENT, NAVY][i] })), note: 'Lower is better. 2023–2025 average: 60 days to offer, 107 days to join. The last point is year-to-date.' });
+        cyc.forEach(c => c.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
+      }
       const trendRows = [];
       TA.availableTrends().forEach(t => { trendRows.push([t.metric.name, t.population || 'Not provided', t.a.period.label + ': ' + TA.fmtVal(t.a.value, t.metric.unit), t.b.period.label + ': ' + TA.fmtVal(t.b.value, t.metric.unit), TA.deltaText(t.metric.unit, t.a.value, t.b.value)]); if (t.b.obs.source) m.sources.add(t.b.obs.source); });
       if (trendRows.length) blocks.push({ type: 'table', label: 'Latest change between comparable periods (descriptive; causes not inferred)', head: ['Measure', 'Population', 'Prior', 'Latest', 'Change'], rows: trendRows });
@@ -430,7 +436,7 @@
           y += th + 14;
         } else if (b.type === 'chart' && b.kind === 'line') {
           text(b.title, 11, { bold: true, color: NAVY, after: 2 });
-          doc.autoTable({ startY: y, head: [['Measure'].concat(b.categories).map(pdfSafe)], body: b.series.map(se => [se.name].concat(se.values.map(v => b.unit === '%' ? v + '%' : TA.fmtInt(v))).map(pdfSafe)), margin: { left: M, right: M, bottom: 50 },
+          doc.autoTable({ startY: y, head: [['Measure'].concat(b.categories).map(pdfSafe)], body: b.series.map(se => [se.name].concat(se.values.map(v => b.unit === '%' ? v + '%' : b.unit === 'days' ? v + ' days' : TA.fmtInt(v))).map(pdfSafe)), margin: { left: M, right: M, bottom: 50 },
             styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 4, textColor: rgb('0F1B2D'), lineColor: rgb(LINE), lineWidth: 0.5 }, headStyles: { fillColor: rgb(NAVY), textColor: 255 } });
           y = doc.lastAutoTable.finalY + 6;
           if (b.note) text(b.note, 8.5, { italic: true, color: SLATE });

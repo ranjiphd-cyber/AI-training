@@ -137,8 +137,44 @@
     return true;
   }
 
+  /* Update 2 (TA Head, 19 Oct 2026): yearly cycle times 2023–2025 and the 3-year averages. */
+  const UPD2 = 'lateral-trends-2026-upd2';
+  const CYCLE = { 2023: [67, 115], 2024: [54, 113], 2025: [58, 94] }; // [req-to-offer, req-to-join] days
+  const SRC_CT = 'Cycle-time trend table supplied by the TA Head (19 Oct 2026)';
+  function applyUpdate2() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(UPD2) >= 0 || applied.indexOf(UPD1) < 0) return false;
+    S.recoveryPoint('Before adding cycle-time trends 2023–2025');
+    const origin = 'Import: ' + SRC_CT;
+    const metric = (name) => S.list('metrics', { archived: true }).find(m => m.name === name);
+    const r2o = metric('Requisition-to-offer time'), r2j = metric('Requisition-to-join time');
+    const add = (m, pid, v, note) => { if (m && !S.list('observations').some(o => o.metricId === m.id && o.periodId === pid && o.population === POP))
+      S.add('observations', { metricId: m.id, periodId: pid, population: POP, target: null, actualReported: v, numerator: null, denominator: null, calcNote: note, attribution: 'Shared business outcome', source: SRC_CT, owner: null, dataDate: null,
+        notes: 'Population assumed to be lateral joiners, as for the 2026 values – confirm.' }, origin); };
+    Object.keys(CYCLE).forEach(yr => { add(r2o, 'per_lat_' + yr, CYCLE[yr][0], 'Source-reported annual value (days).'); add(r2j, 'per_lat_' + yr, CYCLE[yr][1], 'Source-reported annual value (days).'); });
+    if (!S.get('periods', 'per_lat_2023_2025')) S.add('periods', { id: 'per_lat_2023_2025', label: '2023–2025 – Lateral hiring (3-year)', type: 'Custom', scope: 'Lateral hiring', start: '2023-01-01', end: '2025-12-31', cutoff: '2025-12-31', source: SRC_CT, notes: 'Three-year view; not compared with single years.' }, origin);
+    add(r2o, 'per_lat_2023_2025', 60, 'Source-reported 3-year average. Simple mean of the yearly figures = 59.7; weighted by yearly lateral hires (787, 653, 610) = 60.2.');
+    add(r2j, 'per_lat_2023_2025', 107, 'Source-reported 3-year average. Simple mean of the yearly figures = 107.3; weighted by yearly lateral hires = 108.1.');
+    const today = TA.todayIso();
+    if (!S.list('questions').some(x => x.title === 'Cycle-time trend: population and calculation'))
+      S.add('questions', { title: 'Cycle-time trend: population and calculation', type: 'Definition to confirm', priority: 'Nice to have', relatedTo: 'Requisition-to-offer / requisition-to-join',
+        detail: 'The 2023–2025 cycle times are recorded as lateral joiners, like the 2026 values. Confirm the population, and whether each year is a mean per hire. The 3-year averages (60 / 107) match a simple mean of the yearly figures.', valueA: null, valueB: null,
+        owner: 'TA Head / data owner', raisedDate: today, status: 'Open', resolution: null, resolvedDate: null }, origin);
+    const title = 'Requisition-to-join time has fallen each year since 2023';
+    if (!S.list('insights', { archived: true }).some(i => i.title === title))
+      S.add('insights', { title, type: 'Descriptive finding', observation: 'Requisition-to-join: 115 days (2023), 113 (2024), 94 (2025); 89 in 2026 to 14 Oct. Requisition-to-offer: 67 (2023), 54 (2024), 58 (2025); 53 in 2026 to 14 Oct.',
+        supportingData: SRC_CT + '; 2026 values from the business scorecard (year-to-date).', method: 'Year-on-year change in days; lower is better.',
+        interpretation: 'Time to join shortened by 21 days from 2023 to 2025, mostly in 2025; time to offer fell in 2024 and rose slightly in 2025.', uncertainty: '2026 is year-to-date. Causes are not evidenced in the data. Population and calculation basis to confirm.',
+        recommendedAction: 'Agree 2027 cycle-time targets using the 2025 full-year values as the baseline.', owner: null, reviewDate: null, status: 'New', generatedBy: 'Entered from the TA Head\'s cycle-time table' }, origin);
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([UPD2]) });
+    TA.toast('Added cycle-time trends 2023–2025');
+    return true;
+  }
+
   const prev = TA.applyDataPacks;
-  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); const c = applyUpdate1(); return a || b || c; };
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); const c = applyUpdate1(); const d = applyUpdate2(); return a || b || c || d; };
+  TA.LATERAL_CYCLE_METRICS = ['Requisition-to-offer time', 'Requisition-to-join time'];
   TA.LATERAL_TREND_METRICS = ['Gender diversity', 'Vendor usage', 'Employee referrals'];
   TA.LATERAL_VOLUME_METRIC = 'Lateral hires';
 })();
