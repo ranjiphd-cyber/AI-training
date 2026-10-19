@@ -262,7 +262,7 @@ const RVAL = { Exceptional: 5, High: 4, Good: 3, Adequate: 2, Low: 1 };
 const LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
 const ROLES = ['Recruiter', 'Team Lead', 'Sourcer', 'Support / Operations'];
 const DMAIC = ['Define', 'Measure', 'Analyse', 'Improve', 'Control'];
-const PROJECT_STATUS = ['Not started', 'In progress', 'Completed', 'On hold', 'To confirm'];
+const PROJECT_STATUS = ['Not started', 'On track', 'In progress', 'Completed', 'On hold', 'To confirm'];
 const PLAN_TYPES = ['Development action', 'Area for improvement'];
 const PLAN_STATUS = ['Planned', 'In progress', 'Done', 'Dropped'];
 const LEARN_STATUS = ['Planned', 'In progress', 'Completed'];
@@ -302,7 +302,10 @@ const chip = (s, text) => `<span class="chip ${s}">${ICON[s]}${esc(text || ST[s]
 const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below';
 
 /* ===================== store ===================== */
-const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams'];
+const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings'];
+const isIntern = c => /^Internship/.test(c);
+const internPts = () => num((S.settings.scoring || {}).internPts) ?? 0;
+const scaleText = (comp, n) => { const sc = S.settings.behaviourScale || {}; return ((sc.byComp || {})[comp] || {})[n] || (sc.general || {})[n] || ''; };
 const S = Object.fromEntries(COLS.map(c => [c, {}]));
 let LOG = [];
 let db = null, canWrite = false, loaded = new Set(), ready = false;
@@ -324,13 +327,14 @@ function ownBlock(id) {
   const ppo = num(d.ppo) ?? 2, target = num(d.target), prorate = num(d.prorate) ?? 1;
   const ptFull = num(d.ptAnnual) ?? (target != null ? target * ppo : null);
   const ptPro = ptFull != null ? ptFull * prorate : null;
-  const points = num(d.points), offers = num(d.offers), joiners = num(d.joiners);
+  const interns = sum((d.mix || []).filter(m => isIntern(m[0])).map(m => m[1])), basePts = num(d.points);
+  const points = basePts == null ? null : basePts + interns * internPts(), offers = num(d.offers), joiners = num(d.joiners);
   const att = points != null && ptPro ? points / ptPro : null;
   const offer = att != null ? r1(40 * Math.min(att, 1)) : null;
   const jr = offers ? joiners / offers * 100 : null;
   const parts = { offer, jr: jrScore(jr), ct: ctScore(num(d.offerDays)), vendor: vScore(num(d.vendorPct)) };
   const all = Object.values(parts).every(v => v != null);
-  return { d, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.jr + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
+  return { d, interns, basePts, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.jr + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
 }
 function teamOf(lead) { return peopleList().filter(p => p.team === lead.team && p.id !== lead.id && !isLead(p) && !isSupport(p) && inReview(p)); }
 function teamBlock(lead) {
@@ -377,7 +381,7 @@ function promotion(E) {
   const strongB = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) >= 4);
   crit.push({ ok: strongB.length >= 3, label: 'Three or more behaviours rated 4+ by the TA Head', fact: strongB.length ? strongB.join(', ') : 'None rated 4 or above yet' });
   const yrs = yearsSince(p.since);
-  crit.push({ ok: yrs != null && yrs >= 2, label: 'Two or more years in current role', fact: yrs == null ? 'Date in current role not recorded' : `${fmt(yrs)} years in ${p.level || 'current level'} (since ${nice(p.since)})` });
+  crit.push({ ok: yrs != null && yrs >= 3, label: 'Three or more years in current role', fact: yrs == null ? 'Date in current role not recorded' : `${fmt(yrs)} years in ${p.level || 'current level'} (since ${nice(p.since)})` });
   const lead = num((E.beh['Collaboration & Leadership'] || {}).head) >= 4 || E.projs.some(x => num(x.stage) >= 3 && projectScore(x) != null);
   crit.push({ ok: lead, label: 'Leadership evidence', fact: 'Collaboration & Leadership rated 4+, or a scored project validated to Improve or Control' });
   const met = crit.filter(c => c.ok).length, known = [r.y2025, r.y2024, r.y2023].filter(Boolean).length;
@@ -476,7 +480,7 @@ function mixChart(list) {
     const y = top + i * rowH; let cx = L; const segs = g.filter(G => G.pts > 0);
     s += `<g><text class="nm" x="${L - 12}" y="${y + 17}" text-anchor="end">${esc(E.p.name)}</text>`;
     segs.forEach((G, j) => { const w = x(G.pts), last = j === segs.length - 1, ww = Math.max(1, w - (last ? 0 : 2)); s += `<rect x="${cx}" y="${y + 6}" width="${ww}" height="16" rx="${last ? 3 : 0}" fill="var(--${G.c})" data-tip="${esc(`<b>${esc(E.p.name)}</b> · ${esc(G.label)}` + tipRows([['Offers', G.n], ['Points', fmt(G.pts)], ['Share', pct(G.pts / tot * 100)]]))}" data-person="${esc(E.p.id)}" style="cursor:pointer"/>`; cx += w; });
-    s += `<text class="vl" x="${cx + 7}" y="${y + 19}">${fmt(tot)}</text></g>`;
+    s += `<text class="vl" x="${cx + 7}" y="${y + 19}">${fmt(E.own.points)}${E.own.interns && internPts() ? ` <tspan class="mu">incl. ${fmt(E.own.interns * internPts())} for ${E.own.interns} interns</tspan>` : ''}</text></g>`;
   });
   return s + '</svg>';
 }
@@ -574,6 +578,7 @@ function pDelivery(E) {
     <div class="card fig"><div class="l">Points per offer</div><div class="v">${tr.offers ? fmt(o.points / tr.offers, 2) : '—'}</div><div class="f">the target assumes ${o.ppo}</div></div></div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Key measures</h3></div><div class="tw"><table><tbody>
     <tr><td>Offers released (trackers)</td><td class="n">${fmt(tr.offers, 0)}</td><td class="sub">${fmt(tr.joined, 0)} joined · ${fmt(tr.declined, 0)} declined · ${fmt(tr.pending, 0)} pending</td></tr>
+    ${o.interns ? `<tr><td>Intern offers</td><td class="n">${o.interns}</td><td class="sub">${fmt(o.interns * internPts())} points at ${fmt(internPts())} each (tracker points ${fmt(o.basePts)})</td></tr>` : ''}
     <tr><td>Offers (scorecard)</td><td class="n">${fmt(o.offers, 0)}</td><td class="sub">${fmt(o.joiners, 0)} joiners</td></tr>
     <tr><td>Joining ratio</td><td class="n">${pct(o.jr)}</td><td class="sub">scorecard joiners ÷ offers</td></tr>
     <tr><td>Requisition to offer</td><td class="n">${fmt(o.offerDays, 0)} days</td><td class="sub">${ctLabel(o.offerDays)}</td></tr>
@@ -583,7 +588,7 @@ function pDelivery(E) {
     <tr><td>Referral share</td><td class="n">${pct(num(d.referralPct))}</td><td></td></tr>
     <tr><td>Women hires</td><td class="n">${pct(num(d.diversityPct))}</td><td class="sub">${tr.pointsBonus != null ? fmt(tr.pointsBonus) + ' bonus points' : ''}</td></tr></tbody></table></div>
     <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0 0">${esc(d.source || '')}</p></div>
-    <div class="card pad"><div class="sec-h"><h3>Points by offer category</h3></div><div class="tw"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Share</th></tr></thead><tbody>${(d.mix || []).map(([c, n, pts]) => `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(pts)}</td><td class="n">${o.points ? pct(pts / o.points * 100) : '—'}</td></tr>`).join('')}<tr><td><b>Total</b></td><td class="n"><b>${fmt(tr.offers, 0)}</b></td><td class="n"><b>${fmt(o.points)}</b></td><td></td></tr></tbody></table></div>
+    <div class="card pad"><div class="sec-h"><h3>Points by offer category</h3></div><div class="tw"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Share</th></tr></thead><tbody>${(d.mix || []).map(([c, n, pts]) => { if (isIntern(c)) { c = `Internships (${fmt(internPts())} each)`; pts = n * internPts(); } return `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(pts)}</td><td class="n">${o.points ? pct(pts / o.points * 100) : '—'}</td></tr>`; }).join('')}<tr><td><b>Total</b></td><td class="n"><b>${fmt(tr.offers, 0)}</b></td><td class="n"><b>${fmt(o.points)}</b></td><td></td></tr></tbody></table></div>
     ${tr.pointsExclDeclined != null ? `<p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0 0">Without declined offers: ${fmt(tr.pointsExclDeclined)} points. ${esc(tr.note || '')}</p>` : ''}
     ${Object.keys(st).length ? `<h4 style="font-size:13px;margin:14px 0 6px">Offers by stream (scorecard)</h4><div class="tw"><table><tbody>${[['core', 'Core and campus'], ['nats', 'NATS'], ['excelher', 'ExcelHER'], ['other', 'Other programmes']].filter(([k]) => st[k] != null).map(([k, t]) => `<tr><td>${t}</td><td class="n">${st[k]}</td></tr>`).join('')}</tbody></table></div>` : ''}</div></div>`;
   if (E.team) {
@@ -621,18 +626,24 @@ function pScores(E) {
 function pBehaviours(E) {
   const b = E.beh, rated = COMPETENCIES.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null);
   let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">eight core competencies · 1–5 · self and TA Head · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editBehaviours" data-id="${esc(E.p.id)}" type="button">Rate behaviours</button>` : ''}</div>`;
-  if (!rated.length) return h + `<div class="empty-note">No behaviour ratings yet. ${canWrite ? 'Use <b>Rate behaviours</b> to record the self-rating and your rating for each competency, with evidence.' : ''}</div>`;
+  if (!rated.length) return h + scaleCard() + `<div class="empty-note sec">No behaviour ratings yet. ${canWrite ? 'Use <b>Rate behaviours</b> to record the self-rating and your rating for each competency, with evidence.' : ''}</div>`;
   h += `<div class="card pad"><div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>TA Head</span><span><i style="border:2px solid var(--ink-2);border-radius:50%;background:transparent"></i>Self</span></div><div class="beh"><div></div>${[1, 2, 3, 4, 5].map(n => `<div class="hdr">${n}</div>`).join('')}<div class="hdr" style="text-align:left;padding-left:8px">Evidence</div>`;
   for (const c of COMPETENCIES) {
     const x = b[c] || {}, hd = num(x.head), sf = num(x.self);
     h += `<div>${esc(c)}${hd != null && sf != null && Math.abs(sf - hd) > 1 ? ' <span class="tag">gap ' + (sf - hd > 0 ? '+' : '') + (sf - hd) + '</span>' : ''}</div>`;
-    for (let n = 1; n <= 5; n++) h += `<div class="cell">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
+    for (let n = 1; n <= 5; n++) h += `<div class="cell" title="${esc(n + ': ' + (scaleText(c, n) || 'no description yet'))}">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
     h += `<div class="ev">${esc(x.evidence || '')}</div>`;
   }
   h += `</div></div>`;
   const big = COMPETENCIES.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
+  h += scaleCard();
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
   return h;
+}
+function scaleCard() {
+  const g = (S.settings.behaviourScale || {}).general || {};
+  const any = [1, 2, 3, 4, 5].some(n => g[n]);
+  return `<div class="card pad sec"><div class="sec-h"><h3>Rating scale</h3><span class="hint">hover a rating cell to see the description for that competency</span><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit scale</button>' : ''}</div>${any ? `<dl class="kv">${[5, 4, 3, 2, 1].map(n => `<dt>${n}</dt><dd>${esc(g[n] || '—')}</dd>`).join('')}</dl>` : '<div class="sub" style="color:var(--muted);font-size:13px">No descriptions yet. Use <b>Edit scale</b> to describe what each rating means, for all competencies or for one.</div>'}</div>`;
 }
 function itemActions(kind, id) { return canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-${kind}" data-id="${esc(id)}" type="button">Edit</button><button class="btn sm danger" data-act="del-${kind}" data-id="${esc(id)}" type="button">Delete</button></span>` : ''; }
 function pDevelopment(E) {
@@ -694,6 +705,9 @@ function viewManage() {
   const ppl = peopleList().sort((a, b) => (inReview(b) - inReview(a)) || (a.team || '').localeCompare(b.team || '') || a.name.localeCompare(b.name));
   let h = `<div class="phead"><div><h2>People and teams</h2><div class="meta"><span>Add, edit or remove people, and keep teams up to date</span></div></div><div class="sp"></div>${canWrite ? '<div class="btns"><button class="btn" data-act="addTeam" type="button">Add team</button><button class="btn pri" data-act="addPerson" type="button">Add person</button></div>' : ''}</div>`;
   h += `<div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Level</th><th>Joined</th><th>In review</th><th class="n">Annual offer target</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><b class="click" data-person="${esc(p.id)}" style="cursor:pointer">${esc(p.name)}</b>${p.vcnid ? `<div class="sub mono">${esc(p.vcnid)}</div>` : ''}</td><td>${esc(p.role || '')}</td><td>${esc(p.team || '—')}</td><td class="mono">${esc(p.level || '—')}</td><td>${nice(p.joined)}</td><td>${inReview(p) ? 'Yes' : `<span class="sub">No${p.status === 'Left' ? ' (left)' : ''}</span>`}</td><td class="n">${S.delivery[p.id] ? fmt(num(S.delivery[p.id].target), 0) : '—'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button> <button class="btn sm danger" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
+  const sc = S.settings.behaviourScale || {};
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Promotion: time in role</dt><dd>3 years or more</dd></dl></div>
+    <div class="card pad"><div class="sec-h"><h3>Behaviour rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Competency</th><th>Own descriptions</th><th></th></tr></thead><tbody>${COMPETENCIES.map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editScale" data-id="${i}" type="button">Edit</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
   const teams = Object.entries(S.teams).sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99));
   h += `<div class="card pad sec"><div class="sec-h"><h3>Teams</h3></div><div class="tw"><table><thead><tr><th>Team</th><th>Business areas</th><th class="n">People</th><th></th></tr></thead><tbody>${teams.map(([k, t]) => `<tr><td><b>${esc(t.name)}</b></td><td>${esc((t.areas || []).join(', '))}</td><td class="n">${ppl.filter(p => p.team === t.name && inReview(p)).length}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editTeam" data-id="${esc(k)}" type="button">Edit</button> <button class="btn sm danger" data-act="delTeam" data-id="${esc(k)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   return h;
@@ -803,7 +817,7 @@ function deliveryForm(id) {
     fields: [
       { section: 'Target' }, { k: 'target', label: 'Annual offer target', type: 'number', min: 0 }, { k: 'ppo', label: 'Points per offer', type: 'number', min: 0, step: .1 },
       { k: 'ptAnnual', label: 'Personal points target', hint: '(optional, replaces target × points)', type: 'number', min: 0 }, { k: 'prorPct', label: 'Share of year elapsed (%)', type: 'number', min: 0, max: 100, step: .1 },
-      { section: 'Hiring trackers' }, { k: 'points', label: 'Weighted points', type: 'number', min: 0, step: .5 }, { k: 'tOffers', label: 'Offers released', type: 'number', min: 0 },
+      { section: 'Hiring trackers' }, { k: 'points', label: 'Weighted points', hint: '(before intern points)', type: 'number', min: 0, step: .5 }, { k: 'tOffers', label: 'Offers released', type: 'number', min: 0 },
       { k: 'tJoined', label: 'Joined', type: 'number', min: 0 }, { k: 'tDeclined', label: 'Declined', type: 'number', min: 0 }, { k: 'tPending', label: 'Pending joining', type: 'number', min: 0 },
       { section: 'Recruiter scorecard' }, { k: 'offers', label: 'Offers (scorecard)', type: 'number', min: 0 }, { k: 'joiners', label: 'Joiners (scorecard)', type: 'number', min: 0 },
       { k: 'offerDays', label: 'Requisition-to-offer days', type: 'number', min: 0 }, { k: 'joinDays', label: 'Days to join', type: 'number', min: 0 },
@@ -836,7 +850,7 @@ function promoForm(id) {
 }
 function behavioursForm(id) {
   const cur = (S.behaviours[id] || {}).ratings || {}, vals = {}, fields = [];
-  COMPETENCIES.forEach((c, i) => { fields.push({ section: c }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Evidence', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; });
+  COMPETENCIES.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Evidence', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; });
   openForm({ title: `Behaviours: ${S.people[id].name}`, intro: 'Rate each competency from 1 to 5. Behaviours guide the conversation and are not scored.', values: vals, fields, save: async v => {
     const ratings = {}; COMPETENCIES.forEach((c, i) => { ratings[c] = { head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i] }; });
     return write('behaviours/' + id, { ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}`);
@@ -873,6 +887,24 @@ function projectForm(owner, pid) {
     const doc = { ...x, title: v.title, problem: v.problem, status: v.status, stage: v.stageName ? DMAIC.indexOf(v.stageName) : -1, metric: v.metric, planEnd: v.planEnd, baseline: v.baseline, target: v.target, actual: v.actual, reported: v.reported, contributing: v.contributing, scores: { discipline: v.discipline, impact: v.impact, control: v.control, learning: v.learning }, owner: x.owner };
     return write('projects/' + (pid || uid('PR')), doc, `${pid ? 'Edited' : 'Added'} project for ${S.people[x.owner]?.name}: ${v.title}`);
   } });
+}
+/* ---- settings ---- */
+function scaleForm(ci) {
+  const cur = S.settings.behaviourScale || {}, comp = ci != null && ci !== '' ? COMPETENCIES[Number(ci)] : null;
+  const vals = comp ? ((cur.byComp || {})[comp] || {}) : (cur.general || {});
+  openForm({ title: comp ? `Rating scale: ${comp}` : 'General rating scale', intro: comp ? 'Leave a level blank to use the general description.' : 'Applies to every competency unless it has its own description.',
+    values: Object.fromEntries([1, 2, 3, 4, 5].map(n => ['l' + n, vals[n]])), fields: [5, 4, 3, 2, 1].map(n => ({ k: 'l' + n, label: `${n}`, type: 'textarea', full: true })),
+    save: async v => {
+      const lv = Object.fromEntries([1, 2, 3, 4, 5].map(n => [n, v['l' + n] || null]));
+      const doc = { general: cur.general || {}, byComp: { ...(cur.byComp || {}) } };
+      if (comp) doc.byComp[comp] = lv; else doc.general = lv;
+      return write('settings/behaviourScale', doc, `Updated the behaviour rating scale${comp ? ' for ' + comp : ''}`);
+    } });
+}
+function scoringForm() {
+  const cur = S.settings.scoring || {};
+  openForm({ title: 'Scoring settings', values: { internPts: cur.internPts ?? 0 }, fields: [{ k: 'internPts', label: 'Points per intern offer', type: 'number', step: .5, min: -5, max: 5, full: true }],
+    save: async v => write('settings/scoring', { ...cur, internPts: v.internPts ?? 0 }, `Set points per intern offer to ${v.internPts ?? 0}`) });
 }
 /* ---- teams ---- */
 function teamForm(tid) {
@@ -915,6 +947,7 @@ document.addEventListener('click', e => {
       'add-plan': () => planForm(id), 'edit-plan': () => planForm(curP, id), 'del-plan': () => confirmBox('Delete this plan item?', esc(S.plans[id]?.action || ''), 'Delete', () => remove('plans/' + id, `Deleted plan item for ${S.people[S.plans[id]?.emp]?.name}`)),
       'add-learn': () => learnForm(id), 'edit-learn': () => learnForm(curP, id), 'del-learn': () => confirmBox('Delete this training record?', esc(S.learning[id]?.programme || ''), 'Delete', () => remove('learning/' + id, `Deleted training ${S.learning[id]?.programme}`)),
       'add-project': () => projectForm(id), 'edit-project': () => projectForm(curP, id), 'del-project': () => confirmBox('Delete this project?', esc(S.projects[id]?.title || ''), 'Delete', () => remove('projects/' + id, `Deleted project ${S.projects[id]?.title}`)),
+      editScale: () => scaleForm(id), editScoring: () => scoringForm(),
       addTeam: () => teamForm(null), editTeam: () => teamForm(id), delTeam: () => { const n = S.teams[id]?.name, c = peopleList().filter(p => p.team === n).length; confirmBox(`Delete team ${n}?`, c ? `${c} people are in this team. They'll show under "No team yet" until you move them.` : 'Nobody is in this team.', 'Delete', () => remove('teams/' + id, `Deleted team ${n}`)); },
       export: exportSheet }[a] || (() => { }))();
     return;
