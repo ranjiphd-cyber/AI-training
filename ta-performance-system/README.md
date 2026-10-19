@@ -75,3 +75,13 @@ Team Leads are scored on team goal achievement, their own delivery against 50% o
 - **Provisional scores.** Several scoring rules conflict or are undefined in the BRD, for example the hiring-point tables, the vendor denominator and the joining-ratio bands. Each one is configurable in **Rules & Settings** and marked *Pending*. Scores that depend on them are labelled *Provisional* until you record a decision.
 - Reports cover the review period to the data cut-off (16 Oct 2026 in this version).
 - Excel downloads are real `.xlsx` workbooks when the computer is online. Offline, the dashboard falls back to the Excel 2003 XML format (`.xls`); Excel may warn that the format and extension don't match. Choose *Yes* to open it.
+
+## Annual review dashboard
+
+`review/annual_review_template.html` is a standalone annual-review page for the TA Head. It has a scorecard with Projects, Competency and rating inputs, delivery charts, team and support views, a per-person review panel with printing, and a CSV export. Build it from data exported from the TA Head workspace:
+
+```
+python3 tools/build_annual_review.py review_data.json TA_Annual_Review_2026.html
+```
+
+The built file contains everyone's review data and confidential promotion notes. Keep it private to the TA Head and never commit it. Inputs entered in the page are saved in that browser only; use **Download review sheet** to keep them.

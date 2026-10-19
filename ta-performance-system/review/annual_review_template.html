@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annual Performance Review</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f4f6f7; --surface: #ffffff; --surface-2: #eef3f5; --ink: #18232c; --ink-2: #4a5661; --muted: #7d8891;
+  --line: #dfe5e8; --line-2: #c9d2d7; --brand: #18324a; --brand-2: #397a86; --brand-ink: #ffffff; --focus: #2a78d6;
+  --bar: #397a86; --bar-soft: #cfe1e4; --ref: #18324a;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #6250d6;
+  --good: #0ca30c; --good-ink: #006300; --warn: #fab219; --warn-ink: #8a5a00; --bad: #d03b3b; --bad-ink: #b02a2a;
+  --r1: #86b6ef; --r2: #5598e7; --r3: #2a78d6; --r4: #1c5cab; --r5: #104281;
+  --rt1: #0d2a4d; --rt2: #0d2a4d; --rt3: #fff; --rt4: #fff; --rt5: #fff;
+  --shadow: 0 1px 2px rgba(16, 30, 40, .06), 0 2px 8px rgba(16, 30, 40, .05);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #0f1418; --surface: #182027; --surface-2: #1f2a33; --ink: #edf1f3; --ink-2: #b7c2c9; --muted: #85929b;
+    --line: #2a3640; --line-2: #36444f; --brand: #0d1f2e; --brand-2: #5aa3b0; --focus: #3987e5;
+    --bar: #5aa3b0; --bar-soft: #24414a; --ref: #edf1f3;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #9085e9;
+    --good-ink: #3ccf3c; --warn-ink: #fab219; --bad-ink: #ff7a7a;
+    --r1: #184f95; --r2: #1c5cab; --r3: #2a78d6; --r4: #5598e7; --r5: #9ec5f4;
+    --rt1: #fff; --rt2: #fff; --rt3: #fff; --rt4: #0d1f2e; --rt5: #0d1f2e;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0f1418; --surface: #182027; --surface-2: #1f2a33; --ink: #edf1f3; --ink-2: #b7c2c9; --muted: #85929b;
+  --line: #2a3640; --line-2: #36444f; --brand: #0d1f2e; --brand-2: #5aa3b0; --focus: #3987e5;
+  --bar: #5aa3b0; --bar-soft: #24414a; --ref: #edf1f3;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #9085e9;
+  --good-ink: #3ccf3c; --warn-ink: #fab219; --bad-ink: #ff7a7a;
+  --r1: #184f95; --r2: #1c5cab; --r3: #2a78d6; --r4: #5598e7; --r5: #9ec5f4;
+  --rt1: #fff; --rt2: #fff; --rt3: #fff; --rt4: #0d1f2e; --rt5: #0d1f2e;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 108px; }
+body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; }
+.num, td.n, th.n { font-variant-numeric: tabular-nums; }
+
+/* top bar */
+.top { position: sticky; top: 0; z-index: 30; background: var(--brand); color: var(--brand-ink); }
+.top-in { max-width: 1320px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.top h1 { font-size: 17px; margin: 0; font-weight: 650; letter-spacing: .1px; }
+.top .sub { font-size: 12.5px; opacity: .78; }
+.top .spacer { flex: 1; }
+.conf { font-size: 11.5px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; padding: 3px 8px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; }
+.tbtn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); color: #fff; border-radius: 6px; padding: 6px 11px; cursor: pointer; font-size: 13px; }
+.tbtn:hover { background: rgba(255,255,255,.18); }
+.nav { background: var(--surface); border-bottom: 1px solid var(--line); position: sticky; top: 52px; z-index: 29; }
+.nav-in { max-width: 1320px; margin: 0 auto; padding: 0 24px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.nav a { text-decoration: none; padding: 11px 12px; font-size: 13.5px; color: var(--ink-2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.nav a:hover { color: var(--ink); }
+.nav a.on { color: var(--ink); border-bottom-color: var(--brand-2); font-weight: 600; }
+
+main { max-width: 1320px; margin: 0 auto; padding: 20px 24px 64px; }
+section.blk { margin-top: 28px; }
+.blk > h2 { font-size: 18px; margin: 0 0 4px; font-weight: 650; }
+.blk > .lede { margin: 0 0 14px; color: var(--ink-2); max-width: 880px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.pad { padding: 16px 18px; }
+.grid { display: grid; gap: 14px; }
+.g5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.g2 { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); }
+@media (max-width: 1080px) { .g5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .g2 { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .g5, .g3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .g5, .g3 { grid-template-columns: 1fr; } main { padding: 14px 16px 48px; } .top-in, .nav-in { padding-left: 16px; padding-right: 16px; } }
+
+/* stat tiles */
+.tile { padding: 14px 16px; }
+.tile .lab { font-size: 12.5px; color: var(--ink-2); }
+.tile .val { font-size: 28px; font-weight: 650; margin-top: 4px; letter-spacing: -.3px; }
+.tile .val small { font-size: 14px; font-weight: 500; color: var(--ink-2); margin-left: 3px; }
+.tile .foot { font-size: 12px; color: var(--muted); margin-top: 6px; }
+.meter { height: 6px; border-radius: 3px; background: var(--bar-soft); margin-top: 10px; position: relative; overflow: hidden; }
+.meter i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--bar); }
+
+/* status */
+.st { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.st svg { width: 13px; height: 13px; flex: none; }
+.st.good { color: var(--good-ink); } .st.watch { color: var(--warn-ink); } .st.below { color: var(--bad-ink); } .st.none { color: var(--muted); font-weight: 500; }
+
+/* chart cards */
+.ch-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 14px 18px 0; }
+.ch-head h3 { margin: 0; font-size: 15px; font-weight: 650; }
+.ch-head .hint { color: var(--muted); font-size: 12.5px; }
+.ch-head .sp { flex: 1; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink-2); }
+.seg button.on { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 18px 0; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.chart { padding: 8px 18px 16px; }
+svg.viz { display: block; width: 100%; height: auto; overflow: visible; }
+svg.viz text { fill: var(--ink-2); font-size: 12px; }
+svg.viz .name { fill: var(--ink); font-size: 12.5px; font-weight: 550; }
+svg.viz .muted { fill: var(--muted); font-size: 11px; }
+svg.viz .val { fill: var(--ink); font-size: 12px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+svg.viz .grid { stroke: var(--line); stroke-width: 1; }
+svg.viz .ref { stroke: var(--ref); stroke-width: 1.5; stroke-dasharray: 4 3; }
+svg.viz .hit { fill: transparent; cursor: pointer; }
+svg.viz .row:hover .hl { fill: var(--surface-2); }
+svg.viz .row:focus { outline: none; } svg.viz .row:focus-visible .hl { stroke: var(--focus); stroke-width: 2; }
+.tip { position: fixed; z-index: 60; pointer-events: none; background: var(--surface); color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 6px 24px rgba(0,0,0,.16); max-width: 280px; opacity: 0; transition: opacity .08s; }
+.tip b { font-weight: 650; } .tip .r { display: flex; justify-content: space-between; gap: 14px; } .tip .k { color: var(--ink-2); }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font-weight: 600; color: var(--ink-2); font-size: 12px; padding: 9px 10px; border-bottom: 1px solid var(--line-2); white-space: nowrap; background: var(--surface); position: sticky; top: 0; }
+th.sortable { cursor: pointer; user-select: none; } th.sortable:hover { color: var(--ink); }
+th .ar { opacity: .5; font-size: 10px; margin-left: 3px; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr.pr { cursor: pointer; } tr.pr:hover td { background: var(--surface-2); }
+td.n, th.n { text-align: right; }
+.who { min-width: 168px; } .who b { font-weight: 600; white-space: nowrap; } .who div { font-size: 11.5px; color: var(--muted); }
+.sc { display: inline-block; min-width: 40px; text-align: right; }
+.sc small { color: var(--muted); }
+.pending { color: var(--muted); font-style: italic; font-size: 12px; white-space: nowrap; }
+.inp { width: 58px; padding: 4px 6px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--surface); text-align: right; }
+.inp:focus, select:focus, textarea:focus, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+select.rsel { padding: 4px 6px; border: 1px solid var(--line-2); border-radius: 5px; background: var(--surface); max-width: 128px; }
+.rt { display: inline-flex; gap: 3px; }
+.rt span { display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 20px; padding: 0 4px; border-radius: 4px; font-size: 11px; font-weight: 650; color: var(--rt-ink, #fff); }
+.rt span.na { background: transparent; color: var(--muted); border: 1px dashed var(--line-2); font-weight: 500; }
+.total { font-size: 15px; font-weight: 650; }
+.ready { display: flex; gap: 3px; } .ready i { width: 14px; height: 6px; border-radius: 2px; background: var(--line-2); } .ready i.on { background: var(--brand-2); }
+
+/* team cards */
+.team h3 { margin: 0; font-size: 15px; }
+.team .lead { font-size: 12.5px; color: var(--ink-2); margin-top: 2px; }
+.team .big { font-size: 26px; font-weight: 650; margin-top: 10px; }
+.team .row2 { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-2); margin-top: 8px; gap: 8px; }
+.team ul { list-style: none; margin: 12px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.team li { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; gap: 8px; cursor: pointer; }
+.team li:hover { color: var(--brand-2); }
+
+/* person cards grid */
+.people { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.pc { padding: 14px 16px; cursor: pointer; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); width: 100%; }
+.pc:hover { border-color: var(--brand-2); }
+.pc .nm { font-weight: 650; font-size: 14.5px; } .pc .rl { font-size: 12px; color: var(--muted); }
+.pc .pv { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; }
+.pc .pv b { font-size: 20px; }
+
+/* drawer */
+.scrim { position: fixed; inset: 0; background: rgba(8, 16, 22, .42); z-index: 40; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(760px, 100%); background: var(--page); z-index: 41; transform: translateX(102%); transition: transform .18s ease-out; display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0,0,0,.18); }
+.drawer.on { transform: none; }
+.dh { background: var(--brand); color: #fff; padding: 16px 20px; display: flex; gap: 12px; align-items: flex-start; }
+.dh h2 { margin: 0; font-size: 19px; } .dh .meta { font-size: 12.5px; opacity: .82; margin-top: 3px; }
+.dh .sp { flex: 1; }
+.db { overflow-y: auto; padding: 16px 20px 40px; flex: 1; }
+.db h3 { font-size: 14px; margin: 20px 0 8px; font-weight: 650; }
+.db h3:first-child { margin-top: 0; }
+.kv { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 620px) { .kv { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kv .card { padding: 10px 12px; } .kv .lab { font-size: 11.5px; color: var(--ink-2); } .kv .v { font-size: 19px; font-weight: 650; margin-top: 2px; } .kv .f { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.comp { display: grid; grid-template-columns: 150px 1fr 70px; gap: 6px 12px; align-items: center; font-size: 13px; }
+.comp .bar { height: 10px; border-radius: 5px; background: var(--bar-soft); position: relative; overflow: hidden; }
+.comp .bar i { position: absolute; inset: 0 auto 0 0; background: var(--bar); border-radius: 5px; }
+.comp .bar.empty { background: repeating-linear-gradient(135deg, var(--line) 0 4px, transparent 4px 8px); }
+.comp .s { text-align: right; font-variant-numeric: tabular-nums; }
+.list { margin: 0; padding: 0; list-style: none; }
+.list li { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); margin-bottom: 8px; }
+.list .t { font-weight: 600; } .list .d { font-size: 12.5px; color: var(--ink-2); margin-top: 3px; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 10px; background: var(--surface-2); color: var(--ink-2); margin-left: 6px; vertical-align: 1px; }
+.crit { display: grid; grid-template-columns: 20px 1fr; gap: 4px 8px; font-size: 13px; }
+.crit .ok { color: var(--good-ink); font-weight: 700; } .crit .no { color: var(--muted); font-weight: 700; }
+.crit .f { grid-column: 2; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.note { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 12.5px; color: var(--ink-2); }
+.note.warn { border-left: 3px solid var(--warn); }
+.confbox { border: 1px dashed var(--line-2); border-radius: 10px; padding: 12px 14px; background: var(--surface); }
+.confbox .hd { font-size: 11.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--bad-ink); margin-bottom: 8px; }
+.form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 620px) { .form { grid-template-columns: 1fr; } }
+.form label { font-size: 12px; color: var(--ink-2); display: block; }
+.form input, .form select { width: 100%; margin-top: 4px; padding: 6px 8px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); }
+textarea.cm { width: 100%; min-height: 72px; margin-top: 6px; padding: 8px 10px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); resize: vertical; }
+.btn { border: 1px solid var(--line-2); background: var(--surface); padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.btn:hover { border-color: var(--brand-2); }
+.btn.pri { background: var(--brand-2); border-color: var(--brand-2); color: #fff; }
+.small { font-size: 12px; color: var(--muted); }
+.method { columns: 2 360px; column-gap: 28px; font-size: 13px; color: var(--ink-2); }
+.method p { margin: 0 0 10px; break-inside: avoid; } .method b { color: var(--ink); }
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.toolbar .sp { flex: 1; }
+.hidden { display: none !important; }
+
+@media print {
+  :root { color-scheme: light; }
+  body { background: #fff; }
+  .top, .nav, .tbtn, .seg, .toolbar, .btn, .scrim { display: none !important; }
+  .card, .pc, .list li { box-shadow: none; break-inside: avoid; }
+  body.print-person > *:not(.drawer):not(.tip) { display: none !important; }
+  body.print-person .drawer { position: static; transform: none; width: 100%; box-shadow: none; background: #fff; }
+  body.print-person .dh { background: #fff; color: #000; border-bottom: 2px solid #18324a; }
+  body.print-person .db { overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <div><h1>Annual Performance Review <span id="yr"></span></h1><div class="sub" id="topsub"></div></div>
+  <span class="conf">Confidential · TA Head only</span>
+  <div class="spacer"></div>
+  <button class="tbtn" id="csvBtn" title="Download the review sheet as CSV (opens in Excel)">Download review sheet</button>
+  <button class="tbtn" id="printBtn">Print</button>
+  <button class="tbtn" id="themeBtn" aria-label="Switch light or dark theme">Theme</button>
+</div></header>
+<nav class="nav" aria-label="Sections"><div class="nav-in">
+  <a href="#overview">Overview</a><a href="#scorecard">Scorecard</a><a href="#delivery">Delivery</a><a href="#teams">Teams</a><a href="#support">Support roles</a><a href="#method">How scores work</a>
+</div></nav>
+
+<main>
+  <section class="blk" id="overview" style="margin-top:4px">
+    <div class="grid g5" id="tiles"></div>
+    <div class="note warn" id="readinessNote" style="margin-top:14px"></div>
+  </section>
+
+  <section class="blk" id="scorecard">
+    <h2>Review scorecard</h2>
+    <p class="lede">Business Deliverables (70) are calculated from the hiring trackers. Enter Projects (15), Competency Development (15) and the 2026 rating as you complete each review; totals update straight away. Click a name for the full review.</p>
+    <div class="card">
+      <div class="tbl-wrap"><table id="scTable"></table></div>
+    </div>
+  </section>
+
+  <section class="blk" id="delivery">
+    <h2>Delivery</h2>
+    <p class="lede">Weighted points against each person's points target (offer target × 2), pro-rated to the data date. Team Leads carry half a recruiter's offer target.</p>
+    <div class="grid g2">
+      <div class="card">
+        <div class="ch-head"><h3>Points target attainment</h3><span class="hint">dashed line = 100% of pro-rated target</span><span class="sp"></span>
+          <div class="seg" role="group" aria-label="Attainment view"><button class="on" data-v="chart">Chart</button><button data-v="table">Table</button></div></div>
+        <div class="chart" id="attChart"></div>
+      </div>
+      <div class="card">
+        <div class="ch-head"><h3>Where the points came from</h3><span class="hint">weighted points by offer category</span><span class="sp"></span>
+          <div class="seg" role="group" aria-label="Mix view"><button class="on" data-v="chart">Chart</button><button data-v="table">Table</button></div></div>
+        <div class="legend" id="mixLegend"></div>
+        <div class="chart" id="mixChart"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <div class="ch-head"><h3>Quality of delivery</h3><span class="hint">from the recruiter scorecards; campus excluded from cycle time, declines and vendor</span></div>
+      <div class="chart"><div class="tbl-wrap"><table id="qTable"></table></div></div>
+    </div>
+  </section>
+
+  <section class="blk" id="teams">
+    <h2>Teams</h2>
+    <p class="lede">Team Lead deliverables = 35 for the team goal (members' combined points, lead excluded) + 35 for their own delivery.</p>
+    <div class="grid g3" id="teamCards"></div>
+  </section>
+
+  <section class="blk" id="support">
+    <h2>Support and operations roles</h2>
+    <p class="lede">No hiring deliverables. These reviews rest on Projects and Competency Development, shown out of 30.</p>
+    <div class="card"><div class="tbl-wrap"><table id="supTable"></table></div></div>
+  </section>
+
+  <section class="blk" id="method">
+    <h2>How scores work</h2>
+    <div class="card pad"><div class="method" id="methodText"></div></div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+  <div class="dh"><div><h2 id="dTitle"></h2><div class="meta" id="dMeta"></div></div><div class="sp"></div>
+    <button class="tbtn" id="dPrint">Print review</button><button class="tbtn" id="dClose" aria-label="Close">✕</button></div>
+  <div class="db" id="dBody"></div>
+</aside>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const r1 = x => x == null || isNaN(x) ? null : Math.round(x * 10) / 10;
+const fmt = (x, d = 1) => x == null || isNaN(x) ? '—' : (Math.round(x * 10 ** d) / 10 ** d).toLocaleString('en-IN');
+const pct = x => x == null || isNaN(x) ? '—' : Math.round(x) + '%';
+const sum = a => a.reduce((s, x) => s + (x || 0), 0);
+const nice = s => { if (!s) return '—'; const d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }); };
+const P = DATA.period, YEAR = P.year;
+const RATINGS = ['Exceptional', 'High', 'Good', 'Adequate', 'Low'];
+const RVAL = { Exceptional: 5, High: 4, Good: 3, Adequate: 2, Low: 1 };
+const RSHORT = { Exceptional: 'Ex', High: 'Hi', Good: 'Gd', Adequate: 'Ad', Low: 'Lo' };
+
+const people = DATA.people.filter(p => p.inReview);
+const delivery = people.filter(p => p.template !== 'support');
+const support = people.filter(p => p.template === 'support');
+const former = DATA.people.filter(p => !p.inReview);
+const shortTeam = p => ({ 'University Relations & Early Careers': 'UR & Early Careers', 'VCE + Leadership Hiring': 'VCE + Leadership' }[p.teamName] || p.teamName);
+const byId = Object.fromEntries(DATA.people.map(p => [p.id, p]));
+
+/* ---------- saved review inputs (this browser only) ---------- */
+const STORE = 'ta-annual-review-' + YEAR;
+let inputs = {};
+try { inputs = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { inputs = {}; }
+const saveInputs = () => { try { localStorage.setItem(STORE, JSON.stringify(inputs)); } catch (e) { /* storage blocked: inputs last for this session only */ } };
+const inp = id => inputs[id] || (inputs[id] = {});
+
+/* ---------- scoring ---------- */
+function att(b) { return b && b.pointsFormal != null && b.pointsTargetFormal ? b.pointsFormal / b.pointsTargetFormal : null; }
+function status(a) { return a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below'; }
+const ST_LABEL = { good: 'On target', watch: 'Close', below: 'Below target', none: 'No target' };
+const ICON = {
+  good: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.6 8.2l2.2 2.2 4.6-4.8" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  watch: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.6M8 11.6v.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  below: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="3" fill="currentColor"/><path d="M8 4.5v4.5M8 11.2v.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  none: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>'
+};
+const stChip = (s, extra = '') => `<span class="st ${s}">${ICON[s]}${ST_LABEL[s]}${extra}</span>`;
+function clampScore(v, max) { if (v === '' || v == null) return null; const n = Number(v); return isNaN(n) ? null : Math.max(0, Math.min(max, n)); }
+function scores(p) {
+  const i = inputs[p.id] || {};
+  const proj = clampScore(i.proj, 15), comp = clampScore(i.comp, 15);
+  if (p.template === 'support') {
+    const tot = proj != null && comp != null ? proj + comp : null;
+    return { del: null, proj, comp, total: tot, max: 30, partial: (proj || 0) + (comp || 0), done: [proj != null, comp != null, !!i.rating] };
+  }
+  const del = p.deliverables;
+  const tot = del != null && proj != null && comp != null ? r1(del + proj + comp) : null;
+  return { del, proj, comp, total: tot, max: 100, partial: r1((del || 0) + (proj || 0) + (comp || 0)), done: [del != null, proj != null, comp != null, !!i.rating] };
+}
+// ratings array is [last year, two years ago, three years ago]
+const ratingYears = p => [2, 1, 0].map(k => ({ y: YEAR - 1 - k, r: p.ratings[k] }));
+function ratingChips(p) {
+  return `<span class="rt">${ratingYears(p).map(({ y, r }) => r ? `<span style="background:var(--r${RVAL[r]});--rt-ink:var(--rt${RVAL[r]})" title="${y}: ${esc(r)}">${RSHORT[r]}</span>` : `<span class="na" title="${y}: no rating">–</span>`).join('')}</span>`;
+}
+
+/* ---------- category groups for the points mix ---------- */
+const GROUPS = [
+  { k: 'sg5', label: 'Lateral SG5 and above', cats: ['SG9 and above', 'Lateral SG5-SG8'], c: 's1' },
+  { k: 'sg1', label: 'Lateral SG1–SG4', cats: ['Lateral SG1-SG4'], c: 's2' },
+  { k: 'ftc', label: 'FTC (new hire)', cats: ['FTC'], c: 's3' },
+  { k: 'prog', label: 'NATS, ExcelHER, AICTE, PhD', cats: ['NATS Hiring', 'ExcelHER', 'AICTE Professor', 'PhD Internship', 'PMIS'], c: 's4' },
+  { k: 'camp', label: 'Campus (GET / PGET)', cats: ['GET / PGET'], c: 's5' },
+  { k: 'conv', label: 'Conversions', cats: ['Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion', 'NATS Conversion'], c: 's6' },
+];
+function mixOf(p) {
+  const mix = (p.sc && p.sc.tracker && p.sc.tracker.mix) || [];
+  const g = GROUPS.map(G => ({ ...G, n: 0, pts: 0, detail: [] }));
+  let interns = 0;
+  for (const [cat, n, base, bonus] of mix) {
+    const G = g.find(x => x.cats.includes(cat));
+    if (!G) { interns += n; continue; }
+    G.n += n; G.pts += base + bonus; G.detail.push([cat, n, base + bonus]);
+  }
+  return { g, interns, total: sum(g.map(x => x.pts)) };
+}
+
+/* ---------- tooltip ---------- */
+const tip = $('#tip');
+function showTip(ev, html) { tip.innerHTML = html; tip.style.opacity = 1; moveTip(ev); }
+function moveTip(ev) {
+  const r = tip.getBoundingClientRect(); let x = ev.clientX + 14, y = ev.clientY + 14;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - 14;
+  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - 14;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.style.opacity = 0; }
+function bindTips(root) {
+  root.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mouseenter', e => showTip(e, el.dataset.tip));
+    el.addEventListener('mousemove', moveTip);
+    el.addEventListener('mouseleave', hideTip);
+    el.addEventListener('focus', () => { const r = el.getBoundingClientRect(); showTip({ clientX: r.right, clientY: r.top }, el.dataset.tip); });
+    el.addEventListener('blur', hideTip);
+  });
+}
+const tipRows = rows => rows.map(([k, v]) => `<div class="r"><span class="k">${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+
+/* ---------- header and tiles ---------- */
+function renderHeader() {
+  $('#yr').textContent = YEAR;
+  const asOf = delivery.map(p => p.sc && p.sc.asOf).filter(Boolean).sort().pop();
+  $('#topsub').textContent = `India Talent Acquisition · performance year ${P.label} · hiring data to ${nice(P.cutoff)} · scorecards to ${nice(asOf)}`;
+}
+function renderTiles() {
+  const pts = sum(delivery.map(p => p.own.pointsFormal)), tgt = sum(delivery.map(p => p.own.pointsTargetFormal));
+  const offers = sum(delivery.map(p => p.sc && p.sc.tracker ? p.sc.tracker.offers : 0)), joiners = sum(delivery.map(p => p.sc && p.sc.tracker ? p.sc.tracker.joined : 0));
+  const onT = delivery.filter(p => status(att(p.own)) === 'good').length;
+  const w = delivery.filter(p => p.sc && p.sc.offerDays != null && p.sc.offers);
+  const ct = sum(w.map(p => p.sc.offerDays * p.sc.offers)) / sum(w.map(p => p.sc.offers));
+  const all = people.map(p => scores(p)); const steps = sum(all.map(s => s.done.filter(Boolean).length)), stepsMax = sum(all.map(s => s.done.length));
+  const a = pts / tgt;
+  const tiles = [
+    ['Weighted points', `${fmt(pts, 0)}<small>of ${fmt(tgt, 0)}</small>`, `${pct(a * 100)} of pro-rated target`, a],
+    ['Offers released', fmt(offers, 0), `${fmt(joiners, 0)} joined so far (hiring trackers)`, null],
+    ['On or above target', `${onT}<small>of ${delivery.length}</small>`, 'recruiters and team leads', onT / delivery.length],
+    ['Average offer days', fmt(ct, 0), 'requisition to offer, weighted by offers', null],
+    ['Review steps done', `${steps}<small>of ${stepsMax} steps</small>`, `${people.length} people in this year's review`, steps / stepsMax],
+  ];
+  $('#tiles').innerHTML = tiles.map(([l, v, f, m]) => `<div class="card tile"><div class="lab">${l}</div><div class="val num">${v}</div><div class="foot">${f}</div>${m != null ? `<div class="meter" aria-hidden="true"><i style="width:${Math.min(100, m * 100)}%"></i></div>` : ''}</div>`).join('');
+  const missing = people.filter(p => scores(p).total == null).length;
+  $('#readinessNote').innerHTML = missing
+    ? `<b>${missing} of ${people.length} reviews still need scores.</b> Projects and Competency Development haven't been scored in the system yet, so totals stay provisional until you enter them in the scorecard. Your entries are kept in this browser only. Use <b>Download review sheet</b> to keep a copy.`
+    : `<b>All ${people.length} reviews have complete scores.</b> Download the review sheet to keep a copy.`;
+}
+
+/* ---------- scorecard table ---------- */
+let sortKey = 'total', sortDir = -1;
+function cellScore(v, max) { return v == null ? '<span class="pending">—</span>' : `<span class="sc num">${fmt(v)}<small>/${max}</small></span>`; }
+function partOf(p, k) { const x = p.ownDel && p.ownDel.parts.find(q => q.k === k); return x ? x.v : null; }
+function rowsSorted() {
+  const val = p => { const s = scores(p); switch (sortKey) {
+    case 'name': return p.name.toLowerCase(); case 'att': return att(p.own) ?? -1; case 'offer': return partOf(p, 'offer') ?? -1;
+    case 'del': return s.del ?? -1; case 'total': return s.total ?? (s.partial - 1000); case 'level': return p.level || ''; default: return 0; } };
+  return [...delivery].sort((a, b) => { const x = val(a), y = val(b); return (x < y ? -1 : x > y ? 1 : 0) * sortDir; });
+}
+function ratingSelect(p) {
+  const cur = (inputs[p.id] || {}).rating || '';
+  return `<select class="rsel" data-id="${p.id}" data-f="rating" aria-label="${esc(p.name)} ${YEAR} rating"><option value="">Not rated</option>${RATINGS.map(r => `<option ${cur === r ? 'selected' : ''}>${r}</option>`).join('')}</select>`;
+}
+function scoreInput(p, f, label) {
+  const v = (inputs[p.id] || {})[f];
+  return `<input class="inp num" type="number" min="0" max="15" step="0.5" inputmode="decimal" data-id="${p.id}" data-f="${f}" value="${v ?? ''}" placeholder="—" aria-label="${esc(p.name)} ${label} out of 15">`;
+}
+function readiness(s) { return `<span class="ready" title="${s.done.filter(Boolean).length} of ${s.done.length} review steps done">${s.done.map(d => `<i class="${d ? 'on' : ''}"></i>`).join('')}</span>`; }
+function renderScorecard() {
+  const H = (k, t, cls = '') => `<th class="${cls} ${k ? 'sortable' : ''}" ${k ? `data-k="${k}" aria-sort="${sortKey === k ? (sortDir > 0 ? 'ascending' : 'descending') : 'none'}"` : ''}>${t}${k && sortKey === k ? `<span class="ar">${sortDir > 0 ? '▲' : '▼'}</span>` : ''}</th>`;
+  const head = `<thead><tr>${H('name', 'Person')}${H('level', 'Level')}${H('att', 'Points vs target', 'n')}${H('offer', 'Offers &amp; complexity', 'n')}${H('', 'Joining', 'n')}${H('', 'Cycle time', 'n')}${H('', 'Vendor', 'n')}${H('del', 'Deliverables', 'n')}${H('', 'Projects', 'n')}${H('', 'Competency', 'n')}${H('total', 'Total', 'n')}${H('', 'P4P ' + (YEAR - 3) + '–' + String(YEAR - 1).slice(2))}${H('', YEAR + ' rating')}${H('', 'Done')}</tr></thead>`;
+  const body = rowsSorted().map(p => {
+    const s = scores(p), a = att(p.own), st = status(a);
+    return `<tr class="pr" data-id="${p.id}" tabindex="0">
+      <td class="who"><b>${esc(p.name)}</b><div>${esc(p.role)} · ${esc(shortTeam(p))}</div>${p.end ? `<div>Leaves ${nice(p.end)}</div>` : ''}</td>
+      <td>${esc(p.level || '—')}</td>
+      <td class="n"><div class="num">${fmt(p.own.pointsFormal)} <span class="small">/ ${fmt(p.own.pointsTargetFormal, 0)}</span></div>${stChip(st, a != null ? ' · ' + pct(a * 100) : '')}</td>
+      <td class="n">${cellScore(partOf(p, 'offer'), 40)}</td><td class="n">${cellScore(partOf(p, 'jr'), 15)}</td><td class="n">${cellScore(partOf(p, 'ct'), 10)}</td><td class="n">${cellScore(partOf(p, 'vendor'), 5)}</td>
+      <td class="n">${cellScore(s.del, 70)}${p.isTL ? '<div class="small">team + own</div>' : ''}</td>
+      <td class="n">${scoreInput(p, 'proj', 'Projects')}</td><td class="n">${scoreInput(p, 'comp', 'Competency')}</td>
+      <td class="n">${s.total != null ? `<span class="total num">${fmt(s.total)}</span>` : `<span class="pending" title="Provisional: ${fmt(s.partial)} so far">${fmt(s.partial)} so far</span>`}</td>
+      <td>${ratingChips(p)}</td><td>${ratingSelect(p)}</td><td>${readiness(s)}</td></tr>`;
+  }).join('');
+  $('#scTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+}
+
+/* ---------- attainment chart ---------- */
+let attView = 'chart', mixView = 'chart';
+function renderAtt() {
+  const rows = [...delivery].sort((a, b) => (att(b.own) ?? 0) - (att(a.own) ?? 0));
+  if (attView === 'table') {
+    $('#attChart').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Person</th><th class="n">Points</th><th class="n">Pro-rated target</th><th class="n">Full-year target</th><th class="n">Attainment</th><th>Status</th></tr></thead><tbody>${rows.map(p => { const a = att(p.own); return `<tr class="pr" data-id="${p.id}"><td>${esc(p.name)}</td><td class="n">${fmt(p.own.pointsFormal)}</td><td class="n">${fmt(p.own.pointsTargetFormal)}</td><td class="n">${fmt(p.own.pointsTargetFull, 0)}</td><td class="n">${pct(a * 100)}</td><td>${stChip(status(a))}</td></tr>`; }).join('')}</tbody></table></div>`;
+    return;
+  }
+  const W = Math.max(300, Math.round($('#attChart').clientWidth - 36)), narrow = W < 520, L = narrow ? 104 : 132, R = narrow ? 30 : 120, rowH = 34, top = 22, max = 1.5;
+  const H = top + rows.length * rowH + 8, x = v => L + (W - L - R) * Math.min(v, max) / max;
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Points target attainment by person">`;
+  for (const t of [0, .5, 1, 1.5]) s += `<line class="grid" x1="${x(t)}" x2="${x(t)}" y1="${top - 6}" y2="${H - 6}"/><text class="muted" x="${x(t)}" y="${top - 10}" text-anchor="middle">${t * 100}%</text>`;
+  s += `<line class="ref" x1="${x(1)}" x2="${x(1)}" y1="${top - 6}" y2="${H - 6}"/>`;
+  rows.forEach((p, i) => {
+    const a = att(p.own) ?? 0, y = top + i * rowH, st = status(att(p.own)), bw = Math.max(2, x(a) - L);
+    const tipH = `<b>${esc(p.name)}</b> · ${esc(p.role)}` + tipRows([['Weighted points', fmt(p.own.pointsFormal)], ['Pro-rated target', fmt(p.own.pointsTargetFormal)], ['Full-year target', fmt(p.own.pointsTargetFull, 0)], ['Attainment', pct(a * 100)], ['Score', fmt(partOf(p, 'offer')) + ' / 40']]) + (p.isTL && p.team ? tipRows([['Team attainment', pct(att(p.team) * 100)]]) : '');
+    s += `<g class="row" data-id="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)}: ${pct(a * 100)} of target" data-tip="${esc(tipH)}">
+      <rect class="hl" x="0" y="${y}" width="${W}" height="${rowH - 2}" rx="5" fill="transparent"/>
+      <text class="name" x="${L - 10}" y="${y + 15}" text-anchor="end">${esc(p.name)}</text>
+      <text class="muted" x="${L - 10}" y="${y + 28}" text-anchor="end">${esc(p.isTL ? 'Team Lead' : p.role)}</text>
+      <path d="M${L} ${y + 7} h${bw - 4} a4 4 0 0 1 4 4 v10 a4 4 0 0 1 -4 4 h-${bw - 4} z" fill="var(--bar)"/>
+      <text class="val" x="${x(a) + 6}" y="${y + 20}">${pct(a * 100)}</text>
+      <foreignObject x="${W - R + (narrow ? 12 : 18)}" y="${y + 6}" width="${R - (narrow ? 12 : 18)}" height="22"><div xmlns="http://www.w3.org/1999/xhtml">${narrow ? `<span class="st ${st}" title="${ST_LABEL[st]}">${ICON[st]}</span>` : stChip(st)}</div></foreignObject>
+      <rect class="hit" x="0" y="${y}" width="${W}" height="${rowH}"/></g>`;
+  });
+  s += '</svg>';
+  $('#attChart').innerHTML = s;
+  bindTips($('#attChart'));
+}
+
+/* ---------- points mix chart ---------- */
+function renderMix() {
+  $('#mixLegend').innerHTML = mixView === 'chart' ? GROUPS.map(G => `<span><i style="background:var(--${G.c})"></i>${G.label}</span>`).join('') : '';
+  const rows = [...delivery].sort((a, b) => (b.own.pointsFormal || 0) - (a.own.pointsFormal || 0)).map(p => ({ p, m: mixOf(p) }));
+  if (mixView === 'table') {
+    $('#mixChart').innerHTML = `<div class="tbl-wrap"><table><thead><tr><th>Person</th>${GROUPS.map(G => `<th class="n">${G.label}</th>`).join('')}<th class="n">Total</th><th class="n">Points per offer</th></tr></thead><tbody>${rows.map(({ p, m }) => `<tr class="pr" data-id="${p.id}"><td>${esc(p.name)}</td>${m.g.map(G => `<td class="n">${G.n ? fmt(G.pts) + ' <span class="small">(' + G.n + ')</span>' : '—'}</td>`).join('')}<td class="n"><b>${fmt(m.total)}</b></td><td class="n">${fmt(m.total / (p.sc.tracker.offers || 1), 2)}</td></tr>`).join('')}</tbody></table></div><p class="small">Points, with offer counts in brackets. Interns are counted as offers but have no points rule.</p>`;
+    return;
+  }
+  const W = Math.max(300, Math.round($('#mixChart').clientWidth - 36)), L = W < 520 ? 104 : 132, R = 48, rowH = 34, top = 22;
+  const maxP = Math.max(...rows.map(r => r.m.total)), step = maxP > 150 ? 50 : 25, axMax = Math.ceil(maxP / step) * step;
+  const H = top + rows.length * rowH + 8, x = v => (W - L - R) * v / axMax;
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Weighted points by offer category per person">`;
+  for (let t = 0; t <= axMax; t += step) s += `<line class="grid" x1="${L + x(t)}" x2="${L + x(t)}" y1="${top - 6}" y2="${H - 6}"/><text class="muted" x="${L + x(t)}" y="${top - 10}" text-anchor="middle">${t}</text>`;
+  rows.forEach(({ p, m }, i) => {
+    const y = top + i * rowH; let cx = L;
+    s += `<g class="row"><rect class="hl" x="0" y="${y}" width="${W}" height="${rowH - 2}" rx="5" fill="transparent"/>
+      <text class="name" x="${L - 10}" y="${y + 15}" text-anchor="end">${esc(p.name)}</text>
+      <text class="muted" x="${L - 10}" y="${y + 28}" text-anchor="end">${p.sc.tracker.offers} offers${m.interns ? ' · ' + m.interns + ' interns' : ''}</text>`;
+    const segs = m.g.filter(G => G.pts > 0);
+    segs.forEach((G, j) => {
+      const w = x(G.pts), last = j === segs.length - 1, gap = last ? 0 : 2, ww = Math.max(1, w - gap);
+      const d = last && ww > 4 ? `M${cx} ${y + 7} h${ww - 4} a4 4 0 0 1 4 4 v10 a4 4 0 0 1 -4 4 h-${ww - 4} z` : `M${cx} ${y + 7} h${ww} v18 h-${ww} z`;
+      const th = `<b>${esc(p.name)}</b> · ${esc(G.label)}` + tipRows([['Offers', G.n], ['Points', fmt(G.pts)], ['Share of points', pct(G.pts / m.total * 100)]]) + (G.detail.length > 1 ? '<div class="small" style="margin-top:4px">' + G.detail.map(([c, n, pt]) => `${esc(c)}: ${n} offers, ${fmt(pt)} pts`).join('<br>') + '</div>' : '');
+      s += `<path d="${d}" fill="var(--${G.c})" data-tip="${esc(th)}" data-id="${p.id}" style="cursor:pointer"/>`;
+      cx += w;
+    });
+    s += `<text class="val" x="${cx + 6}" y="${y + 20}">${fmt(m.total)}</text></g>`;
+  });
+  s += '</svg>';
+  $('#mixChart').innerHTML = s;
+  bindTips($('#mixChart'));
+}
+
+/* ---------- quality table ---------- */
+function renderQuality() {
+  const rows = [...delivery].sort((a, b) => a.name.localeCompare(b.name));
+  const R = DATA.rules;
+  const flag = (v, good, bad, lowerBetter) => v == null ? '' : (lowerBetter ? (v <= good ? 'good' : v > bad ? 'below' : 'watch') : (v >= good ? 'good' : v < bad ? 'below' : 'watch'));
+  const cell = (v, s, suffix = '') => `<td class="n">${v == null ? '—' : `<span class="num">${fmt(v, 0)}${suffix}</span>`}${s ? ' ' + `<span class="st ${s}" title="${ST_LABEL[s]}">${ICON[s]}</span>` : ''}</td>`;
+  $('#qTable').innerHTML = `<thead><tr><th>Person</th><th class="n">Offers</th><th class="n">Joined</th><th class="n">Joining ratio</th><th class="n">Offer days</th><th class="n">Days to join</th><th class="n">Declined</th><th class="n">Vendor share</th><th class="n">Referral share</th><th class="n">Women hires</th><th class="n">Points per offer</th></tr></thead><tbody>${rows.map(p => {
+    const sc = p.sc || {}, jr = sc.offers ? sc.joiners / sc.offers * 100 : null;
+    return `<tr class="pr" data-id="${p.id}"><td class="who"><b>${esc(p.name)}</b></td><td class="n">${sc.offers ?? '—'}</td><td class="n">${sc.joiners ?? '—'}</td>
+      ${cell(jr, flag(jr, R.jrBands[0][0], R.jrBands[3][0]), '%')}${cell(sc.offerDays, flag(sc.offerDays, R.ctBands.strong - .01, R.ctBands.acceptable, true))}${cell(sc.joinDays, '')}
+      ${cell(sc.declinedPct, '', '%')}${cell(sc.vendorPct, flag(sc.vendorPct, R.vendorBands.low - .01, R.vendorBands.high, true), '%')}${cell(sc.referralPct, '', '%')}${cell(sc.diversityPct, '', '%')}
+      <td class="n">${sc.tracker ? fmt(sc.tracker.points / sc.tracker.offers, 2) : '—'}</td></tr>`;
+  }).join('')}</tbody><tfoot><tr><td colspan="11" class="small" style="border:0;padding-top:10px">Joining ratio is joiners ÷ offers in the scorecard period, so it can pass 100% when people join from offers made the year before. Status icons follow the scoring bands in How scores work.</td></tr></tfoot>`;
+}
+
+/* ---------- teams ---------- */
+function renderTeams() {
+  const leads = delivery.filter(p => p.isTL);
+  $('#teamCards').innerHTML = leads.map(l => {
+    const members = (l.teamMembers || []).map(id => byId[id]).filter(Boolean);
+    const ta = att(l.team), all = [l, ...members];
+    const pts = sum(all.map(p => p.own.pointsFormal)), tgt = sum(all.map(p => p.own.pointsTargetFormal));
+    return `<div class="card pad team"><h3>${esc(l.teamName)}</h3><div class="lead">Team Lead: ${esc(l.name)}${l.alsoTeams && l.alsoTeams.length ? ' · also supports early careers' : ''}</div>
+      <div class="big num">${pct(ta * 100)} <span class="small" style="font-size:12.5px;font-weight:500">team goal attainment</span></div>
+      <div class="meter"><i style="width:${Math.min(100, (ta || 0) * 100)}%"></i></div>
+      <div class="row2"><span>${fmt(l.team.pointsFormal)} of ${fmt(l.team.pointsTargetFormal, 0)} points (members)</span>${stChip(status(ta))}</div>
+      <div class="row2"><span>Including the lead: ${fmt(pts)} of ${fmt(tgt, 0)}</span><span>Team deliverables ${fmt(l.teamDel)}/70</span></div>
+      <ul>${all.map(p => `<li data-id="${p.id}" tabindex="0" role="button"><span>${esc(p.name)}${p === l ? ' <span class="tag">Lead</span>' : ''}</span><span class="num">${fmt(p.own.pointsFormal)} pts · ${pct(att(p.own) * 100)}</span></li>`).join('')}</ul></div>`;
+  }).join('');
+}
+
+/* ---------- support ---------- */
+function renderSupport() {
+  $('#supTable').innerHTML = `<thead><tr><th>Person</th><th>Level</th><th>Focus</th><th class="n">Projects</th><th class="n">Learning</th><th class="n">Projects score</th><th class="n">Competency</th><th class="n">Total</th><th>P4P ${YEAR - 3}–${String(YEAR - 1).slice(2)}</th><th>${YEAR} rating</th><th>Done</th></tr></thead><tbody>${support.map(p => {
+    const s = scores(p);
+    return `<tr class="pr" data-id="${p.id}" tabindex="0"><td class="who"><b>${esc(p.name)}</b><div>${esc(p.jobTitle || p.role)} · ${esc(p.teamName)}</div></td><td>${esc(p.level || '—')}</td>
+      <td style="max-width:300px"><div class="small" style="color:var(--ink-2)">${esc((p.roleNote || '').replace(/\s*\(org chart\)\s*$/, ''))}</div></td>
+      <td class="n">${p.projects.length}</td><td class="n">${p.learning.length}</td>
+      <td class="n">${scoreInput(p, 'proj', 'Projects')}</td><td class="n">${scoreInput(p, 'comp', 'Competency')}</td>
+      <td class="n">${s.total != null ? `<span class="total num">${fmt(s.total)}</span><span class="small">/30</span>` : '<span class="pending">—</span>'}</td>
+      <td>${ratingChips(p)}</td><td>${ratingSelect(p)}</td><td>${readiness(s)}</td></tr>`;
+  }).join('')}</tbody>`;
+}
+
+/* ---------- method ---------- */
+function renderMethod() {
+  const formerTxt = former.filter(p => p.own && p.own.pointsFormal).map(p => `${esc(p.name)} ${fmt(p.own.pointsFormal)}`).join(', ');
+  $('#methodText').innerHTML = `
+  <p><b>Total of 100.</b> Business Deliverables 70 (Offers &amp; complexity 40, Joining 15, Cycle time 10, Vendor 5) + Projects 15 + Competency Development 15. Behaviours are discussed but not scored. Support and operations roles have no deliverables and are scored out of 30.</p>
+  <p><b>Offers &amp; complexity (40).</b> 40 × weighted points ÷ pro-rated points target, capped at 40. The points target is the annual offer target × ${DATA.rules.ppo}, pro-rated by working days to the scorecard date. Team Leads carry ${DATA.rules.tlShare * 100}% of a recruiter's offer target.</p>
+  <p><b>Weighted points per offer.</b> Lateral SG1–SG4 1 · SG5–SG8 2 · SG9 and above 3 · new FTC hire 2 · conversion to FTC 1 · NATS 1 · ExcelHER 2 · GET / PGET 1 · AICTE and PhD 2 · consultant, FTC, NATS and ExcelHER conversions 1. Add 0.5 for women hires where the rule allows; never on FTC or conversions. SG = JL + 2. Declined offers count; offers on hold don't. Interns count as offers with no points (no rule yet).</p>
+  <p><b>Joining (15)</b> from joiners ÷ offers: ≥ 90% 15 · 85–89% 13 · 80–84% 11 · 75–79% 8 · below 75% 5. <b>Cycle time (10)</b> average requisition-to-offer days: under ${DATA.rules.ctBands.strong} 10 · ${DATA.rules.ctBands.strong}–${DATA.rules.ctBands.acceptable} 7 · over ${DATA.rules.ctBands.acceptable} 4. <b>Vendor (5)</b>: under ${DATA.rules.vendorBands.low}% 5 · ${DATA.rules.vendorBands.low}–${DATA.rules.vendorBands.high}% 3 · over ${DATA.rules.vendorBands.high}% 1.</p>
+  <p><b>Team Leads.</b> Deliverables = 35 × team-goal score + 35 × own score (each out of 70). The team goal uses members' combined points and targets, with the lead excluded.</p>
+  <p><b>Sources.</b> Hiring2026 tracker and the NATS and pipeline programmes workbook (offers released 1 Jan–${nice(P.cutoff)}); recruiter scorecards from the 2026 review deck; P4P history and job levels as supplied by the TA Head. Joining ratio uses scorecard joiners ÷ offers, which isn't maturity-adjusted.</p>
+  <p><b>Not in this year's review</b> (left the team): ${esc(former.map(p => p.name).join(', '))}. Their 2026 points for the record: ${formerTxt || '—'}.</p>
+  <p><b>Promotion readiness</b> is advisory, never automatic: last two P4P ratings High or above, current-year score ≥ 80, ≥ 3 competencies at next-level expectation, ≥ 2 years in level, and leadership evidence. The final decision stays with the TA Head and HR.</p>
+  <p><b>Your entries</b> (scores, ratings, comments) are saved in this browser only. Download the review sheet to keep or share them.</p>`;
+}
+
+/* ---------- person drawer ---------- */
+let openId = null, lastFocus = null;
+function compRow(label, v, max, note = '') {
+  return `<div>${label}</div><div class="bar ${v == null ? 'empty' : ''}" aria-hidden="true">${v != null ? `<i style="width:${v / max * 100}%"></i>` : ''}</div><div class="s">${v == null ? '<span class="pending">to score</span>' : fmt(v) + ' / ' + max}</div>${note ? `<div></div><div class="small" style="grid-column:2/4;margin-top:-4px">${note}</div>` : ''}`;
+}
+function openPerson(id) {
+  const p = byId[id]; if (!p) return;
+  openId = id; lastFocus = document.activeElement;
+  const s = scores(p), i = inp(id), sup = p.template === 'support', a = att(p.own);
+  $('#dTitle').textContent = p.name;
+  $('#dMeta').innerHTML = `${esc(p.jobTitle || p.role)} · ${esc(p.role)}, ${esc(p.teamName)}${p.area && p.area !== p.teamName ? ' (' + esc(p.area) + ')' : ''} · ${esc(p.level || 'level n/a')}${p.joined ? ' · joined ' + nice(p.joined) : ''}${p.end ? ' · leaving ' + nice(p.end) : ''}`;
+  let h = '';
+  if (!sup) {
+    const m = mixOf(p), tr = p.sc.tracker;
+    h += `<h3>At a glance</h3><div class="kv">
+      <div class="card"><div class="lab">Weighted points</div><div class="v num">${fmt(p.own.pointsFormal)}</div><div class="f">of ${fmt(p.own.pointsTargetFormal)} pro-rated · ${stChip(status(a), ' ' + pct(a * 100))}</div></div>
+      <div class="card"><div class="lab">Offers released</div><div class="v num">${tr.offers}</div><div class="f">${tr.joined} joined · ${tr.declined} declined · ${tr.pending} pending</div></div>
+      <div class="card"><div class="lab">Points per offer</div><div class="v num">${fmt(tr.points / tr.offers, 2)}</div><div class="f">target assumes ${DATA.rules.ppo}</div></div>
+      <div class="card"><div class="lab">Total so far</div><div class="v num">${s.total != null ? fmt(s.total) : fmt(s.partial)}<span class="small"> / 100</span></div><div class="f">${s.total != null ? 'complete' : 'provisional'}</div></div></div>`;
+    h += `<h3>Score breakdown</h3><div class="card pad"><div class="comp">
+      ${compRow('Offers &amp; complexity', partOf(p, 'offer'), 40)}${compRow('Joining', partOf(p, 'jr'), 15, p.sc.offers ? `${p.sc.joiners} of ${p.sc.offers} offers joined (${pct(p.sc.joiners / p.sc.offers * 100)})` : '')}
+      ${compRow('Cycle time', partOf(p, 'ct'), 10, p.sc.offerDays != null ? p.sc.offerDays + ' days requisition to offer' : '')}${compRow('Vendor', partOf(p, 'vendor'), 5, p.sc.vendorPct != null ? p.sc.vendorPct + '% of hires through vendors' : '')}
+      ${p.isTL ? compRow('Deliverables (team + own)', s.del, 70, `Team goal ${fmt(p.teamDel)}/70 (${pct(att(p.team) * 100)} of team points target) · own ${fmt(p.ownDel.total)}/70`) : compRow('Deliverables', s.del, 70)}
+      ${compRow('Projects', s.proj, 15)}${compRow('Competency development', s.comp, 15)}</div></div>`;
+    h += `<h3>Where the points came from</h3><div class="card pad"><div class="tbl-wrap"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Share</th></tr></thead><tbody>${(tr.mix || []).map(([c, n, b, bo]) => `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(b + bo)}</td><td class="n">${m.total ? pct((b + bo) / m.total * 100) : '—'}</td></tr>`).join('')}<tr><td><b>Total</b></td><td class="n"><b>${tr.offers}</b></td><td class="n"><b>${fmt(tr.points)}</b></td><td></td></tr></tbody></table></div>
+      <p class="small" style="margin:8px 0 0">Includes ${fmt(tr.pointsBonus)} points for women hires. Without declined offers: ${fmt(tr.pointsExclDeclined)} points.</p></div>`;
+  } else {
+    h += `<h3>Role</h3><div class="note">${esc(p.roleNote || p.role)}. No hiring deliverables: the review rests on Projects and Competency Development (out of 30).</div>`;
+  }
+  h += `<h3>Projects</h3>${p.projects.length ? `<ul class="list">${p.projects.map(x => `<li><div class="t">${esc(x.title)}${x.planEnd ? `<span class="tag">due ${nice(x.planEnd)}</span>` : ''}</div>${x.problem ? `<div class="d">${esc(x.problem)}</div>` : ''}${x.metric ? `<div class="d">Measure: ${esc(x.metric)} · baseline ${esc(x.baseline)} → target ${esc(x.target)}${x.actual != null ? ' · now ' + esc(x.actual) : ''}</div>` : ''}${x.reported ? `<div class="d">Status reported: ${esc(x.reported)}</div>` : ''}</li>`).join('')}</ul>` : '<div class="note">No improvement projects recorded for this year.</div>'}`;
+  h += `<h3>Learning</h3>${p.learning.length ? `<ul class="list">${p.learning.map(x => `<li><span class="t">${esc(x.programme)}</span><span class="tag">${esc(x.status)}</span>${x.cert ? '<span class="tag">certified</span>' : ''}</li>`).join('')}</ul>` : '<div class="note">No learning recorded for this year.</div>'}`;
+  h += `<h3>Performance history</h3><div class="card pad"><div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">${ratingYears(p).map(({ y, r }) => `<div><div class="small">${y}</div><div style="font-weight:650">${esc(r || 'No rating')}</div></div>`).join('<div class="small">→</div>')}<div class="small">→</div><div><div class="small">${YEAR} (your rating)</div><div style="font-weight:650">${esc(i.rating || 'Not rated yet')}</div></div></div></div>`;
+  if (p.recs && p.recs.length) h += `<h3>Talking points from the data</h3><ul class="list">${p.recs.map(r => `<li><div class="t">${esc(r.area)}</div><div class="d">${esc(r.fact)}</div><div class="d"><i>Suggestion:</i> ${esc(r.suggestion)}</div></li>`).join('')}</ul>`;
+  h += `<h3>Your review</h3><div class="card pad"><div class="form">
+      <label>Projects (0–15)<input type="number" min="0" max="15" step="0.5" data-id="${id}" data-f="proj" value="${i.proj ?? ''}"></label>
+      <label>Competency development (0–15)<input type="number" min="0" max="15" step="0.5" data-id="${id}" data-f="comp" value="${i.comp ?? ''}"></label>
+      <label>${YEAR} rating<select data-id="${id}" data-f="rating"><option value="">Not rated</option>${RATINGS.map(r => `<option ${i.rating === r ? 'selected' : ''}>${r}</option>`).join('')}</select></label></div>
+      <label class="small" style="display:block;margin-top:12px">Strengths<textarea class="cm" data-id="${id}" data-f="strengths" placeholder="What went well this year">${esc(i.strengths || '')}</textarea></label>
+      <label class="small" style="display:block;margin-top:8px">Development focus for ${YEAR + 1}<textarea class="cm" data-id="${id}" data-f="focus" placeholder="One or two priorities">${esc(i.focus || '')}</textarea></label></div>`;
+  const pr = p.promo;
+  h += `<h3>Promotion readiness</h3><div class="confbox"><div class="hd">Confidential · TA Head only</div>
+      <div style="font-weight:650;margin-bottom:8px">${esc(pr.level)}${pr.next && pr.next !== '—' ? ` <span class="small">(next level ${esc(pr.next)})</span>` : ''}</div>
+      <div class="crit">${pr.crit.map(c => `<span class="${c.ok ? 'ok' : 'no'}">${c.ok ? '✓' : '–'}</span><span>${esc(c.label)}</span><span class="f">${esc(c.fact)}</span>`).join('')}</div>
+      <p class="small" style="margin:6px 0 0">Advisory only, based on scored data. Competency and project scores aren't recorded in the system yet, so two criteria can't be met until they are.</p></div>`;
+  if (p.flags && p.flags.length) h += `<h3>Data notes</h3><ul class="list">${p.flags.map(f => `<li class="d">${esc(f)}</li>`).join('')}</ul>`;
+  $('#dBody').innerHTML = h;
+  $('#drawer').classList.add('on'); $('#scrim').classList.add('on');
+  $('#dBody').scrollTop = 0; $('#dClose').focus();
+}
+function closePerson() {
+  if (!openId) return; openId = null;
+  $('#drawer').classList.remove('on'); $('#scrim').classList.remove('on');
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+
+/* ---------- CSV ---------- */
+function downloadCsv() {
+  const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const head = ['Name', 'Role', 'Team', 'Level', 'Weighted points', 'Pro-rated points target', 'Attainment %', 'Offers & complexity /40', 'Joining /15', 'Cycle time /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Competency /15', 'Total', 'Out of', `P4P ${YEAR - 3}`, `P4P ${YEAR - 2}`, `P4P ${YEAR - 1}`, `${YEAR} rating`, 'Strengths', `Development focus ${YEAR + 1}`, 'Promotion readiness (advisory)'];
+  const rows = people.map(p => { const s = scores(p), i = inputs[p.id] || {}, sup = p.template === 'support', a = att(p.own);
+    return [p.name, p.role, p.teamName, p.level, sup ? '' : r1(p.own.pointsFormal), sup ? '' : r1(p.own.pointsTargetFormal), a != null ? Math.round(a * 100) : '', partOf(p, 'offer'), partOf(p, 'jr'), partOf(p, 'ct'), partOf(p, 'vendor'), s.del, s.proj, s.comp, s.total ?? '', s.max, p.ratings[2], p.ratings[1], p.ratings[0], i.rating, i.strengths, i.focus, p.promo.level]; });
+  const csv = '﻿' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = `Annual_Review_${YEAR}_scores.csv`; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- events ---------- */
+function renderAll() { renderTiles(); renderScorecard(); renderAtt(); renderMix(); renderQuality(); renderTeams(); renderSupport(); }
+document.addEventListener('click', e => {
+  const th = e.target.closest('th.sortable');
+  if (th) { const k = th.dataset.k; if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = k === 'name' || k === 'level' ? 1 : -1; } renderScorecard(); return; }
+  if (e.target.closest('input, select, textarea, button')) return;
+  const row = e.target.closest('[data-id]');
+  if (row && !e.target.closest('#drawer')) { hideTip(); openPerson(row.dataset.id); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePerson();
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('tr.pr, g.row, .team li')) { e.preventDefault(); openPerson(e.target.dataset.id); }
+});
+document.addEventListener('change', e => {
+  const el = e.target; if (!el.dataset || !el.dataset.f) return;
+  const v = el.value.trim();
+  if (el.dataset.f === 'proj' || el.dataset.f === 'comp') { const n = clampScore(v, 15); inp(el.dataset.id)[el.dataset.f] = n; if (n != null && String(n) !== v) el.value = n; }
+  else inp(el.dataset.id)[el.dataset.f] = v;
+  saveInputs(); renderTiles(); renderScorecard(); renderSupport();
+  if (openId === el.dataset.id && el.closest('#drawer') && el.dataset.f !== 'strengths' && el.dataset.f !== 'focus') { const st = $('#dBody').scrollTop; openPerson(openId); $('#dBody').scrollTop = st; }
+});
+document.addEventListener('input', e => { const el = e.target; if (el.matches('textarea.cm')) { inp(el.dataset.id)[el.dataset.f] = el.value; saveInputs(); } });
+document.querySelectorAll('.seg').forEach(seg => seg.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  seg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  if (seg.closest('.card').querySelector('#attChart')) { attView = b.dataset.v; renderAtt(); } else { mixView = b.dataset.v; renderMix(); }
+}));
+$('#scrim').addEventListener('click', closePerson);
+$('#dClose').addEventListener('click', closePerson);
+$('#dPrint').addEventListener('click', () => { document.body.classList.add('print-person'); window.print(); });
+window.addEventListener('afterprint', () => document.body.classList.remove('print-person'));
+$('#printBtn').addEventListener('click', () => window.print());
+$('#csvBtn').addEventListener('click', downloadCsv);
+$('#themeBtn').addEventListener('click', () => {
+  const root = document.documentElement, dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('ta-review-theme', root.dataset.theme); } catch (e) { }
+});
+try { const t = localStorage.getItem('ta-review-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) { }
+// highlight the section in view
+const links = [...document.querySelectorAll('.nav a')];
+const obs = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id)); }), { rootMargin: '-120px 0px -60% 0px' });
+document.querySelectorAll('section.blk').forEach(s => obs.observe(s));
+
+renderHeader(); renderAll(); renderMethod();
+let rz; let lastW = innerWidth; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (innerWidth !== lastW) { lastW = innerWidth; renderAtt(); renderMix(); } }, 120); });
+</script>
+</body>
+</html>
