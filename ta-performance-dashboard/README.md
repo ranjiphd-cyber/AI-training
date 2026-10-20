@@ -72,7 +72,7 @@ About the periods:
 - Name matches: Eli = Elizabeth John, Smruthi MK = Smruthi Prabhakaran, Spoorthi = Spoorthy Das, Sunil Bhat M = Sunil Bhat. Each person's TA team, plus leavers (Jeyapriya Kumaresan, Prabu Krishnan, Sunil Bhat, Fareeda).
 - The recruiter scorecard for 1 Jan–12 Oct 2026, covering eight people (offers, full-year offer target and joiners, all source-reported). Kathir's target was revised to 51.
 - Hiring-tracker counts for the newly matched names, and owners and statuses for the talent programmes.
-- Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100. A follow-up (`talent-review-sync-2026-10-20-upd1`) adds each person's hiring mix (offer counts by category, without points) and job title and grade. Hire dates that differ from the start dates held here are raised as a question.
+- Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100. A follow-up (`talent-review-sync-2026-10-20-upd1`) adds each person's hiring mix (offer counts by category, without points) and job title and grade. Hire dates that differ from the start dates held here are raised as a question. Hire dates come from the P4P review sheet (`p4p-hire-dates-2026-10-20`, new team field "Hire date"); P4P numbers and ratings are not imported. Lincy Mathew keeps a team start date of 10 Jun 2024, with hire date 20 May 2026 (conversion to regular rolls).
 
 ## Lateral-only key parameters (20 Oct 2026)
 

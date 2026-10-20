@@ -198,3 +198,37 @@
   const prev = TA.applyDataPacks;
   TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
 })();
+
+/* Hire dates from the P4P review sheet (supplied by the TA Head, 20 Oct 2026). Only the hire dates are used:
+   P4P numbers, ratings and positions are NOT imported (no automatic rating of people). Start date in team = hire date, except
+   Lincy Mathew, whose team start date stays 10 Jun 2024 (converted to regular rolls on 20 May 2026, TA Head, 20 Oct 2026). */
+(function () {
+  'use strict';
+  const TA = window.TA;
+  const PACK = 'p4p-hire-dates-2026-10-20', SRC = 'P4P review sheet – hire dates only (TA Head, 20 Oct 2026)';
+  const HIRE = [['Gokul', '2023-01-02'], ['Elizabeth John', '2022-03-28'], ['Shreyashi Saha', '2022-03-07'], ['Padma', '2022-03-31'], ['Mickey Singh', '2024-03-20'],
+    ['Adarsh', '2022-07-06'], ['Smruthi Prabhakaran', '2022-07-27'], ['Philomena Lincy', '2023-03-27'], ['Tanushree Mukhopadhyay', '2024-06-12'],
+    ['Lincy Mathew', '2026-05-20'], ['Kathiresaprabu Sanjeevi', '2025-07-07'], ['Spoorthy', '2025-07-24']];
+  const KEEP_START = { 'Lincy Mathew': 'Team start date kept at 10 Jun 2024; hire date is the conversion to regular rolls (TA Head, 20 Oct 2026).' };
+  function apply() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(PACK) >= 0 || applied.indexOf('answers-2026-10-20c') < 0) return false;
+    S.recoveryPoint('Before adding hire dates from the P4P review sheet');
+    HIRE.forEach(([name, d]) => {
+      const t = TA.findMember(name); if (!t) return;
+      const patch = { hireDate: d };
+      if (!KEEP_START[t.name] && t.startDate !== d) patch.startDate = d;
+      const n = 'Hire date ' + TA.fmtDate(d) + ' (' + SRC + ').' + (KEEP_START[t.name] ? ' ' + KEEP_START[t.name] : '');
+      if ((t.notes || '').indexOf(n) < 0) patch.notes = (t.notes ? t.notes + ' ' : '') + n;
+      S.update('team', t.id, patch);
+    });
+    const ad = TA.findMember('Adarsh');
+    if (ad && ad.employmentStatus === 'Not provided') S.update('team', ad.id, { employmentStatus: 'Active', notes: (ad.notes ? ad.notes + ' ' : '') + 'Status Active per the India TA Talent Review (20 Oct 2026).' });
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([PACK]) });
+    TA.toast('Added hire dates from the P4P review sheet');
+    return true;
+  }
+  const prev = TA.applyDataPacks;
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
+})();

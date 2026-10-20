@@ -124,6 +124,7 @@
         { k: 'employmentStatus', l: 'Employment status', t: 'select', o: ['Active', 'Left', 'On leave', 'Vacancy – replacement hiring underway', 'Not provided'], req: true },
         { k: 'businessCoverage', l: 'Business coverage', t: 'textarea', help: 'Shared coverage is recorded per person; totals are not summed across people.' },
         { k: 'startDate', l: 'Start date in team', t: 'date' },
+        { k: 'hireDate', l: 'Hire date (company record)', t: 'date', help: 'From the P4P review sheet. Can differ from the start date in the team, e.g. after a conversion to regular rolls.' },
         { k: 'endDate', l: 'Leaving date', t: 'date' },
         { k: 'goals', l: 'Goals', t: 'textarea', full: true },
         { k: 'resultsSummary', l: 'Results summary', t: 'textarea', full: true },
