@@ -74,6 +74,16 @@ About the periods:
 - Hiring-tracker counts for the newly matched names, and owners and statuses for the talent programmes.
 - Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100.
 
+## Lateral-only key parameters (20 Oct 2026)
+
+`js/data-lateral-scope.js` (pack `lateral-scope-2026-10-20`) applies the TA Head's instruction to report key parameters on lateral hires only, including conversions and FTC hires. The tracker's "Lateral" type already includes both and gives 351 joiners. The pack covers:
+- vendor usage, referrals, direct sourcing and gender diversity;
+- cycle times;
+- offers made, decline rate, acceptance rate and pending offers;
+- requisition ageing.
+
+It reports both the 2026 YTD position and the monthly series. The earlier all-hires values move to the recycle bin and can be restored. Breakdowns (by business area, source, employment type, decline reason and requisition age) are lateral too. Ageing of open requisitions that have no offer is not in the tracker and is shown as "Not provided".
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.
