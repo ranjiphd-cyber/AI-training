@@ -311,6 +311,14 @@ const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PG
 const projStatusClass = st => ({ 'Completed': 'good', 'On track': 'good', 'On hold': 'watch', 'To confirm': 'watch' }[st] || 'none');
 const isIntern = c => /^Internship/.test(c);
 const internPts = () => num((S.settings.scoring || {}).internPts) ?? 0;
+const ijpPts = () => num((S.settings.scoring || {}).ijpPts) ?? 1;
+const declPen = () => num((S.settings.scoring || {}).declinePenalty) ?? 0.5;
+const declFrom = () => num((S.settings.scoring || {}).declineFrom) ?? YEAR + 1;
+const declOn = () => YEAR >= declFrom() && declPen() > 0;
+/* 2026 weights (TA Head, 20 Oct 2026): recruiters and leads 65 + 10 + 5 + 10 + 10; support 70 KPI & SLA + 10 + 10 + 10 */
+const W = { offer: 65, ct: 10, vendor: 5, del: 80, proj: 10, comp: 10, ops: 70, proc: 10 };
+const OPS_W = { timely: 25, volume: 20, errors: 15, experience: 10 };
+const OPS_FACTOR = { 5: 1, 4: 0.9, 3: 0.75, 2: 0.5, 1: 0.2 };
 const scaleText = (comp, n) => { const sc = S.settings.behaviourScale || {}; return ((sc.byComp || {})[comp] || {})[n] || (sc.general || {})[n] || ''; };
 const S = Object.fromEntries(COLS.map(c => [c, {}]));
 let LOG = [];
@@ -335,16 +343,18 @@ function ownBlock(id) {
   const ptFull = num(d.ptAnnual) ?? (target != null ? target * ppo : null);
   const ptPro = ptFull != null ? ptFull * prorate : null;
   const interns = sum((d.mix || []).filter(m => isIntern(m[0])).map(m => m[1])), basePts = num(d.points);
-  const points = basePts == null ? null : basePts + interns * internPts(), offers = num(d.offers), joiners = num(d.joiners);
+  const ijp = num(d.ijp) ?? 0, declined = num((d.tracker || {}).declined) ?? 0, declPts = declOn() ? declined * declPen() : 0;
+  const points = basePts == null ? null : basePts + interns * internPts() + ijp * ijpPts() - declPts, offers = num(d.offers), joiners = num(d.joiners);
   const att = points != null && ptPro ? points / ptPro : null;
-  const offer = att != null ? r1(40 * Math.min(att, 1)) : null;
+  const offer = att != null ? r1(W.offer * Math.min(att, 1)) : null;
   const jr = offers ? joiners / offers * 100 : null;
-  const parts = { offer, jr: jrScore(jr), ct: ctScore(num(d.offerDays)), vendor: vScore(num(d.vendorPct)) };
+  const parts = { offer, ct: ctScore(num(d.offerDays)), vendor: vScore(num(d.vendorPct)) };
   const all = Object.values(parts).every(v => v != null);
   const yd = num((S.settings.scoring || {}).yearDays) ?? 254, revC = num(d.revCadence);
   const revAnnual = revC != null ? revC * yd / 10 : null, revPtPro = revAnnual != null ? revAnnual * ppo * prorate : null, revAtt = points != null && revPtPro ? points / revPtPro : null;
-  return { d, revC, revAnnual, revPtPro, revAtt, interns, basePts, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.jr + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
+  return { d, revC, revAnnual, revPtPro, revAtt, interns, ijp, declined, declPts, basePts, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
 }
+const mixRows = o => (o.d.mix || []).concat(o.ijp ? [['Internal hiring (IJP)', o.ijp, o.ijp * ijpPts()]] : []).concat(o.declPts ? [[`Declined offers (−${fmt(declPen())} each)`, o.declined, -o.declPts]] : []);
 function teamOf(lead) { return peopleList().filter(p => p.team === lead.team && p.id !== lead.id && !isLead(p) && !isSupport(p) && inReview(p)); }
 function teamBlock(lead) {
   const ms = teamOf(lead).map(p => ({ p, b: ownBlock(p.id) })).filter(x => x.b);
@@ -353,7 +363,7 @@ function teamBlock(lead) {
   const offers = sum(ms.map(x => x.b.offers)), joiners = sum(ms.map(x => x.b.joiners));
   const wavg = k => { const w = ms.filter(x => x.b[k] != null && x.b.offers); const t = sum(w.map(x => x.b.offers)); return t ? sum(w.map(x => x.b[k] * x.b.offers)) / t : null; };
   const att = pts != null && ptPro ? pts / ptPro : null, jr = offers ? joiners / offers * 100 : null, ct = wavg('offerDays'), vp = wavg('vendorPct');
-  const parts = { offer: att != null ? r1(40 * Math.min(att, 1)) : null, jr: jrScore(jr), ct: ctScore(ct), vendor: vScore(vp) };
+  const parts = { offer: att != null ? r1(W.offer * Math.min(att, 1)) : null, ct: ctScore(ct), vendor: vScore(vp) };
   const all = Object.values(parts).every(v => v != null);
   return { members: ms.map(x => x.p), points: pts, ptPro, offers, joiners, att, jr, ct, vp, parts, del: all ? r1(sum(Object.values(parts))) : null };
 }
@@ -367,17 +377,18 @@ function evalPerson(p) {
   const own = sup ? null : ownBlock(id);
   const team = isLead(p) ? teamBlock(p) : null;
   let del = own ? own.del : null;
-  if (isLead(p) && team && own) del = team.del != null && own.del != null ? r1(team.del * 35 / 70 + own.del * 35 / 70) : null;
+  if (isLead(p) && team && own) del = team.del != null && own.del != null ? r1(team.del * 40 / W.del + own.del * 40 / W.del) : null;
   const projs = projectsOf(id), counted = projs.filter(x => x.contributing).map(projectScore).filter(x => x != null);
-  const proj = counted.length ? Math.max(...counted) : null;
+  const proj = counted.length ? r1(Math.max(...counted) / 15 * W.proj) : null;
   const cd = [num(rv.growth), num(rv.application), num(rv.planDone)];
-  const comp = cd.every(x => x != null) ? cd[0] + cd[1] + cd[2] : null;
-  const max = sup ? 30 : 100;
-  const total = sup ? (proj != null && comp != null ? r1(proj + comp) : null) : (del != null && proj != null && comp != null ? r1(del + proj + comp) : null);
-  const partial = r1((del ?? (own ? own.raw : 0)) + (proj || 0) + (comp || 0));
+  const comp = cd.every(x => x != null) ? r1((cd[0] + cd[1] + cd[2]) / 15 * W.comp) : null;
+  const ops = sup ? opsRating(id) : null, opsPts = ops ? ops.pts : null, proc = sup ? clampN(num(rv.procImp), 0, W.proc) : null;
+  const max = 100;
+  const total = sup ? (opsPts != null && proj != null && comp != null && proc != null ? r1(opsPts + proj + comp + proc) : null) : (del != null && proj != null && comp != null ? r1(del + proj + comp) : null);
+  const partial = sup ? r1((ops ? ops.ptsSoFar : 0) + (proj || 0) + (comp || 0) + (proc || 0)) : r1((del ?? (own ? own.raw : 0)) + (proj || 0) + (comp || 0));
   const att = own ? own.att : null;
   const stat = !inReview(p) || sup ? 'none' : statusOf(isLead(p) && team && team.att != null && att != null ? Math.min(att, team.att) : att);
-  return { p, sup, own, team, del, proj, comp, cd, total, partial, max, att, stat, rv, projs, learn: learningOf(id), plans: plansOf(id), beh: (S.behaviours[id] || {}).ratings || {} };
+  return { p, sup, own, team, del, proj, comp, cd, opsPts, proc, total, partial, max, att, stat, rv, projs, learn: learningOf(id), plans: plansOf(id), beh: (S.behaviours[id] || {}).ratings || {} };
 }
 
 function promotion(E) {
@@ -411,7 +422,8 @@ function opsRating(id) {
   const vals = OPS_KEYS.map(key => { let v = num(pl[key]); if (v != null && key === 'errors' && breach) v = Math.min(v, 2); return v; });
   const all = vals.every(v => v != null);
   let overall = all ? Math.round(sum(vals) / 4) : null; if (overall != null && breach) overall = Math.min(overall, 3);
-  return { k, pl, vals, breach, overall, avg: all ? sum(vals) / 4 : null, rated: vals.filter(v => v != null).length };
+  const ptsOf = (v, i) => v == null ? 0 : OPS_W[OPS_KEYS[i]] * (OPS_FACTOR[Math.round(v)] ?? 0);
+  return { k, pl, vals, breach, overall, avg: all ? sum(vals) / 4 : null, rated: vals.filter(v => v != null).length, pts: all ? r1(sum(vals.map(ptsOf))) : null, ptsSoFar: r1(sum(vals.map(ptsOf))) };
 }
 /* ===================== tooltip / toast ===================== */
 const tip = $('#tip');
@@ -552,9 +564,9 @@ function viewTeam() {
     <div class="card fig"><div class="l">Average offer days</div><div class="v">${fmt(ct, 0)}</div><div class="f">${ctLabel(ct)} · weighted by offers</div></div>
     <div class="card fig"><div class="l">Reviews complete</div><div class="v">${done}<small>of ${ev.length}</small></div><div class="f">all scores entered</div></div></div>`;
   h += `<div class="grid c2 sec"><div class="card pad span2"><div class="sec-h"><h3>Delivery against target</h3><span class="hint">bar = weighted points · grey track = full-year target · black tick = target to date · dashed blue = revised (reduced cadence) target to date</span></div>${bulletChart(sorted)}</div></div>`;
-  h += `<div class="card pad sec"><div class="sec-h"><h3>Scores against maximum</h3><span class="hint">darker = closer to full marks · hatched = still to score · click a row to open the review</span></div><div class="tw"><table><thead><tr><th>Person</th><th>Role</th><th class="n">Offers &amp; complexity</th><th class="n">Joining</th><th class="n">Cycle time</th><th class="n">Vendor</th><th class="n">Deliverables</th><th class="n">Projects</th><th class="n">Competency dev.</th><th class="n">Total</th><th title="Ex Exceptional · Hi High · Go Good · Ad Adequate · Lo Low">P4P ${YEAR - 3}–${String(YEAR - 1).slice(2)}</th><th>${YEAR} rating</th></tr></thead><tbody>${[...ev].sort((x, y) => (x.sup - y.sup) || ((y.own?.att ?? -1) - (x.own?.att ?? -1))).map(E => { const o = E.own, r = E.p.ratings || {}; return `<tr class="click" data-person="${esc(E.p.id)}"><td class="who"><b>${esc(E.p.name)}</b><div class="sub">${esc(E.p.team || '')}</div></td><td class="nw">${esc(E.p.role === 'Support / Operations' ? 'Support' : E.p.role)}</td>
-      <td>${E.sup ? '' : heatCell(o?.parts.offer, 40, 'Offers & complexity')}</td><td>${E.sup ? '' : heatCell(o?.parts.jr, 15, 'Joining')}</td><td>${E.sup ? '' : heatCell(o?.parts.ct, 10, 'Cycle time')}</td><td>${E.sup ? '' : heatCell(o?.parts.vendor, 5, 'Vendor')}</td>
-      <td>${E.sup ? (() => { const o = opsRating(E.p.id); return o && o.overall != null ? heatCell(o.overall, 5, 'Operational rating (KPI & SLA)') : `<div class="sub" style="text-align:center">${o ? 'KPI & SLA to rate' : 'no deliverables'}</div>`; })() : heatCell(E.del, 70, 'Deliverables')}</td><td>${heatCell(E.proj, 15, 'Projects')}</td><td>${heatCell(E.comp, 15, 'Competency development')}</td>
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Scores against maximum</h3><span class="hint">darker = closer to full marks · hatched = still to score · click a row to open the review</span></div><div class="tw"><table><thead><tr><th>Person</th><th>Role</th><th class="n">Offers &amp; complexity</th><th class="n">Cycle time</th><th class="n">Vendor</th><th class="n">Deliverables / KPI &amp; SLA</th><th class="n">Projects</th><th class="n">Competency dev.</th><th class="n">Total</th><th title="Ex Exceptional · Hi High · Go Good · Ad Adequate · Lo Low">P4P ${YEAR - 3}–${String(YEAR - 1).slice(2)}</th><th>${YEAR} rating</th></tr></thead><tbody>${[...ev].sort((x, y) => (x.sup - y.sup) || ((y.own?.att ?? -1) - (x.own?.att ?? -1))).map(E => { const o = E.own, r = E.p.ratings || {}; return `<tr class="click" data-person="${esc(E.p.id)}"><td class="who"><b>${esc(E.p.name)}</b><div class="sub">${esc(E.p.team || '')}</div></td><td class="nw">${esc(E.p.role === 'Support / Operations' ? 'Support' : E.p.role)}</td>
+      <td>${E.sup ? '' : heatCell(o?.parts.offer, W.offer, 'Offers & complexity')}</td><td>${E.sup ? '' : heatCell(o?.parts.ct, 10, 'Cycle time')}</td><td>${E.sup ? '' : heatCell(o?.parts.vendor, 5, 'Vendor')}</td>
+      <td>${E.sup ? (() => { const o = opsRating(E.p.id); return o && o.pts != null ? heatCell(o.pts, W.ops, 'KPI & SLA') : `<div class="sub" style="text-align:center">${o ? 'KPI & SLA to rate' : 'no deliverables'}</div>`; })() : heatCell(E.del, W.del, 'Deliverables')}</td><td>${heatCell(E.proj, W.proj, 'Projects')}</td><td>${heatCell(E.comp, W.comp, 'Competency development')}</td>
       <td class="n">${E.total != null ? `<b>${fmt(E.total)}</b><span class="sub"> /${E.max}</span>` : `<span class="sub nw">${fmt(E.partial)} so far</span>`}</td>
       <td class="mono nw" title="${esc([r.y2023, r.y2024, r.y2025].map((x, i) => (YEAR - 3 + i) + ': ' + (x || 'no rating')).join(', '))}">${[r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · ')}</td><td>${E.rv.finalRating ? `<span class="tag acc">${esc(E.rv.finalRating)}</span>` : '<span class="sub">not rated</span>'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   h += viewCompare();
@@ -589,10 +601,10 @@ function pOverview(E) {
     h += `<div class="card fig"><div class="l">Weighted points</div><div class="v">${fmt(o.points)}<small>of ${fmt(o.ptPro)}</small></div><div class="f">${pct(o.att * 100)} of target to date · full year ${fmt(o.ptFull, 0)}${o.revC != null ? `<br>${pct(o.revAtt * 100)} of the revised target (${fmt(o.revC)} per 10 days)` : ''}</div></div>
       <div class="card fig"><div class="l">Offers released</div><div class="v">${fmt(tr.offers, 0)}</div><div class="f">${fmt(tr.joined, 0)} joined · ${fmt(tr.declined, 0)} declined · ${fmt(tr.pending, 0)} pending</div></div>
       <div class="card fig"><div class="l">Average offer days</div><div class="v">${fmt(o.offerDays, 0)}</div><div class="f">${ctLabel(o.offerDays)}</div></div>`;
-  } else h += `<div class="card fig span2"><div class="l">Role</div><div class="f" style="font-size:13px;color:var(--ink-2)">${esc(p.roleNote || p.role || '')}</div><div class="f">No hiring deliverables. Scored on Projects and Competency Development (out of 30).</div></div>${(() => { const o = opsRating(p.id); return o ? `<div class="card fig" data-tab="ops" data-person-tab="${esc(p.id)}" style="cursor:pointer"><div class="l">Operational rating (KPI & SLA)</div><div class="v">${o.overall != null ? o.overall + '<small>of 5</small>' : '—'}</div><div class="f">${o.overall != null ? esc(OPS_LABELS[o.overall][0]) : o.rated + ' of 4 pillars rated'}</div></div>` : `<div class="card fig"><div class="l">Projects</div><div class="v">${E.projs.length}</div><div class="f">${E.projs.filter(x => x.status === 'Completed').length} completed</div></div>`; })()}`;
+  } else h += `<div class="card fig span2"><div class="l">Role</div><div class="f" style="font-size:13px;color:var(--ink-2)">${esc(p.roleNote || p.role || '')}</div><div class="f">No hiring deliverables. Scored out of 100: KPI &amp; SLA 70, projects 10, competency development 10, process improvement 10.</div></div>${(() => { const o = opsRating(p.id); return o ? `<div class="card fig" data-tab="ops" data-person-tab="${esc(p.id)}" style="cursor:pointer"><div class="l">Operational rating (KPI & SLA)</div><div class="v">${o.overall != null ? o.overall + '<small>of 5</small>' : '—'}</div><div class="f">${o.overall != null ? esc(OPS_LABELS[o.overall][0]) : o.rated + ' of 4 pillars rated'}</div></div>` : `<div class="card fig"><div class="l">Projects</div><div class="v">${E.projs.length}</div><div class="f">${E.projs.filter(x => x.status === 'Completed').length} completed</div></div>`; })()}`;
   h += `<div class="card fig"><div class="l">Total score</div><div class="v">${E.total != null ? fmt(E.total) : fmt(E.partial)}<small>of ${E.max}</small></div><div class="f">${E.total != null ? 'complete' : 'provisional: some parts not scored'}</div></div></div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Score summary</h3><span class="sp"></span><button class="btn link" data-tab="scores" data-person-tab="${esc(p.id)}" type="button">Details</button></div>
-    ${E.sup ? '' : scoreLine('Business deliverables', E.del, 70, isLead(p) ? 'Half team goal, half own delivery' : '')}${scoreLine('Projects', E.proj, 15)}${scoreLine('Competency development', E.comp, 15)}</div>
+    ${E.sup ? scoreLine('KPI &amp; SLA', E.opsPts, W.ops) : scoreLine('Business deliverables', E.del, W.del, isLead(p) ? 'Half team goal, half own delivery' : '')}${scoreLine('Projects', E.proj, W.proj)}${scoreLine('Competency development', E.comp, W.comp)}${E.sup ? scoreLine('Process improvement', E.proc, W.proc) : ''}</div>
     <div class="card pad"><div class="sec-h"><h3>Performance history</h3></div>${ratingsHistory(E)}</div></div>`;
   const openPlans = E.plans.filter(x => x.status !== 'Done' && x.status !== 'Dropped');
   h += `<div class="grid c3 sec"><div class="card pad"><div class="sec-h"><h3>Development plan</h3><span class="hint">${E.plans.length} items</span></div>${openPlans.length ? `<div class="items">${openPlans.slice(0, 3).map(x => `<div class="item"><div class="t">${esc(x.action)}</div><div class="d">${esc(x.type || '')}${x.competency ? ' · ' + esc(x.competency) : ''}${x.due ? ' · due ' + nice(x.due) : ''}</div></div>`).join('')}</div>` : '<div class="empty-note">No open development actions yet.</div>'}</div>
@@ -616,10 +628,12 @@ function pDelivery(E) {
     <div class="card fig"><div class="l">Annual offer target</div><div class="v">${fmt(o.target, 0)}</div><div class="f">× ${o.ppo} = ${fmt(o.ptFull, 0)} points a year${num(d.ptAnnual) != null ? ' (personal points target)' : ''}</div></div>
     <div class="card fig"><div class="l">Points target to date</div><div class="v">${fmt(o.ptPro)}</div><div class="f">${pct(o.prorate * 100)} of the year by working days</div></div>
     <div class="card fig"><div class="l">Weighted points</div><div class="v">${fmt(o.points)}</div><div class="f">${chip(statusOf(o.att), pct(o.att * 100) + ' of target')}</div></div>
-    <div class="card fig"><div class="l">Points per offer</div><div class="v">${tr.offers ? fmt(o.points / tr.offers, 2) : '—'}</div><div class="f">the target assumes ${o.ppo}</div></div></div>`;
+    <div class="card fig"><div class="l">Points per offer</div><div class="v">${(num(tr.offers) ?? 0) + o.ijp ? fmt(o.points / ((num(tr.offers) ?? 0) + o.ijp), 2) : '—'}</div><div class="f">the target assumes ${o.ppo}</div></div></div>`;
   if (o.revC != null) h += `<div class="note sec" style="color:var(--ink);font-size:13px"><b>Revised target for 2026 (reduced cadence):</b> ${fmt(o.revC)} offers every 10 working days = ${fmt(o.revAnnual, 1)} offers a year and ${fmt(o.revPtPro)} points to date. Against it: ${fmt(o.points)} points, ${chip(statusOf(o.revAtt), pct(o.revAtt * 100))}. The scores above still use the regular target.</div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Key measures</h3></div><div class="tw"><table><tbody>
     <tr><td>Offers released (trackers)</td><td class="n">${fmt(tr.offers, 0)}</td><td class="sub">${fmt(tr.joined, 0)} joined · ${fmt(tr.declined, 0)} declined · ${fmt(tr.pending, 0)} pending</td></tr>
+    ${o.ijp ? `<tr><td>Internal hiring (IJP) offers</td><td class="n">${o.ijp}</td><td class="sub">${fmt(o.ijp * ijpPts())} points at ${fmt(ijpPts())} each, no women's bonus</td></tr>` : ''}
+    ${o.declPts ? `<tr><td>Decline deduction</td><td class="n">−${fmt(o.declPts)}</td><td class="sub">${o.declined} declined × ${fmt(declPen())}</td></tr>` : ''}
     ${o.interns ? `<tr><td>Intern offers</td><td class="n">${o.interns}</td><td class="sub">${fmt(o.interns * internPts())} points at ${fmt(internPts())} each (tracker points ${fmt(o.basePts)})</td></tr>` : ''}
     <tr><td>Offers (scorecard)</td><td class="n">${fmt(o.offers, 0)}</td><td class="sub">${fmt(o.joiners, 0)} joiners</td></tr>
     <tr><td>Joining ratio</td><td class="n">${pct(o.jr)}</td><td class="sub">scorecard joiners ÷ offers</td></tr>
@@ -630,7 +644,7 @@ function pDelivery(E) {
     <tr><td>Referral share</td><td class="n">${pct(num(d.referralPct))}</td><td></td></tr>
     <tr><td>Women hires</td><td class="n">${pct(num(d.diversityPct))}</td><td class="sub">${tr.pointsBonus != null ? fmt(tr.pointsBonus) + ' bonus points' : ''}</td></tr></tbody></table></div>
     <p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0 0">${esc(d.source || '')}</p></div>
-    <div class="card pad"><div class="sec-h"><h3>Points by offer category</h3></div><div class="tw"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Share</th></tr></thead><tbody>${(d.mix || []).map(([c, n, pts]) => { if (isIntern(c)) { c = `Internships (${fmt(internPts())} each)`; pts = n * internPts(); } return `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(pts)}</td><td class="n">${o.points ? pct(pts / o.points * 100) : '—'}</td></tr>`; }).join('')}<tr><td><b>Total</b></td><td class="n"><b>${fmt(tr.offers, 0)}</b></td><td class="n"><b>${fmt(o.points)}</b></td><td></td></tr></tbody></table></div>
+    <div class="card pad"><div class="sec-h"><h3>Points by offer category</h3></div><div class="tw"><table><thead><tr><th>Category</th><th class="n">Offers</th><th class="n">Points</th><th class="n">Share</th></tr></thead><tbody>${mixRows(o).map(([c, n, pts]) => { if (isIntern(c)) { c = `Internships (${fmt(internPts())} each)`; pts = n * internPts(); } return `<tr><td>${esc(c)}</td><td class="n">${n}</td><td class="n">${fmt(pts)}</td><td class="n">${o.points ? pct(pts / o.points * 100) : '—'}</td></tr>`; }).join('')}<tr><td><b>Total</b></td><td class="n"><b>${fmt((num(tr.offers) ?? 0) + o.ijp, 0)}</b></td><td class="n"><b>${fmt(o.points)}</b></td><td></td></tr></tbody></table></div>
     ${tr.pointsExclDeclined != null ? `<p class="sub" style="font-size:12px;color:var(--muted);margin:8px 0 0">Without declined offers: ${fmt(tr.pointsExclDeclined)} points. ${esc(tr.note || '')}</p>` : ''}
     ${Object.keys(st).length ? `<h4 style="font-size:13px;margin:14px 0 6px">Offers by stream (scorecard)</h4><div class="tw"><table><tbody>${[['core', 'Core and campus'], ['nats', 'NATS'], ['excelher', 'ExcelHER'], ['other', 'Other programmes']].filter(([k]) => st[k] != null).map(([k, t]) => `<tr><td>${t}</td><td class="n">${st[k]}</td></tr>`).join('')}</tbody></table></div>` : ''}</div></div>`;
   if (E.team) {
@@ -648,15 +662,16 @@ function pScores(E) {
   const o = E.own, rv = E.rv, p = E.p;
   let h = `<div class="grid c2"><div class="card pad"><div class="sec-h"><h3>Scorecard</h3><span class="hint">out of ${E.max}</span></div>`;
   if (!E.sup && o) {
-    h += scoreLine('Offers &amp; complexity', o.parts.offer, 40, `40 × weighted points ÷ target to date (${fmt(o.points)} ÷ ${fmt(o.ptPro)}), capped at 40`);
-    h += scoreLine('Joining', o.parts.jr, 15, `Joining ratio ${pct(o.jr)}: 90%+ 15 · 85–89% 13 · 80–84% 11 · 75–79% 8 · below 75% 5`);
+    h += scoreLine('Offers &amp; complexity', o.parts.offer, W.offer, `${W.offer} × weighted points ÷ target to date (${fmt(o.points)} ÷ ${fmt(o.ptPro)}), capped at ${W.offer}${o.declPts ? `; includes −${fmt(o.declPts)} for ${o.declined} declined offers` : ''}`);
     h += scoreLine('Cycle time', o.parts.ct, 10, `${fmt(o.offerDays, 0)} days: under ${CT.strong} 10 · ${CT.strong}–${CT.ok} 7 · over ${CT.ok} 4`);
     h += scoreLine('Vendor', o.parts.vendor, 5, `${pct(o.vendorPct)} through vendors: under 10% 5 · 10–20% 3 · over 20% 1`);
-    if (E.team) h += scoreLine('Team goal (team lead)', E.team.del, 70, `Team deliverables; own ${fmt(o.del)} / 70. Lead deliverables = 35 × team + 35 × own`);
-    h += scoreLine('<b>Business deliverables</b>', E.del, 70);
+    if (E.team) h += scoreLine('Team goal (team lead)', E.team.del, W.del, `Team deliverables; own ${fmt(o.del)} / ${W.del}. Lead deliverables = 40 for the team + 40 for own delivery`);
+    h += scoreLine('<b>Business deliverables</b>', E.del, W.del);
   }
-  h += scoreLine('Projects', E.proj, 15, E.projs.some(x => x.contributing) ? 'Best scored project that counts towards the review' : 'Mark a project as counting and score it under Projects');
-  h += scoreLine('Competency development', E.comp, 15, 'Capability growth (7) + application of learning (5) + plan completion (3)');
+  if (E.sup) { const op = opsRating(p.id); h += scoreLine('KPI &amp; SLA', E.opsPts, W.ops, op ? `Timely completion / SLA ${OPS_W.timely} · volume ${OPS_W.volume} · error-free ${OPS_W.errors} · experience ${OPS_W.experience}; each pillar earns 100% at 5, 90% at 4, 75% at 3, 50% at 2, 20% at 1${op.rated < 4 ? ` (${op.rated} of 4 pillars rated)` : ''}` : 'Set up the KPI & SLA scorecard first'); }
+  h += scoreLine('Projects', E.proj, W.proj, E.projs.some(x => x.contributing) ? 'Best scored project that counts (scored out of 15, scaled to 10)' : 'Mark a project as counting and score it under Projects');
+  h += scoreLine('Competency development', E.comp, W.comp, 'Capability growth (7) + application of learning (5) + plan completion (3), scaled from 15 to 10');
+  if (E.sup) h += scoreLine('Process improvement', E.proc, W.proc, 'TA Head score, 0–10, for contribution to process improvement');
   h += `<div class="srow" style="border-top:2px solid var(--line-2)"><div><b>Total</b></div><div></div><div class="s">${E.total != null ? fmt(E.total) : '—'}<small> / ${E.max}</small></div>${E.total == null ? `<div class="why">${fmt(E.partial)} so far</div>` : ''}</div></div>`;
   const done = E.plans.length ? Math.round(E.plans.filter(x => x.status === 'Done').length / E.plans.length * 100) : null;
   h += `<div class="card pad"><div class="sec-h"><h3>Your assessment</h3><span class="hint">TA Head</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editReview" data-id="${esc(p.id)}" type="button">Edit assessment</button>` : ''}</div>
@@ -978,16 +993,16 @@ async function buildDeck(opt) {
       tbl(s, ['Person', 'Status', 'Points', 'Offers', 'Joined', 'Declined', 'Joined ÷ offers', 'Pts / offer', 'Against target'], cr.map(r => [r.p.name, r.left ? 'Left' : r.p.role, N(r.points), N(r.offers, 0), N(r.joined, 0), N(r.declined, 0), P(r.jr), N(r.ppo, 2), r.left ? 'no target' : { text: P(r.att * 100), options: { bold: true, color: stc(statusOf(r.att)) } }]), { x: 6.3, y: 1.45, w: 6.5, colW: [1.35, 0.7, 0.6, 0.55, 0.55, 0.6, 0.7, 0.6, 0.85], fs: 9 });
     }
     // 7 scorecard
-    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Scorecard', 'Deliverables 70 (offers & complexity 40, joining 15, cycle time 10, vendor 5) + projects 15 + competency development 15');
-    tbl(s, ['Person', 'Role', 'Offers /40', 'Joining /15', 'Cycle /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Comp. dev /15', 'Total', `P4P ${YEAR - 3}·${String(YEAR - 2).slice(2)}·${String(YEAR - 1).slice(2)}`, `${YEAR} rating`],
-      all.map(E => { const o = E.own, r = E.p.ratings || {}; return [E.p.name, E.sup ? 'Support' : E.p.role, o ? N(o.parts.offer) : '—', o ? N(o.parts.jr) : '—', o ? N(o.parts.ct) : '—', o ? N(o.parts.vendor) : '—', E.sup ? 'n/a' : N(E.del), N(E.proj), N(E.comp), E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, [r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · '), E.rv.finalRating || '—']; }),
-      { x: 0.5, y: 1.4, w: 12.3, colW: [1.6, 1.05, 0.85, 0.9, 0.8, 0.8, 1.1, 0.95, 1.05, 1.15, 1.15, 0.9], fs: 9.5 });
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Scorecard', 'Deliverables 80 (offers & complexity 65, cycle time 10, vendor 5) + projects 10 + competency development 10. Support: KPI & SLA 70 + projects 10 + competency 10 + process improvement 10');
+    tbl(s, ['Person', 'Role', 'Offers /65', 'Cycle /10', 'Vendor /5', 'Deliverables /80 · KPI & SLA /70', 'Projects /10', 'Comp. dev /10', 'Total', `P4P ${YEAR - 3}·${String(YEAR - 2).slice(2)}·${String(YEAR - 1).slice(2)}`, `${YEAR} rating`],
+      all.map(E => { const o = E.own, r = E.p.ratings || {}; return [E.p.name, E.sup ? 'Support' : E.p.role, o ? N(o.parts.offer) : '—', o ? N(o.parts.ct) : '—', o ? N(o.parts.vendor) : '—', E.sup ? (E.opsPts != null ? N(E.opsPts) + ' (KPI & SLA)' : 'KPI & SLA to rate') : N(E.del), N(E.proj), N(E.comp), E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, [r.y2023, r.y2024, r.y2025].map(x => x ? x.slice(0, 2) : '–').join(' · '), E.rv.finalRating || '—']; }),
+      { x: 0.5, y: 1.4, w: 12.3, colW: [1.6, 1.05, 0.9, 0.8, 0.8, 1.75, 0.9, 1.0, 1.15, 1.25, 1.1], fs: 9.5 });
   }
   // 8 competency & learning
   s = pptx.addSlide({ masterName: 'B' }); head(s, 'Competency development and learning', 'Training records, development plans and behaviour ratings. Attendance alone never adds points.');
   const lrn = all.flatMap(E => E.learn.map(l => [E.p.name, l.programme, l.status || '', l.cert ? 'Yes' : '—']));
   tbl(s, ['Person', 'Programme', 'Status', 'Certificate'], lrn.length ? lrn.slice(0, 14) : [['—', 'No training recorded', '', '']], { x: 0.5, y: 1.4, w: 7.2, colW: [1.7, 3.3, 1.2, 1.0], fs: 9.5 });
-  tbl(s, ['Person', 'Plan items', 'Done', 'Behaviours rated', 'Comp. dev /15'], all.map(E => [E.p.name, E.plans.length, E.plans.filter(x => x.status === 'Done').length, COMPETENCIES.filter(c => (E.beh[c] || {}).head != null).length + ' / 8', N(E.comp)]), { x: 8.0, y: 1.4, w: 4.8, colW: [1.5, 0.8, 0.6, 1.0, 0.9], fs: 9.5 });
+  tbl(s, ['Person', 'Plan items', 'Done', 'Behaviours rated', 'Comp. dev /10'], all.map(E => [E.p.name, E.plans.length, E.plans.filter(x => x.status === 'Done').length, COMPETENCIES.filter(c => (E.beh[c] || {}).head != null).length + ' / 8', N(E.comp)]), { x: 8.0, y: 1.4, w: 4.8, colW: [1.5, 0.8, 0.6, 1.0, 0.9], fs: 9.5 });
   // person slides
   const personSlides = E => {
     const p = E.p, o = E.own, tr = o ? o.d.tracker || {} : {}, r = p.ratings || {};
@@ -996,19 +1011,19 @@ async function buildDeck(opt) {
     if (o) {
       [['Weighted points', `${N(o.points)} / ${N(o.ptPro)}`, `${P(o.att * 100)} of target${o.revAtt != null ? ' · ' + P(o.revAtt * 100) + ' of revised' : ''}`, stc(statusOf(o.att))], ['Offers released', N(tr.offers, 0), `${N(tr.joined, 0)} joined · ${N(tr.declined, 0)} declined`], ['Offer days', N(o.offerDays, 0), ctLabel(o.offerDays)], ['Joining ratio', P(o.jr), 'scorecard joiners ÷ offers'], ['Total score', E.total != null ? `${N(E.total)}` : `${N(E.partial)}`, E.total != null ? `of ${E.max}` : `of ${E.max} so far (provisional)`]].forEach((k, i) => kpi(s1, 0.5 + i * 2.5, 1.4, 2.3, ...k));
       sect(s1, 'Scores against maximum', 0.5, 2.65, 6);
-      const rows = [['Offers & complexity', o.parts.offer, 40], ['Joining', o.parts.jr, 15], ['Cycle time', o.parts.ct, 10], ['Vendor', o.parts.vendor, 5]];
-      if (E.team) rows.push(['Team goal (deliverables)', E.team.del, 70]);
-      rows.push(['Business deliverables', E.del, 70], ['Projects', E.proj, 15], ['Competency development', E.comp, 15]);
+      const rows = [['Offers & complexity', o.parts.offer, W.offer], ['Cycle time', o.parts.ct, W.ct], ['Vendor', o.parts.vendor, W.vendor]];
+      if (E.team) rows.push(['Team goal (deliverables)', E.team.del, W.del]);
+      rows.push(['Business deliverables', E.del, W.del], ['Projects', E.proj, W.proj], ['Competency development', E.comp, W.comp]);
       tbl(s1, ['Component', 'Score', 'Max', '%'], rows.map(([l, v, m]) => [l, v == null ? 'to score' : N(v), m, v == null ? '—' : P(v / m * 100)]), { x: 0.5, y: 3.0, w: 6, colW: [3.0, 1.0, 0.9, 1.1], fs: 10 });
       sect(s1, 'Points by offer category', 6.9, 2.65, 6);
-      tbl(s1, ['Category', 'Offers', 'Points'], (o.d.mix || []).map(([c, n, pts]) => isIntern(c) ? [`Internships (${N(internPts())} each)`, n, N(n * internPts())] : [c, n, N(pts)]).concat([[{ text: 'Total', options: { bold: true } }, { text: N(tr.offers, 0), options: { bold: true } }, { text: N(o.points), options: { bold: true } }]]), { x: 6.9, y: 3.0, w: 5.9, colW: [3.5, 1.1, 1.3], fs: 9.5 });
+      tbl(s1, ['Category', 'Offers', 'Points'], mixRows(o).map(([c, n, pts]) => isIntern(c) ? [`Internships (${N(internPts())} each)`, n, N(n * internPts())] : [c, n, N(pts)]).concat([[{ text: 'Total', options: { bold: true } }, { text: N((num(tr.offers) ?? 0) + o.ijp, 0), options: { bold: true } }, { text: N(o.points), options: { bold: true } }]]), { x: 6.9, y: 3.0, w: 5.9, colW: [3.5, 1.1, 1.3], fs: 9.5 });
       s1.addText(`Other measures: days to join ${N(num(o.d.joinDays), 0)} · declined ${P(num(o.d.declinedPct))} · vendor ${P(o.vendorPct)} · referrals ${P(num(o.d.referralPct))} · women hires ${P(num(o.d.diversityPct))}.   P4P: ${YEAR - 3} ${r.y2023 || '—'} · ${YEAR - 2} ${r.y2024 || '—'} · ${YEAR - 1} ${r.y2025 || '—'} · ${YEAR} ${E.rv.finalRating || 'not rated yet'}`, { x: 0.5, y: 6.45, w: 12.3, h: 0.5, fontFace: F, fontSize: 10, color: C.ink2 });
       if (E.team) s1.addText(`Team goal: members' points ${N(E.team.points)} of ${N(E.team.ptPro)} (${P(E.team.att * 100)}) · team joining ${P(E.team.jr)} · team offer days ${N(E.team.ct, 0)}`, { x: 0.5, y: 6.15, w: 12.3, h: 0.3, fontFace: F, fontSize: 10, bold: true, color: C.acc });
     } else {
-      [['Projects', E.projs.length, `${E.projs.filter(x => x.status === 'Completed').length} completed`], ['Training records', E.learn.length, ''], ['Plan items', E.plans.length, ''], ['Total score', E.total != null ? N(E.total) : N(E.partial), `of 30${E.total == null ? ' so far' : ''}`]].forEach((k, i) => kpi(s1, 0.5 + i * 3.1, 1.4, 2.9, ...k));
+      [['Projects', E.projs.length, `${E.projs.filter(x => x.status === 'Completed').length} completed`], ['Training records', E.learn.length, ''], ['Plan items', E.plans.length, ''], ['Total score', E.total != null ? N(E.total) : N(E.partial), `of 100${E.total == null ? ' so far' : ''}`]].forEach((k, i) => kpi(s1, 0.5 + i * 3.1, 1.4, 2.9, ...k));
       sect(s1, 'Role', 0.5, 2.65, 12); s1.addText(p.roleNote || p.role || '', { x: 0.5, y: 3.0, w: 12.3, h: 0.6, fontFace: F, fontSize: 12, color: C.ink, valign: 'top' });
-      sect(s1, 'Scores', 0.5, 3.8, 6); tbl(s1, ['Component', 'Score', 'Max'], [['Projects', E.proj == null ? 'to score' : N(E.proj), 15], ['Competency development', E.comp == null ? 'to score' : N(E.comp), 15]], { x: 0.5, y: 4.15, w: 6, colW: [3.6, 1.2, 1.2] });
-      s1.addText(`P4P: ${YEAR - 3} ${r.y2023 || '—'} · ${YEAR - 2} ${r.y2024 || '—'} · ${YEAR - 1} ${r.y2025 || '—'} · ${YEAR} ${E.rv.finalRating || 'not rated yet'}. No hiring deliverables; scored out of 30.`, { x: 0.5, y: 6.45, w: 12.3, h: 0.4, fontFace: F, fontSize: 10, color: C.ink2 });
+      sect(s1, 'Scores', 0.5, 3.8, 6); tbl(s1, ['Component', 'Score', 'Max'], [['KPI & SLA', E.opsPts == null ? 'to rate' : N(E.opsPts), W.ops], ['Projects', E.proj == null ? 'to score' : N(E.proj), W.proj], ['Competency development', E.comp == null ? 'to score' : N(E.comp), W.comp], ['Process improvement', E.proc == null ? 'to score' : N(E.proc), W.proc]], { x: 0.5, y: 4.15, w: 6, colW: [3.6, 1.2, 1.2] });
+      s1.addText(`P4P: ${YEAR - 3} ${r.y2023 || '—'} · ${YEAR - 2} ${r.y2024 || '—'} · ${YEAR - 1} ${r.y2025 || '—'} · ${YEAR} ${E.rv.finalRating || 'not rated yet'}. Scored out of 100: KPI & SLA 70, projects 10, competency development 10, process improvement 10.`, { x: 0.5, y: 6.45, w: 12.3, h: 0.4, fontFace: F, fontSize: 10, color: C.ink2 });
     }
     let s2 = pptx.addSlide({ masterName: 'B' });
     head(s2, `${p.name}: contribution and development`, 'Qualitative comments, programmes, projects, learning and development plan');
@@ -1068,7 +1083,7 @@ async function buildDeck(opt) {
   }
   const rest = all.filter(E => !isLead(E.p) && !leads.some(L => L.p.team === E.p.team));
   if (rest.length) {
-    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Support and operations', 'No hiring deliverables. Reviewed on projects and competency development (out of 30).');
+    s = pptx.addSlide({ masterName: 'B' }); head(s, 'Support and operations', 'Scored out of 100: KPI & SLA 70 + projects 10 + competency development 10 + process improvement 10.');
     tbl(s, ['Person', 'Team', 'Level', 'Projects', 'Training', 'Plan items', 'Total', 'Operational rating', `P4P ${YEAR - 1}`], rest.map(E => { const o = opsRating(E.p.id); return [E.p.name, E.p.team || '—', E.p.level || '—', E.projs.length, E.learn.length, E.plans.length, E.total != null ? `${N(E.total)} / ${E.max}` : `${N(E.partial)} so far`, o ? (o.overall != null ? `${o.overall} / 5 ${OPS_LABELS[o.overall][0]}` : `${o.rated} of 4 pillars rated`) : '—', (E.p.ratings || {}).y2025 || '—']; }), { x: 0.5, y: 1.4, w: 12.3, colW: [1.7, 2.3, 0.7, 0.9, 0.9, 1.0, 1.4, 2.1, 1.3] });
     if (opt.people) rest.forEach(personSlides);
   }
@@ -1079,10 +1094,10 @@ async function buildDeck(opt) {
   }
   s = pptx.addSlide({ masterName: 'B' }); head(s, 'How the scores work and where the data comes from');
   bullets(s, [
-    'Total of 100: business deliverables 70 (offers & complexity 40, joining 15, cycle time 10, vendor 5) + projects 15 + competency development 15. Support roles are scored out of 30. Behaviours are discussed, not scored.',
-    `Offers & complexity: 40 × weighted points ÷ points target to date, capped at 40. Points target = annual offer target × 2, pro-rated by working days. Team Leads carry half a recruiter's offer target; their deliverables are 35 for the team goal + 35 for their own delivery.`,
-    `Points per offer: lateral SG1–SG4 1 · SG5–SG8 2 · SG9+ 3 · new FTC hire 2 · conversion to FTC 1 · NATS 1 · ExcelHER 2 · GET/PGET 1 · AICTE and PhD 2 · conversions 1 · interns ${fmt(internPts())}. +0.5 for women hires where the rule allows (never on FTC or conversions). SG = JL + 2. Declined offers count.`,
-    'Joining: ≥90% 15 · 85–89% 13 · 80–84% 11 · 75–79% 8 · <75% 5. Cycle time: <45 days 10 · 45–55 7 · >55 4. Vendor: <10% 5 · 10–20% 3 · >20% 1.',
+    'Total of 100: business deliverables 80 (offers & complexity 65, cycle time 10, vendor 5) + projects 10 + competency development 10. Support roles: KPI & SLA 70 (SLA and timeliness 25, volume 20, error-free 15, experience 10; each pillar earns 100% at 5, 90% at 4, 75% at 3, 50% at 2, 20% at 1) + projects 10 + competency development 10 + process improvement 10. Behaviours are discussed, not scored.',
+    `Offers & complexity: 65 × weighted points ÷ points target to date, capped at 65. Points target = annual offer target × 2, pro-rated by working days. Team Leads: deliverables are 40 for the team goal + 40 for their own delivery.${declOn() ? ` Declined offers: −${fmt(declPen())} each.` : ` From ${declFrom()}, each declined offer earns its normal points minus ${fmt(declPen())}.`}`,
+    `Points per offer: lateral SG1–SG4 1 · SG5–SG8 2 · SG9+ 3 · new FTC hire 2 · conversion to FTC 1 · NATS 1 · ExcelHER 2 · GET/PGET 1 · AICTE and PhD 2 · conversions 1 · internal hiring (IJP) ${fmt(ijpPts())} · interns ${fmt(internPts())}. +0.5 for women hires where the rule allows (never on FTC hires, conversions or IJP). SG = JL + 2. Declined offers count.`,
+    'Cycle time: <45 days 10 · 45–55 7 · >55 4. Vendor: <10% 5 · 10–20% 3 · >20% 1. Joining ratio is shown but not scored.',
     'Sources: Hiring2026 tracker and NATS & pipeline programmes workbook (offers 1 Jan–16 Oct 2026); recruiter scorecards and programme results from the 2026 Annual Performance Review deck; TA year plan 2026; P&C calendar (talent pipeline & university relations); P4P history, job levels and dates supplied by the TA Head.',
   ], { x: 0.5, y: 1.3, w: 12.3, h: 5.6, fs: 12 });
   const blob = await pptx.write({ outputType: 'blob' });
@@ -1106,7 +1121,7 @@ function viewManage() {
   let h = `<div class="phead"><div><h2>People and teams</h2><div class="meta"><span>Add, edit or remove people, and keep teams up to date</span></div></div><div class="sp"></div>${canWrite ? '<div class="btns"><button class="btn" data-act="addTeam" type="button">Add team</button><button class="btn pri" data-act="addPerson" type="button">Add person</button></div>' : ''}</div>`;
   h += `<div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Level</th><th>Joined</th><th>In review</th><th class="n">Annual offer target</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><b class="click" data-person="${esc(p.id)}" style="cursor:pointer">${esc(p.name)}</b>${p.vcnid ? `<div class="sub mono">${esc(p.vcnid)}</div>` : ''}</td><td>${esc(p.role || '')}</td><td>${esc(p.team || '—')}</td><td class="mono">${esc(p.level || '—')}</td><td>${nice(p.joined)}</td><td>${inReview(p) ? 'Yes' : `<span class="sub">No${p.status === 'Left' ? ' (left)' : ''}</span>`}</td><td class="n">${S.delivery[p.id] ? fmt(num(S.delivery[p.id].target), 0) : '—'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button> <button class="btn sm danger" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const sc = S.settings.behaviourScale || {};
-  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Points per IJP offer</dt><dd>${fmt(ijpPts())}</dd><dt>Declined offers</dt><dd>−${fmt(declPen())} each from ${declFrom()}${declOn() ? ' (applied now)' : ` (not applied in ${YEAR})`}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
     <div class="card pad"><div class="sec-h"><h3>Behaviour rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Competency</th><th>Own descriptions</th><th></th></tr></thead><tbody>${COMPETENCIES.map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editScale" data-id="${i}" type="button">Edit</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
   const teams = Object.entries(S.teams).sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99));
   h += `<div class="card pad sec"><div class="sec-h"><h3>Teams</h3></div><div class="tw"><table><thead><tr><th>Team</th><th>Business areas</th><th class="n">People</th><th></th></tr></thead><tbody>${teams.map(([k, t]) => `<tr><td><b>${esc(t.name)}</b></td><td>${esc((t.areas || []).join(', '))}</td><td class="n">${ppl.filter(p => p.team === t.name && inReview(p)).length}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editTeam" data-id="${esc(k)}" type="button">Edit</button> <button class="btn sm danger" data-act="delTeam" data-id="${esc(k)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
@@ -1220,7 +1235,7 @@ function deliveryForm(id) {
       { section: 'Target' }, { k: 'target', label: 'Annual offer target', type: 'number', min: 0 }, { k: 'ppo', label: 'Points per offer', type: 'number', min: 0, step: .1 },
       { k: 'revCadence', label: 'Revised target: offers per 10 working days', hint: '(shown alongside; scores use the regular target)', type: 'number', min: 0, step: 0.5 }, { k: 'ptAnnual', label: 'Personal points target', hint: '(optional, replaces target × points)', type: 'number', min: 0 }, { k: 'prorPct', label: 'Share of year elapsed (%)', type: 'number', min: 0, max: 100, step: .1 },
       { section: 'Hiring trackers' }, { k: 'points', label: 'Weighted points', hint: '(before intern points)', type: 'number', min: 0, step: .5 }, { k: 'tOffers', label: 'Offers released', type: 'number', min: 0 },
-      { k: 'tJoined', label: 'Joined', type: 'number', min: 0 }, { k: 'tDeclined', label: 'Declined', type: 'number', min: 0 }, { k: 'tPending', label: 'Pending joining', type: 'number', min: 0 },
+      { k: 'ijp', label: 'Internal hiring (IJP) offers', hint: `(${fmt(ijpPts())} point each)`, type: 'number', min: 0 }, { k: 'tJoined', label: 'Joined', type: 'number', min: 0 }, { k: 'tDeclined', label: 'Declined', type: 'number', min: 0 }, { k: 'tPending', label: 'Pending joining', type: 'number', min: 0 },
       { section: 'Recruiter scorecard' }, { k: 'offers', label: 'Offers (scorecard)', type: 'number', min: 0 }, { k: 'joiners', label: 'Joiners (scorecard)', type: 'number', min: 0 },
       { k: 'offerDays', label: 'Requisition-to-offer days', type: 'number', min: 0 }, { k: 'joinDays', label: 'Days to join', type: 'number', min: 0 },
       { k: 'declinedPct', label: 'Offers declined (%)', type: 'number', min: 0, max: 100 }, { k: 'vendorPct', label: 'Vendor share (%)', type: 'number', min: 0, max: 100 },
@@ -1228,7 +1243,7 @@ function deliveryForm(id) {
       { k: 'asOf', label: 'Scorecard date', type: 'date' }, { k: 'source', label: 'Source', full: true },
     ],
     save: async v => {
-      const doc = { ...d, target: v.target, ppo: v.ppo ?? 2, revCadence: v.revCadence, ptAnnual: v.ptAnnual, prorate: v.prorPct != null ? v.prorPct / 100 : 1, points: v.points, offers: v.offers, joiners: v.joiners, offerDays: v.offerDays, joinDays: v.joinDays, declinedPct: v.declinedPct, vendorPct: v.vendorPct, referralPct: v.referralPct, diversityPct: v.diversityPct, asOf: v.asOf, source: v.source,
+      const doc = { ...d, ijp: v.ijp, target: v.target, ppo: v.ppo ?? 2, revCadence: v.revCadence, ptAnnual: v.ptAnnual, prorate: v.prorPct != null ? v.prorPct / 100 : 1, points: v.points, offers: v.offers, joiners: v.joiners, offerDays: v.offerDays, joinDays: v.joinDays, declinedPct: v.declinedPct, vendorPct: v.vendorPct, referralPct: v.referralPct, diversityPct: v.diversityPct, asOf: v.asOf, source: v.source,
         tracker: { ...t, offers: v.tOffers, joined: v.tJoined, declined: v.tDeclined, pending: v.tPending } };
       return write('delivery/' + id, doc, `Updated delivery figures for ${S.people[id].name}`);
     } });
@@ -1237,8 +1252,9 @@ function deliveryForm(id) {
 function reviewForm(id) {
   const rv = S.reviews[id] || {};
   openForm({ title: `Assessment: ${S.people[id].name}`, values: rv, fields: [
-    { section: 'Competency development (15)' }, { k: 'growth', label: 'Capability growth', hint: '(0–7)', type: 'number', min: 0, max: 7, step: .5 }, { k: 'application', label: 'Application of learning', hint: '(0–5)', type: 'number', min: 0, max: 5, step: .5 },
+    { section: 'Competency development (entered out of 15, counts as 10)' }, { k: 'growth', label: 'Capability growth', hint: '(0–7)', type: 'number', min: 0, max: 7, step: .5 }, { k: 'application', label: 'Application of learning', hint: '(0–5)', type: 'number', min: 0, max: 5, step: .5 },
     { k: 'planDone', label: 'Development plan completion', hint: '(0–3)', type: 'number', min: 0, max: 3, step: .5 }, { k: 'finalRating', label: `${YEAR} P4P rating`, type: 'select', options: RATINGS },
+    ...(isSupport(S.people[id]) ? [{ k: 'procImp', label: 'Process improvement contribution', hint: '(0–10)', type: 'number', min: 0, max: 10, step: .5 }] : []),
     { k: 'strengths', label: 'Strengths', type: 'textarea', full: true }, { k: 'focus', label: `Development focus for ${YEAR + 1}`, type: 'textarea', full: true }, { k: 'comments', label: 'Comments', type: 'textarea', full: true },
   ], save: async v => write('reviews/' + id, { ...rv, ...v }, `Updated assessment for ${S.people[id].name}`) });
 }
@@ -1282,7 +1298,7 @@ function projectForm(owner, pid) {
     { k: 'status', label: 'Status', type: 'select', options: PROJECT_STATUS, blank: false }, { k: 'stageName', label: 'Last DMAIC stage you validated', type: 'select', options: DMAIC },
     { k: 'metric', label: 'Measure' }, { k: 'planEnd', label: 'Planned end', type: 'date' }, { k: 'baseline', label: 'Baseline' }, { k: 'target', label: 'Target' }, { k: 'actual', label: 'Current value' },
     { k: 'reported', label: 'Latest update', type: 'textarea', full: true },
-    { section: 'Your score (15)' }, { k: 'contributing', label: 'Counts towards this year\'s review', type: 'check', full: true },
+    { section: 'Your score (out of 15, counts as 10 in the total)' }, { k: 'contributing', label: 'Counts towards this year\'s review', type: 'check', full: true },
     { k: 'discipline', label: 'Discipline and execution', hint: '(0–5)', type: 'number', min: 0, max: 5, step: .5 }, { k: 'impact', label: 'Business impact', hint: '(0–5)', type: 'number', min: 0, max: 5, step: .5 },
     { k: 'control', label: 'Sustainability and control', hint: '(0–3)', type: 'number', min: 0, max: 3, step: .5 }, { k: 'learning', label: 'Learning and sharing', hint: '(0–2)', type: 'number', min: 0, max: 2, step: .5 },
   ], save: async v => {
@@ -1306,8 +1322,10 @@ function scaleForm(ci) {
 }
 function scoringForm() {
   const cur = S.settings.scoring || {};
-  openForm({ title: 'Scoring settings', values: { internPts: cur.internPts ?? 0 }, fields: [{ k: 'internPts', label: 'Points per intern offer', type: 'number', step: .5, min: -5, max: 5, full: true }],
-    save: async v => write('settings/scoring', { ...cur, internPts: v.internPts ?? 0 }, `Set points per intern offer to ${v.internPts ?? 0}`) });
+  openForm({ title: 'Scoring settings', values: { internPts: cur.internPts ?? 0, ijpPts: ijpPts(), declinePenalty: declPen(), declineFrom: declFrom() }, fields: [
+    { k: 'internPts', label: 'Points per intern offer', type: 'number', step: .5, min: -5, max: 5 }, { k: 'ijpPts', label: 'Points per internal hiring (IJP) offer', type: 'number', step: .5, min: 0, max: 5 },
+    { k: 'declinePenalty', label: 'Deduction per declined offer', type: 'number', step: .5, min: 0, max: 5 }, { k: 'declineFrom', label: 'Deduction applies from review year', type: 'number', min: 2026, max: 2035 }],
+    save: async v => write('settings/scoring', { ...cur, internPts: v.internPts ?? 0, ijpPts: v.ijpPts ?? 1, declinePenalty: v.declinePenalty ?? 0.5, declineFrom: v.declineFrom ?? YEAR + 1 }, `Updated scoring settings`) });
 }
 /* ---- teams ---- */
 function teamForm(tid) {
@@ -1326,9 +1344,9 @@ async function exportSheet() {
   const dl = await claude.use('downloads');
   if (!dl) { toast('Downloads aren\'t available here.'); return; }
   const q = v => { const s = v == null ? '' : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const head = ['Name', 'Role', 'Team', 'Level', 'Annual offer target', 'Points target to date', 'Weighted points', 'Attainment %', 'Offers released', 'Joined', 'Offer days', 'Vendor %', 'Offers & complexity /40', 'Joining /15', 'Cycle time /10', 'Vendor /5', 'Deliverables /70', 'Projects /15', 'Competency /15', 'Total', 'Out of', `P4P ${YEAR - 3}`, `P4P ${YEAR - 2}`, `P4P ${YEAR - 1}`, `${YEAR} rating`, 'Readiness check', 'Promotion recommendation', 'Reasons', 'Strengths', 'Development focus', 'Open plan items', 'Training records', 'Ops: timely', 'Ops: error-free', 'Ops: volume', 'Ops: experience', 'Operational rating /5', 'Revised cadence (offers / 10 days)', 'Revised points target to date', 'Attainment vs revised %'];
+  const head = ['Name', 'Role', 'Team', 'Level', 'Annual offer target', 'Points target to date', 'Weighted points', 'Attainment %', 'Offers released', 'Joined', 'Offer days', 'Vendor %', 'Offers & complexity /65', 'Cycle time /10', 'Vendor /5', 'Deliverables /80', 'KPI & SLA /70', 'Projects /10', 'Competency /10', 'Process improvement /10', 'Total', 'Out of', `P4P ${YEAR - 3}`, `P4P ${YEAR - 2}`, `P4P ${YEAR - 1}`, `${YEAR} rating`, 'Readiness check', 'Promotion recommendation', 'Reasons', 'Strengths', 'Development focus', 'Open plan items', 'Training records', 'Ops: timely', 'Ops: error-free', 'Ops: volume', 'Ops: experience', 'Operational rating /5', 'Revised cadence (offers / 10 days)', 'Revised points target to date', 'Attainment vs revised %'];
   const rows = peopleList().filter(inReview).map(p => { const E = evalPerson(p), o = E.own, r = p.ratings || {}, rv = E.rv, t = o ? o.d.tracker || {} : {};
-    return [p.name, p.role, p.team, p.level, o?.target, r1(o?.ptPro), o?.points, o?.att != null ? Math.round(o.att * 100) : '', t.offers, t.joined, o?.offerDays, o?.vendorPct, o?.parts.offer, o?.parts.jr, o?.parts.ct, o?.parts.vendor, E.del, E.proj, E.comp, E.total, E.max, r.y2023, r.y2024, r.y2025, rv.finalRating, promotion(E).level, rv.promoDecision, rv.promoReason, rv.strengths, rv.focus, E.plans.filter(x => x.status !== 'Done' && x.status !== 'Dropped').length, E.learn.length, ...(() => { const o = opsRating(p.id); return o ? [...o.vals, o.overall] : ['', '', '', '', '']; })(), E.own ? E.own.revC : '', E.own ? r1(E.own.revPtPro) : '', E.own && E.own.revAtt != null ? Math.round(E.own.revAtt * 100) : '']; });
+    return [p.name, p.role, p.team, p.level, o?.target, r1(o?.ptPro), o?.points, o?.att != null ? Math.round(o.att * 100) : '', t.offers, t.joined, o?.offerDays, o?.vendorPct, o?.parts.offer, o?.parts.ct, o?.parts.vendor, E.del, E.opsPts, E.proj, E.comp, E.proc, E.total, E.max, r.y2023, r.y2024, r.y2025, rv.finalRating, promotion(E).level, rv.promoDecision, rv.promoReason, rv.strengths, rv.focus, E.plans.filter(x => x.status !== 'Done' && x.status !== 'Dropped').length, E.learn.length, ...(() => { const o = opsRating(p.id); return o ? [...o.vals, o.overall] : ['', '', '', '', '']; })(), E.own ? E.own.revC : '', E.own ? r1(E.own.revPtPro) : '', E.own && E.own.revAtt != null ? Math.round(E.own.revAtt * 100) : '']; });
   const csv = '﻿' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
   try { await dl.save({ filename: `TA_Talent_Review_${YEAR}.csv`, data: new Blob([csv], { type: 'text/csv' }) }); } catch (e) { if (e && e.code !== 'declined') toast('The download didn\'t start.'); }
 }
