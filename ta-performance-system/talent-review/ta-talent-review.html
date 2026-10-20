@@ -862,6 +862,14 @@ function trendSmall(name, vals, years, cur) {
   s += `<text class="vl" x="${pts[pts.length - 1][0] - 4}" y="${pts[pts.length - 1][1] - 8}" text-anchor="end">${cur ?? vals[vals.length - 1]}%</text><text class="mu" x="${x(0)}" y="${H - 3}">2020</text><text class="mu" x="${x(years.length)}" y="${H - 3}" text-anchor="end">2026</text>`;
   return s + '</svg>';
 }
+function trendBars(vals, years, cur) {
+  const W = cw(true) > 300 ? Math.min(cw(true), 640) : 300, H = 150, L = 8, R = 8, T = 22, B = 22, all = cur != null ? [...vals, cur] : vals, n = all.length, mx = Math.max(...all) * 1.12;
+  const bw = (W - L - R) / n, y = v => T + (H - T - B) * (1 - v / mx);
+  let s = `<svg class="viz" viewBox="0 0 ${W} ${H}" role="img" aria-label="Lateral joiners by year, 2020 to 2026 year to date"><line class="gl" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>`;
+  all.forEach((v, i) => { const x = L + i * bw + bw * 0.18, w = bw * 0.64, ytd = cur != null && i === n - 1, yr = ytd ? '2026 YTD' : years[i];
+    s += `<g data-tip="${esc(`<b>${yr}</b>` + tipRows([['Lateral joiners', fmt(v, 0)]]) + (i > 0 && !ytd ? tipRows([['Change on prior year', (v - all[i - 1] > 0 ? '+' : '') + fmt(v - all[i - 1], 0)]]) : ''))}"><rect x="${x}" y="${y(v)}" width="${w}" height="${H - B - y(v)}" rx="3" fill="${ytd ? 'var(--h3)' : 'var(--accent)'}" ${ytd ? 'stroke="var(--accent)" stroke-dasharray="3 2"' : ''}/><text class="vl" x="${x + w / 2}" y="${y(v) - 5}" text-anchor="middle">${fmt(v, 0)}</text><text class="mu" x="${x + w / 2}" y="${H - 6}" text-anchor="middle">${ytd ? '2026 YTD' : yr}</text></g>`; });
+  return s + '</svg>';
+}
 function viewProgrammes() {
   const pf = S.settings.portfolio || {}, rows = pf.rows || [], tr = pf.trend || {};
   const tot = rows.reduce((a, r) => [a[0] + r[1], a[1] + r[2]], [0, 0]);
@@ -870,7 +878,7 @@ function viewProgrammes() {
     h += `<div class="grid c5"><div class="card fig"><div class="l">Joiners, all streams</div><div class="v">${fmt(pf.totalJoined, 0)}</div><div class="f">${pct(tot[1] / tot[0] * 100)} of ${fmt(tot[0], 0)} across programmes</div></div><div class="card fig"><div class="l">Vendor usage</div><div class="v">${pct(pf.vendorPct)}</div><div class="f">lowest since 2020</div></div><div class="card fig"><div class="l">Employee referrals</div><div class="v">${pct(pf.referralPct)}</div></div><div class="card fig"><div class="l">Gender diversity</div><div class="v">${pct(pf.diversityPct)}</div></div><div class="card fig"><div class="l">Days to offer · to join</div><div class="v">${fmt(pf.offerDays, 0)} · ${fmt(pf.joinDays, 0)}</div></div></div>`;
     h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Programme results</h3><span class="hint">joined against target · tick = target</span></div>${resultsChart(rows)}<p class="sub" style="font-size:12px;color:var(--muted);margin:6px 0 0">${esc(pf.source || '')}. Over-delivery in one stream doesn't close another stream's gap.</p></div>
       <div class="card pad"><div class="sec-h"><h3>Highlights and priorities</h3></div><ul style="margin:0 0 10px;padding-left:18px;font-size:13px">${(pf.highlights || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul><h4 style="font-size:13px;margin:6px 0">Priorities to close</h4><ul style="margin:0;padding-left:18px;font-size:13px">${(pf.priorities || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-      ${tr.years ? `<h4 style="font-size:13px;margin:14px 0 6px">Lateral hiring trends, 2020 to 2026 YTD</h4><div class="grid c3">${[['Gender diversity', pf.diversityPct], ['Vendor usage', pf.vendorPct], ['Employee referrals', pf.referralPct]].map(([k, c]) => `<div>${trendSmall(k, tr[k] || [], tr.years, c)}</div>`).join('')}</div>` : ''}</div></div>`;
+      ${tr.years ? `<h4 style="font-size:13px;margin:14px 0 6px">Lateral hiring trends, 2020 to 2026 YTD</h4>${tr['Lateral joiners'] ? `<div class="sub" style="font-size:12px;color:var(--muted)">Lateral joiners per year${tr.joinersNote ? ' · ' + esc(tr.joinersNote) : ''}</div>${trendBars(tr['Lateral joiners'], tr.years, tr.joiners2026)}` : ''}<div class="grid c3">${[['Gender diversity', pf.diversityPct], ['Vendor usage', pf.vendorPct], ['Employee referrals', pf.referralPct]].map(([k, c]) => `<div>${trendSmall(k, tr[k] || [], tr.years, c)}</div>`).join('')}</div>` : ''}</div></div>`;
   }
   const progs = Object.entries(S.programmes).map(([k, v]) => ({ id: k, ...v })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   for (const cat of ['Talent pipeline', 'University relations']) {
@@ -934,6 +942,13 @@ async function buildDeck(opt) {
     // 3 programme results
     s = pptx.addSlide({ masterName: 'B' }); head(s, 'Programme results against target', 'Over-delivery in one stream does not close another stream\'s gap');
     s.addChart(pptx.ChartType.bar, [{ name: 'Target', labels: pf.rows.map(r => r[0]), values: pf.rows.map(r => r[1]) }, { name: 'Joined', labels: pf.rows.map(r => r[0]), values: pf.rows.map(r => r[2]) }], { x: 0.5, y: 1.4, w: 7.3, h: 5.4, barDir: 'bar', barGrouping: 'clustered', chartColors: ['CDD2DC', C.acc], showLegend: true, legendPos: 'b', legendFontSize: 10, catAxisLabelFontSize: 11, valAxisLabelFontSize: 9, showValue: true, dataLabelFontSize: 9, catAxisOrientation: 'maxMin', valGridLine: { color: C.line, size: 0.5 } });
+    const trd = pf.trend || {};
+    if (trd.years && trd['Lateral joiners']) {
+      const st = pptx.addSlide({ masterName: 'B' }); head(st, 'Lateral hiring trends, 2020 to 2026 YTD', `Source: ${trd.source || ''}${trd.joinersNote ? '; ' + trd.joinersNote : ''}`);
+      const yl = trd.years.map(String).concat(trd.joiners2026 != null ? ['2026 YTD'] : []);
+      st.addChart(pptx.ChartType.bar, [{ name: 'Lateral joiners', labels: yl, values: trd['Lateral joiners'].concat(trd.joiners2026 != null ? [trd.joiners2026] : []) }], { x: 0.5, y: 1.4, w: 6.0, h: 5.4, barDir: 'col', chartColors: [C.acc], showLegend: false, showValue: true, dataLabelFontSize: 10, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, valGridLine: { color: C.line, size: 0.5 }, showTitle: true, title: 'Lateral joiners', titleFontSize: 12 });
+      st.addChart(pptx.ChartType.line, ['Gender diversity', 'Vendor usage', 'Employee referrals'].map((k, i) => ({ name: k + ' %', labels: yl, values: (trd[k] || []).concat([[pf.diversityPct, pf.vendorPct, pf.referralPct][i]]) })), { x: 6.8, y: 1.4, w: 6.0, h: 5.4, chartColors: ['2A78D6', 'EB6834', '1BAF7A'], lineSize: 2, lineDataSymbolSize: 6, showLegend: true, legendPos: 'b', legendFontSize: 10, showValue: true, dataLabelFontSize: 8, catAxisLabelFontSize: 10, valAxisLabelFontSize: 9, valGridLine: { color: C.line, size: 0.5 }, showTitle: true, title: 'Share of lateral joiners (%)', titleFontSize: 12 });
+    }
     tbl(s, ['Programme', 'Target', 'Joined', 'Attainment', 'Gap'], pf.rows.map(([n, t, j]) => [n, t, j, { text: P(j / t * 100), options: { color: stc(statusOf(j / t)), bold: true } }, j >= t ? (j > t ? `+${j - t}` : 'Met') : j - t]), { x: 8.1, y: 1.5, w: 4.7, colW: [1.4, 0.75, 0.75, 1.0, 0.8] });
   }
   // 4 programmes calendar
