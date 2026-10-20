@@ -162,3 +162,39 @@
   const prev = TA.applyDataPacks;
   TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
 })();
+
+/* Answers (TA Head, 20 Oct 2026): Padma active until 25 Dec 2026; NATS target 125; Spoorthy hire date 24 Jul 2025;
+   Lincy Mathew start date 10 Jun 2024 (converted to regular rolls in 2026). */
+(function () {
+  'use strict';
+  const TA = window.TA;
+  const PACK = 'answers-2026-10-20c', WHO = 'TA Head, 20 Oct 2026';
+  function apply() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(PACK) >= 0 || applied.indexOf('talent-review-sync-2026-10-20-upd1') < 0) return false;
+    S.recoveryPoint('Before applying answers on Padma, NATS and start dates');
+    const today = TA.todayIso();
+    const note = (x, t) => (x && x.indexOf(t) >= 0) ? x : (x ? x + ' ' : '') + t;
+    const padma = TA.findMember('Padma');
+    if (padma) S.update('team', padma.id, { employmentStatus: 'Active', endDate: '2026-12-25',
+      notes: note(padma.notes, 'Active until 25 Dec 2026 (' + WHO + '); this replaces the brief\'s statement that Padma had left. Historical records preserved.') });
+    const sp = TA.findMember('Spoorthy');
+    if (sp) S.update('team', sp.id, { startDate: '2025-07-24', notes: note(sp.notes, 'Start date 24 Jul 2025 (' + WHO + '); earlier records gave 24 Jul 2023, when reviews were as a consultant.') });
+    const lm = TA.findMember('Lincy Mathew');
+    if (lm) S.update('team', lm.id, { startDate: '2024-06-10', notes: note(lm.notes, 'Start date 10 Jun 2024; converted to regular rolls in 2026 (talent review hire date 20 May 2026) (' + WHO + ').') });
+    const rk = S.list('risks', { archived: true }).find(r => r.title === 'Recruiter capacity while two roles are being backfilled');
+    if (rk && /Padma and Jayaram have left/.test(rk.description || '')) S.update('risks', rk.id, { description: 'Jayaram has left; replacement hiring is underway (brief). Padma is active until 25 Dec 2026 (' + WHO + ').' });
+    const ac = S.list('actions', { archived: true }).find(a => a.title === 'Complete replacement hiring for the two departed recruiter roles');
+    if (ac) S.update('actions', ac.id, { notes: note(ac.notes, 'Update: Padma is active until 25 Dec 2026 (' + WHO + '), so only Jayaram\'s role has been vacated so far.') });
+    const resolve = (title, text) => { const q = S.list('questions', { archived: true }).find(x => x.title === title); if (q && q.status !== 'Resolved') S.update('questions', q.id, { status: 'Resolved', resolution: text, resolvedDate: today }); };
+    resolve('Padma: left (brief) or active until 25 Dec 2026 (talent review)?', 'Active until 25 Dec 2026 (' + WHO + ').');
+    resolve('NATS target: 125 or 100? (and other programme numbers)', 'NATS 125 confirmed (' + WHO + '). PG intern 20, Global PGET 8, Campus Ambassadors 8 and Tech Talks 20 were confirmed on 19 Oct. GET/PGET 2027 (50), Research Collaboration (10) and CoTeaching (20) stay at the P&C calendar values; the talent review figures (15, 5, 10) are kept in this record.');
+    resolve('Hire dates: talent review vs start dates held here', 'Spoorthy: 24 Jul 2025. Lincy Mathew: 10 Jun 2024 (converted to regular rolls in 2026) (' + WHO + ').');
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([PACK]) });
+    TA.toast('Applied answers: Padma active to 25 Dec 2026, NATS 125, start dates');
+    return true;
+  }
+  const prev = TA.applyDataPacks;
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
+})();
