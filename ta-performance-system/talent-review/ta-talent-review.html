@@ -305,7 +305,7 @@ const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' 
 const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis'];
 const OPS_LABELS = { 5: ['Outstanding', 'Exceptional'], 4: ['Exceeds Expectations', 'High'], 3: ['Meets Expectations', 'Good'], 2: ['Needs Improvement', 'Adequate'], 1: ['Unsatisfactory', 'Low'] };
 const OPS_KEYS = ['timely', 'errors', 'volume', 'experience'];
-const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
+const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Development area', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
 const PILLARS = ['Unleash Human Potential', 'People Experience', 'Data-Driven Insights', 'Sustainable Operational Excellence'];
 const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PGET', 'Campus GET / PGET'], ['Internship (no points rule)', 'Interns'], ['AICTE Professor', 'AICTE professors'], ['PhD Internship', 'PhD'], ['NATS Conversion', 'NATS conversions'], ['ExcelHER Conversion', 'ExcelHER conversions']];
 const projStatusClass = st => ({ 'Completed': 'good', 'On track': 'good', 'On hold': 'watch', 'To confirm': 'watch' }[st] || 'none');
@@ -787,7 +787,7 @@ function pComments(E) {
 function commentForm(emp, idx) {
   const items = commentsOf(emp).map(({ idx, ...c }) => c), cur = idx != null ? items[idx] : { theme: 'Other', source: 'TA Head' };
   openForm({ title: idx != null ? 'Edit comment' : 'Add comment', values: cur, fields: [{ k: 'theme', label: 'Theme', type: 'select', options: THEMES, blank: false }, { k: 'source', label: 'Source' }, { k: 'text', label: 'Comment', type: 'textarea', full: true, req: true }],
-    save: async v => { if (!v.text) return 'Write the comment.'; const next = [...items]; if (idx != null) next[idx] = v; else next.push(v); return write('comments/' + emp, { items: next }, `${idx != null ? 'Edited' : 'Added'} a comment for ${S.people[emp]?.name}`); } });
+    save: async v => { if (!v.text) return 'Write the comment.'; const next = [...items]; if (idx != null) next[idx] = { ...items[idx], ...v }; else next.push(v); return write('comments/' + emp, { items: next }, `${idx != null ? 'Edited' : 'Added'} a comment for ${S.people[emp]?.name}`); } });
 }
 function delComment(emp, idx) {
   const items = commentsOf(emp).map(({ idx, ...c }) => c);
