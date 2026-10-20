@@ -302,7 +302,7 @@ const chip = (s, text) => `<span class="chip ${s}">${ICON[s]}${esc(text || ST[s]
 const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below';
 
 /* ===================== store ===================== */
-const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis'];
+const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis', 'leadPlans'];
 const OPS_LABELS = { 5: ['Outstanding', 'Exceptional'], 4: ['Exceeds Expectations', 'High'], 3: ['Meets Expectations', 'Good'], 2: ['Needs Improvement', 'Adequate'], 1: ['Unsatisfactory', 'Low'] };
 const OPS_KEYS = ['timely', 'errors', 'volume', 'experience'];
 const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Development area', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
@@ -564,16 +564,16 @@ function viewTeam() {
 }
 
 /* ===================== PERSON ===================== */
-const TABS = [['overview', 'Overview'], ['ops', 'KPI & SLA'], ['comments', 'Comments & contribution'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
+const TABS = [['overview', 'Overview'], ['lead', 'Team lead review'], ['ops', 'KPI & SLA'], ['comments', 'Comments & contribution'], ['delivery', 'Delivery'], ['scores', 'Scores'], ['behaviours', 'Behaviours'], ['development', 'Development plan'], ['learning', 'Training'], ['projects', 'Projects'], ['promotion', 'Promotion'], ['profile', 'Profile']];
 function viewPerson(id) {
   const p0 = S.people[id]; if (!p0) return `<div class="state"><h2>Person not found</h2><p>They may have been deleted. <button class="btn link" data-nav="team" type="button">Back to the team</button></p></div>`;
   const E = evalPerson({ id, ...p0 }), p = E.p;
-  const tabs = TABS.filter(([k]) => !(E.sup && k === 'delivery') && !(k === 'ops' && !S.opsKpis[id]));
+  const tabs = TABS.filter(([k]) => !(E.sup && k === 'delivery') && !(k === 'ops' && !S.opsKpis[id]) && !(k === 'lead' && !isLead(E.p)));
   const tab = tabs.some(([k]) => k === route.tab) ? route.tab : 'overview';
   let h = `<div class="phead"><div><h2>${esc(p.name)}</h2><div class="meta"><span>${esc(p.jobTitle || p.role || '')}</span><span>${esc(p.role || '')} · ${esc(p.team || 'no team')}${p.area && p.area !== p.team ? ' (' + esc(p.area) + ')' : ''}</span><span class="mono">${esc(p.level || 'level —')}</span>${p.vcnid ? `<span class="mono">${esc(p.vcnid)}</span>` : ''}${p.end ? `<span>Leaving ${nice(p.end)}</span>` : ''}${!inReview(p) ? '<span class="tag">Not in this year\'s review</span>' : ''}</div></div><div class="sp"></div>
     <div class="btns">${!E.sup && E.own ? chip(E.stat, E.att != null ? `${ST[E.stat]} · ${pct(E.att * 100)}` : null) : ''}${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(id)}" type="button">Edit details</button>` : ''}</div></div>`;
   h += `<div class="tabs" role="tablist">${tabs.map(([k, t]) => `<button class="tab ${tab === k ? 'on' : ''}" role="tab" aria-selected="${tab === k}" data-tab="${k}" data-person-tab="${esc(id)}" type="button">${t}</button>`).join('')}</div>`;
-  h += ({ overview: pOverview, ops: pOps, comments: pComments, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
+  h += ({ overview: pOverview, lead: pLead, ops: pOps, comments: pComments, delivery: pDelivery, scores: pScores, behaviours: pBehaviours, development: pDevelopment, learning: pLearning, projects: pProjects, promotion: pPromotion, profile: pProfile }[tab])(E);
   return h;
 }
 function scoreLine(label, v, max, why) {
@@ -727,6 +727,52 @@ function pProfile(E) {
     <div class="card pad"><div class="sec-h"><h3>P4P ratings</h3></div><dl class="kv"><dt>${YEAR - 3}</dt><dd>${esc(r.y2023 || '—')}</dd><dt>${YEAR - 2}</dt><dd>${esc(r.y2024 || '—')}</dd><dt>${YEAR - 1}</dt><dd>${esc(r.y2025 || '—')}</dd><dt>${YEAR}</dt><dd>${esc(E.rv.finalRating || 'Not rated yet')}</dd></dl>
     ${(p.notes || []).length ? `<h4 style="font-size:13px;margin:16px 0 6px">Data notes</h4><ul style="margin:0;padding-left:18px;color:var(--ink-2);font-size:13px">${p.notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
     ${canWrite ? `<div style="margin-top:16px"><button class="btn danger sm" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete ${esc(p.name)}</button></div>` : ''}</div></div>`;
+}
+
+/* ===================== TEAM LEAD REVIEW ===================== */
+function leadTeamRows(E) {
+  const members = teamOf(E.p);
+  return [E.p, ...members].map(q => { const b = ownBlock(q.id); const d = b ? b.d : {}; return { q, lead: q.id === E.p.id, b, points: b?.points, ptPro: b?.ptPro, att: b?.att, offers: num(d.offers), od: num(d.offerDays), jd: num(d.joinDays), dec: num(d.declinedPct), div: num(d.diversityPct), ven: num(d.vendorPct), ref: num(d.referralPct) }; });
+}
+function leadList(items, cls) { return items && items.length ? `<ul class="list" style="display:grid;gap:8px;list-style:none;padding:0;margin:0">${items.map(t => `<li style="border-left:3px solid var(--${cls});border-radius:6px"><div style="font-size:13.5px">${esc(t)}</div></li>`).join('')}</ul>` : '<div class="empty-note">Nothing recorded yet.</div>'; }
+function pLead(E) {
+  const lp = S.leadPlans[E.p.id] || {}, t = E.team, rows = leadTeamRows(E), mem = rows.filter(r => !r.lead);
+  const wavg = k => { const w = mem.filter(r => r[k] != null && r.offers); const tw = sum(w.map(r => r.offers)); return tw ? sum(w.map(r => r[k] * r.offers)) / tw : null; };
+  const focusId = lp.focus && lp.focus.person, secondId = lp.focus && lp.focus.second && lp.focus.second.person;
+  let h = `<div class="sec-h"><h3>Team lead review</h3><span class="hint">${esc(lp.source || 'Your assessment of this person as a team lead')}</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editLead" data-id="${esc(E.p.id)}" type="button">Edit lead review</button>` : ''}</div>`;
+  if (lp.summary) h += `<div class="note" style="font-size:13.5px;color:var(--ink);margin-bottom:14px">${esc(lp.summary)}</div>`;
+  h += `<div class="grid c5"><div class="card fig"><div class="l">Team goal (members)</div><div class="v">${t ? pct(t.att * 100) : '—'}</div><div class="f">${t ? `${fmt(t.points)} of ${fmt(t.ptPro)} points ` + chip(statusOf(t.att), ' ') : 'No members'}</div></div>
+    <div class="card fig"><div class="l">Own delivery</div><div class="v">${pct(E.att * 100)}</div><div class="f">${E.own ? `${fmt(E.own.points)} of ${fmt(E.own.ptPro)} points` : ''}</div></div>
+    <div class="card fig"><div class="l">Team joining ratio</div><div class="v">${t ? pct(t.jr) : '—'}</div><div class="f">members, scorecard</div></div>
+    <div class="card fig"><div class="l">Team offer days</div><div class="v">${t ? fmt(t.ct, 0) : '—'}</div><div class="f">${t ? ctLabel(t.ct) : ''}</div></div>
+    <div class="card fig"><div class="l">Team declines · vendor</div><div class="v">${pct(wavg('dec'))} · ${pct(wavg('ven'))}</div><div class="f">weighted by offers</div></div></div>`;
+  h += `<div class="card pad sec"><div class="sec-h"><h3>The team at a glance</h3><span class="hint">scorecard measures to date; ★ = recruiter to focus on</span></div><div class="tw"><table><thead><tr><th>Person</th><th class="n">Points</th><th class="n">Target to date</th><th>Against target</th><th class="n">Offer days</th><th class="n">Days to join</th><th class="n">Declined</th><th class="n">Women hires</th><th class="n">Vendor</th><th class="n">Referrals</th></tr></thead><tbody>${rows.map(r => `<tr class="click" data-person="${esc(r.q.id)}"><td class="who"><b>${r.q.id === focusId ? '★ ' : ''}${esc(r.q.name)}</b><div class="sub">${r.lead ? 'Team Lead' : esc(r.q.role)}${r.q.id === secondId ? ' · also watch' : ''}</div></td><td class="n">${fmt(r.points)}</td><td class="n">${fmt(r.ptPro)}</td><td>${chip(statusOf(r.att), pct(r.att * 100))}</td><td class="n">${fmt(r.od, 0)}</td><td class="n">${fmt(r.jd, 0)}</td><td class="n">${pct(r.dec)}</td><td class="n">${pct(r.div)}</td><td class="n">${pct(r.ven)}</td><td class="n">${pct(r.ref)}</td></tr>`).join('')}</tbody></table></div></div>`;
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Strengths to build on</h3></div>${leadList(lp.strengths, 'good')}</div><div class="card pad"><div class="sec-h"><h3>Areas of concern</h3></div>${leadList(lp.concerns, 'watch')}</div></div>`;
+  if (lp.focus && focusId) {
+    const fp = S.people[focusId] || {};
+    h += `<div class="card pad sec"><div class="sec-h"><h3>Recruiter to focus on: ${esc(fp.name || '—')}</h3><span class="sp"></span><button class="btn link" data-person="${esc(focusId)}" type="button">Open ${esc((fp.name || '').split(' ')[0])}'s review</button></div><div class="grid c2"><div><h4 style="font-size:13px;margin:0 0 6px">Why</h4><ul style="margin:0;padding-left:18px;font-size:13px;display:grid;gap:5px">${(lp.focus.why || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul></div><div><h4 style="font-size:13px;margin:0 0 6px">How to develop them</h4><ol style="margin:0;padding-left:20px;font-size:13px;display:grid;gap:5px">${(lp.focus.develop || []).map(x => `<li>${esc(x)}</li>`).join('')}</ol></div></div>${lp.focus.second && lp.focus.second.note ? `<div class="note sec">${esc(lp.focus.second.note)}</div>` : ''}</div>`;
+  }
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Development plan to grow as a lead</h3></div>${(lp.plan || []).length ? `<div class="tw"><table><thead><tr><th class="n">#</th><th>Action</th><th>How we'll know</th><th>By</th></tr></thead><tbody>${lp.plan.map((x, i) => `<tr><td class="n">${i + 1}</td><td>${esc(x.action)}</td><td style="color:var(--ink-2)">${esc(x.measure || '')}</td><td class="nw">${x.due ? nice(x.due) : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">No plan yet.</div>'}</div>`;
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Training already recorded</h3></div>${E.learn.length ? `<ul style="margin:0;padding-left:18px;font-size:13px">${E.learn.map(l => `<li>${esc(l.programme)} <span class="tag">${esc(l.status || '')}</span></li>`).join('')}</ul>` : '<div class="empty-note">No training recorded for this year.</div>'}</div>
+    <div class="card pad"><div class="sec-h"><h3>Suggested training</h3><span class="hint">in addition to what's recorded</span></div>${(lp.trainings || []).length ? `<div class="items">${lp.trainings.map(x => `<div class="item"><div class="t">${esc(x.name)}</div><div class="d">${esc(x.why || '')}</div></div>`).join('')}</div>` : '<div class="empty-note">No suggestions yet.</div>'}</div></div>`;
+  return h;
+}
+function leadForm(id) {
+  const lp = S.leadPlans[id] || {}, f = lp.focus || {}, members = teamOf(S.people[id] ? { id, ...S.people[id] } : {});
+  const lines = a => (a || []).join('\n');
+  openForm({ title: `Team lead review: ${S.people[id].name}`, intro: 'One item per line. Plan lines: action | how we\'ll know | date (YYYY-MM-DD). Training lines: name | why.',
+    values: { summary: lp.summary, strengths: lines(lp.strengths), concerns: lines(lp.concerns), person: f.person, why: lines(f.why), develop: lines(f.develop), second: f.second && f.second.note, plan: (lp.plan || []).map(x => [x.action, x.measure || '', x.due || ''].join(' | ')).join('\n'), trainings: (lp.trainings || []).map(x => [x.name, x.why || ''].join(' | ')).join('\n') },
+    fields: [{ k: 'summary', label: 'Summary', type: 'textarea', full: true }, { k: 'strengths', label: 'Strengths to build on', type: 'textarea', full: true }, { k: 'concerns', label: 'Areas of concern', type: 'textarea', full: true },
+      { k: 'person', label: 'Recruiter to focus on', type: 'select', options: members.map(m => [m.id, m.name]), full: true }, { k: 'why', label: 'Why', type: 'textarea', full: true }, { k: 'develop', label: 'How to develop them', type: 'textarea', full: true },
+      { k: 'second', label: 'Also watch (optional)', type: 'textarea', full: true }, { k: 'plan', label: 'Development plan', type: 'textarea', full: true }, { k: 'trainings', label: 'Suggested training', type: 'textarea', full: true }],
+    save: async v => {
+      const split = t => (t || '').split('\n').map(x => x.trim()).filter(Boolean);
+      const doc = { ...lp, summary: v.summary, strengths: split(v.strengths), concerns: split(v.concerns),
+        focus: { ...f, person: v.person || null, why: split(v.why), develop: split(v.develop), second: v.second ? { ...(f.second || {}), note: v.second } : null },
+        plan: split(v.plan).map(l => { const [action, measure, due] = l.split('|').map(x => x.trim()); return { action, measure: measure || '', due: /^\d{4}-\d{2}-\d{2}$/.test(due || '') ? due : null }; }),
+        trainings: split(v.trainings).map(l => { const [name, why] = l.split('|').map(x => x.trim()); return { name, why: why || '' }; }) };
+      return write('leadPlans/' + id, doc, `Updated the team lead review for ${S.people[id].name}`);
+    } });
 }
 
 /* ===================== KPI & SLA (support roles) ===================== */
@@ -987,6 +1033,18 @@ async function buildDeck(opt) {
     tbl(s, ['Person', 'Role', 'Points', 'Target', 'Attain.', 'Offers', 'Joined', 'Offer days', 'Vendor', 'Deliverables', 'Total'], [L, ...members].map(E => [E.p.name, E.p.role, N(E.own?.points), N(E.own?.ptPro), { text: P(E.own?.att * 100), options: { bold: true, color: stc(statusOf(E.own?.att)) } }, N((E.own?.d.tracker || {}).offers, 0), N((E.own?.d.tracker || {}).joined, 0), N(E.own?.offerDays, 0), P(E.own?.vendorPct), N(E.del), E.total != null ? N(E.total) : N(E.partial) + ' so far']), { x: 0.5, y: 2.75, w: 12.3, colW: [1.7, 1.1, 0.9, 0.9, 0.9, 0.9, 0.9, 1.0, 0.9, 1.2, 1.9], fs: 10 });
     const lc = commentsOf(L.p.id).filter(c => c.theme !== 'Promotion').slice(0, 4).map(c => `${c.theme}: ${cut(c.text, 200)}`);
     sect(s, 'Lead contribution', 0.5, 4.65, 12); bullets(s, lc, { x: 0.5, y: 5.0, w: 12.3, h: 1.95, fs: 10, empty: 'No comments recorded.' });
+    const lp = S.leadPlans[L.p.id];
+    if (lp) {
+      let sa = pptx.addSlide({ masterName: 'B' }); head(sa, `${L.p.name}: team lead review`); sa.addText(cut(lp.summary || '', 520), { x: 0.5, y: 0.9, w: 12.3, h: 0.7, fontFace: F, fontSize: 11, color: C.ink2, valign: 'top' });
+      sect(sa, 'Strengths to build on', 0.5, 1.6, 6.0); bullets(sa, (lp.strengths || []).map(x => cut(x, 320)), { x: 0.5, y: 1.95, w: 6.0, h: 4.9, fs: 10.5 });
+      sect(sa, 'Areas of concern', 6.8, 1.6, 6.0); bullets(sa, (lp.concerns || []).map(x => cut(x, 360)), { x: 6.8, y: 1.95, w: 6.0, h: 4.9, fs: 10.5 });
+      const fp = lp.focus && S.people[lp.focus.person];
+      let sb = pptx.addSlide({ masterName: 'B' }); head(sb, `${L.p.name}: recruiter focus and development plan`, fp ? `Recruiter to focus on: ${fp.name}` : 'Development plan');
+      if (fp) { sect(sb, `Why ${fp.name}`, 0.5, 1.35, 6.0); bullets(sb, (lp.focus.why || []).map(x => cut(x, 180)), { x: 0.5, y: 1.7, w: 6.0, h: 1.9, fs: 9.5 });
+        sect(sb, 'How to develop them', 6.8, 1.35, 6.0); bullets(sb, (lp.focus.develop || []).map(x => cut(x, 180)).concat(lp.focus.second && lp.focus.second.note ? ['Also watch: ' + cut(lp.focus.second.note, 160)] : []), { x: 6.8, y: 1.7, w: 6.0, h: 1.9, fs: 9.5 }); }
+      tbl(sb, ['#', 'Development action', "How we'll know", 'By'], (lp.plan || []).map((x, i) => [String(i + 1), cut(x.action, 170), cut(x.measure || '', 90), x.due ? nice(x.due) : '—']), { x: 0.5, y: 3.75, w: 8.3, colW: [0.35, 4.6, 2.25, 1.1], fs: 9 });
+      sect(sb, 'Suggested training', 9.1, 3.7, 3.7); bullets(sb, (lp.trainings || []).map(x => `${x.name}: ${cut(x.why || '', 110)}`).concat(L.learn.length ? ['Already recorded: ' + L.learn.map(l => `${l.programme} (${(l.status || '').toLowerCase()})`).join('; ')] : []), { x: 9.1, y: 4.05, w: 3.7, h: 2.9, fs: 9 });
+    }
     if (opt.people) { personSlides(L); members.forEach(personSlides); }
   }
   const rest = all.filter(E => !isLead(E.p) && !leads.some(L => L.p.team === E.p.team));
@@ -1276,7 +1334,7 @@ document.addEventListener('click', e => {
       editScale: () => scaleForm(id), editScoring: () => scoringForm(),
       'add-comment': () => commentForm(id), 'edit-comment': () => commentForm(id, Number(act.dataset.idx)), 'del-comment': () => delComment(id, Number(act.dataset.idx)),
       'add-prog': () => progForm(null), 'edit-prog': () => progForm(id),
-      ppt: () => pptDialog(), ratePillars: () => pillarForm(id), 'add-opsrow': () => opsRowForm(id), 'edit-opsrow': () => opsRowForm(id, Number(act.dataset.idx)), 'del-opsrow': () => delOpsRow(id, Number(act.dataset.idx)),
+      ppt: () => pptDialog(), editLead: () => leadForm(id), ratePillars: () => pillarForm(id), 'add-opsrow': () => opsRowForm(id), 'edit-opsrow': () => opsRowForm(id, Number(act.dataset.idx)), 'del-opsrow': () => delOpsRow(id, Number(act.dataset.idx)),
       addTeam: () => teamForm(null), editTeam: () => teamForm(id), delTeam: () => { const n = S.teams[id]?.name, c = peopleList().filter(p => p.team === n).length; confirmBox(`Delete team ${n}?`, c ? `${c} people are in this team. They'll show under "No team yet" until you move them.` : 'Nobody is in this team.', 'Delete', () => remove('teams/' + id, `Deleted team ${n}`)); },
       export: exportSheet }[a] || (() => { }))();
     return;
