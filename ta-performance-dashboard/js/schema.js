@@ -120,6 +120,7 @@
         { k: 'name', l: 'Name', t: 'text', req: true },
         { k: 'aliases', l: 'Also known as', t: 'text', help: 'Confirmed other spellings or short names, comma-separated. Used to match tracker names and to hide names in exports.' },
         { k: 'role', l: 'Role', t: 'text' },
+        { k: 'taTeam', l: 'TA team', t: 'text' },
         { k: 'employmentStatus', l: 'Employment status', t: 'select', o: ['Active', 'Left', 'On leave', 'Vacancy – replacement hiring underway', 'Not provided'], req: true },
         { k: 'businessCoverage', l: 'Business coverage', t: 'textarea', help: 'Shared coverage is recorded per person; totals are not summed across people.' },
         { k: 'startDate', l: 'Start date in team', t: 'date' },
@@ -139,7 +140,7 @@
         { k: 'source', l: 'Source', t: 'text' },
         { k: 'notes', l: 'Notes', t: 'textarea', full: true }
       ],
-      cols: ['name', 'role', 'employmentStatus', 'businessCoverage', 'successionReadiness', 'humanReviewDate']
+      cols: ['name', 'role', 'taTeam', 'employmentStatus', 'businessCoverage', 'successionReadiness']
     },
     recruiterResults: {
       label: 'Recruiter results', singular: 'Recruiter result', title: '_rrTitle', confidential: true, dupKeys: ['memberId', 'periodId'],

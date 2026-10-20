@@ -66,6 +66,14 @@ About the periods:
 - 2026 is year-to-date. It is drawn as a hollow point, and its change from 2025 is labelled as not like-for-like.
 - Lateral-only values recalculated from the hiring tracker sit alongside for comparison.
 
+## Talent review sync (20 Oct 2026)
+
+`js/data-talent-review-sync.js` (pack `talent-review-sync-2026-10-20`) brings in facts from the TA Head's India TA Talent Review:
+- Name matches: Eli = Elizabeth John, Smruthi MK = Smruthi Prabhakaran, Spoorthi = Spoorthy Das, Sunil Bhat M = Sunil Bhat. Each person's TA team, plus leavers (Jeyapriya Kumaresan, Prabu Krishnan, Sunil Bhat, Fareeda).
+- The recruiter scorecard for 1 Jan–12 Oct 2026, covering eight people (offers, full-year offer target and joiners, all source-reported). Kathir's target was revised to 51.
+- Hiring-tracker counts for the newly matched names, and owners and statuses for the talent programmes.
+- Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.
