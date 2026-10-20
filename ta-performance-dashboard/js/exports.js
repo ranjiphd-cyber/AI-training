@@ -82,12 +82,13 @@
         else blocks.push({ type: 'text', text: 'Prior-period series not charted: some programmes have no value in ' + prior.label + ' (missing is not shown as zero).' });
         blocks.push({ type: 'text', text: TA.programmeSetsMatch(priorPs, ps) ? 'Comparison with ' + prior.label + ': total ' + TA.deltaText('count', priorPs.joinedSum, ps.joinedSum) + '.' : 'Totals not compared with ' + prior.label + ': the periods hold different programme sets.' });
       } else if (prior) blocks.push({ type: 'text', text: 'Prior period ' + prior.label + ' is not comparable: ' + TA.comparability(prior, p).reasons.join(' ') });
-      const lat = (TA.LATERAL_TREND_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+      const LYTD = TA.LATERAL_YTD || { periodId: 'per_biz_2026ytd', population: 'Lateral joiners' };
+      const lat = (TA.LATERAL_TREND_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', LYTD.periodId, LYTD.population)).filter(x => x && x.points.length >= 2);
       if (lat.length) {
         const cats = lat[0].points.map(p => p.short);
         if (lat.every(s => s.points.map(p => p.short).join() === cats.join())) {
           blocks.push({ type: 'chart', kind: 'line', unit: '%', title: 'Lateral hiring – key parameters (%), 2020–2026 YTD', categories: cats, series: lat.map((s, i) => ({ name: s.metric.name, values: s.points.map(p => TA.round(p.value, 1)), color: [ACCENT, AMBER, '7A5BC4'][i] })),
-            note: '2026 is year-to-date (to 14 Oct); compare with full years with care. Source: Business Review Meeting (Oct) slide.' });
+            note: '2026 is year-to-date (to 14 Oct); compare with full years with care. Sources: Business Review Meeting (Oct) slide (2020–2025); hiring tracker, lateral incl. conversions and FTC (2026 YTD).' });
         }
         lat.forEach(s => s.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
       }
@@ -97,10 +98,10 @@
           note: 'Full calendar years; the last point is year-to-date and not comparable with full years.' });
         vol.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); });
       }
-      const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+      const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', LYTD.periodId, LYTD.population)).filter(x => x && x.points.length >= 2);
       if (cyc.length && cyc.every(c => c.points.map(p => p.short).join() === cyc[0].points.map(p => p.short).join())) {
         blocks.push({ type: 'chart', kind: 'line', unit: 'days', title: 'Lateral hiring cycle time (days), ' + cyc[0].points[0].short + '–' + cyc[0].points[cyc[0].points.length - 1].short, categories: cyc[0].points.map(p => p.short),
-          series: cyc.map((c, i) => ({ name: c.metric.name, values: c.points.map(p => p.value), color: [ACCENT, NAVY][i] })), note: 'Lower is better. 2023–2025 average: 60 days to offer, 107 days to join. The last point is year-to-date.' });
+          series: cyc.map((c, i) => ({ name: c.metric.name, values: c.points.map(p => p.value), color: [ACCENT, NAVY][i] })), note: 'Lower is better. 2023–2025 average: 60 days to offer, 107 days to join. The last point is year-to-date from the hiring tracker (lateral incl. conversions and FTC).' });
         cyc.forEach(c => c.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
       }
       const trendRows = [];

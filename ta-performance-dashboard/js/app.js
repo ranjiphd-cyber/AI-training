@@ -297,8 +297,9 @@
 
   /* Lateral-hiring key parameters: annual 2020–2025 plus 2026 YTD (drawn as a partial point). */
   function keyParamsCard() {
+    const LYTD = TA.LATERAL_YTD || { periodId: 'per_biz_2026ytd', population: 'Lateral joiners' };
     const names = TA.LATERAL_TREND_METRICS || [];
-    const sets = names.map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+    const sets = names.map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', LYTD.periodId, LYTD.population)).filter(x => x && x.points.length >= 2);
     if (!sets.length) return '';
     const vol = TA.LATERAL_VOLUME_METRIC ? TA.annualWithYtd(TA.LATERAL_VOLUME_METRIC, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd') : null;
     let volHtml = '';
@@ -312,7 +313,7 @@
         vol.points.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + TA.fmtInt(p.value) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
     }
     const pp = (a, b) => TA.deltaText('%', a, b).replace(' (percentage points)', '');
-    const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', 'per_biz_2026ytd')).filter(x => x && x.points.length >= 2);
+    const cyc = (TA.LATERAL_CYCLE_METRICS || []).map(n => TA.annualWithYtd(n, 'Lateral hiring', 'Lateral joiners', LYTD.periodId, LYTD.population)).filter(x => x && x.points.length >= 2);
     let cycHtml = '';
     if (cyc.length) {
       cycHtml = '<div class="grid g2" style="margin-bottom:14px">' + cyc.map(c => {
@@ -335,7 +336,7 @@
         '<details class="tableview"><summary>Table view</summary><div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">Value</th><th scope="col">Source</th></tr></thead><tbody>' +
         pts.map(p => '<tr><td>' + esc(p.short) + '</td><td class="num">' + esc(TA.fmtPct(p.value)) + '</td><td class="small"><button class="linklike" data-act="view" data-entity="observations" data-id="' + p.obs.id + '">' + esc(p.obs.source || 'Not provided') + '</button></td></tr>').join('') + '</tbody></table></div></details></div>';
     }).join('') + '</div>';
-    return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring and cycle-time trend tables and Business Review Meeting (Oct) slide; 2026 vendor usage 6.6% confirmed at the 14 Oct cut-off.', body +
+    return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring and cycle-time trend tables and Business Review Meeting (Oct) slide. 2026 YTD for the % measures and cycle times: hiring tracker, lateral incl. conversions and FTC (352 joiners); 2026 volume: trend table (353 to 19 Oct).', body +
       commentary('Lateral hires peaked in 2022 and have fallen each full year since. Requisition-to-join time fell from 115 days (2023) to 94 (2025). Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'Together these show the volume, speed, cost, inclusion and sourcing mix of lateral hiring. 2026 is not yet a full year.',
         'Track the planned diversity pipeline and the referral module redesign (see Actions); use 2025 full-year cycle times as the baseline for targets; compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
   }
@@ -527,7 +528,7 @@
       return '<div class="tile"><div class="t-label">' + esc(cat) + '</div><div class="t-value' + (t.validated ? '' : ' np') + '">' + (t.validated ? esc(TA.fmtVal(t.validatedGross, t.unit)) : (cat === 'Non-financial outcome' ? t.count + ' recorded' : 'None validated')) + '</div>' +
         '<div class="t-sub">' + esc(defn) + '<br>' + t.count + ' record(s) · ' + t.validated + ' validated' + (t.unvalidatedGross ? ' · unvalidated/estimated: ' + esc(TA.fmtVal(t.unvalidatedGross, t.unit)) + ' (not claimed)' : '') + (t.validated && cat !== 'Productivity capacity released' ? '<br>Validated net: ' + (t.netKnown ? esc(TA.fmtINR(t.validatedNet)) : 'not calculable – costs missing') : '') + (t.overlaps ? '<br>' + t.overlaps + ' with overlap noted' : '') + '</div></div>';
     }).join('') + '</div>';
-    h += '<div class="notice warn" style="margin-bottom:14px"><strong>Vendor usage (6.6% of lateral joiners, 1 Jan–14 Oct 2026):</strong> a change in vendor usage is not, by itself, a monetary saving. A vendor-fee saving needs comparable baseline and comparison vendor hires for the same population and an approved fee per hire. No such inputs have been supplied, so no saving is reported.</div>';
+    h += '<div class="notice warn" style="margin-bottom:14px"><strong>Vendor usage (6.5% – 23 of 352 lateral joiners incl. conversions, 1 Jan–14 Oct 2026):</strong> a change in vendor usage is not, by itself, a monetary saving. A vendor-fee saving needs comparable baseline and comparison vendor hires for the same population and an approved fee per hire. No such inputs have been supplied, so no saving is reported.</div>';
     h += table('benefits', 'benefits', { filters: ['category', 'validationStatus', 'calcType'], defaults: { validationStatus: 'Proposed – not validated', unitCostApproved: false },
       rowActions: (r) => '<button class="btn sm" data-act="view" data-entity="benefits" data-id="' + r.id + '">Calculation</button> ', empty: 'No benefits recorded. No savings, cost avoidance or financial inputs were supplied in the reference data.' });
     h += '<div style="height:14px"></div>' + card('Calculation methods', 'Every benefit exposes its inputs, steps and assumptions in its detail view.',

@@ -123,3 +123,42 @@
   const prev = TA.applyDataPacks;
   TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
 })();
+
+/* Update (TA Head, 20 Oct 2026: "use the data in the TA Performance Management System chat"): hiring mix and role context per person
+   from the India TA Talent Review. Offer counts by hiring category only – the review's points, ratings and appraisal scores are not imported
+   (no automatic rating of people). Hire dates that differ from the start dates held here are raised as a question, not changed. */
+(function () {
+  'use strict';
+  const TA = window.TA;
+  const PACK = 'talent-review-sync-2026-10-20-upd1';
+  const SRC = 'India TA Talent Review (TA Performance Management System chat), 20 Oct 2026';
+  const P = [{"names":["Adarsh","Adarsh K V","Adarsh KV"],"jobTitle":"Talent Acquisition Professional","level":"SG6","joined":"2022-07-06","since":"2022-07-06","mix":[["Lateral SG5-SG8",24],["Lateral SG1-SG4",1],["FTC",21],["FTC Conversion",7],["ExcelHER",10],["NATS Hiring",31],["Contract Conversion",23],["ExcelHER Conversion",1],["NATS Conversion",1]],"streams":{"core":76,"excelher":10,"nats":31},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Elizabeth John","Eli"],"jobTitle":"Talent Acquisition Professional","level":"SG6","joined":"2022-03-28","since":"2022-03-28","mix":[["Lateral SG5-SG8",14],["Lateral SG1-SG4",1],["FTC",27],["FTC Conversion",7],["ExcelHER",1],["NATS Hiring",18],["AICTE Professor",2],["PhD Internship",1],["Contract Conversion",20],["NATS Conversion",2]],"streams":{"core":66,"excelher":1,"nats":18,"other":3},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Fareeda"],"jobTitle":null,"level":null,"joined":null,"since":null,"mix":[["Lateral SG5-SG8",4]],"streams":{},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Gokul","Gokula"],"jobTitle":"HR Systems Analyst Professional","level":"SG5","joined":"2023-01-02","since":"2023-01-02","mix":[],"streams":{},"mixPeriod":null},{"names":["Jayaram","Kothuru Jayaram"],"jobTitle":null,"level":null,"joined":null,"since":null,"mix":[["Lateral SG5-SG8",23],["Lateral SG1-SG4",1],["FTC Conversion",1],["NATS Hiring",25],["NATS Conversion",2]],"streams":{},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Jeyapriya Kumaresan","Jeyapriya"],"jobTitle":null,"level":null,"joined":"2024-01-20","since":null,"mix":[["NATS Hiring",8],["GET / PGET",51],["Internship",33]],"streams":{},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Kathir","Kathiresaprabu Sanjeevi","Kathiresaprabu"],"jobTitle":"Talent Acquisition Professional","level":"SG6","joined":"2025-07-07","since":"2025-07-07","mix":[["SG9 and above",2],["Lateral SG5-SG8",22],["FTC Conversion",1],["ExcelHER",6],["NATS Hiring",21],["Contract Conversion",9]],"streams":{"core":33,"excelher":6,"nats":21},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Lincy Mathew"],"jobTitle":"HR Operations Analyst Professional","level":"SG6","joined":"2026-05-20","since":"2024-06-10","mix":[],"streams":{},"mixPeriod":null},{"names":["Mickey","Mickey Singh","Mikki"],"jobTitle":"HR Operations Analyst Entry","level":"SG5","joined":"2024-03-20","since":"2024-03-20","mix":[],"streams":{},"mixPeriod":null},{"names":["Padma","Padmavathi Kalidasan","Padmavathy","Padmavathi K","Padmavathi"],"jobTitle":"Talent Acquisition Professional","level":"SG6","joined":"2022-03-31","since":"2022-03-31","mix":[["Lateral SG5-SG8",3],["ExcelHER",7],["NATS Hiring",29],["GET / PGET",5],["Contract Conversion",2],["Internship",13]],"streams":{"core":9,"excelher":7,"nats":29,"other":11},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Philomena Lincy","Lincy","Lincy P","Lincy Philomena"],"jobTitle":"Talent Acquisition Senior","level":"SG8","joined":"2023-03-27","since":"2023-03-27","mix":[["SG9 and above",1],["Lateral SG5-SG8",25],["FTC",1],["ExcelHER",2],["NATS Hiring",6],["Contract Conversion",1],["ExcelHER Conversion",1]],"streams":{"core":29,"excelher":2,"nats":6},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Prabu Krishnan","Prabu","Prabu K"],"jobTitle":null,"level":null,"joined":null,"since":null,"mix":[],"streams":{},"mixPeriod":"1 Jan–14 Oct 2026"},{"names":["Shreyashi","Shreyashi Saha"],"jobTitle":"Recruiter Professional","level":"SG5","joined":"2022-03-07","since":"2022-03-07","mix":[["Lateral SG5-SG8",29],["Lateral SG1-SG4",33],["FTC",14],["FTC Conversion",1],["ExcelHER",1],["NATS Hiring",16],["GET / PGET",4],["Contract Conversion",4]],"streams":{"core":84,"excelher":1,"nats":16},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Smruthi MK","Smruthi Prabhakaran","Smruthi"],"jobTitle":"Talent Acquisition Professional","level":"SG6","joined":"2022-07-27","since":"2022-07-27","mix":[["SG9 and above",1],["Lateral SG5-SG8",23],["Lateral SG1-SG4",2],["FTC",6],["FTC Conversion",4],["ExcelHER",7],["NATS Hiring",22],["Contract Conversion",11],["ExcelHER Conversion",1]],"streams":{"core":48,"excelher":7,"nats":22},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Spoorthy Das","Spoorthy","Spoorthi"],"jobTitle":"Recruiter Professional","level":"SG5","joined":"2025-07-24","since":"2023-07-24","mix":[["Lateral SG5-SG8",2],["ExcelHER",7],["NATS Hiring",60],["ExcelHER Conversion",1],["NATS Conversion",2]],"streams":{"core":5,"excelher":7,"nats":60},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Sunil Bhat","Sunil Bhat M"],"jobTitle":null,"level":null,"joined":null,"since":null,"mix":[["Lateral SG5-SG8",2],["FTC",7],["FTC Conversion",2],["NATS Hiring",4],["Contract Conversion",6]],"streams":{},"mixPeriod":"1 Jan–16 Oct 2026"},{"names":["Tanushree","Tanushree Mukhopadhyay"],"jobTitle":"HR Systems Analyst Senior","level":"SG6","joined":"2024-06-12","since":"2024-06-12","mix":[],"streams":{},"mixPeriod":null}];
+  const STREAM = { core: 'core hiring', nats: 'NATS', excelher: 'ExcelHER', other: 'other programmes' };
+  function apply() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(PACK) >= 0 || applied.indexOf('talent-review-sync-2026-10-20') < 0) return false;
+    S.recoveryPoint('Before adding hiring mix and role context from the talent review');
+    const origin = 'Import: ' + SRC, today = TA.todayIso(), dates = [];
+    P.forEach(x => {
+      const t = x.names.map(n => TA.findMember(n)).find(Boolean); if (!t) return;
+      const patch = {};
+      const st = Object.keys(x.streams).map(k => STREAM[k] + ' ' + x.streams[k]);
+      const mix = (st.length ? 'Scorecard offers by stream (1 Jan–12 Oct 2026): ' + st.join(', ') + '. ' : '') +
+        (x.mix.length ? 'Offers by category (Hiring2026 tracker plus the NATS and pipeline programmes workbook, ' + x.mixPeriod + '): ' + x.mix.map(m => m[0] + ' ' + m[1]).join(', ') + '.' : '');
+      if (mix && (t.hiringMix || '').indexOf(mix) < 0) patch.hiringMix = (t.hiringMix ? t.hiringMix + ' ' : '') + mix + ' (Talent review.)';
+      const rc = (x.jobTitle ? 'Job title: ' + x.jobTitle : '') + (x.level ? (x.jobTitle ? '; ' : '') + 'grade ' + x.level : '');
+      if (rc && (t.roleComplexity || '').indexOf(rc) < 0) patch.roleComplexity = (t.roleComplexity ? t.roleComplexity + ' ' : '') + rc + ' (talent review).';
+      if (Object.keys(patch).length) S.update('team', t.id, patch);
+      if (x.joined && t.startDate && x.joined !== t.startDate) dates.push(t.name + ': start date held here ' + TA.fmtDate(t.startDate) + '; talent review hire date ' + TA.fmtDate(x.joined) + (x.since ? ' (in role since ' + TA.fmtDate(x.since) + ')' : ''));
+    });
+    const title = 'Hire dates: talent review vs start dates held here';
+    if (dates.length && !S.list('questions', { archived: true }).some(q => q.title === title))
+      S.add('questions', { title, type: 'Data conflict', priority: 'Nice to have', relatedTo: 'Team & Development – start dates', detail: dates.join('. ') + '. Start dates are unchanged. Which date should the dashboard use for tenure and target exposure?',
+        valueA: 'Start date held here', valueB: 'Talent review hire date', owner: 'Dr. Ranjith TP', raisedDate: today, status: 'Open', resolution: null, resolvedDate: null }, origin);
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([PACK]) });
+    return true;
+  }
+  const prev = TA.applyDataPacks;
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
+})();

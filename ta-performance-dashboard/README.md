@@ -72,7 +72,7 @@ About the periods:
 - Name matches: Eli = Elizabeth John, Smruthi MK = Smruthi Prabhakaran, Spoorthi = Spoorthy Das, Sunil Bhat M = Sunil Bhat. Each person's TA team, plus leavers (Jeyapriya Kumaresan, Prabu Krishnan, Sunil Bhat, Fareeda).
 - The recruiter scorecard for 1 Jan–12 Oct 2026, covering eight people (offers, full-year offer target and joiners, all source-reported). Kathir's target was revised to 51.
 - Hiring-tracker counts for the newly matched names, and owners and statuses for the talent programmes.
-- Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100.
+- Ratings and appraisal scores are **not** imported. Two conflicts are raised as Essential questions: Padma's status and NATS 125 vs 100. A follow-up (`talent-review-sync-2026-10-20-upd1`) adds each person's hiring mix (offer counts by category, without points) and job title and grade. Hire dates that differ from the start dates held here are raised as a question.
 
 ## Lateral-only key parameters (20 Oct 2026)
 
@@ -82,7 +82,7 @@ About the periods:
 - offers made, decline rate, acceptance rate and pending offers;
 - requisition ageing.
 
-It reports both the 2026 YTD position and the monthly series. The earlier all-hires values move to the recycle bin and can be restored. Breakdowns (by business area, source, employment type, decline reason and requisition age) are lateral too. Ageing of open requisitions that have no offer is not in the tracker and is shown as "Not provided".
+It reports both the 2026 YTD position and the monthly series. The one NATS conversion the tracker records as "Fresher" is counted as lateral (TA Head, 20 Oct), so the lateral base is 352; the scorecard Lateral programme stays at 351 as reported. Cycle times use the tracker (53.5 / 90.3 days). The 2026 YTD point on the lateral key-parameter charts comes from the tracker (`TA.LATERAL_YTD`). The earlier all-hires values move to the recycle bin and can be restored. Breakdowns (by business area, source, employment type, decline reason and requisition age) are lateral too. Ageing of open requisitions that have no offer is not in the tracker and is shown as "Not provided".
 
 ## How data is stored
 
