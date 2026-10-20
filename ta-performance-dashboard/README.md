@@ -92,7 +92,7 @@ It reports both the 2026 YTD position and the monthly series. The one NATS conve
 - external hires by previous company;
 - consultant conversions by partner firm.
 
-It also adds three descriptive insights. The Offer Stack sheet supplies the current company; it was matched to tracker outcomes on requisition ID and offer date outside the dashboard. The match covers 303 of 352 joiners; the Offer Stack starts in 2026, so earlier offers have no company recorded. Only company-level counts are stored. Company spellings are normalised, and vendor contacts are reduced to the agency name.
+It also adds three descriptive insights. The Offer Stack sheet supplies the current company; it was matched to tracker outcomes on requisition ID and offer date outside the dashboard. Rows without a recorded company are left out, and same or similar company names are merged (update `-upd1`). Only company-level counts are stored. Company spellings are normalised, and vendor contacts are reduced to the agency name.
 
 ## How data is stored
 
