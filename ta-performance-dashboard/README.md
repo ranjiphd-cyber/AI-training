@@ -84,6 +84,16 @@ About the periods:
 
 It reports both the 2026 YTD position and the monthly series. The one NATS conversion the tracker records as "Fresher" is counted as lateral (TA Head, 20 Oct), so the lateral base is 352; the scorecard Lateral programme stays at 351 as reported. Cycle times use the tracker (53.5 / 90.3 days). The 2026 YTD point on the lateral key-parameter charts comes from the tracker (`TA.LATERAL_YTD`). The earlier all-hires values move to the recycle bin and can be restored. Breakdowns (by business area, source, employment type, decline reason and requisition age) are lateral too. Ageing of open requisitions that have no offer is not in the tracker and is shown as "Not provided".
 
+## Sources of hire and previous companies (20 Oct 2026)
+
+`js/data-hiring-sources.js` (pack `hiring-sources-companies-2026-10-20`) adds four lateral breakdowns to Trends and to the exports:
+- hire type: external market hires vs conversions;
+- specific source: channel, vendor agency and conversion type;
+- external hires by previous company;
+- consultant conversions by partner firm.
+
+It also adds three descriptive insights. The Offer Stack sheet supplies the current company; it was matched to tracker outcomes on requisition ID and offer date outside the dashboard. The match covers 303 of 352 joiners; the Offer Stack starts in 2026, so earlier offers have no company recorded. Only company-level counts are stored. Company spellings are normalised, and vendor contacts are reduced to the agency name.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.
