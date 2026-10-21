@@ -743,9 +743,14 @@ function pBehaviours(E) {
     const x = b[c] || {}, hd = num(x.head), sf = num(x.self);
     h += `<div>${esc(c)}${hd != null && sf != null && Math.abs(sf - hd) > 1 ? ' <span class="tag">gap ' + (sf - hd > 0 ? '+' : '') + (sf - hd) + '</span>' : ''}</div>`;
     for (let n = 1; n <= 5; n++) h += `<div class="cell" title="${esc(n + ': ' + (scaleText(c, n) || 'no description yet'))}">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
-    h += `<div class="ev">${esc(x.evidence || '')}</div>`;
+    const ev = String(x.evidence || ''); h += `<div class="ev"${ev.length > 120 ? ` title="${esc(ev)}"` : ''}>${esc(ev.length > 120 ? ev.slice(0, 117).replace(/\s+\S*$/, '') + '…' : ev)}</div>`;
   }
   h += `</div></div>`;
+  const notes = C.filter(c => { const x = b[c] || {}; return x.evidence || x.actions || x.target; });
+  if (notes.length) h += `<div class="card pad sec"><div class="sec-h"><h3>Feedback and next steps</h3><span class="hint">TA Head's view, with actions to try and a target to aim for</span></div><div class="items">${notes.map(c => { const x = b[c] || {}, acts = String(x.actions || '').split('\n').map(a => a.trim()).filter(Boolean);
+    return `<div class="item"><div class="t">${esc(c)}${num(x.head) != null ? ` <span class="tag acc">TA Head ${num(x.head)} of 5</span>` : ' <span class="tag">TA Head rating to add</span>'}${num(x.self) != null ? ` <span class="tag">self ${num(x.self)}</span>` : ''}</div>${x.evidence ? `<div class="d" style="color:var(--ink);font-size:13px">${esc(x.evidence)}</div>` : ''}
+      ${acts.length ? `<div class="d" style="margin-top:6px"><b>Actions to consider</b><ul style="margin:4px 0 0;padding-left:18px">${acts.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}${x.target ? `<div class="d" style="margin-top:6px"><b>Target and plan:</b> ${esc(x.target)}</div>` : ''}
+      ${x.original && canWrite ? `<details style="margin-top:6px"><summary class="sub" style="font-size:12px;color:var(--muted);cursor:pointer">Your original note</summary><div class="d">${esc(x.original)}</div></details>` : ''}</div>`; }).join('')}</div></div>`;
   const big = C.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
   h += scaleCard();
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
@@ -1327,9 +1332,9 @@ function promoForm(id) {
 }
 function behavioursForm(id) {
   const doc0 = S.behaviours[id] || {}, cur = doc0.ratings || {}, vals = {}, fields = [], C = behSet(id);
-  C.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Evidence', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; });
+  C.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Feedback and evidence', type: 'textarea', full: true }); fields.push({ k: 'a' + i, label: 'Actions to consider', hint: '(one per line)', type: 'textarea', full: true }); fields.push({ k: 't' + i, label: 'Target and plan', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; vals['a' + i] = x.actions; vals['t' + i] = x.target; });
   openForm({ title: `Behaviours: ${S.people[id].name}`, intro: `Rate each behaviour for a ${roleKey(S.people[id]).toLowerCase()} from 1 to 5. Behaviours guide the conversation and are not scored. Use Add behaviour on the Behaviours tab to add one for this person.`, values: vals, fields, save: async v => {
-    const ratings = {}; C.forEach((c, i) => { ratings[c] = { head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i] }; });
+    const ratings = {}; C.forEach((c, i) => { ratings[c] = { ...(cur[c] || {}), head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i], actions: v['a' + i], target: v['t' + i] }; });
     return write('behaviours/' + id, { ...doc0, ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}`);
   } });
 }
