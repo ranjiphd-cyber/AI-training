@@ -257,6 +257,49 @@ svg.viz .row { cursor: pointer; } svg.viz .row:hover .hl { fill: var(--card-2); 
 /* ===================== constants (from the TA Head's rules) ===================== */
 const YEAR = 2026, CUTOFF = '2026-10-16';
 const COMPETENCIES = ['Delivery Ownership', 'Stakeholder Management', 'Talent Advisory', 'Market Intelligence', 'Data & Analytics', 'Assessment Capability', 'Digital & AI Capability', 'Collaboration & Leadership'];
+/* Default behaviours and development suggestions by role; the TA Head can edit both under People & teams */
+const DEFAULT_BEH = {
+  'Recruiter': COMPETENCIES,
+  'Sourcer': ['Sourcing Strategy & Search', 'Talent Pipeline Building', 'Market Intelligence', 'Candidate Engagement', 'Recruiter Partnership', 'Data & Analytics', 'Digital & AI Capability', 'Delivery Ownership'],
+  'Team Lead': ['Team Delivery Ownership', 'Coaching & Developing Others', 'Stakeholder Management', 'Talent Advisory', 'Planning & Prioritisation', 'Data-Driven Decisions', 'Process Improvement & Change', 'Collaboration & Leadership'],
+  'Support / Operations': ['Accuracy & Attention to Detail', 'Timeliness & Reliability', 'Process & Compliance Discipline', 'Systems Capability', 'Data & Reporting', 'Stakeholder Service', 'Process Improvement', 'Digital & AI Capability'],
+};
+const DEFAULT_PLANLIB = {
+  'Recruiter': [
+    ['Hold an intake meeting for every new requisition and agree a written role scorecard with the hiring manager', 'Stakeholder Management', 'Scorecard agreed for every new requisition'],
+    ['Review requisitions open longer than 30 days every week and agree a next step for each', 'Delivery Ownership', 'Requisition-to-offer days below 45'],
+    ['Pre-close each candidate on salary, notice period and counter-offer risk before the offer is released', 'Talent Advisory', 'Fewer declined offers than last year'],
+    ['Build a talent map for one hard-to-fill skill family and share it with the business', 'Market Intelligence', 'Talent map shared with the business'],
+    ['Use a structured, competency-based screening guide for each role family', 'Assessment Capability', 'Guide in use for the main role families'],
+    ['Track your own funnel (submissions, interviews, offers, joins) monthly and act on the weakest stage', 'Data & Analytics', 'Monthly funnel review completed'],
+    ['Use AI tools for job descriptions, search strings and outreach messages', 'Digital & AI Capability', 'Time saved per requisition'],
+    ['Mentor a new joiner or lead a campus, NATS or ExcelHER drive', 'Collaboration & Leadership', 'Drive delivered or mentee feedback'],
+  ],
+  'Sourcer': [
+    ['Build a library of search strings for the top skill families', 'Sourcing Strategy & Search', 'Library shared with recruiters'],
+    ['Keep a warm pipeline for repeat roles before requisitions open', 'Talent Pipeline Building', 'Ready candidates for repeat roles'],
+    ['Agree candidate quality feedback with each recruiter weekly', 'Recruiter Partnership', 'Submission-to-interview ratio improves'],
+    ['Track source of hire and response rates by channel', 'Data & Analytics', 'Monthly channel report'],
+  ],
+  'Team Lead': [
+    ['Hold a monthly one-to-one with each recruiter, with written actions', 'Coaching & Developing Others', 'Twelve one-to-ones per recruiter a year'],
+    ['Run a weekly pipeline review with the team and agree priorities with business heads', 'Planning & Prioritisation', 'Team at or above target to date'],
+    ['Hold a quarterly business review with key hiring managers', 'Stakeholder Management', 'Reviews held; feedback recorded'],
+    ['Name a backup for each critical role and recruiter in the team', 'Coaching & Developing Others', 'Backup plan agreed'],
+    ['Lead one process improvement project through to the Control stage', 'Process Improvement & Change', 'Project validated to Control'],
+    ['Review the team dashboard weekly and act on the weakest measure', 'Data-Driven Decisions', 'Weakest measure improves quarter on quarter'],
+    ['Complete a people-management or coaching programme', 'Coaching & Developing Others', 'Programme completed and applied'],
+  ],
+  'Support / Operations': [
+    ['Write or update the SOP for each activity you own', 'Process & Compliance Discipline', 'SOPs current for every owned activity'],
+    ['Keep a monthly SLA tracker for your activities and share it with the TA Head', 'Timeliness & Reliability', '95% or more within SLA'],
+    ['Add a maker-checker step for payroll inputs and vendor billing', 'Accuracy & Attention to Detail', 'No payroll or billing corrections'],
+    ['Automate one recurring report or tracker', 'Data & Reporting', 'Report produced with less manual work'],
+    ['Become the go-to expert for one system (SuccessFactors, Medius or EBD)', 'Systems Capability', 'Queries resolved without escalation'],
+    ['Run a quarterly feedback pulse with recruiters and vendors', 'Stakeholder Service', 'Pulse score improves'],
+    ['Propose and deliver one process improvement', 'Process Improvement', 'Improvement in use'],
+  ],
+};
 const RATINGS = ['Exceptional', 'High', 'Good', 'Adequate', 'Low'];
 const RVAL = { Exceptional: 5, High: 4, Good: 3, Adequate: 2, Low: 1 };
 const LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
@@ -319,6 +362,16 @@ const declOn = () => YEAR >= declFrom() && declPen() > 0;
 const W = { offer: 65, ct: 10, vendor: 5, del: 80, proj: 10, comp: 10, ops: 70, proc: 10 };
 const OPS_W = { timely: 25, volume: 20, errors: 15, experience: 10 };
 const OPS_FACTOR = { 5: 1, 4: 0.9, 3: 0.75, 2: 0.5, 1: 0.2 };
+const roleKey = p => p && DEFAULT_BEH[p.role] ? p.role : 'Recruiter';
+const roleSets = () => ({ ...DEFAULT_BEH, ...(((S.settings.behaviourSets || {}).sets) || {}) });
+const roleLib = () => ({ ...DEFAULT_PLANLIB, ...(((S.settings.planLibrary || {}).byRole) || {}) });
+function behSet(id) {
+  const b = S.behaviours[id] || {}, base = roleSets()[roleKey(S.people[id])] || COMPETENCIES;
+  const rated = Object.keys(b.ratings || {}).filter(c => { const x = b.ratings[c] || {}; return x.head != null || x.self != null || x.evidence; });
+  return [...new Set([...base, ...(b.extra || []), ...rated])];
+}
+function allBehNames() { return [...new Set([...Object.values(roleSets()).flat(), ...Object.values(S.behaviours).flatMap(b => b.extra || [])])]; }
+const leadBeh = c => /Leadership|Coaching|Developing Others/.test(c);
 const scaleText = (comp, n) => { const sc = S.settings.behaviourScale || {}; return ((sc.byComp || {})[comp] || {})[n] || (sc.general || {})[n] || ''; };
 const S = Object.fromEntries(COLS.map(c => [c, {}]));
 let LOG = [];
@@ -388,7 +441,7 @@ function evalPerson(p) {
   const partial = sup ? r1((ops ? ops.ptsSoFar : 0) + (proj || 0) + (comp || 0) + (proc || 0)) : r1((del ?? (own ? own.raw : 0)) + (proj || 0) + (comp || 0));
   const att = own ? own.att : null;
   const stat = !inReview(p) || sup ? 'none' : statusOf(isLead(p) && team && team.att != null && att != null ? Math.min(att, team.att) : att);
-  return { p, sup, own, team, del, proj, comp, cd, opsPts, proc, total, partial, max, att, stat, rv, projs, learn: learningOf(id), plans: plansOf(id), beh: (S.behaviours[id] || {}).ratings || {} };
+  return { p, comps: behSet(id), sup, own, team, del, proj, comp, cd, opsPts, proc, total, partial, max, att, stat, rv, projs, learn: learningOf(id), plans: plansOf(id), beh: (S.behaviours[id] || {}).ratings || {} };
 }
 
 function promotion(E) {
@@ -398,13 +451,13 @@ function promotion(E) {
   crit.push({ ok: strong, label: `Last two P4P ratings High or above`, fact: `${YEAR - 1}: ${r.y2025 || 'no rating'} · ${YEAR - 2}: ${r.y2024 || 'no rating'}` });
   const score = E.total != null ? E.total / E.max * 100 : null;
   crit.push({ ok: score != null && score >= 80, label: `${YEAR} total score of 80% or more`, fact: E.total != null ? `${fmt(E.total)} of ${E.max}` : `Not complete yet (${fmt(E.partial)} of ${E.max} so far)` });
-  const strongB = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) >= 4);
+  const strongB = E.comps.filter(c => num((E.beh[c] || {}).head) >= 4);
   crit.push({ ok: strongB.length >= 3, label: 'Three or more behaviours rated 4+ by the TA Head', fact: strongB.length ? strongB.join(', ') : 'None rated 4 or above yet' });
   const yrs = yearsSince(p.since);
   const exc = p.roleTimeException;
   crit.push({ ok: !!exc || (yrs != null && yrs >= 2), label: 'Two or more years in current role', fact: (yrs == null ? 'Date in current role not recorded' : `${fmt(yrs)} years in ${p.level || 'current level'} (since ${nice(p.since)})`) + (exc ? ` · Exception: ${p.roleTimeReason || 'approved by the TA Head'}` : '') });
-  const lead = num((E.beh['Collaboration & Leadership'] || {}).head) >= 4 || E.projs.some(x => num(x.stage) >= 3 && projectScore(x) != null);
-  crit.push({ ok: lead, label: 'Leadership evidence', fact: 'Collaboration & Leadership rated 4+, or a scored project validated to Improve or Control' });
+  const lead = E.comps.some(c => leadBeh(c) && num((E.beh[c] || {}).head) >= 4) || E.projs.some(x => num(x.stage) >= 3 && projectScore(x) != null);
+  crit.push({ ok: lead, label: 'Leadership evidence', fact: 'A leadership or coaching behaviour rated 4+, or a scored project validated to Improve or Control' });
   const met = crit.filter(c => c.ok).length, known = [r.y2025, r.y2024, r.y2023].filter(Boolean).length;
   let level;
   if (!inReview(p)) level = 'Not assessed';
@@ -681,22 +734,24 @@ function pScores(E) {
   return h;
 }
 function pBehaviours(E) {
-  const b = E.beh, rated = COMPETENCIES.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null);
-  let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">eight core competencies · 1–5 · self and TA Head · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editBehaviours" data-id="${esc(E.p.id)}" type="button">Rate behaviours</button>` : ''}</div>`;
-  if (!rated.length) return h + scaleCard() + `<div class="empty-note sec">No behaviour ratings yet. ${canWrite ? 'Use <b>Rate behaviours</b> to record the self-rating and your rating for each competency, with evidence.' : ''}</div>`;
+  const b = E.beh, C = E.comps, rated = C.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null), extra = (S.behaviours[E.p.id] || {}).extra || [];
+  let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">${C.length} behaviours for ${esc(roleKey(E.p))}${extra.length ? ` (incl. ${extra.length} added for ${esc(E.p.name)})` : ''} · 1–5 · self and TA Head · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="addBeh" data-id="${esc(E.p.id)}" type="button">Add behaviour</button> <button class="btn sm pri" data-act="editBehaviours" data-id="${esc(E.p.id)}" type="button">Rate behaviours</button>` : ''}</div>`;
+  h += p4pNote(E);
+  if (!rated.length) return h + `<div class="card pad"><div class="sub" style="font-size:13px;color:var(--ink-2)">${C.map(c => `<span class="tag" style="margin:0 6px 6px 0;display:inline-block">${esc(c)}${extra.includes(c) ? ' · added' : ''}</span>`).join('')}</div></div>` + scaleCard() + `<div class="empty-note sec">No behaviour ratings yet. ${canWrite ? 'Use <b>Rate behaviours</b> to record the self-rating and your rating for each competency, with evidence.' : ''}</div>`;
   h += `<div class="card pad"><div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>TA Head</span><span><i style="border:2px solid var(--ink-2);border-radius:50%;background:transparent"></i>Self</span></div><div class="beh"><div></div>${[1, 2, 3, 4, 5].map(n => `<div class="hdr">${n}</div>`).join('')}<div class="hdr" style="text-align:left;padding-left:8px">Evidence</div>`;
-  for (const c of COMPETENCIES) {
+  for (const c of C) {
     const x = b[c] || {}, hd = num(x.head), sf = num(x.self);
     h += `<div>${esc(c)}${hd != null && sf != null && Math.abs(sf - hd) > 1 ? ' <span class="tag">gap ' + (sf - hd > 0 ? '+' : '') + (sf - hd) + '</span>' : ''}</div>`;
     for (let n = 1; n <= 5; n++) h += `<div class="cell" title="${esc(n + ': ' + (scaleText(c, n) || 'no description yet'))}">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
     h += `<div class="ev">${esc(x.evidence || '')}</div>`;
   }
   h += `</div></div>`;
-  const big = COMPETENCIES.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
+  const big = C.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
   h += scaleCard();
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
   return h;
 }
+function p4pNote(E) { const r = E.p.ratings || {}; return `<div class="sub" style="font-size:12.5px;color:var(--ink-2);margin:-4px 0 12px">P4P rating for ${YEAR - 1}: <b>${esc(r.y2025 || 'not given')}</b> · ${YEAR - 2}: <b>${esc(r.y2024 || 'not given')}</b> <span style="color:var(--muted)">(review cycles ${YEAR} and ${YEAR - 1})</span></div>`; }
 function scaleCard() {
   const g = (S.settings.behaviourScale || {}).general || {};
   const any = [1, 2, 3, 4, 5].some(n => g[n]);
@@ -704,13 +759,15 @@ function scaleCard() {
 }
 function itemActions(kind, id) { return canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-${kind}" data-id="${esc(id)}" type="button">Edit</button><button class="btn sm danger" data-act="del-${kind}" data-id="${esc(id)}" type="button">Delete</button></span>` : ''; }
 function pDevelopment(E) {
-  let h = `<div class="sec-h"><h3>Development plan</h3><span class="hint">actions and areas for improvement</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-plan" data-id="${esc(E.p.id)}" type="button">Add item</button>` : ''}</div>`;
-  if (!E.plans.length) return h + `<div class="empty-note">No development plan yet. Add development actions (training, stretch assignment, coaching) or areas for improvement with the expected and current behaviour.</div>`;
+  let h = `<div class="sec-h"><h3>Development plan</h3><span class="hint">actions and areas for improvement</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-plan" data-id="${esc(E.p.id)}" type="button">Add item</button>` : ''}</div>` + p4pNote(E);
+  const have = new Set(E.plans.map(x => (x.action || '').trim().toLowerCase())), lib = (roleLib()[roleKey(E.p)] || []).map((x, i) => [x, i]).filter(([x]) => !have.has(String(x[0]).trim().toLowerCase()));
+  const sugg = lib.length ? `<div class="card pad sec"><div class="sec-h"><h3>Suggested for a ${esc(roleKey(E.p).toLowerCase())}</h3><span class="hint">pick what fits, then set the date and details · edit the list under People &amp; teams</span></div><div class="tw"><table><thead><tr><th>Action</th><th>Behaviour</th><th>How we'll know</th><th></th></tr></thead><tbody>${lib.map(([x, i]) => `<tr><td>${esc(x[0])}</td><td class="sub" style="font-size:12.5px">${esc(x[1] || '')}</td><td class="sub" style="font-size:12.5px">${esc(x[2] || '')}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="sugg-plan" data-id="${esc(E.p.id)}" data-idx="${i}" type="button">Add to plan</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>` : '';
+  if (!E.plans.length) return h + `<div class="empty-note">No development plan yet. Add your own item, or pick from the suggestions for this role below.</div>` + sugg;
   const order = s => PLAN_STATUS.indexOf(s);
   h += `<div class="items">${[...E.plans].sort((a, b) => order(a.status) - order(b.status)).map(x => `<div class="item"><div class="t">${esc(x.action)} <span class="tag ${x.type === 'Area for improvement' ? '' : 'acc'}">${esc(x.type || '')}</span><span class="tag">${esc(x.status || '')}</span>${itemActions('plan', x.id)}</div>
     <div class="d">${[x.competency, x.due ? 'due ' + nice(x.due) : null, x.support ? 'support: ' + x.support : null].filter(Boolean).map(esc).join(' · ')}</div>
     ${x.expected || x.current ? `<div class="d">Expected: ${esc(x.expected || '—')} · Current: ${esc(x.current || '—')}</div>` : ''}${x.evidence ? `<div class="d">Evidence: ${esc(x.evidence)}</div>` : ''}</div>`).join('')}</div>`;
-  return h;
+  return h + sugg;
 }
 function pLearning(E) {
   let h = `<div class="sec-h"><h3>Training and certifications</h3><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-learn" data-id="${esc(E.p.id)}" type="button">Add training</button>` : ''}</div>`;
@@ -1002,7 +1059,7 @@ async function buildDeck(opt) {
   s = pptx.addSlide({ masterName: 'B' }); head(s, 'Competency development and learning', 'Training records, development plans and behaviour ratings. Attendance alone never adds points.');
   const lrn = all.flatMap(E => E.learn.map(l => [E.p.name, l.programme, l.status || '', l.cert ? 'Yes' : '—']));
   tbl(s, ['Person', 'Programme', 'Status', 'Certificate'], lrn.length ? lrn.slice(0, 14) : [['—', 'No training recorded', '', '']], { x: 0.5, y: 1.4, w: 7.2, colW: [1.7, 3.3, 1.2, 1.0], fs: 9.5 });
-  tbl(s, ['Person', 'Plan items', 'Done', 'Behaviours rated', 'Comp. dev /10'], all.map(E => [E.p.name, E.plans.length, E.plans.filter(x => x.status === 'Done').length, COMPETENCIES.filter(c => (E.beh[c] || {}).head != null).length + ' / 8', N(E.comp)]), { x: 8.0, y: 1.4, w: 4.8, colW: [1.5, 0.8, 0.6, 1.0, 0.9], fs: 9.5 });
+  tbl(s, ['Person', 'Plan items', 'Done', 'Behaviours rated', 'Comp. dev /10'], all.map(E => [E.p.name, E.plans.length, E.plans.filter(x => x.status === 'Done').length, E.comps.filter(c => (E.beh[c] || {}).head != null).length + ' / ' + E.comps.length, N(E.comp)]), { x: 8.0, y: 1.4, w: 4.8, colW: [1.5, 0.8, 0.6, 1.0, 0.9], fs: 9.5 });
   // person slides
   const personSlides = E => {
     const p = E.p, o = E.own, tr = o ? o.d.tracker || {} : {}, r = p.ratings || {};
@@ -1040,7 +1097,7 @@ async function buildDeck(opt) {
     sect(s2, 'Development plan and review', 7.2, 4.65, 5.6);
     const dev = E.plans.filter(x => x.status !== 'Dropped').map(x => `${x.action} (${x.status || ''})`);
     if (E.rv.strengths) dev.push('Strengths: ' + cut(E.rv.strengths, 160)); if (E.rv.focus) dev.push(`Focus for ${YEAR + 1}: ` + cut(E.rv.focus, 160));
-    const rated = COMPETENCIES.filter(c => num((E.beh[c] || {}).head) != null); if (rated.length) dev.push(`Behaviours rated: ${rated.length} of 8; 4+ on ${rated.filter(c => num(E.beh[c].head) >= 4).join(', ') || 'none'}`);
+    const rated = E.comps.filter(c => num((E.beh[c] || {}).head) != null); if (rated.length) dev.push(`Behaviours rated: ${rated.length} of ${E.comps.length}; 4+ on ${rated.filter(c => num(E.beh[c].head) >= 4).join(', ') || 'none'}`);
     bullets(s2, dev.slice(0, 6), { x: 7.2, y: 5.0, w: 5.6, h: 1.95, fs: 10, empty: 'No development plan or review notes yet.' });
     const ops = opsRating(p.id);
     if (ops) {
@@ -1122,7 +1179,9 @@ function viewManage() {
   h += `<div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Level</th><th>Joined</th><th>In review</th><th class="n">Annual offer target</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><b class="click" data-person="${esc(p.id)}" style="cursor:pointer">${esc(p.name)}</b>${p.vcnid ? `<div class="sub mono">${esc(p.vcnid)}</div>` : ''}</td><td>${esc(p.role || '')}</td><td>${esc(p.team || '—')}</td><td class="mono">${esc(p.level || '—')}</td><td>${nice(p.joined)}</td><td>${inReview(p) ? 'Yes' : `<span class="sub">No${p.status === 'Left' ? ' (left)' : ''}</span>`}</td><td class="n">${S.delivery[p.id] ? fmt(num(S.delivery[p.id].target), 0) : '—'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button> <button class="btn sm danger" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const sc = S.settings.behaviourScale || {};
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Points per IJP offer</dt><dd>${fmt(ijpPts())}</dd><dt>Declined offers</dt><dd>−${fmt(declPen())} each from ${declFrom()}${declOn() ? ' (applied now)' : ` (not applied in ${YEAR})`}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
-    <div class="card pad"><div class="sec-h"><h3>Behaviour rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Competency</th><th>Own descriptions</th><th></th></tr></thead><tbody>${COMPETENCIES.map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editScale" data-id="${i}" type="button">Edit</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
+    <div class="card pad"><div class="sec-h"><h3>Behaviour rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Behaviour</th><th>Own descriptions</th><th></th></tr></thead><tbody>${allBehNames().map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editScale" data-id="${i}" type="button">Edit</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
+  const RS = roleSets(), RL = roleLib();
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Behaviours and development suggestions by role</h3><span class="hint">used on each person's Behaviours and Development plan tabs</span></div><div class="tw"><table><thead><tr><th>Role</th><th>Behaviours</th><th class="n">Development suggestions</th><th></th></tr></thead><tbody>${Object.keys(RS).map((r, i) => `<tr><td><b>${esc(r)}</b><div class="sub">${peopleList().filter(p => inReview(p) && roleKey(p) === r).length} people</div></td><td style="font-size:12.5px;color:var(--ink-2)">${RS[r].map(esc).join(' · ')}</td><td class="n">${(RL[r] || []).length}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="editBehSet" data-id="${i}" type="button">Edit behaviours</button> <button class="btn sm" data-act="editPlanLib" data-id="${i}" type="button">Edit suggestions</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const teams = Object.entries(S.teams).sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99));
   h += `<div class="card pad sec"><div class="sec-h"><h3>Teams</h3></div><div class="tw"><table><thead><tr><th>Team</th><th>Business areas</th><th class="n">People</th><th></th></tr></thead><tbody>${teams.map(([k, t]) => `<tr><td><b>${esc(t.name)}</b></td><td>${esc((t.areas || []).join(', '))}</td><td class="n">${ppl.filter(p => p.team === t.name && inReview(p)).length}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editTeam" data-id="${esc(k)}" type="button">Edit</button> <button class="btn sm danger" data-act="delTeam" data-id="${esc(k)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   return h;
@@ -1267,18 +1326,36 @@ function promoForm(id) {
   ], save: async v => write('reviews/' + id, { ...rv, ...v, promoDate: new Date().toISOString().slice(0, 10) }, `Recorded promotion recommendation for ${p.name}: ${v.promoDecision || '—'}`) });
 }
 function behavioursForm(id) {
-  const cur = (S.behaviours[id] || {}).ratings || {}, vals = {}, fields = [];
-  COMPETENCIES.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Evidence', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; });
-  openForm({ title: `Behaviours: ${S.people[id].name}`, intro: 'Rate each competency from 1 to 5. Behaviours guide the conversation and are not scored.', values: vals, fields, save: async v => {
-    const ratings = {}; COMPETENCIES.forEach((c, i) => { ratings[c] = { head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i] }; });
-    return write('behaviours/' + id, { ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}`);
+  const doc0 = S.behaviours[id] || {}, cur = doc0.ratings || {}, vals = {}, fields = [], C = behSet(id);
+  C.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Evidence', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; });
+  openForm({ title: `Behaviours: ${S.people[id].name}`, intro: `Rate each behaviour for a ${roleKey(S.people[id]).toLowerCase()} from 1 to 5. Behaviours guide the conversation and are not scored. Use Add behaviour on the Behaviours tab to add one for this person.`, values: vals, fields, save: async v => {
+    const ratings = {}; C.forEach((c, i) => { ratings[c] = { head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i] }; });
+    return write('behaviours/' + id, { ...doc0, ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}`);
   } });
 }
+function addBehForm(id) {
+  const doc0 = S.behaviours[id] || {}, base = roleSets()[roleKey(S.people[id])] || [];
+  openForm({ title: `Behaviours added for ${S.people[id].name}`, intro: `On top of the ${base.length} behaviours for a ${roleKey(S.people[id]).toLowerCase()}. One per line; remove a line to drop it (ratings already given are kept).`, values: { extra: (doc0.extra || []).join('\n') },
+    fields: [{ k: 'extra', label: 'Added behaviours', type: 'textarea', full: true }],
+    save: async v => { const extra = [...new Set(String(v.extra || '').split('\n').map(x => x.trim()).filter(x => x && !base.includes(x)))]; return write('behaviours/' + id, { ...doc0, ratings: doc0.ratings || {}, extra }, `Updated added behaviours for ${S.people[id].name}`); } });
+}
+function behSetForm(role) {
+  const cur = (S.settings.behaviourSets || {}).sets || {};
+  openForm({ title: `Behaviours for ${role}`, intro: 'One behaviour per line. These apply to everyone in this role; you can still add extra ones for a person.', values: { list: (roleSets()[role] || []).join('\n') },
+    fields: [{ k: 'list', label: 'Behaviours', type: 'textarea', full: true }],
+    save: async v => { const list = [...new Set(String(v.list || '').split('\n').map(x => x.trim()).filter(Boolean))]; if (!list.length) return 'Add at least one behaviour.'; return write('settings/behaviourSets', { sets: { ...cur, [role]: list } }, `Updated behaviours for ${role}`); } });
+}
+function planLibForm(role) {
+  const cur = (S.settings.planLibrary || {}).byRole || {};
+  openForm({ title: `Development suggestions for ${role}`, intro: 'One suggestion per line, as: action | behaviour | how we\'ll know. These show on the Development plan tab for everyone in this role.', values: { list: (roleLib()[role] || []).map(x => x.filter(Boolean).join(' | ')).join('\n') },
+    fields: [{ k: 'list', label: 'Suggestions', type: 'textarea', full: true }],
+    save: async v => { const list = String(v.list || '').split('\n').map(x => x.split('|').map(y => y.trim())).filter(x => x[0]).map(x => [x[0], x[1] || '', x[2] || '']); return write('settings/planLibrary', { byRole: { ...cur, [role]: list } }, `Updated development suggestions for ${role}`); } });
+}
 /* ---- plans / learning / projects ---- */
-function planForm(emp, iid) {
-  const x = iid ? S.plans[iid] : { emp, type: 'Development action', status: 'Planned' };
+function planForm(emp, iid, preset) {
+  const x = iid ? S.plans[iid] : { emp, type: 'Development action', status: 'Planned', ...(preset || {}) };
   openForm({ title: iid ? 'Edit plan item' : 'Add plan item', values: x, del: iid ? () => remove('plans/' + iid, `Deleted plan item for ${S.people[x.emp]?.name}`).then(closeModal) : null, fields: [
-    { k: 'action', label: 'Action or area', full: true, req: true }, { k: 'type', label: 'Type', type: 'select', options: PLAN_TYPES, blank: false }, { k: 'competency', label: 'Competency', type: 'select', options: COMPETENCIES },
+    { k: 'action', label: 'Action or area', full: true, req: true }, { k: 'type', label: 'Type', type: 'select', options: PLAN_TYPES, blank: false }, { k: 'competency', label: 'Behaviour', type: 'select', options: [...new Set([...behSet(x.emp), ...(x.competency ? [x.competency] : [])])] },
     { k: 'status', label: 'Status', type: 'select', options: PLAN_STATUS, blank: false }, { k: 'due', label: 'Target date', type: 'date' },
     { k: 'expected', label: 'Expected behaviour', full: true }, { k: 'current', label: 'Current behaviour', full: true }, { k: 'support', label: 'Support needed', full: true }, { k: 'evidence', label: 'Evidence of progress', type: 'textarea', full: true },
   ], save: async v => { if (!v.action) return 'Describe the action.'; return write('plans/' + (iid || uid('D')), { ...x, ...v, emp: x.emp }, `${iid ? 'Edited' : 'Added'} plan item for ${S.people[x.emp]?.name}: ${v.action}`); } });
@@ -1309,7 +1386,7 @@ function projectForm(owner, pid) {
 }
 /* ---- settings ---- */
 function scaleForm(ci) {
-  const cur = S.settings.behaviourScale || {}, comp = ci != null && ci !== '' ? COMPETENCIES[Number(ci)] : null;
+  const cur = S.settings.behaviourScale || {}, comp = ci != null && ci !== '' ? allBehNames()[Number(ci)] : null;
   const vals = comp ? ((cur.byComp || {})[comp] || {}) : (cur.general || {});
   openForm({ title: comp ? `Rating scale: ${comp}` : 'General rating scale', intro: comp ? 'Leave a level blank to use the general description.' : 'Applies to every competency unless it has its own description.',
     values: Object.fromEntries([1, 2, 3, 4, 5].map(n => ['l' + n, vals[n]])), fields: [5, 4, 3, 2, 1].map(n => ({ k: 'l' + n, label: `${n}`, type: 'textarea', full: true })),
@@ -1364,7 +1441,8 @@ document.addEventListener('click', e => {
     if (!canWrite && act.dataset.act !== 'export' && act.dataset.act !== 'ppt') return;
     const id = act.dataset.id, a = act.dataset.act;
     const curP = route.view === 'person' ? route.id : null;
-    ({ addPerson: () => personForm(null), editPerson: () => personForm(id), delPerson: () => askDeletePerson(id), editDelivery: () => deliveryForm(id), editReview: () => reviewForm(id), editPromo: () => promoForm(id), editBehaviours: () => behavioursForm(id),
+    ({ addPerson: () => personForm(null), editPerson: () => personForm(id), delPerson: () => askDeletePerson(id), editDelivery: () => deliveryForm(id), editReview: () => reviewForm(id), editPromo: () => promoForm(id), editBehaviours: () => behavioursForm(id), addBeh: () => addBehForm(id), editBehSet: () => behSetForm(Object.keys(roleSets())[Number(id)]), editPlanLib: () => planLibForm(Object.keys(roleSets())[Number(id)]),
+      'sugg-plan': () => { const x = (roleLib()[roleKey(S.people[id])] || [])[Number(act.dataset.idx)]; if (x) planForm(id, null, { action: x[0], competency: x[1] || null, expected: x[2] || null }); },
       'add-plan': () => planForm(id), 'edit-plan': () => planForm(curP, id), 'del-plan': () => confirmBox('Delete this plan item?', esc(S.plans[id]?.action || ''), 'Delete', () => remove('plans/' + id, `Deleted plan item for ${S.people[S.plans[id]?.emp]?.name}`)),
       'add-learn': () => learnForm(id), 'edit-learn': () => learnForm(curP, id), 'del-learn': () => confirmBox('Delete this training record?', esc(S.learning[id]?.programme || ''), 'Delete', () => remove('learning/' + id, `Deleted training ${S.learning[id]?.programme}`)),
       'add-project': () => projectForm(id), 'edit-project': () => projectForm(curP, id), 'del-project': () => confirmBox('Delete this project?', esc(S.projects[id]?.title || ''), 'Delete', () => remove('projects/' + id, `Deleted project ${S.projects[id]?.title}`)),
