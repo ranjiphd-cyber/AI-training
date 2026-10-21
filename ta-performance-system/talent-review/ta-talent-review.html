@@ -729,7 +729,7 @@ function pScores(E) {
   const done = E.plans.length ? Math.round(E.plans.filter(x => x.status === 'Done').length / E.plans.length * 100) : null;
   h += `<div class="card pad"><div class="sec-h"><h3>Your assessment</h3><span class="hint">TA Head</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editReview" data-id="${esc(p.id)}" type="button">Edit assessment</button>` : ''}</div>
     <dl class="kv"><dt>Capability growth</dt><dd>${rv.growth != null ? fmt(rv.growth) + ' / 7' : '—'}</dd><dt>Application of learning</dt><dd>${rv.application != null ? fmt(rv.application) + ' / 5' : '—'}</dd><dt>Plan completion</dt><dd>${rv.planDone != null ? fmt(rv.planDone) + ' / 3' : '—'} <span class="sub" style="color:var(--muted)">${done != null ? `(${done}% of development actions done)` : '(no development actions yet)'}</span></dd>
-    <dt>${YEAR} rating</dt><dd>${rv.finalRating ? `<span class="tag acc">${esc(rv.finalRating)}</span>` : 'Not rated'}</dd><dt>Strengths</dt><dd>${esc(rv.strengths || '—')}</dd><dt>Development focus</dt><dd>${esc(rv.focus || '—')}</dd><dt>Comments</dt><dd>${esc(rv.comments || '—')}</dd></dl>
+    <dt>${YEAR} rating</dt><dd>${rv.finalRating ? `<span class="tag acc">${esc(rv.finalRating)}</span>` : 'Not rated'}</dd><dt>Strengths</dt><dd>${esc(rv.strengths || '—')}${origNote((rv.orig || {}).strengths)}</dd><dt>Development focus</dt><dd>${esc(rv.focus || '—')}${origNote((rv.orig || {}).focus)}</dd><dt>Comments</dt><dd>${esc(rv.comments || '—')}</dd></dl>
     <p class="sub" style="font-size:12px;color:var(--muted);margin:12px 0 0">Training attendance alone never adds points. Competency development rewards growth you have seen and learning that was applied.</p></div></div>`;
   return h;
 }
@@ -756,6 +756,7 @@ function pBehaviours(E) {
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
   return h;
 }
+const origNote = t => t && canWrite ? `<details style="margin-top:6px"><summary class="sub" style="font-size:12px;color:var(--muted);cursor:pointer">Your original note</summary><div class="d" style="white-space:pre-wrap">${esc(t)}</div></details>` : '';
 function p4pNote(E) { const r = E.p.ratings || {}; return `<div class="sub" style="font-size:12.5px;color:var(--ink-2);margin:-4px 0 12px">P4P rating for ${YEAR - 1}: <b>${esc(r.y2025 || 'not given')}</b> · ${YEAR - 2}: <b>${esc(r.y2024 || 'not given')}</b> <span style="color:var(--muted)">(review cycles ${YEAR} and ${YEAR - 1})</span></div>`; }
 function scaleCard() {
   const g = (S.settings.behaviourScale || {}).general || {};
@@ -771,7 +772,7 @@ function pDevelopment(E) {
   const order = s => PLAN_STATUS.indexOf(s);
   h += `<div class="items">${[...E.plans].sort((a, b) => order(a.status) - order(b.status)).map(x => `<div class="item"><div class="t">${esc(x.action)} <span class="tag ${x.type === 'Area for improvement' ? '' : 'acc'}">${esc(x.type || '')}</span><span class="tag">${esc(x.status || '')}</span>${itemActions('plan', x.id)}</div>
     <div class="d">${[x.competency, x.due ? 'due ' + nice(x.due) : null, x.support ? 'support: ' + x.support : null].filter(Boolean).map(esc).join(' · ')}</div>
-    ${x.expected || x.current ? `<div class="d">Expected: ${esc(x.expected || '—')} · Current: ${esc(x.current || '—')}</div>` : ''}${x.evidence ? `<div class="d">Evidence: ${esc(x.evidence)}</div>` : ''}</div>`).join('')}</div>`;
+    ${x.expected || x.current ? `<div class="d">Expected: ${esc(x.expected || '—')} · Current: ${esc(x.current || '—')}</div>` : ''}${x.evidence ? `<div class="d">Evidence: ${esc(x.evidence)}</div>` : ''}${origNote(x.orig ? Object.entries(x.orig).map(([k, v]) => `${k}: ${v}`).join('\n') : '')}</div>`).join('')}</div>`;
   return h + sugg;
 }
 function pLearning(E) {
@@ -794,7 +795,7 @@ function pPromotion(E) {
     <div class="crit">${pr.crit.map(c => `<span class="${c.ok ? 'y' : 'x'}">${c.ok ? '✓' : '–'}</span><span>${esc(c.label)}</span><span class="f">${esc(c.fact)}</span>`).join('')}</div>
     <p class="sub" style="font-size:12px;color:var(--muted);margin:4px 0 0">Next level: ${esc(pr.next)}. These are proposed criteria. The decision is yours and HR's.</p></div>
     <div class="card pad"><div class="sec-h"><h3>Your recommendation</h3><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="editPromo" data-id="${esc(E.p.id)}" type="button">Record recommendation</button>` : ''}</div>
-    ${rv.promoDecision ? `<div style="font:600 18px var(--display)">${esc(rv.promoDecision)}</div>${rv.promoLevel ? `<div class="sub" style="color:var(--muted)">to ${esc(rv.promoLevel)}</div>` : ''}<p style="margin:10px 0 0;white-space:pre-wrap">${esc(rv.promoReason || '')}</p>${rv.promoDate ? `<p class="sub" style="font-size:12px;color:var(--muted)">Recorded ${nice(rv.promoDate)}</p>` : ''}` : '<div class="empty-note">No recommendation recorded yet.</div>'}</div></div>`;
+    ${rv.promoDecision ? `<div style="font:600 18px var(--display)">${esc(rv.promoDecision)}</div>${rv.promoLevel ? `<div class="sub" style="color:var(--muted)">to ${esc(rv.promoLevel)}</div>` : ''}<p style="margin:10px 0 0;white-space:pre-wrap">${esc(rv.promoReason || '')}</p>${origNote((rv.orig || {}).promoReason)}${rv.promoDate ? `<p class="sub" style="font-size:12px;color:var(--muted)">Recorded ${nice(rv.promoDate)}</p>` : ''}` : '<div class="empty-note">No recommendation recorded yet.</div>'}</div></div>`;
   return h;
 }
 function pProfile(E) {
@@ -906,8 +907,8 @@ function pComments(E) {
     ${pipe.length ? `<div class="tw"><table><thead><tr><th>Programme</th><th class="n">Offers</th><th class="n">Points</th></tr></thead><tbody>${pipe.map(x => `<tr><td>${esc(x.label)}</td><td class="n">${x.n}</td><td class="n">${fmt(x.pts)}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">No programme offers in the trackers.</div>'}
     <h4 style="font-size:13px;margin:16px 0 6px">Programmes in the 2026 calendar</h4>${progs.length ? `<div class="tw"><table><thead><tr><th>Programme</th><th>Role</th><th class="n">Planned</th><th>Status</th></tr></thead><tbody>${progs.map(x => `<tr><td>${esc(x.name)}</td><td>${esc(x.as)}</td><td class="n">${x.expected ?? '—'}</td><td><span class="tag">${esc(x.status || '')}</span></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty-note">Not named as owner or responsible for a calendar programme.</div>'}</div>
     <div class="card pad"><div class="sec-h"><h3>Qualitative comments</h3><span class="hint">from your decks, year plan and trackers</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-comment" data-id="${esc(p.id)}" type="button">Add comment</button>` : ''}</div>
-    ${cm.length ? `<div class="items">${cm.map(c => `<div class="item"><div class="t"><span class="tag acc">${esc(c.theme || 'Other')}</span>${canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Edit</button><button class="btn sm danger" data-act="del-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Delete</button></span>` : ''}</div><div style="font-size:13.5px">${esc(c.text)}</div>${c.source ? `<div class="d">Source: ${esc(c.source)}</div>` : ''}</div>`).join('')}</div>` : '<div class="empty-note">No comments yet.</div>'}</div></div>`;
-  if (E.rv.strengths || E.rv.focus || E.rv.comments) h += `<div class="card pad sec"><div class="sec-h"><h3>Your review notes</h3></div><dl class="kv"><dt>Strengths</dt><dd>${esc(E.rv.strengths || '—')}</dd><dt>Development focus</dt><dd>${esc(E.rv.focus || '—')}</dd><dt>Comments</dt><dd>${esc(E.rv.comments || '—')}</dd></dl></div>`;
+    ${cm.length ? `<div class="items">${cm.map(c => `<div class="item"><div class="t"><span class="tag acc">${esc(c.theme || 'Other')}</span>${canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Edit</button><button class="btn sm danger" data-act="del-comment" data-id="${esc(p.id)}" data-idx="${c.idx}" type="button">Delete</button></span>` : ''}</div><div style="font-size:13.5px">${esc(c.text)}</div>${c.source ? `<div class="d">Source: ${esc(c.source)}</div>` : ''}${origNote(c.original)}</div>`).join('')}</div>` : '<div class="empty-note">No comments yet.</div>'}</div></div>`;
+  if (E.rv.strengths || E.rv.focus || E.rv.comments) h += `<div class="card pad sec"><div class="sec-h"><h3>Your review notes</h3></div><dl class="kv"><dt>Strengths</dt><dd>${esc(E.rv.strengths || '—')}${origNote((E.rv.orig || {}).strengths)}</dd><dt>Development focus</dt><dd>${esc(E.rv.focus || '—')}${origNote((E.rv.orig || {}).focus)}</dd><dt>Comments</dt><dd>${esc(E.rv.comments || '—')}</dd></dl></div>`;
   return h;
 }
 function commentForm(emp, idx) {
