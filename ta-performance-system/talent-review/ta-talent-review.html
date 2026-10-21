@@ -300,6 +300,8 @@ const DEFAULT_PLANLIB = {
     ['Propose and deliver one process improvement', 'Process Improvement', 'Improvement in use'],
   ],
 };
+/* Behavioural indicators (drafts the TA Head can edit, globally or per person) */
+const DEFAULT_IND = {"Delivery Ownership": ["Owns requisitions end to end and meets agreed timelines","Keeps the pipeline healthy and acts early on roles at risk","Follows through on commitments without reminders","Takes on programmes and drives them to completion"],"Stakeholder Management": ["Runs structured intake meetings and agrees the hiring plan","Gives hiring managers regular, proactive updates","Handles disagreements and escalations constructively","Builds trust with senior business leaders"],"Talent Advisory": ["Advises hiring managers on role design, talent availability and pay","Challenges unrealistic requirements with data","Pre-closes candidates and manages offer risk","Recommends options rather than only filling roles"],"Market Intelligence": ["Knows where the talent sits and which competitors hire it","Tracks salary, notice period and availability trends","Shares market insights with the business and the team"],"Data & Analytics": ["Keeps trackers accurate and up to date","Uses funnel data to find and fix bottlenecks","Prepares clear reports with a recommendation"],"Assessment Capability": ["Uses structured, competency-based interviews and scorecards","Assesses candidates objectively and records the evidence","Agrees with hiring managers what good looks like for the role"],"Digital & AI Capability": ["Uses AI tools for job descriptions, search and outreach","Makes full use of SuccessFactors and sourcing tools","Shares useful tools and tips with the team"],"Collaboration & Leadership": ["Supports colleagues and shares candidates and knowledge","Takes the initiative to lead drives, projects or programmes","Mentors newer team members","Brings solutions, not only problems"],"Sourcing Strategy & Search": ["Builds effective search strings and uses several channels","Finds passive candidates beyond job portals","Changes the search approach when results are poor"],"Talent Pipeline Building": ["Keeps warm pipelines for repeat and critical roles","Maintains talent communities","Re-engages past candidates"],"Candidate Engagement": ["Responds to candidates promptly and keeps them informed","Gives a professional, positive candidate experience","Keeps candidates engaged through to joining"],"Recruiter Partnership": ["Agrees role briefs and quality standards with recruiters","Hands over well-qualified candidates with notes","Acts on recruiter feedback"],"Team Delivery Ownership": ["Owns the team's results against target","Reviews the pipeline with the team every week","Balances workload by complexity and capacity","Steps in early on roles at risk"],"Coaching & Developing Others": ["Sets clear goals with each team member and follows up","Holds regular one-to-ones with useful feedback","Develops team members through coaching and stretch work","Addresses under-performance early and supportively"],"Planning & Prioritisation": ["Plans hiring with the business ahead of demand","Holds kick-off meetings and writes recruitment plans","Sets priorities and adjusts them when the business changes"],"Data-Driven Decisions": ["Uses the team dashboard to decide where to act","Explains trends and their causes to the business","Tracks the impact of the actions taken"],"Process Improvement & Change": ["Spots process problems and proposes fixes","Runs improvement projects through to measurable results","Helps the team adopt new ways of working"],"Accuracy & Attention to Detail": ["Produces error-free offers, payroll inputs and billing","Checks own work before release","Keeps system data accurate and audit-ready"],"Timeliness & Reliability": ["Completes activities within the agreed SLA","Meets monthly deadlines for reports, billing and payroll","Flags delays early with a revised date"],"Process & Compliance Discipline": ["Follows SOPs and compliance rules every time","Keeps SOPs up to date","Protects candidate and employee data"],"Systems Capability": ["Knows SuccessFactors, Medius, EBD and related tools well","Resolves system issues without escalation","Helps recruiters use the systems correctly"],"Data & Reporting": ["Publishes accurate reports on time","Maintains trackers and dashboards","Explains what the numbers show"],"Stakeholder Service": ["Responds to recruiters, vendors and finance promptly","Communicates clearly on status and timelines","Handles queries and escalations courteously"],"Process Improvement": ["Suggests improvements to own processes","Automates or simplifies repetitive work","Shares improvements with the team"]};
 const RATINGS = ['Exceptional', 'High', 'Good', 'Adequate', 'Low'];
 const RVAL = { Exceptional: 5, High: 4, Good: 3, Adequate: 2, Low: 1 };
 const LEVELS = ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'SG6', 'SG7', 'SG8', 'SG9', 'SG10', 'SG11', 'SG12'];
@@ -366,11 +368,15 @@ const roleKey = p => p && DEFAULT_BEH[p.role] ? p.role : 'Recruiter';
 const roleSets = () => ({ ...DEFAULT_BEH, ...(((S.settings.behaviourSets || {}).sets) || {}) });
 const roleLib = () => ({ ...DEFAULT_PLANLIB, ...(((S.settings.planLibrary || {}).byRole) || {}) });
 function behSet(id) {
-  const b = S.behaviours[id] || {}, base = roleSets()[roleKey(S.people[id])] || COMPETENCIES;
+  const b = S.behaviours[id] || {};
+  if (Array.isArray(b.list)) return b.list;
+  const base = roleSets()[roleKey(S.people[id])] || COMPETENCIES;
   const rated = Object.keys(b.ratings || {}).filter(c => { const x = b.ratings[c] || {}; return x.head != null || x.self != null || x.evidence; });
   return [...new Set([...base, ...(b.extra || []), ...rated])];
 }
-function allBehNames() { return [...new Set([...Object.values(roleSets()).flat(), ...Object.values(S.behaviours).flatMap(b => b.extra || [])])]; }
+const globalInd = c => (((S.settings.behaviourIndicators || {}).byName) || {})[c];
+function indicatorsFor(id, c) { const own = ((S.behaviours[id] || {}).ind || {})[c]; return own || globalInd(c) || DEFAULT_IND[c] || []; }
+function allBehNames() { return [...new Set([...Object.values(roleSets()).flat(), ...Object.values(S.behaviours).flatMap(b => [...(b.extra || []), ...(b.list || [])])])]; }
 const leadBeh = c => /Leadership|Coaching|Developing Others/.test(c);
 const scaleText = (comp, n) => { const sc = S.settings.behaviourScale || {}; return ((sc.byComp || {})[comp] || {})[n] || (sc.general || {})[n] || ''; };
 const S = Object.fromEntries(COLS.map(c => [c, {}]));
@@ -734,23 +740,25 @@ function pScores(E) {
   return h;
 }
 function pBehaviours(E) {
-  const b = E.beh, C = E.comps, rated = C.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null), extra = (S.behaviours[E.p.id] || {}).extra || [];
-  let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">${C.length} behaviours for ${esc(roleKey(E.p))}${extra.length ? ` (incl. ${extra.length} added for ${esc(E.p.name)})` : ''} · 1–5 · self and TA Head · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="addBeh" data-id="${esc(E.p.id)}" type="button">Add behaviour</button> <button class="btn sm pri" data-act="editBehaviours" data-id="${esc(E.p.id)}" type="button">Rate behaviours</button>` : ''}</div>`;
+  const b = E.beh, C = E.comps, id = E.p.id, rated = C.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null), custom = Array.isArray((S.behaviours[id] || {}).list);
+  let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">${C.length} behaviours${custom ? ` set for ${esc(E.p.name)}` : ` for a ${esc(roleKey(E.p).toLowerCase())}`} · 1–5 · self and TA Head · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="addBeh" data-id="${esc(id)}" type="button">Add behaviour</button> <button class="btn sm pri" data-act="editBehaviours" data-id="${esc(id)}" type="button">Rate all</button>` : ''}</div>`;
   h += p4pNote(E);
-  if (!rated.length) return h + `<div class="card pad"><div class="sub" style="font-size:13px;color:var(--ink-2)">${C.map(c => `<span class="tag" style="margin:0 6px 6px 0;display:inline-block">${esc(c)}${extra.includes(c) ? ' · added' : ''}</span>`).join('')}</div></div>` + scaleCard() + `<div class="empty-note sec">No behaviour ratings yet. ${canWrite ? 'Use <b>Rate behaviours</b> to record the self-rating and your rating for each competency, with evidence.' : ''}</div>`;
-  h += `<div class="card pad"><div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>TA Head</span><span><i style="border:2px solid var(--ink-2);border-radius:50%;background:transparent"></i>Self</span></div><div class="beh"><div></div>${[1, 2, 3, 4, 5].map(n => `<div class="hdr">${n}</div>`).join('')}<div class="hdr" style="text-align:left;padding-left:8px">Evidence</div>`;
-  for (const c of C) {
-    const x = b[c] || {}, hd = num(x.head), sf = num(x.self);
-    h += `<div>${esc(c)}${hd != null && sf != null && Math.abs(sf - hd) > 1 ? ' <span class="tag">gap ' + (sf - hd > 0 ? '+' : '') + (sf - hd) + '</span>' : ''}</div>`;
-    for (let n = 1; n <= 5; n++) h += `<div class="cell" title="${esc(n + ': ' + (scaleText(c, n) || 'no description yet'))}">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
-    const ev = String(x.evidence || ''); h += `<div class="ev"${ev.length > 120 ? ` title="${esc(ev)}"` : ''}>${esc(ev.length > 120 ? ev.slice(0, 117).replace(/\s+\S*$/, '') + '…' : ev)}</div>`;
+  if (rated.length) {
+    h += `<div class="card pad"><div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>TA Head</span><span><i style="border:2px solid var(--ink-2);border-radius:50%;background:transparent"></i>Self</span></div><div class="beh"><div></div>${[1, 2, 3, 4, 5].map(n => `<div class="hdr">${n}</div>`).join('')}<div class="hdr" style="text-align:left;padding-left:8px">Feedback</div>`;
+    for (const c of C) {
+      const x = b[c] || {}, hd = num(x.head), sf = num(x.self);
+      h += `<div>${esc(c)}${hd != null && sf != null && Math.abs(sf - hd) > 1 ? ' <span class="tag">gap ' + (sf - hd > 0 ? '+' : '') + (sf - hd) + '</span>' : ''}</div>`;
+      for (let n = 1; n <= 5; n++) h += `<div class="cell" title="${esc(n + ': ' + (scaleText(c, n) || 'no description yet'))}">${hd === n || sf === n ? `<span class="both">${hd === n ? '<span class="dot head" title="TA Head"></span>' : ''}${sf === n ? '<span class="dot self" title="Self"></span>' : ''}</span>` : ''}</div>`;
+      const ev = String(x.evidence || ''); h += `<div class="ev"${ev.length > 120 ? ` title="${esc(ev)}"` : ''}>${esc(ev.length > 120 ? ev.slice(0, 117).replace(/\s+\S*$/, '') + '…' : ev)}</div>`;
+    }
+    h += `</div></div>`;
   }
-  h += `</div></div>`;
-  const notes = C.filter(c => { const x = b[c] || {}; return x.evidence || x.actions || x.target; });
-  if (notes.length) h += `<div class="card pad sec"><div class="sec-h"><h3>Feedback and next steps</h3><span class="hint">TA Head's view, with actions to try and a target to aim for</span></div><div class="items">${notes.map(c => { const x = b[c] || {}, acts = String(x.actions || '').split('\n').map(a => a.trim()).filter(Boolean);
-    return `<div class="item"><div class="t">${esc(c)}${num(x.head) != null ? ` <span class="tag acc">TA Head ${num(x.head)} of 5</span>` : ' <span class="tag">TA Head rating to add</span>'}${num(x.self) != null ? ` <span class="tag">self ${num(x.self)}</span>` : ''}</div>${x.evidence ? `<div class="d" style="color:var(--ink);font-size:13px">${esc(x.evidence)}</div>` : ''}
+  h += `<div class="card pad sec"><div class="sec-h"><h3>Behaviours, indicators and evidence</h3><span class="hint">what good looks like · your evidence against each indicator · feedback, actions and rating</span></div><div class="items">${C.map((c, ci) => { const x = b[c] || {}, ind = indicatorsFor(id, c), ie = x.indEv || {}, acts = String(x.actions || '').split('\n').map(a => a.trim()).filter(Boolean);
+    return `<div class="item"><div class="t">${esc(c)}${num(x.head) != null ? ` <span class="tag acc">TA Head ${num(x.head)} of 5</span>` : ' <span class="tag">not rated</span>'}${num(x.self) != null ? ` <span class="tag">self ${num(x.self)}</span>` : ''}${canWrite ? `<span class="acts"><button class="btn sm pri" data-act="rateBeh" data-id="${esc(id)}" data-idx="${ci}" type="button">Rate</button><button class="btn sm" data-act="editBeh" data-id="${esc(id)}" data-idx="${ci}" type="button">Edit</button><button class="btn sm danger" data-act="delBeh" data-id="${esc(id)}" data-idx="${ci}" type="button">Remove</button></span>` : ''}</div>
+      ${ind.length ? `<div class="d" style="margin-top:4px"><b>Indicators</b><ul style="margin:4px 0 0;padding-left:18px">${ind.map(t => `<li>${esc(t)}${ie[t] ? `<div style="color:var(--ink);font-size:12.5px;margin:2px 0 4px">Evidence: ${esc(ie[t])}</div>` : ''}</li>`).join('')}</ul></div>` : '<div class="d">No indicators yet. Use Edit to add them.</div>'}
+      ${x.evidence ? `<div class="d" style="color:var(--ink);font-size:13px;margin-top:6px"><b>Feedback:</b> ${esc(x.evidence)}</div>` : ''}
       ${acts.length ? `<div class="d" style="margin-top:6px"><b>Actions to consider</b><ul style="margin:4px 0 0;padding-left:18px">${acts.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}${x.target ? `<div class="d" style="margin-top:6px"><b>Target and plan:</b> ${esc(x.target)}</div>` : ''}
-      ${x.original && canWrite ? `<details style="margin-top:6px"><summary class="sub" style="font-size:12px;color:var(--muted);cursor:pointer">Your original note</summary><div class="d">${esc(x.original)}</div></details>` : ''}</div>`; }).join('')}</div></div>`;
+      ${origNote(x.original)}</div>`; }).join('')}</div></div>`;
   const big = C.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
   h += scaleCard();
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
@@ -1185,7 +1193,7 @@ function viewManage() {
   h += `<div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Level</th><th>Joined</th><th>In review</th><th class="n">Annual offer target</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><b class="click" data-person="${esc(p.id)}" style="cursor:pointer">${esc(p.name)}</b>${p.vcnid ? `<div class="sub mono">${esc(p.vcnid)}</div>` : ''}</td><td>${esc(p.role || '')}</td><td>${esc(p.team || '—')}</td><td class="mono">${esc(p.level || '—')}</td><td>${nice(p.joined)}</td><td>${inReview(p) ? 'Yes' : `<span class="sub">No${p.status === 'Left' ? ' (left)' : ''}</span>`}</td><td class="n">${S.delivery[p.id] ? fmt(num(S.delivery[p.id].target), 0) : '—'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button> <button class="btn sm danger" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const sc = S.settings.behaviourScale || {};
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Points per IJP offer</dt><dd>${fmt(ijpPts())}</dd><dt>Declined offers</dt><dd>−${fmt(declPen())} each from ${declFrom()}${declOn() ? ' (applied now)' : ` (not applied in ${YEAR})`}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
-    <div class="card pad"><div class="sec-h"><h3>Behaviour rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Behaviour</th><th>Own descriptions</th><th></th></tr></thead><tbody>${allBehNames().map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editScale" data-id="${i}" type="button">Edit</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
+    <div class="card pad"><div class="sec-h"><h3>Behaviours: indicators and rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Behaviour</th><th>Own descriptions</th><th></th></tr></thead><tbody>${allBehNames().map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="editInd" data-id="${i}" type="button">Indicators</button> <button class="btn sm" data-act="editScale" data-id="${i}" type="button">Scale</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
   const RS = roleSets(), RL = roleLib();
   h += `<div class="card pad sec"><div class="sec-h"><h3>Behaviours and development suggestions by role</h3><span class="hint">used on each person's Behaviours and Development plan tabs</span></div><div class="tw"><table><thead><tr><th>Role</th><th>Behaviours</th><th class="n">Development suggestions</th><th></th></tr></thead><tbody>${Object.keys(RS).map((r, i) => `<tr><td><b>${esc(r)}</b><div class="sub">${peopleList().filter(p => inReview(p) && roleKey(p) === r).length} people</div></td><td style="font-size:12.5px;color:var(--ink-2)">${RS[r].map(esc).join(' · ')}</td><td class="n">${(RL[r] || []).length}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="editBehSet" data-id="${i}" type="button">Edit behaviours</button> <button class="btn sm" data-act="editPlanLib" data-id="${i}" type="button">Edit suggestions</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const teams = Object.entries(S.teams).sort((a, b) => (a[1].order ?? 99) - (b[1].order ?? 99));
@@ -1221,12 +1229,12 @@ function field(f, val) {
 }
 function openForm({ title, intro, fields, values = {}, save, del, saveLabel = 'Save' }) {
   modalCtx = { fields, save, del };
-  $('#modalRoot').innerHTML = `<div class="scrim" id="scrim"><form class="modal" id="mform" role="dialog" aria-modal="true" aria-labelledby="mTitle" novalidate><header><h3 id="mTitle">${esc(title)}</h3>${intro ? `<p>${intro}</p>` : ''}</header><div class="body">${fields.map(f => f.section ? `<div class="full" style="font:600 12.5px var(--display);margin-top:6px">${esc(f.section)}</div>` : field(f, values[f.k])).join('')}<div class="err" id="mErr"></div></div><footer>${del ? '<button class="btn danger" type="button" id="mDel">Delete</button>' : ''}<span class="sp"></span><button class="btn" type="button" id="mCancel">Cancel</button><button class="btn pri" type="submit">${esc(saveLabel)}</button></footer></form></div>`;
+  $('#modalRoot').innerHTML = `<div class="scrim" id="scrim"><form class="modal" id="mform" role="dialog" aria-modal="true" aria-labelledby="mTitle" novalidate><header><h3 id="mTitle">${esc(title)}</h3>${intro ? `<p>${intro}</p>` : ''}</header><div class="body">${fields.map(f => f.note ? `<div class="full" style="font-size:12.5px;color:var(--muted);margin-top:-4px">${esc(f.note)}</div>` : f.section ? `<div class="full" style="font:600 ${f.big ? '15px' : '12.5px'} var(--display);margin-top:${f.big ? '14px;padding-top:12px;border-top:1px solid var(--line)' : '6px'}">${esc(f.section)}</div>` : field(f, values[f.k])).join('')}<div class="err" id="mErr"></div></div><footer>${del ? '<button class="btn danger" type="button" id="mDel">Delete</button>' : ''}<span class="sp"></span><button class="btn" type="button" id="mCancel">Cancel</button><button class="btn pri" type="submit">${esc(saveLabel)}</button></footer></form></div>`;
   const first = $('#mform input, #mform select, #mform textarea'); first && first.focus();
 }
 function readForm() {
   const out = {};
-  for (const f of modalCtx.fields) { if (f.section) continue; const el = document.getElementById('f_' + f.k); if (!el) continue;
+  for (const f of modalCtx.fields) { if (f.section || f.note) continue; const el = document.getElementById('f_' + f.k); if (!el) continue;
     if (f.type === 'check') out[f.k] = el.checked;
     else if (f.type === 'number') { const v = num(el.value); out[f.k] = v == null ? null : (f.min != null || f.max != null ? clampN(v, f.min ?? -Infinity, f.max ?? Infinity) : v); }
     else out[f.k] = el.value.trim() || null; }
@@ -1331,19 +1339,52 @@ function promoForm(id) {
     { k: 'promoReason', label: 'Reasons', type: 'textarea', full: true, hint: '(evidence for or against)' },
   ], save: async v => write('reviews/' + id, { ...rv, ...v, promoDate: new Date().toISOString().slice(0, 10) }, `Recorded promotion recommendation for ${p.name}: ${v.promoDecision || '—'}`) });
 }
-function behavioursForm(id) {
-  const doc0 = S.behaviours[id] || {}, cur = doc0.ratings || {}, vals = {}, fields = [], C = behSet(id);
-  C.forEach((c, i) => { fields.push({ section: c + ([1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? ' · ' + [5, 4, 3, 2, 1].map(n => n + ' ' + (scaleText(c, n) || '—')).join(' · ') : '') }); fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: [1, 2, 3, 4, 5] }); fields.push({ k: 'e' + i, label: 'Feedback and evidence', type: 'textarea', full: true }); fields.push({ k: 'a' + i, label: 'Actions to consider', hint: '(one per line)', type: 'textarea', full: true }); fields.push({ k: 't' + i, label: 'Target and plan', full: true }); const x = cur[c] || {}; vals['h' + i] = x.head; vals['s' + i] = x.self; vals['e' + i] = x.evidence; vals['a' + i] = x.actions; vals['t' + i] = x.target; });
-  openForm({ title: `Behaviours: ${S.people[id].name}`, intro: `Rate each behaviour for a ${roleKey(S.people[id]).toLowerCase()} from 1 to 5. Behaviours guide the conversation and are not scored. Use Add behaviour on the Behaviours tab to add one for this person.`, values: vals, fields, save: async v => {
-    const ratings = {}; C.forEach((c, i) => { ratings[c] = { ...(cur[c] || {}), head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i], actions: v['a' + i], target: v['t' + i] }; });
-    return write('behaviours/' + id, { ...doc0, ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}`);
+function behavioursForm(id, only) {
+  const doc0 = S.behaviours[id] || {}, cur = doc0.ratings || {}, vals = {}, fields = [], all = behSet(id), C = only != null ? [all[only]].filter(Boolean) : all;
+  C.forEach((c, i) => {
+    const ind = indicatorsFor(id, c), x = cur[c] || {}, ie = x.indEv || {};
+    fields.push({ section: c, big: C.length > 1 });
+    if (ind.length) fields.push({ note: 'Indicators: add a comment or evidence against each one that applies.' });
+    ind.forEach((t, j) => { fields.push({ k: `x${i}_${j}`, label: t, type: 'textarea', full: true }); vals[`x${i}_${j}`] = ie[t]; });
+    fields.push({ k: 'e' + i, label: 'Overall feedback', type: 'textarea', full: true }); fields.push({ k: 'a' + i, label: 'Actions to consider', hint: '(one per line)', type: 'textarea', full: true }); fields.push({ k: 't' + i, label: 'Target and plan', full: true });
+    const sc = [1, 2, 3, 4, 5].some(n => scaleText(c, n)) ? [1, 2, 3, 4, 5].map(n => [n, `${n} · ${scaleText(c, n) || '—'}`]) : [1, 2, 3, 4, 5];
+    fields.push({ k: 'h' + i, label: 'TA Head rating', type: 'select', options: sc }); fields.push({ k: 's' + i, label: 'Self-rating', type: 'select', options: sc });
+    Object.assign(vals, { ['h' + i]: x.head, ['s' + i]: x.self, ['e' + i]: x.evidence, ['a' + i]: x.actions, ['t' + i]: x.target });
+  });
+  openForm({ title: only != null ? `${C[0]}: ${S.people[id].name}` : `Behaviours: ${S.people[id].name}`, intro: 'For each behaviour: note evidence against the indicators, give your overall feedback, then the rating (1 to 5). Behaviours guide the conversation and are not scored.', values: vals, fields, save: async v => {
+    const ratings = { ...cur };
+    C.forEach((c, i) => { const indEv = {}; indicatorsFor(id, c).forEach((t, j) => { if (v[`x${i}_${j}`]) indEv[t] = v[`x${i}_${j}`]; }); ratings[c] = { ...(cur[c] || {}), indEv, head: num(v['h' + i]), self: num(v['s' + i]), evidence: v['e' + i], actions: v['a' + i], target: v['t' + i] }; });
+    return write('behaviours/' + id, { ...doc0, ratings, at: new Date().toISOString().slice(0, 10) }, `Updated behaviour ratings for ${S.people[id].name}${only != null ? ': ' + C[0] : ''}`);
   } });
 }
-function addBehForm(id) {
-  const doc0 = S.behaviours[id] || {}, base = roleSets()[roleKey(S.people[id])] || [];
-  openForm({ title: `Behaviours added for ${S.people[id].name}`, intro: `On top of the ${base.length} behaviours for a ${roleKey(S.people[id]).toLowerCase()}. One per line; remove a line to drop it (ratings already given are kept).`, values: { extra: (doc0.extra || []).join('\n') },
-    fields: [{ k: 'extra', label: 'Added behaviours', type: 'textarea', full: true }],
-    save: async v => { const extra = [...new Set(String(v.extra || '').split('\n').map(x => x.trim()).filter(x => x && !base.includes(x)))]; return write('behaviours/' + id, { ...doc0, ratings: doc0.ratings || {}, extra }, `Updated added behaviours for ${S.people[id].name}`); } });
+function behEditForm(id, idx) {
+  const doc0 = S.behaviours[id] || {}, list = behSet(id), old = idx != null ? list[idx] : null;
+  const allN = allBehNames().filter(n => !list.includes(n));
+  openForm({ title: old ? `Edit behaviour: ${S.people[id].name}` : `Add a behaviour for ${S.people[id].name}`, intro: old ? 'Rename the behaviour or change its indicators. Ratings and evidence move with it.' : `Pick one already used elsewhere${allN.length ? '' : ' (none available)'}, or type a new one, then list its indicators.`,
+    values: { name: old, ind: old ? indicatorsFor(id, old).join('\n') : '', everyone: false },
+    fields: [...(old ? [] : [{ k: 'pick', label: 'Existing behaviour', type: 'select', options: allN, full: true }]), { k: 'name', label: old ? 'Behaviour' : 'Or a new behaviour', full: true }, { k: 'ind', label: 'Behavioural indicators', hint: '(one per line; leave blank to use the standard ones)', type: 'textarea', full: true }, { k: 'everyone', label: 'Use these indicators for everyone with this behaviour', type: 'check', full: true }],
+    save: async v => {
+      const name = (v.name || v.pick || '').trim(); if (!name) return 'Name the behaviour.';
+      if (name !== old && list.includes(name)) return `${name} is already in the list.`;
+      const ind = String(v.ind || '').split('\n').map(x => x.trim()).filter(Boolean);
+      const next = old ? list.map(n => n === old ? name : n) : [...list, name];
+      const ratings = { ...(doc0.ratings || {}) }, own = { ...(doc0.ind || {}) };
+      if (old && name !== old) { if (ratings[old]) { ratings[name] = ratings[old]; delete ratings[old]; } delete own[old]; }
+      const std = globalInd(name) || DEFAULT_IND[name] || [];
+      if (v.everyone && ind.length) { delete own[name]; const g = S.settings.behaviourIndicators || {}; await write('settings/behaviourIndicators', { byName: { ...(g.byName || {}), [name]: ind } }, `Updated indicators for ${name} (everyone)`); }
+      else if (ind.length && ind.join('\n') !== std.join('\n')) own[name] = ind; else delete own[name];
+      return write('behaviours/' + id, { ...doc0, ratings, list: next, ind: own }, `${old ? (name !== old ? `Renamed behaviour ${old} to ${name}` : `Edited behaviour ${name}`) : `Added behaviour ${name}`} for ${S.people[id].name}`);
+    } });
+}
+function behDelete(id, idx) {
+  const doc0 = S.behaviours[id] || {}, list = behSet(id), name = list[idx]; if (!name) return;
+  confirmBox(`Remove ${name}?`, `It will no longer show for ${esc(S.people[id].name)}. Any rating already given is kept and comes back if you add the behaviour again.`, 'Remove', () => write('behaviours/' + id, { ...doc0, ratings: doc0.ratings || {}, list: list.filter(n => n !== name) }, `Removed behaviour ${name} for ${S.people[id].name}`));
+}
+function indGlobalForm(idx) {
+  const name = allBehNames()[Number(idx)]; if (!name) return; const g = S.settings.behaviourIndicators || {};
+  openForm({ title: `Indicators: ${name}`, intro: 'Standard indicators for everyone with this behaviour (unless set differently for a person). One per line.', values: { ind: (globalInd(name) || DEFAULT_IND[name] || []).join('\n') },
+    fields: [{ k: 'ind', label: 'Behavioural indicators', type: 'textarea', full: true }],
+    save: async v => { const ind = String(v.ind || '').split('\n').map(x => x.trim()).filter(Boolean); return write('settings/behaviourIndicators', { byName: { ...(g.byName || {}), [name]: ind } }, `Updated indicators for ${name}`); } });
 }
 function behSetForm(role) {
   const cur = (S.settings.behaviourSets || {}).sets || {};
@@ -1447,7 +1488,7 @@ document.addEventListener('click', e => {
     if (!canWrite && act.dataset.act !== 'export' && act.dataset.act !== 'ppt') return;
     const id = act.dataset.id, a = act.dataset.act;
     const curP = route.view === 'person' ? route.id : null;
-    ({ addPerson: () => personForm(null), editPerson: () => personForm(id), delPerson: () => askDeletePerson(id), editDelivery: () => deliveryForm(id), editReview: () => reviewForm(id), editPromo: () => promoForm(id), editBehaviours: () => behavioursForm(id), addBeh: () => addBehForm(id), editBehSet: () => behSetForm(Object.keys(roleSets())[Number(id)]), editPlanLib: () => planLibForm(Object.keys(roleSets())[Number(id)]),
+    ({ addPerson: () => personForm(null), editPerson: () => personForm(id), delPerson: () => askDeletePerson(id), editDelivery: () => deliveryForm(id), editReview: () => reviewForm(id), editPromo: () => promoForm(id), editBehaviours: () => behavioursForm(id), addBeh: () => behEditForm(id, null), editBeh: () => behEditForm(id, Number(act.dataset.idx)), delBeh: () => behDelete(id, Number(act.dataset.idx)), rateBeh: () => behavioursForm(id, Number(act.dataset.idx)), editInd: () => indGlobalForm(id), editBehSet: () => behSetForm(Object.keys(roleSets())[Number(id)]), editPlanLib: () => planLibForm(Object.keys(roleSets())[Number(id)]),
       'sugg-plan': () => { const x = (roleLib()[roleKey(S.people[id])] || [])[Number(act.dataset.idx)]; if (x) planForm(id, null, { action: x[0], competency: x[1] || null, expected: x[2] || null }); },
       'add-plan': () => planForm(id), 'edit-plan': () => planForm(curP, id), 'del-plan': () => confirmBox('Delete this plan item?', esc(S.plans[id]?.action || ''), 'Delete', () => remove('plans/' + id, `Deleted plan item for ${S.people[S.plans[id]?.emp]?.name}`)),
       'add-learn': () => learnForm(id), 'edit-learn': () => learnForm(curP, id), 'del-learn': () => confirmBox('Delete this training record?', esc(S.learning[id]?.programme || ''), 'Delete', () => remove('learning/' + id, `Deleted training ${S.learning[id]?.programme}`)),
