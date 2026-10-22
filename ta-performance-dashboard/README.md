@@ -94,6 +94,14 @@ It reports both the 2026 YTD position and the monthly series. The one NATS conve
 
 It also adds three descriptive insights. The Offer Stack sheet supplies the current company; it was matched to tracker outcomes on requisition ID and offer date outside the dashboard. Rows without a recorded company are left out, and same or similar company names are merged (updates `-upd1`, `-upd2`; LTM = Mindtree confirmed by the TA Head). Only company-level counts are stored. Company spellings are normalised, and vendor contacts are reduced to the agency name.
 
+## Cost of hiring (22 Oct 2026)
+
+`js/data-hiring-cost.js` (pack `hiring-cost-2026-10-22`) loads the Finance cost-centre results by year:
+- CC 74200 (HR Recruitment – OH) and CC 74202 (HR Recruitment – VIT, from 2025), for 2021–2025;
+- the 2026 full-year actual plus estimate, INR 50,535,000.
+
+Trends gains a "Cost of hiring" card with a cost table and chart, and the exports include the same. Cost per hire = cost ÷ all hires in the year (lateral, freshers/GET, NATS, ExcelHER, PhD/AICTE, internal mobility, interns). It is calculated automatically once a value for the metric "All hires in year (all types)" is added for a year. The yearly totals are awaited.
+
 ## How data is stored
 
 - Data is saved automatically in **this browser on this device**. It uses IndexedDB, plus a localStorage copy when the data fits.

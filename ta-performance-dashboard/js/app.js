@@ -225,6 +225,7 @@
     h += tabs('trends', [['results', 'Programme results & trends'], ['calendar', 'Programme calendar 2026']], 'results');
     if (tab('trends', 'results') === 'calendar') return h + calendarView();
     h += keyParamsCard();
+    h += costCard();
     h += '<div class="tabs" role="tablist" aria-label="Period granularity">' + ['Month', 'Quarter', 'Annual', 'YTD'].map(tp => {
       const n = S.list('periods').filter(x => x.type === tp).length;
       return '<button role="tab" aria-selected="' + (ui.trendType === tp) + '" data-act="trend-type" data-type="' + tp + '">' + ({ Month: 'Monthly', Quarter: 'Quarterly', Annual: 'Annual', YTD: 'YTD' })[tp] + ' (' + n + ')</button>';
@@ -339,6 +340,24 @@
     return card('Lateral hiring – volume and key parameters', 'Lateral joiners. Full calendar years, plus 2026 year-to-date to 14 Oct (hollow point, dashed line). Sources: lateral hiring and cycle-time trend tables and Business Review Meeting (Oct) slide. 2026 YTD for the % measures and cycle times: hiring tracker, lateral incl. conversions and FTC (352 joiners); 2026 volume: trend table (353 to 19 Oct).', body +
       commentary('Lateral hires peaked in 2022 and have fallen each full year since. Requisition-to-join time fell from 115 days (2023) to 94 (2025). Vendor usage is at its lowest value in the series; gender diversity is below 2024–2025; referrals are above 2025 but below 2024.', 'Together these show the volume, speed, cost, inclusion and sourcing mix of lateral hiring. 2026 is not yet a full year.',
         'Track the planned diversity pipeline and the referral module redesign (see Actions); use 2025 full-year cycle times as the baseline for targets; compare full-year 2026 once the year closes.')) + '<div style="height:14px"></div>';
+  }
+
+  /* Cost of hiring: TA cost-centre cost by year and cost per hire (when the year's hire total is recorded). */
+  function costCard() {
+    const rows = TA.costSeries ? TA.costSeries() : [];
+    if (!rows.length) return '';
+    const L = (v) => Math.round(v / 1e4) / 10;
+    const pts = rows.map(r => ({ label: r.year, short: r.year.replace(' (est.)', ' est.'), value: L(r.cost), partial: r.estimate }));
+    const per = rows.filter(r => TA.isNum(r.perHire));
+    const full = rows.filter(r => !r.estimate), a = full[0], b = full[full.length - 1], e = rows.find(r => r.estimate);
+    let body = '<div class="grid g2" style="margin-bottom:10px"><div><h4>TA function cost (INR lakh)</h4>' + TA.chartLine(pts, 'count', { labels: true, w: 560, h: 220, zero: true, aria: 'TA function cost by year', seriesLabel: 'Cost (CC 74200 + 74202)' }) + '</div><div><h4>Cost per hire (INR)</h4>' +
+      (per.length >= 2 ? TA.chartLine(per.map(r => ({ label: r.year, short: r.year.replace(' (est.)', ' est.'), value: r.perHire, partial: r.estimate })), 'INR', { labels: true, w: 560, h: 220, zero: true, aria: 'Cost per hire by year', seriesLabel: 'Cost per hire' })
+        : '<div class="notice warn" style="margin-top:8px"><strong>Not provided yet.</strong> Cost per hire = cost ÷ all hires (lateral, freshers/GET, NATS, ExcelHER, PhD/AICTE, internal mobility, interns). Hire totals for 2021–2025 and the 2026 full-year hire estimate are awaited (see Data Quality). Only lateral hires are recorded for those years, which would overstate cost per hire.</div>') + '</div></div>';
+    body += '<div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">CC 74200 (OH)</th><th scope="col" class="num">CC 74202 (VIT)</th><th scope="col" class="num">Total cost</th><th scope="col" class="num">All hires</th><th scope="col" class="num">Cost per hire</th></tr></thead><tbody>' +
+      rows.map(r => '<tr><td>' + esc(r.year) + '</td><td class="num">' + esc(TA.fmtVal(r.cc1, 'INR')) + '</td><td class="num">' + (TA.isNum(r.cc2) ? esc(TA.fmtVal(r.cc2, 'INR')) : '<span class="muted">Not reported</span>') + '</td><td class="num">' + esc(TA.fmtVal(r.cost, 'INR')) + '</td><td class="num">' + (TA.isNum(r.hires) ? TA.fmtInt(r.hires) : np()) + '</td><td class="num">' + (TA.isNum(r.perHire) ? esc(TA.fmtVal(r.perHire, 'INR')) : np()) + '</td></tr>').join('') + '</tbody></table></div>';
+    body += commentary(a && b ? 'Cost ' + a.year + ' → ' + b.year + ': ' + esc(TA.deltaText('count', L(a.cost), L(b.cost))) + ' lakh' + (e ? '; 2026 estimate INR ' + TA.fmtInt(L(e.cost)) + ' lakh.' : '.') : '',
+      'Cost per hire shows the efficiency of the TA function only when cost and hires cover the same year and the same scope.', 'Add yearly hire totals (Deliverables & Metrics → "All hires in year (all types)") to calculate cost per hire; confirm what the cost centres include.');
+    return card('Cost of hiring', 'Finance cost-centre results (source-reported). Full years 2021–2025; 2026 = actual + estimate (hollow point). CC 74202 is reported from 2025.', body) + '<div style="height:14px"></div>';
   }
 
   function breakdownsCard() {

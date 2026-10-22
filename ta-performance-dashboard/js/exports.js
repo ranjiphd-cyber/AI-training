@@ -104,6 +104,13 @@
           series: cyc.map((c, i) => ({ name: c.metric.name, values: c.points.map(p => p.value), color: [ACCENT, NAVY][i] })), note: 'Lower is better. 2023–2025 average: 60 days to offer, 107 days to join. The last point is year-to-date from the hiring tracker (lateral incl. conversions and FTC).' });
         cyc.forEach(c => c.points.forEach(p => { if (p.obs && p.obs.source) m.sources.add(p.obs.source); }));
       }
+      const cost = TA.costSeries ? TA.costSeries() : [];
+      if (cost.length >= 2) {
+        blocks.push({ type: 'chart', kind: 'line', unit: 'count', title: 'TA function cost (INR lakh), ' + cost[0].year + '–' + cost[cost.length - 1].year, categories: cost.map(r => r.year), series: [{ name: 'Cost (CC 74200 + 74202)', values: cost.map(r => TA.round(r.cost / 1e5, 1)), color: ACCENT }],
+          note: 'Finance cost-centre results; 2026 is actual + estimate. CC 74202 is reported from 2025.' });
+        blocks.push({ type: 'table', label: 'Cost of hiring by year', head: ['Year', 'Total cost', 'All hires', 'Cost per hire'], rows: cost.map(r => [r.year, TA.fmtVal(r.cost, 'INR'), TA.isNum(r.hires) ? TA.fmtInt(r.hires) : 'Not provided', TA.isNum(r.perHire) ? TA.fmtVal(r.perHire, 'INR') : 'Not provided']) });
+        m.sources.add('Finance cost-centre report (22 Oct 2026)');
+      }
       const trendRows = [];
       TA.availableTrends().forEach(t => { trendRows.push([t.metric.name, t.population || 'Not provided', t.a.period.label + ': ' + TA.fmtVal(t.a.value, t.metric.unit), t.b.period.label + ': ' + TA.fmtVal(t.b.value, t.metric.unit), TA.deltaText(t.metric.unit, t.a.value, t.b.value)]); if (t.b.obs.source) m.sources.add(t.b.obs.source); });
       if (trendRows.length) blocks.push({ type: 'table', label: 'Latest change between comparable periods (descriptive; causes not inferred)', head: ['Measure', 'Population', 'Prior', 'Latest', 'Change'], rows: trendRows });
