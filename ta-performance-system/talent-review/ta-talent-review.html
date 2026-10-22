@@ -315,12 +315,12 @@ const PROMO = ['Recommend now', 'Recommend in 6–12 months', 'Not this cycle', 
 const JR_BANDS = [[90, 15], [85, 13], [80, 11], [75, 8], [0, 5]];
 const CT = { strong: 45, ok: 55 }, VB = { low: 10, high: 20 };
 const MIX_GROUPS = [
-  { label: 'Lateral SG5 and above', cats: ['SG9 and above', 'Lateral SG5-SG8'], c: 's1' },
-  { label: 'Lateral SG1–SG4', cats: ['Lateral SG1-SG4'], c: 's2' },
+  { label: 'Lateral SG4 and above', cats: ['Lateral SG10 and above', 'Lateral SG8-SG9', 'Lateral SG4-SG7', 'SG9 and above', 'Lateral SG5-SG8'], c: 's1' },
+  { label: 'Lateral SG1–SG3', cats: ['Lateral SG1-SG3', 'Lateral SG1-SG4'], c: 's2' },
   { label: 'FTC (new hire)', cats: ['FTC'], c: 's3' },
   { label: 'NATS, ExcelHER, AICTE, PhD', cats: ['NATS Hiring', 'ExcelHER', 'AICTE Professor', 'PhD Internship', 'PMIS'], c: 's4' },
   { label: 'Campus (GET / PGET)', cats: ['GET / PGET'], c: 's5' },
-  { label: 'Conversions', cats: ['Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion', 'NATS Conversion'], c: 's6' },
+  { label: 'Conversions', cats: ['Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion', 'NATS Conversion', 'Intern Conversion'], c: 's6' },
 ];
 
 /* ===================== helpers ===================== */
@@ -352,11 +352,12 @@ const OPS_LABELS = { 5: ['Outstanding', 'Exceptional'], 4: ['Exceeds Expectation
 const OPS_KEYS = ['timely', 'errors', 'volume', 'experience'];
 const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Development area', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
 const PILLARS = ['Unleash Human Potential', 'People Experience', 'Data-Driven Insights', 'Sustainable Operational Excellence'];
-const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PGET', 'Campus GET / PGET'], ['Internship (no points rule)', 'Interns'], ['AICTE Professor', 'AICTE professors'], ['PhD Internship', 'PhD'], ['NATS Conversion', 'NATS conversions'], ['ExcelHER Conversion', 'ExcelHER conversions']];
+const PIPE_CATS = [['NATS Hiring', 'NATS'], ['ExcelHER', 'ExcelHER'], ['GET / PGET', 'Campus GET / PGET'], ['Internship (no points rule)', 'Interns'], ['AICTE Professor', 'AICTE professors'], ['PhD Internship', 'PhD'], ['NATS Conversion', 'NATS conversions'], ['ExcelHER Conversion', 'ExcelHER conversions'], ['Intern Conversion', 'Intern conversions']];
 const projStatusClass = st => ({ 'Completed': 'good', 'On track': 'good', 'On hold': 'watch', 'To confirm': 'watch' }[st] || 'none');
 const isIntern = c => /^Internship/.test(c);
 const internPts = () => num((S.settings.scoring || {}).internPts) ?? 0;
 const ijpPts = () => num((S.settings.scoring || {}).ijpPts) ?? 1;
+const ijpHighPts = () => num((S.settings.scoring || {}).ijpHighPts) ?? 2;
 const declPen = () => num((S.settings.scoring || {}).declinePenalty) ?? 0.5;
 const declFrom = () => num((S.settings.scoring || {}).declineFrom) ?? YEAR + 1;
 const declOn = () => YEAR >= declFrom() && declPen() > 0;
@@ -398,12 +399,12 @@ const vScore = v => v == null ? null : v < VB.low ? 5 : v <= VB.high ? 3 : 1;
 
 function ownBlock(id) {
   const d = S.delivery[id]; if (!d) return null;
-  const ppo = num(d.ppo) ?? 2, target = num(d.target), prorate = num(d.prorate) ?? 1;
+  const ppo = num((S.settings.scoring || {}).ppo) ?? num(d.ppo) ?? 2, target = num(d.target), prorate = num(d.prorate) ?? 1;
   const ptFull = num(d.ptAnnual) ?? (target != null ? target * ppo : null);
   const ptPro = ptFull != null ? ptFull * prorate : null;
   const interns = sum((d.mix || []).filter(m => isIntern(m[0])).map(m => m[1])), basePts = num(d.points);
-  const ijp = num(d.ijp) ?? 0, declined = num((d.tracker || {}).declined) ?? 0, declPts = declOn() ? declined * declPen() : 0;
-  const points = basePts == null ? null : basePts + interns * internPts() + ijp * ijpPts() - declPts, offers = num(d.offers), joiners = num(d.joiners);
+  const ijpLow = num(d.ijp) ?? 0, ijpHigh = num(d.ijpHigh) ?? 0, ijp = ijpLow + ijpHigh, ijpP = ijpLow * ijpPts() + ijpHigh * ijpHighPts(), declined = num((d.tracker || {}).declined) ?? 0, declPts = declOn() ? declined * declPen() : 0;
+  const points = basePts == null ? null : basePts + interns * internPts() + ijpP - declPts, offers = num(d.offers), joiners = num(d.joiners);
   const att = points != null && ptPro ? points / ptPro : null;
   const offer = att != null ? r1(W.offer * Math.min(att, 1)) : null;
   const jr = offers ? joiners / offers * 100 : null;
@@ -411,9 +412,9 @@ function ownBlock(id) {
   const all = Object.values(parts).every(v => v != null);
   const yd = num((S.settings.scoring || {}).yearDays) ?? 254, revC = num(d.revCadence);
   const revAnnual = revC != null ? revC * yd / 10 : null, revPtPro = revAnnual != null ? revAnnual * ppo * prorate : null, revAtt = points != null && revPtPro ? points / revPtPro : null;
-  return { d, revC, revAnnual, revPtPro, revAtt, interns, ijp, declined, declPts, basePts, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
+  return { d, revC, revAnnual, revPtPro, revAtt, interns, ijp, ijpLow, ijpHigh, ijpP, declined, declPts, basePts, ppo, target, prorate, ptFull, ptPro, points, offers, joiners, att, jr, offerDays: num(d.offerDays), vendorPct: num(d.vendorPct), parts, del: all ? r1(parts.offer + parts.ct + parts.vendor) : null, raw: r1(sum(Object.values(parts))) };
 }
-const mixRows = o => (o.d.mix || []).concat(o.ijp ? [['Internal hiring (IJP)', o.ijp, o.ijp * ijpPts()]] : []).concat(o.declPts ? [[`Declined offers (−${fmt(declPen())} each)`, o.declined, -o.declPts]] : []);
+const mixRows = o => (o.d.mix || []).concat(o.ijpLow ? [[o.ijpHigh ? 'Internal hiring (IJP) up to SG7' : 'Internal hiring (IJP)', o.ijpLow, o.ijpLow * ijpPts()]] : []).concat(o.ijpHigh ? [['Internal hiring (IJP) SG8 and above', o.ijpHigh, o.ijpHigh * ijpHighPts()]] : []).concat(o.declPts ? [[`Declined offers (−${fmt(declPen())} each)`, o.declined, -o.declPts]] : []);
 function teamOf(lead) { return peopleList().filter(p => p.team === lead.team && p.id !== lead.id && !isLead(p) && !isSupport(p) && inReview(p)); }
 function teamBlock(lead) {
   const ms = teamOf(lead).map(p => ({ p, b: ownBlock(p.id) })).filter(x => x.b);
@@ -691,7 +692,7 @@ function pDelivery(E) {
   if (o.revC != null) h += `<div class="note sec" style="color:var(--ink);font-size:13px"><b>Revised target for 2026 (reduced cadence):</b> ${fmt(o.revC)} offers every 10 working days = ${fmt(o.revAnnual, 1)} offers a year and ${fmt(o.revPtPro)} points to date. Against it: ${fmt(o.points)} points, ${chip(statusOf(o.revAtt), pct(o.revAtt * 100))}. The scores above still use the regular target.</div>`;
   h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Key measures</h3></div><div class="tw"><table><tbody>
     <tr><td>Offers released (trackers)</td><td class="n">${fmt(tr.offers, 0)}</td><td class="sub">${fmt(tr.joined, 0)} joined · ${fmt(tr.declined, 0)} declined · ${fmt(tr.pending, 0)} pending</td></tr>
-    ${o.ijp ? `<tr><td>Internal hiring (IJP) offers</td><td class="n">${o.ijp}</td><td class="sub">${fmt(o.ijp * ijpPts())} points at ${fmt(ijpPts())} each, no women's bonus</td></tr>` : ''}
+    ${o.ijp ? `<tr><td>Internal hiring (IJP) offers</td><td class="n">${o.ijp}</td><td class="sub">${fmt(o.ijpP)} points: ${fmt(ijpPts())} each up to SG7${o.ijpHigh ? `, ${fmt(ijpHighPts())} each for the ${o.ijpHigh} at SG8 and above` : ''}; no women's bonus</td></tr>` : ''}
     ${o.declPts ? `<tr><td>Decline deduction</td><td class="n">−${fmt(o.declPts)}</td><td class="sub">${o.declined} declined × ${fmt(declPen())}</td></tr>` : ''}
     ${o.interns ? `<tr><td>Intern offers</td><td class="n">${o.interns}</td><td class="sub">${fmt(o.interns * internPts())} points at ${fmt(internPts())} each (tracker points ${fmt(o.basePts)})</td></tr>` : ''}
     <tr><td>Offers (scorecard)</td><td class="n">${fmt(o.offers, 0)}</td><td class="sub">${fmt(o.joiners, 0)} joiners</td></tr>
@@ -1166,8 +1167,8 @@ async function buildDeck(opt) {
   s = pptx.addSlide({ masterName: 'B' }); head(s, 'How the scores work and where the data comes from');
   bullets(s, [
     'Total of 100: business deliverables 80 (offers & complexity 65, cycle time 10, vendor 5) + projects 10 + competency development 10. Support roles: KPI & SLA 70 (SLA and timeliness 25, volume 20, error-free 15, experience 10; each pillar earns 100% at 5, 90% at 4, 75% at 3, 50% at 2, 20% at 1) + projects 10 + competency development 10 + process improvement 10. Behaviours are discussed, not scored.',
-    `Offers & complexity: 65 × weighted points ÷ points target to date, capped at 65. Points target = annual offer target × 2, pro-rated by working days. Team Leads: deliverables are 40 for the team goal + 40 for their own delivery.${declOn() ? ` Declined offers: −${fmt(declPen())} each.` : ` From ${declFrom()}, each declined offer earns its normal points minus ${fmt(declPen())}.`}`,
-    `Points per offer: lateral SG1–SG4 1 · SG5–SG8 2 · SG9+ 3 · new FTC hire 2 · conversion to FTC 1 · NATS 1 · ExcelHER 2 · GET/PGET 1 · AICTE and PhD 2 · conversions 1 · internal hiring (IJP) ${fmt(ijpPts())} · interns ${fmt(internPts())}. +0.5 for women hires where the rule allows (never on FTC hires, conversions or IJP). SG = JL + 2. Declined offers count.`,
+    `Offers & complexity: 65 × weighted points ÷ points target to date, capped at 65. Points target = annual offer target × ${fmt(num((S.settings.scoring || {}).ppo) ?? 2)}, pro-rated by working days. Team Leads: deliverables are 40 for the team goal + 40 for their own delivery.${declOn() ? ` Declined offers: −${fmt(declPen())} each.` : ` From ${declFrom()}, each declined offer earns its normal points minus ${fmt(declPen())}.`}`,
+    `Points per offer (agreed with the team, 22 Oct 2026): lateral SG1–SG3 1 · SG4–SG7 3 · SG8–SG9 4 · SG10+ 5 · FTC hire by the position's SG · GET/PGET 2 · NATS/PMIS 2 · ExcelHER 3 · AICTE and PhD 3 · interns ${fmt(internPts())} · conversions (consultant, intern, FTC, NATS or ExcelHER to permanent, or any conversion to FTC) 1 · internal hiring (IJP) ${fmt(ijpPts())} up to SG7, ${fmt(ijpHighPts())} at SG8+. +0.5 for women lateral hires (not FTC hires or conversions). SG = JL + 2. Declined offers count${declOn() ? `, minus ${fmt(declPen())} each` : ''}.`,
     'Cycle time: <45 days 10 · 45–55 7 · >55 4. Vendor: <10% 5 · 10–20% 3 · >20% 1. Joining ratio is shown but not scored.',
     'Sources: Hiring2026 tracker and NATS & pipeline programmes workbook (offers 1 Jan–16 Oct 2026); recruiter scorecards and programme results from the 2026 Annual Performance Review deck; TA year plan 2026; P&C calendar (talent pipeline & university relations); P4P history, job levels and dates supplied by the TA Head.',
   ], { x: 0.5, y: 1.3, w: 12.3, h: 5.6, fs: 12 });
@@ -1192,7 +1193,7 @@ function viewManage() {
   let h = `<div class="phead"><div><h2>People and teams</h2><div class="meta"><span>Add, edit or remove people, and keep teams up to date</span></div></div><div class="sp"></div>${canWrite ? '<div class="btns"><button class="btn" data-act="addTeam" type="button">Add team</button><button class="btn pri" data-act="addPerson" type="button">Add person</button></div>' : ''}</div>`;
   h += `<div class="card"><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Team</th><th>Level</th><th>Joined</th><th>In review</th><th class="n">Annual offer target</th><th></th></tr></thead><tbody>${ppl.map(p => `<tr><td><b class="click" data-person="${esc(p.id)}" style="cursor:pointer">${esc(p.name)}</b>${p.vcnid ? `<div class="sub mono">${esc(p.vcnid)}</div>` : ''}</td><td>${esc(p.role || '')}</td><td>${esc(p.team || '—')}</td><td class="mono">${esc(p.level || '—')}</td><td>${nice(p.joined)}</td><td>${inReview(p) ? 'Yes' : `<span class="sub">No${p.status === 'Left' ? ' (left)' : ''}</span>`}</td><td class="n">${S.delivery[p.id] ? fmt(num(S.delivery[p.id].target), 0) : '—'}</td><td class="n">${canWrite ? `<button class="btn sm" data-act="editPerson" data-id="${esc(p.id)}" type="button">Edit</button> <button class="btn sm danger" data-act="delPerson" data-id="${esc(p.id)}" type="button">Delete</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
   const sc = S.settings.behaviourScale || {};
-  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Points per IJP offer</dt><dd>${fmt(ijpPts())}</dd><dt>Declined offers</dt><dd>−${fmt(declPen())} each from ${declFrom()}${declOn() ? ' (applied now)' : ` (not applied in ${YEAR})`}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
+  h += `<div class="grid c2 sec"><div class="card pad"><div class="sec-h"><h3>Scoring settings</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScoring" type="button">Edit</button>' : ''}</div><dl class="kv"><dt>Points per intern offer</dt><dd>${fmt(internPts())}</dd><dt>Points target multiplier</dt><dd>× ${fmt(num((S.settings.scoring || {}).ppo) ?? 2)}</dd><dt>Points per IJP offer</dt><dd>${fmt(ijpPts())} up to SG7 · ${fmt(ijpHighPts())} at SG8+</dd><dt>Declined offers</dt><dd>−${fmt(declPen())} each from ${declFrom()}${declOn() ? ' (applied now)' : ` (not applied in ${YEAR})`}</dd><dt>Promotion: time in role</dt><dd>2 years or more</dd></dl></div>
     <div class="card pad"><div class="sec-h"><h3>Behaviours: indicators and rating scale</h3><span class="sp"></span>${canWrite ? '<button class="btn sm" data-act="editScale" type="button">Edit general scale</button>' : ''}</div><div class="tw"><table><thead><tr><th>Behaviour</th><th>Own descriptions</th><th></th></tr></thead><tbody>${allBehNames().map((c, i) => { const n = [1, 2, 3, 4, 5].filter(k => ((sc.byComp || {})[c] || {})[k]).length; return `<tr><td>${esc(c)}</td><td>${n ? n + ' of 5 levels' : '<span class="sub">uses the general scale</span>'}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="editInd" data-id="${i}" type="button">Indicators</button> <button class="btn sm" data-act="editScale" data-id="${i}" type="button">Scale</button>` : ''}</td></tr>`; }).join('')}</tbody></table></div></div></div>`;
   const RS = roleSets(), RL = roleLib();
   h += `<div class="card pad sec"><div class="sec-h"><h3>Behaviours and development suggestions by role</h3><span class="hint">used on each person's Behaviours and Development plan tabs</span></div><div class="tw"><table><thead><tr><th>Role</th><th>Behaviours</th><th class="n">Development suggestions</th><th></th></tr></thead><tbody>${Object.keys(RS).map((r, i) => `<tr><td><b>${esc(r)}</b><div class="sub">${peopleList().filter(p => inReview(p) && roleKey(p) === r).length} people</div></td><td style="font-size:12.5px;color:var(--ink-2)">${RS[r].map(esc).join(' · ')}</td><td class="n">${(RL[r] || []).length}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="editBehSet" data-id="${i}" type="button">Edit behaviours</button> <button class="btn sm" data-act="editPlanLib" data-id="${i}" type="button">Edit suggestions</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>`;
@@ -1308,7 +1309,7 @@ function deliveryForm(id) {
       { section: 'Target' }, { k: 'target', label: 'Annual offer target', type: 'number', min: 0 }, { k: 'ppo', label: 'Points per offer', type: 'number', min: 0, step: .1 },
       { k: 'revCadence', label: 'Revised target: offers per 10 working days', hint: '(shown alongside; scores use the regular target)', type: 'number', min: 0, step: 0.5 }, { k: 'ptAnnual', label: 'Personal points target', hint: '(optional, replaces target × points)', type: 'number', min: 0 }, { k: 'prorPct', label: 'Share of year elapsed (%)', type: 'number', min: 0, max: 100, step: .1 },
       { section: 'Hiring trackers' }, { k: 'points', label: 'Weighted points', hint: '(before intern points)', type: 'number', min: 0, step: .5 }, { k: 'tOffers', label: 'Offers released', type: 'number', min: 0 },
-      { k: 'ijp', label: 'Internal hiring (IJP) offers', hint: `(${fmt(ijpPts())} point each)`, type: 'number', min: 0 }, { k: 'tJoined', label: 'Joined', type: 'number', min: 0 }, { k: 'tDeclined', label: 'Declined', type: 'number', min: 0 }, { k: 'tPending', label: 'Pending joining', type: 'number', min: 0 },
+      { k: 'ijp', label: 'IJP offers up to SG7', hint: `(${fmt(ijpPts())} point each)`, type: 'number', min: 0 }, { k: 'ijpHigh', label: 'IJP offers SG8 and above', hint: `(${fmt(ijpHighPts())} points each)`, type: 'number', min: 0 }, { k: 'tJoined', label: 'Joined', type: 'number', min: 0 }, { k: 'tDeclined', label: 'Declined', type: 'number', min: 0 }, { k: 'tPending', label: 'Pending joining', type: 'number', min: 0 },
       { section: 'Recruiter scorecard' }, { k: 'offers', label: 'Offers (scorecard)', type: 'number', min: 0 }, { k: 'joiners', label: 'Joiners (scorecard)', type: 'number', min: 0 },
       { k: 'offerDays', label: 'Requisition-to-offer days', type: 'number', min: 0 }, { k: 'joinDays', label: 'Days to join', type: 'number', min: 0 },
       { k: 'declinedPct', label: 'Offers declined (%)', type: 'number', min: 0, max: 100 }, { k: 'vendorPct', label: 'Vendor share (%)', type: 'number', min: 0, max: 100 },
@@ -1316,7 +1317,7 @@ function deliveryForm(id) {
       { k: 'asOf', label: 'Scorecard date', type: 'date' }, { k: 'source', label: 'Source', full: true },
     ],
     save: async v => {
-      const doc = { ...d, ijp: v.ijp, target: v.target, ppo: v.ppo ?? 2, revCadence: v.revCadence, ptAnnual: v.ptAnnual, prorate: v.prorPct != null ? v.prorPct / 100 : 1, points: v.points, offers: v.offers, joiners: v.joiners, offerDays: v.offerDays, joinDays: v.joinDays, declinedPct: v.declinedPct, vendorPct: v.vendorPct, referralPct: v.referralPct, diversityPct: v.diversityPct, asOf: v.asOf, source: v.source,
+      const doc = { ...d, ijp: v.ijp, ijpHigh: v.ijpHigh, target: v.target, ppo: v.ppo ?? 2, revCadence: v.revCadence, ptAnnual: v.ptAnnual, prorate: v.prorPct != null ? v.prorPct / 100 : 1, points: v.points, offers: v.offers, joiners: v.joiners, offerDays: v.offerDays, joinDays: v.joinDays, declinedPct: v.declinedPct, vendorPct: v.vendorPct, referralPct: v.referralPct, diversityPct: v.diversityPct, asOf: v.asOf, source: v.source,
         tracker: { ...t, offers: v.tOffers, joined: v.tJoined, declined: v.tDeclined, pending: v.tPending } };
       return write('delivery/' + id, doc, `Updated delivery figures for ${S.people[id].name}`);
     } });
@@ -1446,10 +1447,10 @@ function scaleForm(ci) {
 }
 function scoringForm() {
   const cur = S.settings.scoring || {};
-  openForm({ title: 'Scoring settings', values: { internPts: cur.internPts ?? 0, ijpPts: ijpPts(), declinePenalty: declPen(), declineFrom: declFrom() }, fields: [
-    { k: 'internPts', label: 'Points per intern offer', type: 'number', step: .5, min: -5, max: 5 }, { k: 'ijpPts', label: 'Points per internal hiring (IJP) offer', type: 'number', step: .5, min: 0, max: 5 },
-    { k: 'declinePenalty', label: 'Deduction per declined offer', type: 'number', step: .5, min: 0, max: 5 }, { k: 'declineFrom', label: 'Deduction applies from review year', type: 'number', min: 2026, max: 2035 }],
-    save: async v => write('settings/scoring', { ...cur, internPts: v.internPts ?? 0, ijpPts: v.ijpPts ?? 1, declinePenalty: v.declinePenalty ?? 0.5, declineFrom: v.declineFrom ?? YEAR + 1 }, `Updated scoring settings`) });
+  openForm({ title: 'Scoring settings', values: { internPts: cur.internPts ?? 0, ijpPts: ijpPts(), ijpHighPts: ijpHighPts(), ppo: cur.ppo ?? 2, declinePenalty: declPen(), declineFrom: declFrom() }, fields: [
+    { k: 'ppo', label: 'Points target multiplier', hint: '(annual offer target × this)', type: 'number', step: .1, min: 0.5, max: 6 }, { k: 'internPts', label: 'Points per intern offer', type: 'number', step: .5, min: -5, max: 5 }, { k: 'ijpPts', label: 'Points per IJP offer, up to SG7', type: 'number', step: .5, min: 0, max: 5 }, { k: 'ijpHighPts', label: 'Points per IJP offer, SG8 and above', type: 'number', step: .5, min: 0, max: 6 },
+    { k: 'declinePenalty', label: 'Deduction per declined offer', type: 'number', step: .05, min: 0, max: 5 }, { k: 'declineFrom', label: 'Deduction applies from review year', type: 'number', min: 2026, max: 2035 }],
+    save: async v => write('settings/scoring', { ...cur, ppo: v.ppo ?? 2, ijpHighPts: v.ijpHighPts ?? 2, internPts: v.internPts ?? 0, ijpPts: v.ijpPts ?? 1, declinePenalty: v.declinePenalty ?? 0.5, declineFrom: v.declineFrom ?? YEAR + 1 }, `Updated scoring settings`) });
 }
 /* ---- teams ---- */
 function teamForm(tid) {
