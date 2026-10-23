@@ -100,7 +100,7 @@ It also adds three descriptive insights. The Offer Stack sheet supplies the curr
 - CC 74200 (HR Recruitment – OH) and CC 74202 (HR Recruitment – VIT, from 2025), for 2021–2025;
 - the 2026 full-year actual plus estimate, INR 50,535,000.
 
-Trends gains a "Cost of hiring" card with a cost table and chart, and the exports include the same. Cost per hire = cost ÷ all hires in the year (lateral, freshers/GET, NATS, ExcelHER, PhD/AICTE, internal mobility, interns). It is calculated automatically once a value for the metric "All hires in year (all types)" is added for a year. The yearly totals are awaited.
+Trends gains a "Cost of hiring" card with a cost table and chart, and the exports include the same. Cost per hire = cost ÷ all hires in the year (lateral, freshers/GET, NATS, ExcelHER, PhD/AICTE, internal mobility, interns). It is calculated automatically once a value for the metric "All hires in year (all types)" is added for a year. The yearly totals are awaited. The cost includes agency fees, job-board licences, referral bonuses and campus costs; each year is the financial year Jan–Dec (update `-upd1`).
 
 ## How data is stored
 

@@ -356,8 +356,8 @@
     body += '<div class="table-wrap"><table class="data"><thead><tr><th scope="col">Year</th><th scope="col" class="num">CC 74200 (OH)</th><th scope="col" class="num">CC 74202 (VIT)</th><th scope="col" class="num">Total cost</th><th scope="col" class="num">All hires</th><th scope="col" class="num">Cost per hire</th></tr></thead><tbody>' +
       rows.map(r => '<tr><td>' + esc(r.year) + '</td><td class="num">' + esc(TA.fmtVal(r.cc1, 'INR')) + '</td><td class="num">' + (TA.isNum(r.cc2) ? esc(TA.fmtVal(r.cc2, 'INR')) : '<span class="muted">Not reported</span>') + '</td><td class="num">' + esc(TA.fmtVal(r.cost, 'INR')) + '</td><td class="num">' + (TA.isNum(r.hires) ? TA.fmtInt(r.hires) : np()) + '</td><td class="num">' + (TA.isNum(r.perHire) ? esc(TA.fmtVal(r.perHire, 'INR')) : np()) + '</td></tr>').join('') + '</tbody></table></div>';
     body += commentary(a && b ? 'Cost ' + a.year + ' → ' + b.year + ': ' + esc(TA.deltaText('count', L(a.cost), L(b.cost))) + ' lakh' + (e ? '; 2026 estimate INR ' + TA.fmtInt(L(e.cost)) + ' lakh.' : '.') : '',
-      'Cost per hire shows the efficiency of the TA function only when cost and hires cover the same year and the same scope.', 'Add yearly hire totals (Deliverables & Metrics → "All hires in year (all types)") to calculate cost per hire; confirm what the cost centres include.');
-    return card('Cost of hiring', 'Finance cost-centre results (source-reported). Full years 2021–2025; 2026 = actual + estimate (hollow point). CC 74202 is reported from 2025.', body) + '<div style="height:14px"></div>';
+      'Cost per hire shows the efficiency of the TA function only when cost and hires cover the same year and the same scope.', 'Add yearly hire totals (Deliverables & Metrics → "All hires in year (all types)") to calculate cost per hire.');
+    return card('Cost of hiring', 'Finance cost-centre results (source-reported), financial year Jan–Dec. Includes agency fees, job-board licences, referral bonuses and campus costs. 2026 = actual + estimate (hollow point). CC 74202 is reported from 2025.', body) + '<div style="height:14px"></div>';
   }
 
   function breakdownsCard() {

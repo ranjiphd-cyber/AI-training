@@ -107,7 +107,7 @@
       const cost = TA.costSeries ? TA.costSeries() : [];
       if (cost.length >= 2) {
         blocks.push({ type: 'chart', kind: 'line', unit: 'count', title: 'TA function cost (INR lakh), ' + cost[0].year + '–' + cost[cost.length - 1].year, categories: cost.map(r => r.year), series: [{ name: 'Cost (CC 74200 + 74202)', values: cost.map(r => TA.round(r.cost / 1e5, 1)), color: ACCENT }],
-          note: 'Finance cost-centre results; 2026 is actual + estimate. CC 74202 is reported from 2025.' });
+          note: 'Finance cost-centre results, financial year Jan–Dec; includes agency fees, job-board licences, referral bonuses and campus costs. 2026 is actual + estimate. CC 74202 is reported from 2025.' });
         blocks.push({ type: 'table', label: 'Cost of hiring by year', head: ['Year', 'Total cost', 'All hires', 'Cost per hire'], rows: cost.map(r => [r.year, TA.fmtVal(r.cost, 'INR'), TA.isNum(r.hires) ? TA.fmtInt(r.hires) : 'Not provided', TA.isNum(r.perHire) ? TA.fmtVal(r.perHire, 'INR') : 'Not provided']) });
         m.sources.add('Finance cost-centre report (22 Oct 2026)');
       }

@@ -73,6 +73,28 @@
       return { id: p.id, year: p.start.slice(0, 4) + (p.id === M.est ? ' (est.)' : ''), estimate: p.id === M.est, cc1: val(M.cc1, p.id), cc2: val(M.cc2, p.id), cost, hires, perHire: TA.isNum(cost) && TA.isNum(hires) && hires > 0 ? cost / hires : null };
     }).filter(r => TA.isNum(r.cost));
   };
+  /* Update (TA Head, 23 Oct 2026): the cost centres include agency fees, job-board licences, referral bonuses and campus costs,
+     and each year is the financial year Jan–Dec ("entire 2026 includes Jan–Dec 2026"). */
+  const UPD1 = 'hiring-cost-2026-10-22-upd1', W2 = 'TA Head, 23 Oct 2026';
+  const SCOPE = 'Includes agency (vendor) fees, job-board licences, referral bonuses and campus costs (' + W2 + ').';
+  function upd1() {
+    const S = TA.Store;
+    const applied = S.state.meta.appliedPacks || [];
+    if (applied.indexOf(UPD1) >= 0 || applied.indexOf(PACK) < 0) return false;
+    S.recoveryPoint('Before confirming cost scope and financial year');
+    const today = TA.todayIso(), M = TA.COST_METRICS;
+    S.list('periods').filter(p => /^per_fy_/.test(p.id)).forEach(p => {
+      const n = p.id === M.est ? 'Financial year Jan–Dec 2026: actual to date plus Finance estimate for the rest of the year (' + W2 + '). Not a final figure.' : 'Financial year = Jan–Dec ' + p.start.slice(0, 4) + ' (' + W2 + ').';
+      if (p.notes !== n) S.update('periods', p.id, { notes: n });
+    });
+    [M.total, M.cc1, M.cc2, M.perHire].forEach(name => { const m = S.list('metrics', { archived: true }).find(x => x.name === name); if (m && (m.definition || '').indexOf(SCOPE) < 0) S.update('metrics', m.id, { definition: (m.definition ? m.definition + ' ' : '') + SCOPE, definitionStatus: name === M.perHire ? 'Agreed' : m.definitionStatus }); });
+    const q = S.list('questions', { archived: true }).find(x => x.title === 'What the TA cost centres include');
+    if (q && q.status !== 'Resolved') S.update('questions', q.id, { status: 'Resolved', resolvedDate: today, resolution: 'Yes – the cost centres include agency fees, job-board licences, referral bonuses and campus costs, so cost per hire is a full recruitment cost. Each year is the financial year Jan–Dec (' + W2 + ').' });
+    const i = S.list('insights', { archived: true }).find(x => x.generatedBy === 'Finance cost-centre report');
+    if (i && (i.uncertainty || '').indexOf('What the cost centres include') >= 0) S.update('insights', i.id, { uncertainty: '2026 is partly an estimate. Cost per hire cannot be stated until yearly hire totals are supplied. The cost covers agency fees, job boards, referral bonuses and campus costs; years are Jan–Dec.' });
+    S.setMeta({ appliedPacks: (S.state.meta.appliedPacks || []).concat([UPD1]) });
+    return true;
+  }
   const prev = TA.applyDataPacks;
-  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); return a || b; };
+  TA.applyDataPacks = function () { const a = prev ? prev() : false; const b = apply(); const c = upd1(); return a || b || c; };
 })();
