@@ -79,7 +79,7 @@ para(s, [
 const Y = '✓', N_ = '—';
 table(s, [
   [H('Form'), H('Slide'), H('Recruiter / sourcer'), H('Team lead'), H('Support')],
-  ...[['S1', 'Profile', Y, Y, Y], ['S2', 'Hiring delivery', Y, Y, N_], ['S3', 'Hiring quality and notable hires', Y, Y, N_], ['S4', 'University relations and pipeline', Y, Y, 'if any'], ['S5', 'Projects', Y, Y, Y], ['S6', 'Learning', Y, Y, Y], ['S7', 'Behaviours self-rating', Y, Y, Y], ['S8', 'Achievements and support', Y, Y, Y], ['S9', 'Development plan 2027', Y, Y, Y], ['S10', 'Career and promotion', Y, Y, Y], ['S11', 'Points system feedback', Y, Y, 'optional'], ['L1–L2', 'Team and leadership', N_, Y, N_], ['O1–O2', 'KPI and SLA', N_, N_, Y], ['Z1', 'Sign-off', Y, Y, Y]]
+  ...[['S1', 'Profile', Y, Y, Y], ['S2', 'Hiring delivery', Y, Y, N_], ['S3', 'Hiring quality and notable hires', Y, Y, N_], ['S4', 'University relations and pipeline', Y, Y, 'if any'], ['S5', 'Projects', Y, Y, Y], ['S6', 'Learning', Y, Y, Y], ['S7', 'Behaviours (recruiter, sourcer)', Y, N_, N_], ['S7L', 'Behaviours (team lead)', N_, Y, N_], ['S7O', 'Behaviours (support)', N_, N_, Y], ['S8', 'Achievements and support', Y, Y, Y], ['S9', 'Development plan 2027', Y, Y, Y], ['S10', 'Career and promotion', Y, Y, Y], ['S11', 'Points system feedback', Y, Y, 'optional'], ['L1–L2', 'Team and leadership', N_, Y, N_], ['O1–O2', 'KPI and SLA', N_, N_, Y], ['Z1', 'Sign-off', Y, Y, Y]]
     .map(r => [L(r[0]), r[1], r[2], r[3], r[4]].map((c, i) => i ? { text: c, options: { align: i > 1 ? 'center' : 'left' } } : c)),
 ], { x: 7.4, y: 1.45, w: 5.43, colW: [0.75, 2.38, 0.9, 0.7, 0.7], fs: 10, name: 'role-map' });
 
@@ -123,18 +123,22 @@ table(s, [[H('Course or programme'), H('Provider'), H('Status'), H('Completed on
   [F('Exact course name'), F('For example LinkedIn Learning, Coursera, internal'), F('Planned / In progress / Completed'), F('DD-MM-YYYY'), F('Yes / No'), F('One concrete example')],
   ...Array.from({ length: 5 }, () => [F(), F(), F(), F(), F(), F()])], { colW: [2.6, 1.9, 1.4, 1.2, 1.0, 4.23], rowH: 0.66, fs: 10.5, name: 'learning' });
 
-/* ---------- S7 Behaviours ---------- */
-s = form('S7', 'Behaviours self-rating', 'Rate yourself 1 to 5 on each competency and give one specific 2026 example as evidence.', WHO_ALL);
-const comps = ['Delivery Ownership', 'Stakeholder Management', 'Talent Advisory', 'Market Intelligence', 'Data & Analytics', 'Assessment Capability', 'Digital & AI Capability', 'Collaboration & Leadership'];
-table(s, [[H('Competency'), H('Self-rating (1–5)'), H('Evidence: situation, what you did, result')], ...comps.map(c => [L(c), { text: '', options: { align: 'center', fill: { color: HEX.fill } } }, F()])],
-  { w: 9.4, colW: [2.5, 1.2, 5.7], rowH: 0.58, fs: 11, name: 'behaviours' });
-s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 10.15, y: 1.45, w: 2.68, h: 5.2, rectRadius: 0.1, fill: { color: HEX.label }, line: { color: HEX.label }, objectName: 'scale-card' });
-s.addText([
-  { text: 'Rating guide', options: { bold: true, fontSize: 13, color: HEX.navy, breakLine: true } },
-  { text: ' ', options: { fontSize: 6, breakLine: true } },
-  ...[['5', 'Role model: others learn from you'], ['4', 'Strong: consistently above the role'], ['3', 'Fully meets the role'], ['2', 'Developing: sometimes meets'], ['1', 'Not yet shown']].flatMap(([n, t], i, a) => [
-    { text: n + '  ', options: { bold: true, fontSize: 16, color: HEX.teal } }, { text: t, options: { fontSize: 11, color: HEX.ink, breakLine: true } }, { text: ' ', options: { fontSize: 8, breakLine: i < a.length - 1 } }]),
-], { x: 10.3, y: 1.6, w: 2.4, h: 4.9, valign: 'top', margin: 0, isTextBox: true, objectName: 'scale' });
+/* ---------- S7 Behaviours (one version per role) ---------- */
+function s7(code, title, who, comps) {
+  const s = form(code, title, 'Rate yourself 1 to 5 on each behaviour and give one specific 2026 example as evidence.', who);
+  table(s, [[H('Behaviour'), H('Self-rating (1–5)'), H('Evidence: situation, what you did, result')], ...comps.map(c => [L(c), { text: '', options: { align: 'center', fill: { color: HEX.fill } } }, F()])],
+    { w: 9.4, colW: [2.5, 1.2, 5.7], rowH: 0.58, fs: 11, name: 'behaviours' });
+  s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 10.15, y: 1.45, w: 2.68, h: 5.2, rectRadius: 0.1, fill: { color: HEX.label }, line: { color: HEX.label }, objectName: 'scale-card' });
+  s.addText([
+    { text: 'Rating guide', options: { bold: true, fontSize: 13, color: HEX.navy, breakLine: true } },
+    { text: ' ', options: { fontSize: 6, breakLine: true } },
+    ...[['5', 'Role model: others learn from you'], ['4', 'Strong: consistently above the role'], ['3', 'Fully meets the role'], ['2', 'Developing: sometimes meets'], ['1', 'Not yet shown']].flatMap(([n, t], i, a) => [
+      { text: n + '  ', options: { bold: true, fontSize: 16, color: HEX.teal } }, { text: t, options: { fontSize: 11, color: HEX.ink, breakLine: true } }, { text: ' ', options: { fontSize: 8, breakLine: i < a.length - 1 } }]),
+  ], { x: 10.3, y: 1.6, w: 2.4, h: 4.9, valign: 'top', margin: 0, isTextBox: true, objectName: 'scale' });
+}
+s7('S7', 'Behaviours self-rating: recruiters and sourcers', 'Recruiters and sourcers', ['Delivery Ownership', 'Stakeholder Management', 'Talent Advisory', 'Market Intelligence', 'Data & Analytics', 'Assessment Capability', 'Digital & AI Capability', 'Collaboration & Leadership']);
+s7('S7L', 'Behaviours self-rating: team leads', WHO_LEAD, ['Team Delivery Ownership', 'Coaching & Developing Others', 'Stakeholder Management', 'Talent Advisory', 'Planning & Prioritisation', 'Data-Driven Decisions', 'Process Improvement & Change', 'Collaboration & Leadership']);
+s7('S7O', 'Behaviours self-rating: support and operations', WHO_OPS, ['Accuracy & Attention to Detail', 'Timeliness & Reliability', 'Process & Compliance Discipline', 'Systems Capability', 'Data & Reporting', 'Stakeholder Service', 'Process Improvement', 'Digital & AI Capability']);
 
 /* ---------- S8 Achievements ---------- */
 s = form('S8', 'Achievements, challenges and support needed', 'Three to five points in each column. Be concrete.', WHO_ALL);
@@ -145,7 +149,7 @@ s = form('S8', 'Achievements, challenges and support needed', 'Three to five poi
 /* ---------- S9 Plan ---------- */
 s = form('S9', 'Development plan 2027', 'Three to five actions. Each needs a measure of success and a target date.', WHO_ALL);
 table(s, [[H('Action'), H('Type'), H('Competency'), H('Measure of success'), H('Target date'), H('Support needed')],
-  [F('For example lead the 2027 GET campus drive end to end'), F('Development action / Area for improvement'), F('One of the 8 in S7'), F('For example 40 offers, 85% join rate'), F('DD-MM-YYYY'), F('')],
+  [F('For example lead the 2027 GET campus drive end to end'), F('Development action / Area for improvement'), F('One of the behaviours in your S7 slide'), F('For example 40 offers, 85% join rate'), F('DD-MM-YYYY'), F('')],
   ...Array.from({ length: 4 }, () => [F(), F(), F(), F(), F(), F()])], { colW: [3.2, 1.9, 1.7, 2.4, 1.2, 1.93], rowH: 0.82, fs: 10.5, name: 'plan' });
 
 /* ---------- S10 Career ---------- */
