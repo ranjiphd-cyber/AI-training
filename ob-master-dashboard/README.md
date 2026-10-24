@@ -1,33 +1,37 @@
 # OB Analysis Master Dashboard
 
-An interactive, single-file study and reference dashboard for the Organizational Behaviour Analysis programme (SRIHER).
+An interactive, single-file study and reference dashboard for the Organizational Behaviour Analysis programme (SRIHER), aligned to the programme syllabus.
 
 Open `index.html` in any browser. No install or build is needed.
 
-## Curriculum architecture
+## Syllabus papers (31 modules)
 
-Six master units, two modules each (12 modules):
-
-| Unit | Modules |
+| Paper | Modules |
 | --- | --- |
-| 1. Foundations, Neurobiology of Learning, and Individual Differences | 1.1 Foundations of OB and the neurobiology of workplace learning · 1.2 Personality, cognitive ability, and self-beliefs |
-| 2. Work Motivation, Self-Determination, and Modern Reward Architectures | 2.1 Needs, expectancy, equity, and goals · 2.2 SDT, job design, and modern reward architectures |
-| 3. Perception, Cognitive Biases, and Strategic Decision-Making | 3.1 Perception, attribution, and work attitudes · 3.2 Heuristics, biases, and the neuroscience of decisions |
-| 4. Group Dynamics, Psychological Safety, Power, and Political Skill | 4.1 Group dynamics and psychological safety · 4.2 Power, influence, and political skill |
-| 5. Organizational Culture, Psychological Contracts, and Change Resistance | 5.1 Organizational culture · 5.2 Psychological contracts and resistance to change |
-| 6. Workplace Well-Being, Psychometrics, and Behavioural Interventions | 6.1 Stress, burnout, and well-being · 6.2 Psychometrics, assessment, and interventions (assessment hub) |
+| P1 Foundations of Behaviour in Organisations | Foundations · Theories & Perspectives · Individual Differences · Practical Applications |
+| P2 Individual Differences (Personality, Perception, Attitudes in HR) | Personality Foundations · Perception and Cognition · Attitudes and Work Behaviour · Applying Individual Differences in HR |
+| P3 Perception, Cognition and Decision-Making | Perception in Organisations (shared with P2 · M2) · Cognition · Decision-Making Processes · Applications |
+| P4 Motivation at Work | Theories of Motivation · Process Approaches · Rewards · Motivation in Practice |
+| P5 Group Dynamics, Teamwork, Power and Politics | Group Dynamics · Teamwork · Power & Politics · Practical Applications |
+| P6 Organisational Culture, Change and Psychological Contracts | Foundations of Culture · Change and Resistance · Psychological Contracts |
+| P7 Workplace Well-Being | Foundations · Stress · Coping and Work–Life Integration · Applied Practices |
+| P8 Assessment Tools in OB (manual) | Individual-difference tools (Big Five, WLCS, EIQ, WEIMS) · Stress and well-being tools (PSS, ProQOL, WHO-5) · Organisational tools (Climate, Leadership Effectiveness, ROCS) |
+| P9 Research Methods and Academic Writing | Research Foundations · Academic Writing |
 
-Four cross-cutting threads run through all modules: Assessment & Evaluation, Neuroscience & Cognition, Contemporary Workplace, and Ethics & Professional Practice.
+Paper titles are descriptive labels; module and unit names follow the syllabus documents. SLOs are labelled "From syllabus" (quoted from the SLO tables) or "Suggested" (written from the syllabus topics where no SLO table was supplied).
+
+A **Reference library** of 12 further modules (six master units) provides deeper dives and beyond-syllabus topics such as decision neuroscience, algorithmic management and hybrid work. Syllabus units link to it under "Go deeper".
 
 ## Each module contains
 
-- **Deep Dive:** core construct and framework, advanced expansion (each entry labelled *Established*, *Emerging*, *Interpretation*, *Critique/boundary* or *Practice*), comparative matrices (copyable as Markdown tables), an illustrative case (fictional), and measurement and diagnostics with limits and cautions.
-- **Exam & Field Toolkit:** three MCQs with option-by-option rationales, a scenario-based case challenge with a saved draft, a self-scoring rubric and a model answer, plus a cheat sheet.
+- **Syllabus & SLOs** with self-check boxes (P8 modules also have a **Tool manual** tab with structure, scoring, interpretation and cautions for each instrument).
+- **Deep Dive:** core construct and framework (unit by unit), advanced expansion with evidence labels, comparative matrices (copyable as Markdown), a fictional case, and measurement cautions.
+- **Exam & Field Toolkit:** three MCQs with option-by-option rationales, a case challenge with saved draft, rubric and model answer, and a cheat sheet.
 
-The dashboard also has a **Reference toolbox** (scales, paradigms, metrics, interventions), a **Mixed exam** (random questions by unit or across the curriculum), **My progress**, full-text search, and a WHO-5 scoring demonstrator in Module 6.2.
+Also included: a reference toolbox, mixed exams by paper, a progress page, full-text search, a reverse-scoring calculator (PSS-10 preset), a WEIMS self-determination index calculator and a WHO-5 scoring demonstrator.
 
 Progress is saved only in the viewer's browser (localStorage).
 
 ## Cautions
 
-All workplace scenarios are fictional illustrations. Psychometric instruments (for example ProQOL, WHO-5, MBI) are presented as research and workplace assessment aids, not diagnostic tools. Use official, validated versions under their stated terms, with qualified professional oversight.
+All workplace scenarios are fictional illustrations. Psychometric instruments are presented as research and workplace assessment aids, not diagnostic tools. Where the SRIHER manual's version or scoring key differs from the published versions summarised here, follow the manual.
