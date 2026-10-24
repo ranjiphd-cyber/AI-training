@@ -317,7 +317,7 @@ const CT = { strong: 45, ok: 55 }, VB = { low: 10, high: 20 };
 const MIX_GROUPS = [
   { label: 'Lateral SG4 and above', cats: ['Lateral SG10 and above', 'Lateral SG8-SG9', 'Lateral SG4-SG7', 'SG9 and above', 'Lateral SG5-SG8'], c: 's1' },
   { label: 'Lateral SG1–SG3', cats: ['Lateral SG1-SG3', 'Lateral SG1-SG4'], c: 's2' },
-  { label: 'FTC (new hire)', cats: ['FTC'], c: 's3' },
+  { label: 'FTC (new hire)', cats: ['FTC', 'FTC SG1-SG3', 'FTC SG4-SG7', 'FTC SG8-SG9', 'FTC SG10 and above'], c: 's3' },
   { label: 'NATS, ExcelHER, AICTE, PhD', cats: ['NATS Hiring', 'ExcelHER', 'AICTE Professor', 'PhD Internship', 'PMIS'], c: 's4' },
   { label: 'Campus (GET / PGET)', cats: ['GET / PGET'], c: 's5' },
   { label: 'Conversions', cats: ['Contract Conversion', 'FTC Conversion', 'ExcelHER Conversion', 'NATS Conversion', 'Intern Conversion'], c: 's6' },
@@ -746,6 +746,7 @@ function pDelivery(E) {
     <tr><td>Joining ratio</td><td class="n">${pct(o.jr)}</td><td class="sub">scorecard joiners ÷ offers</td></tr>
     <tr><td>Requisition to offer</td><td class="n">${fmt(o.offerDays, 0)} days</td><td class="sub">${ctLabel(o.offerDays)}</td></tr>
     <tr><td>Days to join</td><td class="n">${fmt(num(d.joinDays), 0)}</td><td></td></tr>
+    ${d.openReqs ? `<tr><td>Open requisitions</td><td class="n">${d.openReqs.n}</td><td class="sub">average age ${fmt(d.openReqs.avgAge, 0)} days · ${d.openReqs.over90} over 90 days${d.openReqs.over180 ? ` · ${d.openReqs.over180} over 180` : ''}</td></tr>` : ''}
     <tr><td>Offers declined</td><td class="n">${pct(num(d.declinedPct))}</td><td></td></tr>
     <tr><td>Vendor share</td><td class="n">${pct(o.vendorPct)}</td><td class="sub">${o.vendorPct == null ? '' : o.vendorPct < VB.low ? 'under 10%' : o.vendorPct <= VB.high ? '10–20%' : 'over 20%'}</td></tr>
     <tr><td>Referral share</td><td class="n">${pct(num(d.referralPct))}</td><td></td></tr>
