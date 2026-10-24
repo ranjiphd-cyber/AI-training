@@ -18,7 +18,7 @@ function check(name, ok, detail) { console.log((ok ? "PASS " : "FAIL ") + name +
 
 /* ---- content integrity ---- */
 const ids = new Set(C.concepts.map(k => k.id));
-check("76 concepts loaded", C.concepts.length === 76, C.concepts.length + " concepts");
+check("95 concepts loaded", C.concepts.length === 95, C.concepts.length + " concepts");
 const badRefs = [];
 C.concepts.forEach(k => k.pre.concat(k.rel).forEach(r => { if (!ids.has(r)) badRefs.push(k.id + "→" + r); }));
 C.questions.forEach(q => q.c.forEach(r => { if (!ids.has(r)) badRefs.push(q.id + "→" + r); }));
@@ -32,7 +32,7 @@ check("Auto-graded answers are well formed", autoBad.length === 0, autoBad.map(q
 const covered = new Set(); C.questions.forEach(q => q.c.forEach(id => covered.add(id)));
 const uncoveredH = C.concepts.filter(k => k.exam === "H" && !covered.has(k.id)).map(k => k.id);
 check("Every high-importance concept has at least one question", uncoveredH.length === 0, uncoveredH.join(","));
-console.log("     " + C.questions.filter(q => q.auto).length + " auto-graded, " + C.questions.filter(q => !q.auto).length + " open questions; " + covered.size + "/76 concepts covered");
+console.log("     " + C.questions.filter(q => q.auto).length + " auto-graded, " + C.questions.filter(q => !q.auto).length + " open questions; " + covered.size + "/" + C.concepts.length + " concepts covered");
 
 /* ---- simulated learners ---- */
 function qsFor(id) { return C.questions.filter(q => q.auto && q.c.includes(id)); }
@@ -40,7 +40,7 @@ function study(s, id, t, quality) {
   E.recordView(s, id, t);
   E.recordCheck(s, id, quality, t);
   E.recordPractice(s, id, quality, t);
-  qsFor(id).forEach((q, i) => E.recordAttempt(s, { q: q.id, c: q.c, d: q.d, m: 1, score: (i % 10) / 10 < quality ? 1 : 0, session: "S" + t }, t));
+  qsFor(id).forEach((q, i) => E.recordAttempt(s, { q: q.id, c: q.c, d: q.d, m: 1, score: ((i * 7) % 10) / 10 < quality ? 1 : 0, session: "S" + t }, t));
 }
 function review(s, id, t, pass) {
   const q = qsFor(id)[0] || { id: "x", c: [id], d: 2 };
@@ -94,6 +94,10 @@ E.recordView(R, "C03.2", T0); E.recordCheck(R, "C03.2", 1, T0);
 const stR = E.status(R, C, "C03.2", T0);
 check("Reading + concept check alone cannot exceed Learning-level mastery cap", stR.m <= 55 && stR.st === 1, "mastery " + stR.m + ", " + E.STATUSES[stR.st]);
 
+const q10 = E.selectQuiz(E.emptyState(), C, { n: 10, level: 2, autoOnly: true, seed: 3 }, T0);
+check("A 10-question quiz returns 10 auto-marked questions", q10.length === 10 && q10.every(q => q.auto), q10.length + " questions");
+const q50 = E.selectQuiz(E.emptyState(), C, { n: 50, level: "exam", mode: "exam", autoOnly: true, seed: 5 }, T0);
+check("A 50-question mock excludes external-only items and caps any type at 40%", q50.length === 50 && !q50.some(q => q.ext) && Object.values(q50.reduce((m, q) => (m[q.t] = (m[q.t] || 0) + 1, m), {})).every(v => v <= 20), q50.length + " questions");
 const rec = E.recommend(E.emptyState(), C, T0);
 check("A new learner is recommended the first unlocked concept", rec.lesson && rec.lesson.id === "C01.1", rec.lesson && rec.lesson.id);
 

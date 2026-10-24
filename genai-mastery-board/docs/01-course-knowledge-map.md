@@ -1,271 +1,373 @@
 # 01 — Course Knowledge Map
 
-Built from the IITM Pravartak brochure (module titles and bullets, tag **IITM-B**)
-and the concepts you listed from your class materials (tag **IITM-L**). See
-`00-source-register.md` for the labels.
+> Generated from `app/content/*.js` by `app/tests/gen-knowledge-map.js`. Edit the content files, then re-run the script.
 
-**Week numbers:** the brochure does not give weeks. Column "Module" uses the
-brochure's module number. *Week: course material not currently available.*
+**Primary source:** your course compendium (`course-material/iitm-master-course-compendium.md`), tag **IITM-D**, covering Weeks 1–7 and 9–13.
+Weeks 8, 14 and 15 come from the brochure only (**IITM-B**): *course material not currently available*.
+**IITM-L** marks items you named that the compendium doesn't contain (COSTAR; the chatbot/assistant/automation/agent distinction).
 
-**Exam importance** is an *estimate* (no exam blueprint was uploaded). It is based
-on (a) how often the concept recurs across modules, (b) whether it is conceptual
-enough to test in writing, (c) whether IBM certificate syllabi repeat it.
-H = high, M = medium, L = low. Re-rate once the exam format is known.
+**Exam importance** is an estimate until the exam format is known. **Qs** = questions in the bank for that concept.
 
-**Project relevance** = how often the concept appears in the brochure's 20+
-projects / 25+ use cases and the capstone.
+| Totals | |
+|---|---|
+| Weeks / modules | 15 |
+| Concepts | 95 (70 from the compendium) |
+| Auto-marked questions | 230 |
+| Written questions | 24 |
 
-Concept IDs (`C05.2` etc.) are stable keys used across all other documents.
 
----
+## Pillar 1 — Foundations of AI, LLMs & Prompt Engineering
 
-## Programme structure (IITM-B)
+### Week 1 — AI Fundamentals for Everyday Work Efficiency
 
-```
-PILLAR 1  Foundations of AI, LLMs & Prompt Engineering ........ M1  M2  M3
-PILLAR 2  Ecosystem, Tooling & Automation for Business ........ M4  M5  M6  M7  M8  M9
-PILLAR 3  Advanced Contextual AI Architectures (RAG & Agents) . M10 M11 M12 M13
-PILLAR 4  AI Governance, Evaluation & Capstone ................ M14 M15
-Parallel  IBM certificates: Responsible GenAI · GenAI for Leaders · Foundation Models
-```
+**Course frameworks:** 3-Tier AI Risk Model · Cost–Latency–Accuracy Triangle · 60-Second Pre-Flight Checklist · 5-Step Manual Verification Protocol · Impact–Effort Matrix · Hard & soft ROI · 1-Page AI Business Proposal  
+**Tools:** Chat assistants (ChatGPT, Claude, Gemini) · **Exam importance:** H · **Practical importance:** M
 
----
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C01.1 | AI – ML – DL – GenAI hierarchy | Rules vs learning; predictive vs generative; where LLMs sit | IITM-B | C01.4, C02.1 | Explain to a leader which kind of AI a vendor is selling | H | L | 2 |
+| C01.2 | Hard & soft ROI | Hours saved per task × frequency × labour rate = gross savings; soft ROI: standardisation, lower cognitive load, faster turnaround | IITM-B+D | C05.6, C01.9 | Build a Personal AI Time-Saver Plan with hard and soft ROI | H | H | 4 |
+| C01.3 | Opportunity discovery & prioritisation | Impact–Effort Matrix (high impact, low effort first); Automate / Accelerate / Augment / Avoid AI | IITM-B+D | C01.2, C05.1 | Plot your team's tasks on an Impact–Effort Matrix | H | H | 4 |
+| C01.4 | Core mental model: fluency ≠ accuracy | Probabilistic next-word prediction; not a factual database or an autonomous decision-maker | IITM-D | C02.1, C02.3 | Explain why a confident answer can still be wrong | H | M | 3 |
+| C01.5 | The 3-Tier AI Risk Model | Tier 1 drafting & ideation; Tier 2 internal analysis & reporting; Tier 3 external & decision-critical | IITM-D | C01.8, C04.2, C14.4 | Assign a tier and the matching oversight to any use case | H | H | 8 |
+| C01.6 | From Shadow AI to a governed AI operating model | Untracked personal use vs enterprise-governed use with policy, tools and logging | IITM-D | C04.4 | Describe the shift for your TA team | M | M | 1 |
+| C01.7 | The Cost–Latency–Accuracy Triangle | Improving one dimension forces trade-offs in the others | IITM-D | C02.4, C02.7 | Place three TA use cases on the triangle | H | M | 2 |
+| C01.8 | 60-Second Pre-Flight Checklist & 5-Step Verification Protocol | Pre-flight: remove PII, purpose, format & tone, human reviewer, downstream use. Verify: trusted sources, spot-check numbers, step-by-step reasoning, rephrase & compare, compliance & tone | IITM-D | C04.6, C14.4 | Run both checklists on a real output | H | H | 5 |
+| C01.9 | 1-Page AI Business Proposal | Problem, proposed AI solution, expected impact (ROI), risk & controls, pilot scope, success metrics | IITM-D | C01.2, C02.5 | Write a one-page proposal for a TA use case | M | H | 2 |
 
-## PILLAR 1 — Foundations of AI, LLMs & Prompt Engineering
+### Week 2 — Choose the Right AI Model for Your Tasks
 
-### Module 1 — AI Fundamentals for Everyday Work Efficiency
+**Course frameworks:** Six decision pillars · Three failure modes · Prompt knobs · Business AI Stack (5 categories) · Executive Justification Framework  
+**Tools:** Model playgrounds, Google AI Studio · **Exam importance:** H · **Practical importance:** M
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C01.1 | AI – ML – DL – GenAI hierarchy | rules vs learning; predictive vs generative; where LLMs sit | IITM-B | C02.1, IBM-3 | Explain to a leader which kind of AI a vendor is selling | H | L |
-| C01.2 | AI productivity & ROI | hours saved × cost; quality gain; cycle-time; adoption cost | IITM-B | C07.3, C15.4 | Build a "Personal AI Time-Saver Plan" ROI | H | H |
-| C01.3 | Opportunity identification & prioritisation | **Automate / Accelerate / Augment / Avoid AI**; impact × feasibility; task inventory | IITM-B + IITM-L | C05.1, C04.2, IBM-2 | Sort a TA team's recurring tasks into the 4 buckets | H | H |
-| C01.4 | What AI can vs cannot do | pattern completion, no ground truth, no live data unless connected, judgement limits | IITM-B | C02.3, C14.4 | Reject an unsuitable AI request with reasons | H | M |
-| C01.5 | Accuracy, reliability, trust & responsible AI basics | accuracy vs reliability vs trust; human oversight; risk levels | IITM-B + IITM-L | C14.1–C14.5 | Set a risk level and oversight rule for a use case | H | H |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C02.1 | How LLMs generate responses | Tokens; next-token prediction; probability; context | IITM-B+D | C01.4, C03.6 | Predict how wording changes output | H | M | 1 |
+| C02.2 | High-level LLM architecture | Pre-training; instruction tuning; context window; multimodal | IITM-B | C02.1 | Explain why a model doesn't know last week's news | M | L | 1 |
+| C02.3 | The three failure modes | Incomplete output; drift; hallucination | IITM-D | C02.6, C10.6, C11.4 | Diagnose which failure mode a bad output shows | H | H | 6 |
+| C02.4 | Six decision pillars | Cost, Speed, Accuracy, Risk, Trust, Scalability | IITM-D | C01.7, C02.7 | Compare two AI options on the six pillars | H | M | 2 |
+| C02.5 | Executive Justification Framework | Problem → Choice → Value → Risk Control → Owner | IITM-D | C01.9, C02.4 | Justify an AI choice to your CHRO in five lines | H | H | 3 |
+| C02.6 | Prompt knobs: controlling outputs | Context quality, instruction clarity, negative/positive constraints, concrete examples, temperature | IITM-D | C03.3, C03.4 | Fix a failing output by turning one knob at a time | H | M | 3 |
+| C02.7 | The Business AI Stack & trade-off tensions | Chat, Search & Knowledge, Automation, Analytics & Insights, Agent Frameworks; Accuracy vs Speed, Cost vs Scale, Flexibility vs Control, Power vs Risk | IITM-D | C13.1, C04.1 | Pick the stack category for five TA problems | H | H | 7 |
+| C02.8 | Hidden cost drivers | Token consumption scaling with adoption; human review bottlenecks; integration maintenance | IITM-D | C05.6 | List the hidden costs of a planned AI rollout | M | M | 2 |
 
-### Module 2 — Choose the Right AI Model for Your Tasks
+### Week 3 — Design Effective Prompts for Reliable AI Outputs
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C02.1 | How LLMs generate responses | tokens, next-token prediction, probability, context | IITM-B | C03.6, ALLIED tokens | Predict how wording changes output | H | M |
-| C02.2 | High-level LLM architecture | pre-training, instruction-tuning, context window, multimodal | IITM-B | IBM-3 | Explain "why it doesn't know last week's news" | M | L |
-| C02.3 | Why LLMs hallucinate | plausible-not-true generation, missing context, ambiguous prompts, outdated training data | IITM-L | C11.1, C06.3, C14.4 | Diagnose a hallucinated answer and name the fix | H | H |
-| C02.4 | Comparing models on business criteria | quality, speed, cost, context length, privacy/hosting, multimodality | IITM-B | C04.2 | Produce a model comparison table | H | M |
-| C02.5 | Choosing, controlling & justifying AI systems | fit-to-task, control levers, justification to stakeholders | IITM-B + IITM-L | C02.4, C14.5 | Write a one-paragraph model choice justification | H | H |
-| C02.6 | Fixing incomplete / incorrect responses | add context, split task, constrain format, ground in documents, verify | IITM-B | C03.4, C11.4 | Repair a bad output in ≤3 iterations | H | M |
+**Course frameworks:** Role · Context · Rules · Output Format · Prompt Maturity Curve (L1–L5) · Zero-shot vs few-shot · Prompt failure taxonomy & debugging loop · Reusable Prompt Blueprint · Peer Review Rubric · COSTAR (your notes)  
+**Tools:** Prompt playground, Claude, ChatGPT · **Exam importance:** H · **Practical importance:** H
 
-### Module 3 — Design Effective Prompts for Reliable AI Outputs
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C03.1 | Zero-shot vs few-shot | Zero-shot for low-risk creative work; few-shot mandatory for medium/high-risk, compliance, brand voice and reusable templates; risks of poor examples | IITM-B+D | C03.3, C03.10 | Decide when examples are mandatory | H | H | 5 |
+| C03.2 | COSTAR | Context, Objective, Style, Tone, Audience, Response (from your notes; not in the compendium) | IITM-L | C03.3, C06.2 | Write a COSTAR prompt for a recruiter email | M | M | 1 |
+| C03.3 | Prompts as behavioural control: Role · Context · Rules · Output Format | Role = identity and expertise boundary; Context = domain, facts, sources; Rules = boundaries, negative constraints, fallbacks; Output Format = exact deliverable | IITM-D | C03.2, C03.10, C02.6 | Write a four-part prompt for a TA task | H | H | 6 |
+| C03.4 | Prompt failure taxonomy & debugging loop | Missing context, ambiguous goals, absent constraints, unclear output format, task overloading; test → observe → identify → adjust one variable → retest | IITM-D | C02.6, C03.9 | Debug a failing prompt one variable at a time | H | H | 5 |
+| C03.5 | Structured outputs | Tables, JSON schema, fixed headings, field lists | IITM-B+D | C03.3, C13.3 | Make output machine-readable for an automation | H | H | 2 |
+| C03.6 | Generation controls (temperature) | Low temperature for reliable extraction; higher for creative ideation | IITM-B+D | C02.6 | Choose a temperature for three tasks | M | M | 1 |
+| C03.7 | Safe workplace prompting | Removing personal or confidential data and risky phrasing | IITM-B | C04.6, C14.3 | Rewrite a real prompt to remove candidate personal data | H | H | 1 |
+| C03.8 | The Prompt Maturity Curve | L1 Chatting, L2 Formatting, L3 Structuring, L4 Testing, L5 System Design | IITM-D | C03.10 | Place your team's prompts on the curve | H | M | 3 |
+| C03.9 | Test-case bank & Before/After capture | Easy/standard, boundary/edge, high-risk/failure cases; baseline, refined prompt, failure type, risk reduction, business impact | IITM-D | C03.4, C05.7, C10.5 | Build a nine-case test bank for one prompt | H | H | 3 |
+| C03.10 | The Reusable Prompt Blueprint | Fixed control logic (role, grounding rules, output schema, self-validation) + variable inputs + self-checking outputs | IITM-D | C03.3, C03.11 | Turn a one-off prompt into a blueprint with {variables} | H | H | 4 |
+| C03.11 | Prompt Peer Review Rubric | Score 1–5: Role/Task Definition, Constraint Strength, Validation Logic, Reusability, Scalability Readiness → Approve / Revise / Escalate | IITM-D | C03.10 | Review a colleague's prompt with the rubric | H | M | 2 |
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C03.1 | Zero-shot, few-shot, role-based prompting | when examples help; persona effect | IITM-B | C03.3 | Choose the right method for a task | H | H |
-| C03.2 | **COSTAR** | Context, Objective, Style, Tone, Audience, Response | IITM-L | C03.3, C06.2 | Write a COSTAR prompt for a recruiter email | H | H |
-| C03.3 | Context, instructions, constraints, examples | the four building blocks; ordering; delimiters | IITM-L | C03.2, ALLIED context engineering | Diagnose which block a weak prompt lacks | H | H |
-| C03.4 | Anchors & iterative refinement | reference anchors, test–observe–revise loop; stress-testing with ambiguous prompts | IITM-B | C02.6 | Run a 3-version refinement log | H | M |
-| C03.5 | Structured outputs | tables, JSON, fixed headings, field lists | IITM-B | C05.2, C13.4 | Make output machine-readable for an automation | H | H |
-| C03.6 | Generation controls | temperature, length, depth, style settings; playground experiments | IITM-B | C02.1 | Explain when to lower temperature | M | M |
-| C03.7 | Safe workplace prompting | removing personal/confidential data, risky phrasing | IITM-B (use case) | C14.3 | Rewrite a real prompt to remove candidate PII | H | H |
+## Pillar 2 — Ecosystem, Tooling & Automation for Business
 
----
+### Week 4 — Build Your Everyday AI Toolstack
 
-## PILLAR 2 — Ecosystem, Tooling & Automation for Business
+**Course frameworks:** 30-Second Safe Input Checklist · Minimum Viable Toolstack Operating Model · Value · Simplicity · Cost · Safety · Tool Change Radar · Reliable outputs: Structure · Completeness · Accuracy · Clarity  
+**Tools:** Notion AI, Fathom, Gamma · **Exam importance:** M · **Practical importance:** H
 
-### Module 4 — Build Your Everyday AI Toolstack
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C04.1 | Categories of AI tools for business | Chat, writing, research, meeting, presentation, automation, analytics, assistant builders | IITM-B | C02.7 | Map a stack across categories | M | M | 1 |
+| C04.2 | Business-first tool decisions: Value · Simplicity · Cost · Safety | Score each criterion; Safety below 4 bars a tool from Tier-2 and Tier-3 workflows | IITM-B+D | C01.5, C04.4 | Score three tools for a TA use case | H | H | 4 |
+| C04.3 | Simple integrations | Connectors, APIs, webhooks (concept level) | IITM-B | C05.2 | Explain how two tools pass data | M | H | 1 |
+| C04.4 | Minimum Viable Toolstack Operating Model | Data sensitivity tiers (Public · Internal after redaction · Confidential/Regulated prohibited); mandatory human verification; shared logging | IITM-D | C04.6, C01.6, C14.3 | Classify your team's data into the three tiers | H | H | 4 |
+| C04.5 | Tool Change Radar | Log triggers, evaluate workflow impact, assign owner and review; switch only for proven savings, quality leaps or compliance | IITM-D | C04.2 | Run one tool change through the radar | M | M | 1 |
+| C04.6 | 30-Second Safe Input Checklist | No PII · Redacted numbers · Policy compliant · Approved tool | IITM-D | C03.7, C01.8 | Apply it before every prompt for a week | H | H | 3 |
+| C04.7 | Reliable professional outputs & the Everyday AI Toolkit | Structure, Completeness, Accuracy Check, Clarity for Action; Core Tools + Prompt Packs + Output Templates + Quality Checklists | IITM-D | C03.10, C06.3 | Assemble your personal toolkit | M | H | 2 |
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C04.1 | Categories of AI tools for business | chat, writing, research, meeting, presentation, automation, analytics, assistant-builders | IITM-B | C04.4 | Map a stack across categories | M | M |
-| C04.2 | Business-first tool selection | **value – simplicity – cost – safety** | IITM-B + IITM-L | C01.3, C02.4 | Score 3 tools for a TA use case | H | H |
-| C04.3 | Simple integrations | connectors, APIs, webhooks (concept level) | IITM-B | C05.2, ALLIED APIs | Explain how two tools pass data | M | H |
-| C04.4 | Mapping tools to daily workflows | one tool per step; avoid tool sprawl | IITM-B | C05.1 | Draw "my week + my tools" | M | H |
-| C04.5 | Staying updated on tools & trends | evaluation cadence, pilot rules | IITM-B | C09.4 | Set a quarterly tool-review routine | L | L |
+### Week 5 — Build No-Code Automated Workflows that 2× Your Productivity
 
-### Module 5 — Build No-Code Automated Workflows that 2× Your Productivity
+**Course frameworks:** Use-case quick test · Universal automation structure · Net automation ROI & Go/No-Go gate · Fallback Ladder · HITL Control Matrix · 2-2-1 test pack · Evidence Handover Package  
+**Tools:** n8n, Zapier, Make · **Exam importance:** H · **Practical importance:** H
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C05.1 | Identifying what to automate | repetition, frequency, friction, impact, judgement required, data sensitivity, process stability | IITM-B + IITM-L | C01.3 | Score a process for automation suitability | H | H |
-| C05.2 | **Trigger → Data → Decision → Integration → AI Step → Output** | breaking a workflow into clear steps | IITM-L | C03.5, C04.3 | Decompose a manual routine into the 6 blocks | H | H |
-| C05.3 | Multi-step automations with alerts & approvals | branching, approvals, notifications | IITM-B | C14.4 | Add an approval gate before a candidate email | H | H |
-| C05.4 | Workflow governance | approvals, logging, escalation, exception handling, testing, handover | IITM-L | C14.5, C15.3 | Write the governance block of a workflow | H | H |
-| C05.5 | Cross-functional automation | HR, Ops, Sales, Product, Finance, Marketing | IITM-B | C05.2 | Transfer a TA flow to Finance | M | M |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C05.1 | Automation sweet spot & use-case quick test | Automate only if (Frequency + Friction + Impact) ≥ 10 and Judgement Required ≤ 2 (1–5 scale); tasks to avoid | IITM-B+D | C01.3, C05.6 | Run the quick test on five TA processes | H | H | 8 |
+| C05.2 | The universal automation structure | Trigger → Data Inputs/Validation → Processing Steps → Conditions/Approvals → Outputs/Notifications → Audit Log | IITM-D | C03.5, C04.3, C05.3 | Map a manual routine onto the six layers | H | H | 7 |
+| C05.3 | Conditional logic & approval gates | Route on thresholds, completeness checks or SLAs; approval before high-impact actions | IITM-B+D | C14.4, C05.4 | Add a threshold rule and an approval gate | H | H | 1 |
+| C05.4 | The Fallback Ladder & HITL Control Matrix | Retry (backoff) → Notify Owner → Route to Manual → Safe Stop & Log; owners, SLAs and protocols per exception | IITM-D | C05.3, C13.8 | Design the fallback for an integration failure | H | H | 5 |
+| C05.5 | Cross-functional automation | HR, Ops, Sales, Product, Finance, Marketing | IITM-B | C05.2 | Transfer a TA flow to Finance | M | M | 1 |
+| C05.6 | Net automation ROI & the Go/No-Go gate | Gross value − operational effort; gate: measurable ROI, acceptable risk tier, owner, rollback feasibility, data clearance | IITM-D | C01.2, C02.8 | Run the Go/No-Go gate on one automation | H | H | 4 |
+| C05.7 | Testing, debugging & the Evidence Handover Package | 2 Normal, 2 Edge, 1 Failure; reproduce → isolate → verify → safeguard → retest; logic diagram, build, 5 tests, SOP, sign-off | IITM-D | C03.9, C15.3 | Write the 2-2-1 test pack for a flow | H | H | 4 |
 
-### Module 6 — Auto-Create Content & Presentations with AI
+### Week 6 — Auto-Create Content & Presentations with AI
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C06.1 | One document → many assets | summaries, SOPs, FAQs, action lists, stakeholder updates | IITM-B | C03.2 | Repurpose a hiring-policy doc into 5 assets | M | H |
-| C06.2 | Business briefs & storyline architecture | situation–complication–resolution style flow; audience-first structure | IITM-L | C03.2 | Build a 10–12 slide storyline | M | H |
-| C06.3 | Claims validation & executive communication | every claim traced to a source/number; no unsupported figures | IITM-L | C02.3, C11.4 | Audit an AI-made deck for unsupported claims | H | H |
-| C06.4 | Automated / auto-updating decks | data → template → refreshed slides | IITM-B | C07, C08 | Design a monthly TA review deck that refreshes | M | M |
+**Course frameworks:** 7-Step Business Brief · 7-Stage Executive Storyline · 10-Second Test & action headlines · Claims Table · Single source → multi-output  
+**Tools:** Gamma, Claude · **Exam importance:** M · **Practical importance:** H
 
-### Module 7 — Build Automated Dashboards
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C06.1 | Single source → multi-output transformation | Master document → 5-slide deck, 1-page memo, 150-word email, 3-bullet board brief, talking points; numbers and risk statements locked | IITM-B+D | C06.2, C06.3 | Turn one TA update into five formats | M | H | 2 |
+| C06.2 | The 7-Step Business Brief | Context, Objective, Audience, Decision Required, Constraints, Evidence Available, Sensitivity Level | IITM-D | C03.3, C06.5 | Write a brief before generating a deck | H | H | 3 |
+| C06.3 | Claims Table discipline | Audit at least 5 claims: claim, data source, confidence (H/M/L), verification step; unsupported → remove or 'To be validated in pilot phase' | IITM-D | C02.3, C11.4 | Build a claims table for an AI-made deck | H | H | 4 |
+| C06.4 | Automated, auto-updating decks | Data → template → refreshed slides with review | IITM-B | C07.4 | Design a monthly TA review deck that refreshes | M | M | 1 |
+| C06.5 | Executive storyline & readability standard | Current Situation → Problem/Gap → Impact → Proposed Action → Evidence → Risk & Controls → Decision Ask; 10-second test; action headlines; ≤ 3 levels; 'So what?' | IITM-D | C06.2 | Rewrite five slide titles as action headlines | H | H | 6 |
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C07.1 | Dataset design & data discipline | grain, data type, date format, flat structure, missing values, naming, validation | IITM-B + IITM-L | C08.1 | Clean a requisition tracker to one-row-per-requisition | H | H |
-| C07.2 | Connecting multiple data sources | joins/keys, refresh, single source of truth | IITM-B | C12.1 | Join ATS export with offer tracker | M | H |
-| C07.3 | **Goal → KPI → Threshold → Decision → Action** | formula, owner, refresh frequency, threshold, trigger, action; vanity metrics | IITM-L | C08.4 | Turn "improve hiring" into 3 actionable KPIs | H | H |
-| C07.4 | KPI views & automated refresh | anomaly rules, self-refreshing tracker | IITM-B | C08.2 | Build an automated KPI tracker in Sheets | M | H |
+### Week 7 — Build Automated Dashboards
 
-### Module 8 — Generate Automated Insights from Dashboards
+**Course frameworks:** Goal → KPI → Decision → Action · 5 Tests of a True KPI · Grain & dataset hygiene · Append vs Join & sanity checks · 10-Second Decision Test · Dashboard Handover Package  
+**Tools:** Google Sheets, Excel, Looker Studio · **Exam importance:** H · **Practical importance:** H
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C08.1 | Connecting dashboards to AI | export → prompt → insight; data in context | IITM-B | C07.1 | Feed a KPI table to an AI step safely | M | H |
-| C08.2 | Patterns, trends, anomalies | baseline, variance, seasonality, outliers | IITM-B | C07.4 | Write anomaly rules for time-to-fill | H | H |
-| C08.3 | Weekly leadership summaries | what changed – why it matters – what to do | IITM-B | C06.2 | Auto-generate a weekly TA brief | M | H |
-| C08.4 | Data → decisions → next steps | decision rights, recommended action, owner | IITM-B | C07.3 | Attach an owner and action to each insight | H | H |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C07.1 | Dataset discipline & grain | Grain = what one row represents; flat schemas, YYYY-MM-DD dates, uniform labels, explicit null rules | IITM-B+D | C07.2 | Clean a requisition tracker to one row per requisition | H | H | 4 |
+| C07.2 | Integration patterns & sanity checks | Append (stack identical schemas) vs Join (merge on unique keys); check row counts, totals, unmatched records, 5 sample rows | IITM-B+D | C07.1, C12.3 | Join an ATS export with an offer tracker and run the checks | H | H | 3 |
+| C07.3 | Goal → KPI → Decision → Action & the 5 tests of a true KPI | Measurable, Decision-Linked, Formula Transparency, Assigned Owner, Defined Refresh Cadence; a threshold triggers the action | IITM-D | C07.4, C08.4 | Turn 'improve hiring' into three true KPIs | H | H | 5 |
+| C07.4 | Dashboard usability: the 10-Second Decision Test | 3–6 KPI cards top, trends middle, breakdowns bottom; Green / Amber / Red discipline | IITM-D | C07.3, C06.5 | Redesign a cluttered TA dashboard | H | H | 2 |
+| C07.5 | Dashboard failure modes & handover package | Overload, vanity metrics, missing owners, undocumented assumptions, silent pipeline failures; KPI dictionary, refresh pipeline, assumptions, lineage, owner & audit cadence | IITM-D | C07.3, C05.7 | Write the KPI dictionary for your dashboard | M | H | 2 |
 
-### Module 9 — Automate Market Research & Competitive Intelligence
+### Week 8 — Generate Automated Insights from Dashboards *(brochure only)*
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C09.1 | Intelligence chain | strategic question → dimensions → signals → sources → credibility → validation → analysis → business relevance → decision supported → owner → action → cadence | IITM-L | C12.2 | Design a competitor-hiring intelligence brief | H | H |
-| C09.2 | Signal collection & competitor comparison | pull & summarise market signals; weekly change tracking | IITM-B | C12.1 | Track 5 competitors' job postings weekly | M | H |
-| C09.3 | Trend / opportunity / risk alerts | scorecards, opportunity maps, decision-ready summaries | IITM-B | C08.3 | Produce a campus-compensation scorecard | M | H |
-| C09.4 | Monitoring & recurring intelligence | cadence, change detection, alert thresholds | IITM-L | C12, C07.3 | Set a weekly skills-demand monitor | M | H |
+**Course frameworks:** Patterns – trends – anomalies · What changed · why it matters · what to do  
+**Tools:** Sheets + AI, n8n · **Exam importance:** M · **Practical importance:** H
 
----
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C08.1 | Connecting dashboards to AI | Export → prompt → insight; data in context | IITM-B | C07.1 | Feed a KPI table to an AI step safely | M | H | 1 |
+| C08.2 | Patterns, trends & anomalies | Baseline, variance, seasonality, outliers | IITM-B | C07.4 | Write anomaly rules for time-to-fill | H | H | 1 |
+| C08.3 | Weekly leadership summaries | What changed – why it matters – what to do | IITM-B | C06.5 | Auto-generate a weekly TA brief | M | H | 1 |
+| C08.4 | Data → decisions → next steps | Decision rights; recommended action; owner | IITM-B | C07.3 | Attach an owner and action to each insight | H | H | 1 |
 
-## PILLAR 3 — Advanced Contextual AI Architectures (RAG & Agents)
+### Week 9 — Automate Market Research & Competitive Intelligence
 
-### Module 10 — Create Smart Work Assistants
+**Course frameworks:** CI framework · 5 signal categories · Source triangulation · Signal Log · Converging-signals rule · 8-Part Executive Brief · Alert triggers  
+**Tools:** Perplexity, n8n, Claude · **Exam importance:** M · **Practical importance:** H
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C10.1 | Role-aware assistant definition | purpose, role, scope, users, inputs | IITM-B + IITM-L | C03.2 | Write an assistant charter | H | H |
-| C10.2 | Context injection with documents | PRDs, policies, SOPs, reports as context | IITM-B | C11 | Attach the right 3 documents, not 30 | H | H |
-| C10.3 | Tone, style & memory | consistent persona; what to remember, what not to | IITM-B | C13.7 | Define memory rules for a recruiter assistant | M | H |
-| C10.4 | Guardrails & conversation flow | refusals, escalation, clarifying questions, hand-off to human | IITM-L | C14.4 | Script the flow for "salary question" | H | H |
-| C10.5 | Assistant evaluation | test set, rubric, failure log, continuous improvement | IITM-L | C14.5 | Write 10 test prompts with expected behaviour | H | H |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C09.1 | The competitive intelligence framework | Strategic Questions → Analysis Dimensions → Signal Sources → Collection & Validation | IITM-D | C09.2, C12.1 | Frame a CI question for competitor hiring | H | H | 3 |
+| C09.2 | The five signal categories | Competitor moves; market shifts; technology disruptions; customer behaviour; regulatory & policy updates | IITM-D | C09.1, C09.3 | Classify ten signals into the five categories | H | H | 5 |
+| C09.3 | Source triangulation & the Signal Log | Primary, secondary and digital sources; log: description, URL, date, category, credibility, validation status, relevance, next action (Use Now / Monitor / Discard) | IITM-D | C12.4 | Log five real signals | H | H | 4 |
+| C09.4 | Competitor comparison & converging signals | Fixed dimensions: products, pricing, verticals, technology, partnerships, distribution; infer intent only when independent signals converge | IITM-D | C09.3 | Compare three competitors on fixed dimensions | H | H | 2 |
+| C09.5 | The 8-Part Executive Brief & alert triggers | Strategic question, key signals, context, insights, implications, evidence confidence, decision ask, next steps/owner; predefined high-impact triggers | IITM-D | C06.5, C07.3 | Write a brief and two alert triggers | M | H | 3 |
 
-### Module 11 — Build Custom GPTs From Your Documents (RAG)
+## Pillar 3 — Advanced Contextual AI Architectures (RAG & Agents)
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C11.1 | Why prompts alone fail; **retrieve-first thinking** | model doesn't know your policies; retrieve, then generate | IITM-L | C02.3 | Decide prompt vs RAG for a use case | H | H |
-| C11.2 | RAG pipeline | query → retrieval → augmented prompt → generation | IITM-B (RAG use cases) + IITM-L | ALLIED embeddings, chunking | Draw the pipeline and name each failure point | H | H |
-| C11.3 | Knowledge-base preparation | document selection, versioning, structure, naming, chunk-friendly formatting, metadata | IITM-B + IITM-L | C07.1 | Prepare 5–10 HR documents as a mini KB | H | H |
-| C11.4 | Document-backed answers & citation verification | cite source/section; "not found" behaviour | IITM-B + IITM-L | C06.3 | Configure "answer only from this document" | H | H |
-| C11.5 | Knowledge governance | owners, review dates, retire outdated docs, access rights | IITM-L | C14.3 | Write a KB maintenance policy | M | H |
+### Week 10 — Create Smart Work Assistants
 
-### Module 12 — Build Multi-Source Search Assistants
+**Course frameworks:** Allowed vs prohibited boundaries · Four guardrail layers · Context layers · Grounded prompt pattern · 5-case test pack · Failure escalation matrix · Version maturation V1–V4  
+**Tools:** Custom GPTs, Claude Projects, Gemini Gems · **Exam importance:** H · **Practical importance:** H
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C12.1 | Connecting multiple sources | PDFs, Sheets, websites, dashboards | IITM-B | C07.2 | Map sources to question types | M | H |
-| C12.2 | Search scope & source selection | allowed questions, permitted / excluded sources, ranking, recency | IITM-L | C09.1 | Write a source policy | H | H |
-| C12.3 | Deduplication, normalisation, conflicting evidence | same fact from 3 places; unit/date normalisation; conflict rules | IITM-L | C06.3 | Resolve two conflicting salary figures | H | H |
-| C12.4 | Cited synthesis | one combined answer with per-claim citations | IITM-B + IITM-L | C11.4 | Produce a cited synthesis | H | H |
-| C12.5 | Accuracy across split information | coverage checks, "partial answer" behaviour | IITM-B | C12.3 | Flag when a source is missing | M | M |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C10.1 | Assistant scope: allowed vs prohibited & success criteria | Explicit boundaries; success = accuracy, format compliance, < 30 s, satisfaction ≥ 4/5 | IITM-D | C10.4 | Write the boundary list for an HR assistant | H | H | 4 |
+| C10.2 | Context layers & the grounded prompt pattern | Static, dynamic and system context; Role + Source of Truth + Task + Evidence Rule + Missing Context Rule + Output Schema | IITM-D | C03.3, C11.1 | Write a grounded prompt for a policy assistant | H | H | 4 |
+| C10.3 | Tone, style & memory | Consistent persona; what to remember and what never to store | IITM-B | C13.4 | Define memory rules for a recruiter assistant | M | H | 0 |
+| C10.4 | Four guardrail layers & the assistant workflow | Input validation, output constraints, content safety filters, escalation triggers; input → draft → safety validation → human handoff → final execution | IITM-D | C14.4, C10.6 | Place the four guardrail layers on a candidate FAQ assistant | H | H | 6 |
+| C10.5 | 5-case test pack & the production gate | 3 normal, 1 boundary, 1 adversarial; score 1–5 on accuracy, clarity, relevance, format, safety; any case < 3 or a safety fail blocks production | IITM-D | C03.9, C05.7 | Write and score a 5-case test pack | H | H | 4 |
+| C10.6 | Failure escalation matrix & version maturation | Hallucination → stop and audit; drift → correct and re-run under review; missing context → ask, don't guess; V1 Baseline → V2 Grounded → V3 Structured → V4 Validated | IITM-D | C02.3, C10.5 | Match failures to escalation actions | H | H | 4 |
 
-### Module 13 — Create No-Code Multi-Agents
+### Week 11 — Build Custom GPTs From Your Documents
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C13.1 | Chatbot vs assistant vs automation vs agent vs multi-agent | autonomy, tools, goal-pursuit, loop | IITM-L + INF | C05, C10 | Classify 6 systems correctly | H | H |
-| C13.2 | Agent decomposition & clear roles | **Planner, Researcher, Executor, Reviewer** (+ Analyst, Writer, Validator); one responsibility each | IITM-B + IITM-L | C13.4 | Decompose a research task into roles | H | H |
-| C13.3 | Sequential vs parallel workflows | dependency, speed, merge step | IITM-L | EXT agent patterns | Choose topology for a given task | H | H |
-| C13.4 | Context sharing & structured handoffs | handoff schema, shared vs private context | IITM-B + IITM-L | C03.5 | Write a handoff contract between two agents | H | H |
-| C13.5 | MCP for safe file access & data fetching | standard connector to tools/data; scoped access | IITM-B | ALLIED tool calling | Explain what MCP gives an agent and what it must not | M | M |
-| C13.6 | Guardrails for accuracy & permissions | tool permissions, read vs write, approval before action | IITM-B | C14.4 | Set least-privilege permissions per agent | H | H |
-| C13.7 | Consistent tone & memory across agents | shared style guide, state | IITM-B | C10.3 | Define shared context rules | M | M |
-| C13.8 | Debugging & evaluating agent workflows | trace each step, find failing handoff, regression tests | IITM-L | C14.5 | Locate the failing agent in a broken run | H | H |
+**Course frameworks:** Retrieve first, then answer · Semantic chunking (200–500 words) · Chunk metadata · Citation & rejection of unknowns · KB lifecycle governance  
+**Tools:** Custom GPTs, NotebookLM, Flowise · **Exam importance:** H · **Practical importance:** H
 
----
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C11.1 | Retrieve first, then answer | Anchor answers in verified company records, not pre-trained memory | IITM-D | C02.3, C10.2 | Decide prompt vs RAG for a use case | H | H | 3 |
+| C11.2 | RAG architecture | Semantic-search retrieval precision + LLM synthesis fluency; query → retrieve → augment → generate | IITM-B+D | C11.3, C11.4 | Draw the pipeline and name each failure point | H | H | 1 |
+| C11.3 | Knowledge-base preparation & semantic chunking | Clean (dedupe, retire drafts, standardise, canonical sources); 200–500-word self-contained chunks; metadata: title, department, version date, owner, access clearance | IITM-D | C07.1, C11.5 | Prepare 5–10 HR documents as a mini knowledge base | H | H | 5 |
+| C11.4 | Citation-based verification & rejection of unknowns | Granular citations [Doc vX, Section]; answer only from retrieved excerpts; 'Information not available in knowledge base'; Answer + Source schema | IITM-D | C06.3, C12.4 | Configure 'answer only from these documents' | H | H | 4 |
+| C11.5 | Knowledge-base governance & lifecycle | Version control (Draft → Reviewed → Approved); index refresh triggers; role-based access control | IITM-D | C14.3, C12.5 | Write a KB maintenance policy | H | H | 4 |
 
-## PILLAR 4 — AI Governance, Evaluation & Capstone
+### Week 12 — Build Multi-Source Search Assistants
 
-### Module 14 — AI Governance, Safety & Evaluation Standards
+**Course frameworks:** Query routing vs parallel retrieval · Composite ranking score · Evidence hierarchy · Conflict resolution rules · Sensitivity classes  
+**Tools:** Flowise, Perplexity, n8n · **Exam importance:** H · **Practical importance:** H
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C14.1 | Responsible AI principles & ethical risk identification | fairness, accountability, transparency, safety, privacy | IITM-B | IBM-1, EXT NIST | Run a risk identification on a use case | H | H |
-| C14.2 | Bias, fairness & privacy safeguards | biased data, proxy variables, disparate impact, consent | IITM-B | PEER IIM Ranchi M2/M8 | Spot bias risks in AI resume screening | H | H |
-| C14.3 | Data protection in practical AI usage | PII minimisation, approved tools, retention | IITM-B | C03.7, EXT DPDP | Classify data sensitivity for a workflow | H | H |
-| C14.4 | Output verification with human-in-the-loop | review points, approve/reject, sampling | IITM-B | C05.3, C13.6 | Place HITL gates on a workflow | H | H |
-| C14.5 | Trustworthy, compliant workflows; evaluation, testing & production readiness | test sets, acceptance criteria, logging, monitoring, audit, incident response | IITM-B + IITM-L | C10.5, C13.8 | Write a go-live checklist | H | H |
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C12.1 | Scoped multi-source search | Unstructured text, structured data, live APIs, external feeds; permitted questions, authorised sources, exclusions | IITM-B+D | C09.1 | Write the scope for a compensation search assistant | H | H | 1 |
+| C12.2 | Query routing vs parallel retrieval | Routing: one optimal repository, fast and cheap; parallel: many systems at once, coverage at the cost of latency | IITM-D | C01.7, C13.3 | Choose routing or parallel for three questions | H | H | 4 |
+| C12.3 | Deduplication, normalisation & composite ranking | Exact and near duplicates; schemas, currency, dates, metric definitions; Score = w1·Relevance + w2·Recency + w3·Credibility + w4·Completeness | IITM-D | C07.2 | Set ranking weights for a salary benchmark | H | H | 4 |
+| C12.4 | Evidence hierarchy & conflict resolution | Internal authoritative > external official filings > recent secondary reports > unverified web; select, disclose both, ask, or reject | IITM-D | C09.3, C11.4 | Resolve two conflicting salary figures | H | H | 4 |
+| C12.5 | Search monitoring & governance | Log queries, retrievals, outputs, failure rates; threshold alerts; source access control; Public / Internal / Confidential / Restricted; PII masking | IITM-D | C11.5, C14.3 | Write the monitoring plan | M | H | 3 |
 
-### Module 15 — Capstone
+### Week 13 — Create No-Code Multi-Agents
 
-| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project |
-|----|---------|--------------|-----|---------|-----------------|------|---------|
-| C15.1 | Integrated solution | assistant + knowledge base + automations in one workflow | IITM-B | all of Pillar 3 | Assemble a working end-to-end flow | M | H |
-| C15.2 | End-to-end business problem solving | problem → design → build → test | IITM-B | C01.3 | Choose a capstone with real impact | M | H |
-| C15.3 | Handover guides & SOPs | run-book, owners, failure handling | IITM-B | C05.4 | Write an SOP a colleague can follow | M | H |
-| C15.4 | Demo & impact report | before/after metrics, ROI | IITM-B | C01.2 | Present a 5-minute demo | M | H |
+**Course frameworks:** Planner · Researcher · Executor · Reviewer/Validator · One agent = one responsibility · Sequential vs parallel + aggregator · Least-privilege tool access · Failure-mode matrix · Trace-driven debugging · Quality–Cost–Time triangle  
+**Tools:** n8n, Flowise, Claude + MCP · **Exam importance:** H · **Practical importance:** H
 
-*Capstone brief details: course material not currently available.*
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C13.1 | Chatbot vs assistant vs automation vs agent vs multi-agent | Autonomy, tools, goal pursuit, the loop | IITM-L | C02.7, C05.2, C10.1 | Classify six systems correctly | H | H | 5 |
+| C13.2 | Agent role decomposition | Planner, Researcher, Executor, Reviewer/Validator; one agent = one clear responsibility; why monolithic prompts degrade | IITM-B+D | C13.3, C13.4 | Decompose a research task into roles | H | H | 6 |
+| C13.3 | Sequential & parallel multi-agent workflows | Sequential: A's structured output is B's input; parallel: independent agents merged by an aggregator | IITM-D | C12.2 | Choose a topology for a given task | H | H | 3 |
+| C13.4 | Shared context management & structured handoffs | Pass task state, citations and constraints; exclude irrelevant history; JSON/Markdown schemas | IITM-B+D | C03.5 | Write a handoff schema between two agents | H | H | 2 |
+| C13.5 | MCP for safe file access & data fetching | Standard connector to tools and data; scoped access | IITM-B | C04.3 | Explain what MCP gives an agent and what it must not | M | M | 1 |
+| C13.6 | Least-privilege tool access & guardrails | Permissions by role: Researcher read-only, Executor scoped write; approval before consequential actions | IITM-B+D | C14.4, C04.4 | Set least-privilege permissions per agent | H | H | 3 |
+| C13.7 | Consistent tone & memory across agents | Shared style guide; state | IITM-B | C10.3 | Define shared context rules | M | M | 0 |
+| C13.8 | Multi-agent failure modes & safeguards | Infinite loops (N ≤ 5, circuit breakers); task misrouting; contradictory outputs (synthesis agent); missing outputs (timeouts, manual fallback) | IITM-D | C05.4, C13.9 | Match each failure mode to its safeguard | H | H | 7 |
+| C13.9 | Trace-driven debugging, optimisation & runbook | Trace ID, agent, tool, input, output schema, latency, error; prune agents, sharpen prompts, cache, batch; handover runbook | IITM-D | C13.8, C05.7 | Find the failing agent from a trace | H | H | 3 |
 
----
+## Pillar 4 — AI Governance, Evaluation & Capstone
 
-## IBM certificate tracks (IITM-B, part of the programme)
+### Week 14 — AI Governance, Safety & Evaluation Standards *(brochure only)*
+
+**Course frameworks:** Responsible AI principles · Human-in-the-loop · NIST AI RMF (course reference)  
+**Tools:** Risk register, Evaluation sets · **Exam importance:** H · **Practical importance:** H
+
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C14.1 | Responsible AI principles & ethical risk identification | Fairness, accountability, transparency, safety, privacy | IITM-B | C01.5 | Run a risk identification on a use case | H | H | 2 |
+| C14.2 | Bias, fairness & privacy safeguards | Biased data, proxy variables, disparate impact, consent | IITM-B | C14.1 | Spot bias risks in AI resume screening | H | H | 4 |
+| C14.3 | Data protection in practical AI usage | Personal-data minimisation; approved tools; retention | IITM-B | C04.4, C04.6 | Classify data sensitivity for a workflow | H | H | 1 |
+| C14.4 | Output verification with human-in-the-loop | Review points; approve or reject; sampling | IITM-B | C01.5, C05.3, C13.6 | Place human review gates on a workflow | H | H | 5 |
+| C14.5 | Trustworthy, compliant workflows & production readiness | Test sets, acceptance criteria, logging, monitoring, audit, incident response | IITM-B | C10.5, C13.9 | Write a go-live checklist | H | H | 1 |
+
+### Week 15 — Capstone *(brochure only)*
+
+**Course frameworks:** Assistant + knowledge base + automations  
+**Tools:** All programme tools · **Exam importance:** M · **Practical importance:** H
+
+| ID | Concept | Sub-concepts | Src | Related | Practical skill | Exam | Project | Qs |
+|---|---|---|---|---|---|---|---|---|
+| C15.1 | Integrated solution | Assistant + knowledge base + automations in one workflow | IITM-B | C05.2, C11.4 | Assemble a working end-to-end flow | M | H | 1 |
+| C15.2 | End-to-end business problem solving | Problem → design → build → test | IITM-B | C01.3 | Choose a capstone with real impact | M | H | 0 |
+| C15.3 | Handover guides & SOPs | Run-book, owners, failure handling | IITM-B | C05.7, C13.9 | Write an SOP a colleague can follow | M | H | 1 |
+| C15.4 | Demo & impact report | Before/after metrics; ROI | IITM-B | C01.2 | Present a five-minute demo | M | H | 1 |
+
+## IBM certificate tracks (IITM-B)
 
 | ID | Certificate | Topics | Links to |
-|----|-------------|--------|---------|
-| IBM-1 | Responsible & Ethical GenAI | limitations and ethical issues; social & economic impact; responsible GenAI | M1, M14 |
-| IBM-2 | GenAI for Execs & Business Leaders | develop a use case; effective prompts & strategic use cases; risk awareness & mitigation; formulating a business goal; evaluating AI output | M1, M3, M14 |
-| IBM-3 | Foundation Models & GenAI Platforms | models for GenAI; text-to-text / image / code; IBM watsonx.ai; Hugging Face | M2 |
+|---|---|---|---|
+| IBM-1 | Responsible & Ethical Generative AI | Limitations and ethical issues of GenAI; social and economic impact; responsible GenAI | M01, M14 |
+| IBM-2 | GenAI for Execs & Business Leaders | Develop a use case; effective prompts and strategic use cases; risk awareness and mitigation; formulating a business goal; evaluating AI output | M01, M03, M14 |
+| IBM-3 | Foundation Models & GenAI Platforms | Models for GenAI; text-to-text, text-to-image, text-to-code; IBM watsonx.ai; Hugging Face | M02 |
 
----
+## Where the course differs from your original brief
 
-## Knowledge spine (how the modules build on each other)
+| Topic | Your brief | Course compendium | Board uses |
+|---|---|---|---|
+| C03.2 COSTAR | see right | see right | Course compendium: Role · Context · Rules · Output Format. Your notes: COSTAR. They overlap on Context and Output; COSTAR adds Style, Tone and Audience, while the course adds Role and Rules (constraints and fallbacks). Use the course structure in the exam and combine both at work. |
+| C05.1 Automation sweet spot & use-case quick test | see right | see right | Your brief listed seven criteria (repetition, frequency, friction, impact, judgement, sensitivity, stability). The course formalises four into the quick test; sensitivity is handled by the risk tier and data clearance in the Go/No-Go gate. |
+| C05.2 The universal automation structure | see right | see right | Your brief used Trigger → Data → Decision → Integration → AI Step → Output. The course structure is Trigger → Data Inputs/Validation → Processing Steps → Conditions/Approvals → Outputs/Notifications → Audit Log. Integration happens inside the layers; the course adds validation and an audit log. Use the course order in the exam. |
+| C07.3 Goal → KPI → Decision → Action & the 5 tests of a true KPI | see right | see right | Your brief used Goal → KPI → Threshold → Decision → Action. The course writes Goal → KPI → Decision → Action and places the threshold inside the KPI ('a quantifiable threshold that triggers action'). Same logic; use the course wording in the exam. |
+| C13.1 Chatbot vs assistant vs automation vs agent vs multi-agent | see right | see right | This five-way distinction comes from your brief (IITM-L). The compendium frames the same idea through the Business AI Stack and the statement that monolithic models degrade on multi-step work. |
 
-```
-M1 What AI is / where it fits
-   └─► M2 How LLMs work, why they fail
-         └─► M3 Prompting (control the model)
-               ├─► M4 Toolstack (pick the right tool)
-               ├─► M5 Automation (put the prompt inside a workflow)
-               │     ├─► M6 Content   ├─► M7 Dashboards ─► M8 Insights
-               │     └─► M9 Market & competitive intelligence
-               └─► M10 Assistants (prompt + context + memory)
-                     └─► M11 RAG (context from your documents)
-                           └─► M12 Multi-source search (context from many places)
-                                 └─► M13 Multi-agents (several roles + tools + handoffs)
-M14 Governance & evaluation wraps every module ──► M15 Capstone integrates them
-```
+## Prerequisite graph
 
-The same spine in the terms you used:
-
-**Prompt Engineering → Context Engineering → RAG → Tools → Agents → Multi-Agent Orchestration → Evaluation & Governance**
-
-("Context engineering" is an ALLIED term — current industry name for deliberately
-choosing what goes into the model's context. It extends IITM's *context,
-instructions, constraints, examples*.)
-
-## Prerequisite graph (used by the revision and recommendation engines)
-
-| Concept | Must be ≥ Competent first |
-|---------|---------------------------|
+| Concept | Must be started first |
+|---|---|
+| C01.5 The 3-Tier AI Risk Model | C01.4 |
+| C01.7 The Cost–Latency–Accuracy Triangle | C01.4 |
+| C01.8 60-Second Pre-Flight Checklist & 5-Step Verification Protocol | C01.5 |
+| C01.9 1-Page AI Business Proposal | C01.2, C01.5 |
+| C02.2 High-level LLM architecture | C02.1 |
+| C02.3 The three failure modes | C01.4 |
+| C02.4 Six decision pillars | C01.7 |
+| C02.5 Executive Justification Framework | C02.4 |
+| C02.6 Prompt knobs: controlling outputs | C02.3 |
+| C02.7 The Business AI Stack & trade-off tensions | C02.4 |
+| C02.8 Hidden cost drivers | C02.4 |
+| C03.1 Zero-shot vs few-shot | C02.1 |
 | C03.2 COSTAR | C02.1 |
-| C05.2 Workflow blocks | C03.5, C05.1 |
-| C07.3 KPI chain | C07.1 |
-| C08.2 Anomalies | C07.3 |
-| C09.1 Intelligence chain | C03.3 |
-| C10.1 Assistant charter | C03.2 |
-| C11.2 RAG pipeline | C02.3, C10.2 |
-| C12.3 Conflicts | C11.4 |
-| C13.2 Decomposition | C05.2, C10.1 |
-| C13.4 Handoffs | C03.5, C13.2 |
-| C14.4 HITL | C01.5, C05.3 |
-| C15.1 Capstone | C05.4, C11.4, C14.5 |
+| C03.3 Prompts as behavioural control: Role · Context · Rules · Output Format | C02.1 |
+| C03.4 Prompt failure taxonomy & debugging loop | C03.3 |
+| C03.5 Structured outputs | C03.3 |
+| C03.6 Generation controls (temperature) | C02.1 |
+| C03.7 Safe workplace prompting | C03.3 |
+| C03.8 The Prompt Maturity Curve | C03.3 |
+| C03.9 Test-case bank & Before/After capture | C03.4 |
+| C03.10 The Reusable Prompt Blueprint | C03.3, C03.5 |
+| C03.11 Prompt Peer Review Rubric | C03.10 |
+| C04.2 Business-first tool decisions: Value · Simplicity · Cost · Safety | C04.1, C01.5 |
+| C04.4 Minimum Viable Toolstack Operating Model | C04.6 |
+| C04.5 Tool Change Radar | C04.2 |
+| C04.7 Reliable professional outputs & the Everyday AI Toolkit | C04.2 |
+| C05.1 Automation sweet spot & use-case quick test | C01.3 |
+| C05.2 The universal automation structure | C05.1 |
+| C05.3 Conditional logic & approval gates | C05.2 |
+| C05.4 The Fallback Ladder & HITL Control Matrix | C05.2 |
+| C05.5 Cross-functional automation | C05.2 |
+| C05.6 Net automation ROI & the Go/No-Go gate | C01.2, C05.1 |
+| C05.7 Testing, debugging & the Evidence Handover Package | C05.2 |
+| C06.1 Single source → multi-output transformation | C06.2 |
+| C06.2 The 7-Step Business Brief | C03.3 |
+| C06.3 Claims Table discipline | C02.3 |
+| C06.4 Automated, auto-updating decks | C06.1 |
+| C06.5 Executive storyline & readability standard | C06.2 |
+| C07.2 Integration patterns & sanity checks | C07.1 |
+| C07.3 Goal → KPI → Decision → Action & the 5 tests of a true KPI | C07.1 |
+| C07.4 Dashboard usability: the 10-Second Decision Test | C07.3 |
+| C07.5 Dashboard failure modes & handover package | C07.3 |
+| C08.1 Connecting dashboards to AI | C07.1 |
+| C08.2 Patterns, trends & anomalies | C07.3 |
+| C08.3 Weekly leadership summaries | C08.2 |
+| C08.4 Data → decisions → next steps | C07.3 |
+| C09.1 The competitive intelligence framework | C03.3 |
+| C09.2 The five signal categories | C09.1 |
+| C09.3 Source triangulation & the Signal Log | C09.2 |
+| C09.4 Competitor comparison & converging signals | C09.3 |
+| C09.5 The 8-Part Executive Brief & alert triggers | C09.4 |
+| C10.1 Assistant scope: allowed vs prohibited & success criteria | C03.3 |
+| C10.2 Context layers & the grounded prompt pattern | C10.1 |
+| C10.3 Tone, style & memory | C10.1 |
+| C10.4 Four guardrail layers & the assistant workflow | C10.1 |
+| C10.5 5-case test pack & the production gate | C10.1 |
+| C10.6 Failure escalation matrix & version maturation | C02.3, C10.5 |
+| C11.1 Retrieve first, then answer | C02.3 |
+| C11.2 RAG architecture | C11.1 |
+| C11.3 Knowledge-base preparation & semantic chunking | C11.1 |
+| C11.4 Citation-based verification & rejection of unknowns | C11.2 |
+| C11.5 Knowledge-base governance & lifecycle | C11.3 |
+| C12.1 Scoped multi-source search | C11.2 |
+| C12.2 Query routing vs parallel retrieval | C12.1 |
+| C12.3 Deduplication, normalisation & composite ranking | C12.1 |
+| C12.4 Evidence hierarchy & conflict resolution | C12.3 |
+| C12.5 Search monitoring & governance | C12.1 |
+| C13.1 Chatbot vs assistant vs automation vs agent vs multi-agent | C05.2, C10.1 |
+| C13.2 Agent role decomposition | C13.1 |
+| C13.3 Sequential & parallel multi-agent workflows | C13.2 |
+| C13.4 Shared context management & structured handoffs | C03.5, C13.2 |
+| C13.5 MCP for safe file access & data fetching | C13.1 |
+| C13.6 Least-privilege tool access & guardrails | C13.2 |
+| C13.7 Consistent tone & memory across agents | C13.2 |
+| C13.8 Multi-agent failure modes & safeguards | C13.3 |
+| C13.9 Trace-driven debugging, optimisation & runbook | C13.8 |
+| C14.1 Responsible AI principles & ethical risk identification | C01.5 |
+| C14.2 Bias, fairness & privacy safeguards | C14.1 |
+| C14.3 Data protection in practical AI usage | C04.6 |
+| C14.4 Output verification with human-in-the-loop | C01.5, C05.3 |
+| C14.5 Trustworthy, compliant workflows & production readiness | C14.4 |
+| C15.1 Integrated solution | C05.7, C11.4, C14.5 |
+| C15.2 End-to-end business problem solving | C01.3 |
+| C15.3 Handover guides & SOPs | C05.7 |
+| C15.4 Demo & impact report | C01.2 |
 
-## Allied concepts and where they attach (MASTER mode)
+## Allied concepts and where they attach (Expert Mode)
 
-| Allied concept (ALLIED / EXT) | Extends IITM concept |
-|-------------------------------|----------------------|
-| Foundation models, tokens, context windows | C02.1, C02.2, IBM-3 |
-| Embeddings, vector databases, semantic search | C11.2 |
-| Chunking, metadata, retrieval quality, reranking | C11.3, C11.4 |
-| Grounding, hallucination reduction | C02.3, C11.4 |
-| Structured outputs, function/tool calling, API concepts | C03.5, C04.3, C13.5 |
-| Prompt chaining, context engineering | C03.3, C05.2 |
-| Agent loops, planning, tool use, state, memory | C13.1, C13.2 |
-| Orchestration, handoffs, single- vs multi-agent, sequential vs parallel | C13.2–C13.4 |
-| MCP and integration patterns | C13.5 |
-| Observability, tracing, evaluation | C13.8, C14.5 |
-| Guardrails, prompt injection, data leakage, failure recovery | C13.6, C14.3, C14.5 |
-| Latency, token/cost optimisation, model selection | C02.4 |
-| Privacy, security, responsible AI, AI governance, production monitoring | C14.1–C14.5 |
+| Allied concept | Src | Extends |
+|---|---|---|
+| Tokens & context windows | ALLIED | C02.1 How LLMs generate responses |
+| Embeddings & vector databases | ALLIED | C11.2 RAG architecture |
+| Reranking & retrieval evaluation | ALLIED | C11.4 Citation-based verification & rejection of unknowns |
+| Structured outputs & tool calling (fast-changing) | EXT | C03.5 Structured outputs |
+| Prompt chaining | ALLIED | C03.4 Prompt failure taxonomy & debugging loop |
+| Context engineering | EXT | C03.3 Prompts as behavioural control: Role · Context · Rules · Output Format |
+| Agent loop: plan → act → check | ALLIED | C13.1 Chatbot vs assistant vs automation vs agent vs multi-agent |
+| Orchestration patterns | EXT | C13.3 Sequential & parallel multi-agent workflows |
+| Model Context Protocol (MCP) (fast-changing) | EXT | C13.5 MCP for safe file access & data fetching |
+| Observability & LLMOps | EXT | C13.9 Trace-driven debugging, optimisation & runbook |
+| Evals & LLM-as-judge | EXT | C10.5 5-case test pack & the production gate |
+| Prompt injection & data leakage | EXT | C10.4 Four guardrail layers & the assistant workflow |
+| Excessive agency | EXT | C13.6 Least-privilege tool access & guardrails |
+| Latency & cost optimisation (fast-changing) | ALLIED | C01.7 The Cost–Latency–Accuracy Triangle |
+| NIST AI RMF & Generative AI Profile | EXT | C14.1 Responsible AI principles & ethical risk identification |
+| ISO/IEC 42001 | EXT | C14.5 Trustworthy, compliant workflows & production readiness |
+| EU AI Act: recruitment as high-risk (fast-changing) | EXT | C14.2 Bias, fairness & privacy safeguards |
+| India DPDP Act 2023 & Rules 2025 (fast-changing) | EXT | C14.3 Data protection in practical AI usage |
+| Assertion–evidence slides | EXT | C06.5 Executive storyline & readability standard |
+| SCIP competitive intelligence standards | EXT | C09.1 The competitive intelligence framework |

@@ -1,93 +1,80 @@
 # 00 — Source Register
 
 Every piece of content on the Practice Board carries a source label. This file
-defines the labels and lists exactly what material the design rests on today.
+defines the labels and records what the design rests on.
 
-## 1. Source labels (shown as a small tag on every card)
+## 1. Source labels
 
 | Tag | Meaning | Trust rule |
 |-----|---------|-----------|
-| **IITM-B** | IITM Course Concept — confirmed in the uploaded IITM Pravartak brochure | Primary. Never overridden. |
-| **IITM-L** | IITM Course Concept — named by the learner from class materials that are **not yet uploaded** | Primary for *naming and sequence*. Wording/detail shown as "pending course material". |
-| **IITM-D** | IITM Course Concept — confirmed in uploaded class decks (*none yet*) | Primary. Replaces IITM-L once decks arrive. |
-| **ALLIED** | Allied / Expanded Concept — needed to understand the IITM concept more deeply (e.g. embeddings behind RAG) | Supplements. Always says which IITM concept it extends. |
-| **EXT** | Current External / Industry Practice — standards, official docs, research | Supplements. Cited, dated, flagged if fast-changing. |
-| **INF** | General explanation / inference by the tutor | Lowest. Used for analogies, worked examples, HR adaptations. |
-| **PEER** | Other uploaded programmes (IIMA, IIM Ranchi, IIM Trichy, MIT) | Reference only, for HR examples and cross-checks. Never presented as IITM teaching. |
+| **IITM-D** | IITM course concept from your **course compendium** (`course-material/iitm-master-course-compendium.md`) | Primary. Never overridden. Exam wording comes from here. |
+| **IITM-B** | IITM course concept from the brochure only (Weeks 8, 14, 15 and brochure bullets) | Primary for naming and sequence; detail pending class material. |
+| **IITM-B+D** | In both the brochure and the compendium | Primary. |
+| **IITM-L** | Named by you in your brief but **not in the compendium** (e.g. COSTAR) | Shown with the course's own framework alongside. |
+| **ALLIED** | Allied / expanded concept that deepens a course concept (e.g. embeddings behind semantic search) | Supplements. Always names the course concept it extends. |
+| **EXT** | Current external / industry practice: standards, official docs, research | Supplements. Cited, flagged if fast-changing. |
+| **INF** | Tutor's general explanation, analogy or HR adaptation | Lowest. |
+| **PEER** | Other uploaded programmes (IIMA, IIM Ranchi, IIM Trichy, MIT) | Reference only. |
 
-**Conflict rule:** if EXT practice differs from IITM teaching, the card shows
-both, side by side, under a heading **"Course view vs current practice"**, and
-says which to use in the exam (course view) and which to use at work (usually
-both, with the reason).
+**Conflict rule:** where your brief or current practice differs from the course,
+the concept page shows a **"Course view vs current practice"** note, says which
+to use in the exam (the course view) and which to use at work.
 
-## 2. What was uploaded
+## 2. Material received
 
-| File | Type | Used for |
-|------|------|----------|
-| `IITMadras-EGAIBA_Brochure_B2C.pdf` | IITM Pravartak programme brochure (24 pp.) | **Primary.** 4 pillars, 15 modules, module bullets, 10 sample use cases, 10 sample projects, 3 IBM certificate syllabi, tools, assessment rules |
-| `Executive_Programme_in_AI_for_Business_-_IIMA.pdf` | IIM Ahmedabad brochure | PEER — technology/business module list (ML, NLP, LLMs, AI agents, security/ethics) |
-| `IIM_Ranchi_HRM.pdf` | IIM Ranchi AI-Driven HRM brochure | PEER — HR examples: AI in sourcing, resume screening, JD generation, bias in hiring, people analytics, HR chatbots, HR ethics |
-| `IIM-TRICHY-SHRM_Brochure...pdf` | IIM Trichy Strategic HRM brochure | PEER — general HR context only (no AI curriculum extracted) |
-| MIT Professional Education cover image | "No Code and Agentic AI" | PEER — tool list: KNIME, n8n, Google AI Studio, Gemini Notebook (NotebookLM), Claude |
+| Material | Date | Coverage | Used for |
+|----------|------|----------|----------|
+| IITM Pravartak programme brochure (PDF) | 24 Oct 2026 | 15 modules, 4 pillars, use cases, projects, IBM certificates, completion rules | Module titles, bullets, tools, assessment rules |
+| **Master Course Compendium** (pasted text) | 24 Oct 2026 | **Weeks 1–7 and 9–13** | **Primary source** for concepts, frameworks, questions, labs, rubrics and tutor rules |
+| IIM Ahmedabad, IIM Ranchi, IIM Trichy brochures; MIT cover image | 24 Oct 2026 | Peer programmes | HR examples and tool references only |
 
-## 3. Facts taken from the IITM brochure (IITM-B)
+Week N in the compendium is Module N in the brochure, so the board uses week numbers throughout.
 
-- **Programme:** Executive Programme in Generative AI and Agentic AI Tools for Business, IITM Pravartak with Emeritus. 4 months, 8–10 h/week, live online. Start date stated as 23 September 2026.
-- **Completion rule:** minimum **70%** in exams, capstone project completed, **50%** attendance. → The board's *Exam Readiness* target is set at 80% so you clear 70% with margin.
-- **4 pillars, 15 modules** (full map in `01-course-knowledge-map.md`).
-- **Tools named:** Flowise, Notion AI, n8n, Gamma, Claude, Fathom, Zapier, Make, Sheets/Excel, JIRA, Slack/Teams; "15+ tools", list not final.
-- **Signature framework in the brochure:** *Automate / Accelerate / Augment / Avoid AI* — sort recurring tasks into these four buckets ("Map Your Work for AI Opportunities").
-- **Tool-selection criteria:** value – simplicity – cost – safety (Module 4).
-- **IBM certificates:** Responsible & Ethical GenAI; GenAI for Execs & Business Leaders (use-case formulation, prompts, risk, evaluating output); Foundation Models & GenAI Platforms (text-to-text/image/code, watsonx.ai, Hugging Face).
+## 3. Facts from the brochure (IITM-B)
 
-## 4. Concepts named by you (IITM-L), awaiting decks
+- 4 months, 8–10 h/week, live online; start date 23 September 2026.
+- **Completion:** minimum **70%** in exams, capstone completed, **50%** attendance. The board's Exam Readiness target is 80% to clear 70% with margin.
+- Tools named: Flowise, Notion AI, n8n, Gamma, Claude, Fathom, Zapier, Make, Sheets/Excel, JIRA, Slack/Teams.
+- Brochure framework not in the compendium: *Automate / Accelerate / Augment / Avoid AI* (kept alongside the compendium's Impact–Effort Matrix).
 
-AI fundamentals for everyday work · how LLMs generate outputs and why they
-hallucinate · choosing, controlling and justifying AI systems · risk,
-reliability, trust and human oversight · AI opportunity identification and
-prioritisation · business-first tool selection · **COSTAR** and other
-structured prompting · context, instructions, constraints, examples · AI
-toolstack · **Trigger → Data → Decision → Integration → AI Step → Output** ·
-workflow governance, approvals, logging, escalation · business briefs and
-storyline architecture · claims validation and executive communication ·
-**Goal → KPI → Threshold → Decision → Action** · dataset design and data
-discipline · intelligence questions → signals → sources → validation →
-decision relevance · smart work assistants: scope, role, guardrails, memory,
-conversation flow, evaluation · RAG and **retrieve-first thinking** ·
-knowledge-base preparation · citation-based verification · multi-source search:
-scope, source selection, deduplication, conflicting evidence, cited synthesis ·
-monitoring and recurring intelligence · agent decomposition · **Planner,
-Researcher, Executor, Reviewer** roles · sequential and parallel workflows ·
-context sharing, structured handoffs, permissions, guardrails · debugging and
-evaluating agent workflows · responsible AI and governance · human-in-the-loop ·
-evaluation, testing and production readiness.
+## 4. Where the course differs from your original brief
 
-## 5. Gaps — marked "Course material not currently available"
+| Topic | Your brief | Course compendium (used in the exam) |
+|-------|-----------|--------------------------------------|
+| Prompt structure | COSTAR | **Role · Context · Rules · Output Format**, plus the Prompt Maturity Curve, Reusable Prompt Blueprint and Peer Review Rubric. COSTAR kept as IITM-L. |
+| Automation structure | Trigger → Data → Decision → Integration → AI Step → Output | **Trigger → Data Inputs/Validation → Processing Steps → Conditions/Approvals → Outputs/Notifications → Audit Log** |
+| Automation suitability | Seven criteria | **Quick test:** (Frequency + Friction + Impact) ≥ 10 and Judgement ≤ 2, on a 1–5 scale |
+| Dashboard chain | Goal → KPI → Threshold → Decision → Action | **Goal → KPI → Decision → Action** (threshold inside the KPI) and the **5 tests of a true KPI** |
+| Risk levels | Low / medium / high | **3-Tier AI Risk Model** (drafting · internal reporting · external & decision-critical) |
+| Agent roles | Planner, Researcher, Analyst, Executor, Reviewer, Writer, Validator | **Planner, Researcher, Executor, Reviewer/Validator**; one agent = one responsibility |
+| Chatbot vs assistant vs automation vs agent | Five-way distinction | Not stated as such; the compendium uses the **Business AI Stack** (5 categories). Kept as IITM-L. |
 
-- Week-by-week schedule (brochure gives modules, not weeks).
-- Exact IITM wording of COSTAR and other frameworks, and any variants taught.
-- Class examples, tool walkthroughs, assignment briefs and grading rubrics.
-- Exam format (MCQ vs scenario vs mixed), question weighting, time limits.
-- Module 15 capstone brief beyond the brochure bullets.
+## 5. Gaps — "Course material not currently available"
 
-**How to close the gaps:** drop decks/PDFs into `genai-mastery-board/course-material/<module-number>/`.
-Phase 1 of the implementation plan re-runs extraction, upgrades IITM-L items to
-IITM-D, and fills week numbers.
+- **Week 8** (Generate Automated Insights from Dashboards): brochure only.
+- **Week 14** (AI Governance, Safety & Evaluation Standards): brochure only; the compendium cites NIST AI RMF as a course reference.
+- **Week 15** (Capstone): brochure only.
+- Exam format, weighting and time limits.
+- Class examples, assignment briefs and grading rubrics beyond what the compendium states.
 
-## 6. External sources the design relies on (EXT)
+To close a gap, add material to `course-material/` and update `app/content/`; re-run `app/tests/simulate.js` and `app/tests/gen-knowledge-map.js`.
 
-Checked against the assistant's knowledge (cut-off mid-2026). Items marked ⚠ are
-fast-changing — the board shows a "verify at source" note on them.
+## 6. External sources (EXT)
+
+Course references from the compendium are marked †.
 
 | Area | Source |
 |------|--------|
-| AI risk management | NIST AI Risk Management Framework 1.0 (Jan 2023) and its Generative AI Profile, NIST AI 600-1 (Jul 2024) — functions Govern, Map, Measure, Manage |
+| AI risk | † NIST AI RMF 1.0 (2023); NIST AI 600-1 Generative AI Profile (2024) |
 | AI management system | ISO/IEC 42001:2023 |
-| Regulation (EU) | EU AI Act, Regulation (EU) 2024/1689 — AI used for recruitment/selection is listed as **high-risk** (Annex III, employment). ⚠ Application dates for high-risk duties were under review in 2025–26; verify current timeline |
-| Regulation (India) | Digital Personal Data Protection Act 2023 and DPDP Rules 2025 (phased commencement) ⚠ verify which provisions are in force |
-| LLM security | OWASP Top 10 for LLM Applications (2025 edition) — prompt injection, sensitive information disclosure, excessive agency, etc. |
-| Agent design patterns | Anthropic, "Building effective agents" (Dec 2024) — workflows vs agents; prompt chaining, routing, parallelisation, orchestrator–workers, evaluator–optimiser |
-| Tool integration | Model Context Protocol specification, modelcontextprotocol.io ⚠ evolving spec |
-| RAG origin | Lewis et al., "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", NeurIPS 2020 |
-| Prompting | Official prompt-engineering guides from Anthropic, OpenAI and Google ⚠ model-specific; COSTAR's public origin is GovTech Singapore's 2023 prompt-engineering competition write-up |
-| Learning science | Bloom (1968) mastery learning; Anderson & Krathwohl (2001) revised Bloom's taxonomy; Roediger & Karpicke (2006) retrieval practice; Leitner boxes / SM-2 / FSRS spaced-repetition schedulers |
+| Regulation (EU) | EU AI Act, Regulation (EU) 2024/1689 — recruitment AI is high-risk (Annex III). Application dates were under review in 2025–26; verify. |
+| Regulation (India) | DPDP Act 2023 and DPDP Rules 2025 (phased commencement); verify which provisions are in force. |
+| LLM security | OWASP Top 10 for LLM Applications (2025) |
+| Prompting & structured outputs | † OpenAI prompt engineering & structured outputs (2024); † Anthropic multi-shot prompting, context engineering, evals for agents (2024) |
+| Agents & orchestration | † OpenAI, A Practical Guide to Building AI Agents (2024); † Microsoft Azure LLMOps maturity model & agent orchestration patterns (2024); Anthropic, Building effective agents (2024) |
+| RAG governance | † Databricks RAG governance & LLMOps (2024); Lewis et al., RAG (NeurIPS 2020) |
+| Presentations | † Penrose & Alley (2018), assertion–evidence approach |
+| Competitive intelligence | † SCIP (2022) standards |
+| Workflow testing | † n8n & LogicWorkflow (2026) |
+| Tool integration | Model Context Protocol specification (evolving) |
+| Learning science | Bloom (1968); Anderson & Krathwohl (2001); Roediger & Karpicke (2006); Leitner / SM-2 / FSRS |

@@ -238,6 +238,7 @@
       if (opts.modules && opts.modules.length && !q.c.some(function (id) { return opts.modules.indexOf(content.byId[id].m) >= 0; })) return false;
       if (opts.concepts && opts.concepts.length && !q.c.some(function (id) { return opts.concepts.indexOf(id) >= 0; })) return false;
       if (opts.mode === "exam" && q.ext) return false;
+      if (opts.autoOnly && !q.auto) return false;
       return true;
     });
     var last = {};

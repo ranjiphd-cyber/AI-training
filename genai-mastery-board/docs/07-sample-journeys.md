@@ -7,6 +7,8 @@ board would present it. Source tags in brackets.
 
 ## Journey A — Prompt Engineering (Module 3)
 
+> **Update after the course compendium arrived:** the course's prompt structure is **Role · Context · Rules · Output Format**, with the Prompt Maturity Curve, the Reusable Prompt Blueprint and the Peer Review Rubric. The live board's Prompt Lab now follows that structure. COSTAR (below) is kept as your own note (IITM-L) and is useful for audience-facing writing, but lead with the course structure in the exam.
+
 ### A1. LEARN — C03.2 COSTAR  `[IITM-L]`
 
 **L1 (new to AI):** A prompt is a work brief. COSTAR is a checklist so the brief

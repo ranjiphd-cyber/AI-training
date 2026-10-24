@@ -7,6 +7,21 @@ Programme timing (IITM-B): started 23 Sep 2026, 4 months → finishes around lat
 January 2027. The plan front-loads exam-relevant pieces so they're useful
 before the exams, and builds labs in the order the modules are taught.
 
+
+## Status at 24 Oct 2026
+
+| Phase | Status |
+|-------|--------|
+| 0 Architecture review | Done. Defaults taken: private browser file plus optional publish in Claude; mixed exam format; content-first for the compendium weeks. |
+| 1 Course-material ingestion | Done for the compendium (Weeks 1–7, 9–13). Weeks 8, 14, 15 still brochure-only. |
+| 2 Content authoring | v1 done: 95 concepts, 230 auto-marked + 24 written questions, 11 labs, 8 projects, 10 cases. Full notes for each week's key frameworks; core notes elsewhere. |
+| 3 Logic validation | Done: `app/tests/simulate.js` (content integrity, three simulated learners, quiz selection). Readiness without a mock is capped at 85% by the formula (0.6 + 0.25). |
+| 4 Prototype v1 | Done: all 18 sections. |
+| 5 Labs | Done with checklist scoring and copyable tutor prompts. |
+| 6 AI tutor | Built in: runs when the board is opened in Claude; otherwise copy-to-Claude prompts. Gate 6 (agreement with your own scoring on 20 answers) still to run with you. |
+| 7 Allied engine & Expert Mode | v1 done: 20 allied cards with course references marked. |
+| 8 Capstone kit | Waiting for the Week 15 capstone brief. |
+
 ## Phase 0 — Architecture review (this document set) — *now*
 
 Deliverables: `00`–`08`.
@@ -43,8 +58,8 @@ Order: modules already taught → current module → upcoming modules.
 
 | Asset | Target for v1 |
 |-------|---------------|
-| Concept records (all 20 fields, L1–L4) | 76 concepts (all of `01`) |
-| Question bank | ~380 items: ~5 per concept, all types A–P represented, 4 difficulty levels |
+| Concept records (all 20 fields, L1–L4) | 95 concepts (all of `01`) |
+| Question bank | ~380 items (v1: 254): ~5 per concept, all types A–P represented, 4 difficulty levels |
 | Exercises | 2 per lab (20) |
 | Case studies | 10 (one per function listed in the brief) |
 | Revision assets | 15 module one-pagers, key definitions list, 8 comparison tables, Night-before pack |
@@ -58,7 +73,7 @@ card has bridge sentence + citation + date.
 ## Phase 3 — Logic validation without UI (≈ 3 days)
 
 - Run the mastery and revision formulas in a spreadsheet (or a small script) against three simulated learners: *strong-but-forgetful*, *weak-on-governance*, *steady*.
-- Confirm: status changes happen when expected; revision priority surfaces the right concepts; mastered concepts recede; exam readiness doesn't exceed 80% without a mock exam.
+- Confirm: status changes happen when expected; revision priority surfaces the right concepts; mastered concepts recede; exam readiness doesn't exceed 85% without a mock exam.
 
 **Gate 3:** simulated outputs match expectations in `06`; thresholds tuned if not.
 

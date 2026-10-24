@@ -86,7 +86,7 @@
   function st(id) { return statuses()[id] || { st: 0, m: 0 }; }
   function srcTag(src) {
     var cls = /^IITM/.test(src) ? "tag iitm" : (src === "EXT" ? "tag ext" : "tag");
-    var title = { "IITM-B": "IITM course concept, confirmed in the brochure", "IITM-L": "IITM course concept named by you; class deck not uploaded", "IITM-B+L": "IITM course concept: brochure plus your class materials", "ALLIED": "Allied / expanded concept", "EXT": "Current external or industry practice", "INF": "Tutor's general explanation" }[src] || src;
+    var title = { "IITM-D": "IITM course concept from your course compendium", "IITM-B+D": "IITM course concept: brochure and course compendium", "IITM-B": "IITM course concept from the brochure only", "IITM-L": "Named by you; not in the course compendium", "ALLIED": "Allied / expanded concept", "EXT": "Current external or industry practice", "INF": "Tutor's general explanation" }[src] || src;
     return '<span class="' + cls + '" title="' + esc(title) + '">' + esc(src) + "</span>";
   }
   function chip(id, label) {
@@ -112,7 +112,7 @@
     toast("Select the text and copy it");
   }
   function fmtDate(ts) { var d = new Date(ts); return d.toLocaleDateString(undefined, { day: "numeric", month: "short" }); }
-  function modName(m) { return MODS[m] ? "Module " + parseInt(m.slice(1), 10) + " · " + MODS[m].title : m; }
+  function modName(m) { return MODS[m] ? "Week " + MODS[m].week + " · " + MODS[m].title : m; }
   function trim(s, n) { s = String(s || ""); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
   function cap(s) { return String(s || "").slice(0, 8000); }
 
@@ -168,7 +168,7 @@
       stat(sum.mastery, "%", "Overall course mastery", meter(sum.mastery, [], "Mastery")) +
       stat(sum.readiness, "%", "Exam readiness · pass mark 70%, target 80%", meter(sum.readiness, [70, 80], "Exam readiness")) +
       stat(sum.practical, "%", "Practical skills", meter(sum.practical, [], "Practical skills")) +
-      stat(sum.mastered, " / 76", "Concepts mastered · " + sum.competent + " competent or better") +
+      stat(sum.mastered, " / " + C.concepts.length, "Concepts mastered · " + sum.competent + " competent or better") +
       stat(sum.needRevision, "", "Concepts needing revision") +
       stat(sum.accuracy30 == null ? "–" : sum.accuracy30, sum.accuracy30 == null ? "" : "%", "Quiz accuracy, last 30 days") +
       stat(sum.projectsDone, " / 8", "Projects completed") +
@@ -177,7 +177,7 @@
       stat(L ? "L" + L.n : "L0", "", L ? L.title : "Not yet at Level 1 · AI Aware", NL ? '<span class="small muted">Next: ' + esc(NL.title) + "</span>" : "") +
       "</section>" +
       '<section class="grid g2"><div class="card"><h3>Recent mistakes</h3>' + (mistakes.length ? '<ul class="clean">' + mistakes.map(function (a) { var q = qById[a.q]; return q ? '<li class="row between"><span class="small">' + esc(trim(q.q, 110)) + "</span>" + q.c.map(function (id) { return chip(id); }).join(" ") + "</li>" : ""; }).join("") + '</ul><div><a class="btn sm" href="#revision">Replay mistakes</a></div>' : '<p class="small muted">None yet. Mistakes you make in quizzes appear here and come back in the Revision Centre in new wording.</p>') + "</div>" +
-      '<div class="card"><h3>How this board labels sources</h3><p class="small">' + esc(G.SOURCES_NOTE) + '</p><div class="row">' + ["IITM-B", "IITM-L", "ALLIED", "EXT", "INF"].map(srcTag).join("") + '</div><p class="small muted">Upload your class decks to replace IITM-L items with the course\'s exact wording.</p></div></section>' +
+      '<div class="card"><h3>How this board labels sources</h3><p class="small">' + esc(G.SOURCES_NOTE) + '</p><div class="row">' + ["IITM-D", "IITM-B", "IITM-L", "ALLIED", "EXT", "INF"].map(srcTag).join("") + '</div><p class="small muted">Items tagged IITM-L, such as COSTAR, show the course framework alongside on their concept page.</p></div></section>' +
       '<section class="card"><h3>The knowledge spine</h3><div class="spine">' + G.SPINE.map(function (s, i) { return "<span>" + esc(s) + "</span>" + (i < G.SPINE.length - 1 ? "→" : ""); }).join("") + "</div></section>";
   }
   function planItem(kind, title, why, href, cta, mins, act, arg) {
@@ -206,16 +206,16 @@
       body = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));align-items:start">' + G.PILLARS.map(function (p) {
         return '<div class="pillar"><div><div class="eyebrow">Pillar ' + p.n + "</div><h3>" + esc(p.title) + "</h3></div>" + G.MODULES.filter(function (m) { return m.p === p.n; }).map(function (m) {
           var ms = moduleStats(m.id);
-          return '<div class="mod"><div class="row between"><span class="num">' + m.id + '</span><span class="pill st' + ms.st + '">' + STN[ms.st] + "</span></div><h3>" + esc(m.title) + "</h3>" + meter(ms.m, [], "Module mastery") +
-            '<div class="small muted num">Mastery ' + ms.m + "% · Exam " + m.exam + " · Practical " + m.prac + " · Week: not in uploaded material</div>" +
+          return '<div class="mod"><div class="row between"><span class="mid">' + m.id + '</span><span class="pill st' + ms.st + '">' + STN[ms.st] + "</span></div><h3>" + esc(m.title) + "</h3>" + meter(ms.m, [], "Module mastery") +
+            '<div class="small muted num">Week ' + m.week + " · Mastery " + ms.m + "% · Exam " + m.exam + " · Practical " + m.prac + "</div>" +
             '<div class="small"><b>Frameworks:</b> ' + esc(m.frameworks.join("; ")) + '</div><div class="small"><b>Tools:</b> ' + esc(m.tools.join(", ")) + "</div>" +
             '<div class="row">' + ms.ids.map(function (id) { return chip(id); }).join("") + "</div>" +
-            '<details><summary class="small">Brochure topics</summary><ul class="bul small">' + m.bullets.map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("") + '</ul><p class="small muted">Class decks for this module: course material not currently available.</p></details></div>';
+            '<details><summary class="small">Brochure topics</summary><ul class="bul small">' + m.bullets.map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("") + '</ul>' + (m.material === "compendium" ? '<p class="small muted">Covered by your course compendium.</p>' : '<p class="small muted">Course material not currently available. This week uses the brochure only.</p>') + '</details></div>';
         }).join("") + "</div>";
       }).join("") + "</div>";
       body += '<div class="card"><h3>IBM certificate tracks</h3><div class="table-wrap"><table><thead><tr><th>Certificate</th><th>Topics</th><th>Links to</th></tr></thead><tbody>' + G.IBM.map(function (b) { return "<tr><td>" + esc(b.title) + "</td><td>" + esc(b.topics) + "</td><td>" + esc(b.links) + "</td></tr>"; }).join("") + "</tbody></table></div></div>";
     }
-    return '<div class="row between"><div class="head"><div class="eyebrow">15 modules · 4 pillars · 76 concepts</div><h1>Course Map</h1></div><div class="seg" role="group" aria-label="Map view"><button data-act="mapview" data-v="pillars" aria-pressed="' + (U.mapView === "pillars") + '">Pillars</button><button data-act="mapview" data-v="spine" aria-pressed="' + (U.mapView === "spine") + '">Knowledge spine</button></div></div>' +
+    return '<div class="row between"><div class="head"><div class="eyebrow">15 weeks · 4 pillars · ' + C.concepts.length + ' concepts</div><h1>Course Map</h1></div><div class="seg" role="group" aria-label="Map view"><button data-act="mapview" data-v="pillars" aria-pressed="' + (U.mapView === "pillars") + '">Pillars</button><button data-act="mapview" data-v="spine" aria-pressed="' + (U.mapView === "spine") + '">Knowledge spine</button></div></div>' +
       '<div class="row small">' + [0, 1, 2, 3, 4].map(function (i) { return '<span class="chip st' + i + '">' + STN[i] + "</span>"; }).join("") + "</div>" + body;
   }
 
@@ -231,7 +231,7 @@
     if (f.sort === "weak") list.sort(function (a, b) { return (st(a.id).st === 0) - (st(b.id).st === 0) || st(a.id).m - st(b.id).m; });
     if (f.sort === "rec") list.sort(function (a, b) { return pri[b.id] - pri[a.id]; });
     if (f.sort === "exam") list.sort(function (a, b) { return "HML".indexOf(a.exam) - "HML".indexOf(b.exam); });
-    return '<div class="head"><div class="eyebrow">76 concepts</div><h1>Learn Concepts</h1><p class="muted">Every concept has four levels, from plain language to expert trade-offs. Full notes are written for the Module 1–5 essentials and the three sample journeys; the rest have core notes for now.</p></div>' +
+    return '<div class="head"><div class="eyebrow">' + C.concepts.length + ' concepts</div><h1>Learn Concepts</h1><p class="muted">Every concept has four levels, from plain language to expert trade-offs. Content follows your course compendium (Weeks 1–7, 9–13); Weeks 8, 14 and 15 use the brochure until their material is available. The key frameworks of each week have full notes; the rest have core notes.</p></div>' +
       '<div class="grid g3"><label class="lbl small">Search<input type="search" id="lq" value="' + esc(f.q) + '" placeholder="e.g. COSTAR, handoff, KPI" data-act-input="learn-q"></label>' +
       '<label class="lbl small">Module<select data-act-change="learn-m"><option value="">All modules</option>' + G.MODULES.map(function (m) { return '<option value="' + m.id + '"' + (f.m === m.id ? " selected" : "") + ">" + m.id + " " + esc(m.title) + "</option>"; }).join("") + "</select></label>" +
       '<label class="lbl small">Order<select data-act-change="learn-sort">' + [["course", "Course order"], ["rec", "Recommended"], ["weak", "Weakest first"], ["exam", "Exam importance"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.sort === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label></div>" +
@@ -249,7 +249,7 @@
     var c = cstate(id); if (!c.viewed) { E.recordView(S, id, now()); save(); }
     var lvl = U.clevel[id] || "L1";
     var tab = U.ctab;
-    var hdr = '<div class="head"><div class="eyebrow">' + esc(modName(k.m)) + '</div><h1>' + esc(k.name) + '</h1><div class="row">' + '<span class="mono small">' + id + "</span>" + srcTag(k.src) + '<span class="tag">Exam importance ' + k.exam + '</span><span class="tag">Project relevance ' + k.proj + '</span><span class="chip st' + s.st + '">' + STN[s.st] + '</span><span class="small muted num">Mastery ' + s.m + '</span><span class="small muted">Week: not in uploaded material</span></div></div>';
+    var hdr = '<div class="head"><div class="eyebrow">' + esc(modName(k.m)) + '</div><h1>' + esc(k.name) + '</h1><div class="row">' + '<span class="mono small">' + id + "</span>" + srcTag(k.src) + '<span class="tag">Exam importance ' + k.exam + '</span><span class="tag">Project relevance ' + k.proj + '</span><span class="chip st' + s.st + '">' + STN[s.st] + '</span><span class="small muted num">Mastery ' + s.m + '</span><span class="small muted">Week ' + MODS[k.m].week + (MODS[k.m].material === "compendium" ? "" : " · brochure only, class material not available") + '</span></div></div>';
     var tabs = '<div class="tabs" role="tablist">' + CTABS.map(function (t) { return '<button role="tab" aria-selected="' + (tab === t[0]) + '" data-act="ctab" data-tab="' + t[0] + '">' + t[1] + "</button>"; }).join("") + "</div>";
     var body = "";
     if (tab === "overview") {
@@ -381,8 +381,7 @@
   }
   function buildQuiz(cfg) {
     var n = cfg.n === "full" ? 70 : cfg.n;
-    var items = E.selectQuiz(S, C, { n: n, level: cfg.level === 5 ? "exam" : cfg.level, mode: cfg.mode, modules: cfg.module ? [cfg.module] : null, concepts: cfg.concepts || null, seed: now() }, now());
-    if (!cfg.open) items = items.filter(function (q) { return q.auto; });
+    var items = E.selectQuiz(S, C, { n: n, level: cfg.level === 5 ? "exam" : cfg.level, mode: cfg.mode, modules: cfg.module ? [cfg.module] : null, concepts: cfg.concepts || null, autoOnly: true, seed: now() }, now());
     if (cfg.open) {
       var opens = C.questions.filter(function (q) { return !q.auto && (!cfg.module || q.c.some(function (id) { return C.byId[id].m === cfg.module; })); });
       var k = Math.max(1, Math.round(items.length / 10));
@@ -552,7 +551,7 @@
     out += '<div class="card fill"><h4>Scenario</h4><p>' + esc(lab.brief) + '</p><details><summary class="small">Use my own scenario instead</summary><textarea data-bind="labs.' + cur + '.brief" placeholder="Describe a real situation from your work (no personal data).">' + esc(L.brief || "") + "</textarea></details></div>";
     if (lab.suitability) out += suitabilityCard(cur, L);
     if (lab.gate) out += '<div class="note warn"><b>Gate question.</b> ' + esc(lab.gate) + "</div>";
-    if (cur === "prompt") out += '<div class="row"><button class="btn sm" data-act="costar">Insert COSTAR scaffold</button><span class="small muted">The scaffold adds headings only. You still write every line.</span></div>';
+    if (cur === "prompt") out += '<div class="note small">Course structure (Week 3): Role · Context · Rules · Output Format, made reusable with {variables} and a self-check. COSTAR from your notes can enrich Context and Output Format, but it isn\'t the course\'s structure.</div>';
     out += lab.fields.map(function (f) {
       var key = "lab-" + cur + "-" + f.id, chk = L.checks && L.checks[f.id], fs = L.fscores && L.fscores[f.id];
       return '<div class="card"><div class="row between"><h3>' + esc(f.label) + "</h3>" + chip(f.c, f.c + " " + trim(C.byId[f.c].name, 30)) + '</div><p class="small muted">' + esc(f.q) + '</p><textarea class="' + (f.big ? "big " : "") + (cur === "prompt" ? "code" : "") + '" id="' + key + '" data-bind="labs.' + cur + ".fields." + f.id + '">' + esc(fields[f.id] || "") + "</textarea>" +
@@ -572,13 +571,13 @@
     return out;
   }
   function suitabilityCard(cur, L) {
-    var v = L.suit || {}, tot = 0;
-    G.SUITABILITY.forEach(function (s) { var x = Number(v[s.id] || 0); tot += s.rev ? 3 - x : x; });
-    var verdict = tot >= 14 ? "Good automation candidate." : tot >= 10 ? "Partial automation: automate the data-gathering, keep decisions human." : "Weak candidate. Standardise the process first, or keep it manual.";
-    if (Number(v.judg || 0) >= 2) verdict += " Judgement is high, so keep a human in the loop.";
-    return '<div class="card"><h3>Is it suitable for automation?</h3><p class="small muted">Score each criterion 0–3. Judgement and data sensitivity count against automation.</p><div class="grid g4">' + G.SUITABILITY.map(function (s) {
-      return '<label class="lbl small">' + esc(s.label) + ' <span class="muted">' + esc(s.hint) + '</span><input type="range" min="0" max="3" step="1" value="' + (v[s.id] || 0) + '" data-act-input="suit" data-lab="' + cur + '" data-k="' + s.id + '" aria-valuetext="' + (v[s.id] || 0) + '"><span class="num small">' + (v[s.id] || 0) + "/3</span></label>";
-    }).join("") + '</div><p><b class="num">' + tot + "/21</b> · " + esc(verdict) + "</p></div>";
+    var v = L.suit || {}, val = function (k) { return Number(v[k] || 1); };
+    var sum = val("freq") + val("fric") + val("imp"), j = val("judg"), pass = sum >= 10 && j <= 2;
+    var verdict = pass ? "Passes the quick test. Next: run the Go/No-Go gate (ROI, risk tier, owner, rollback, data clearance)." :
+      sum >= 10 ? "Fails on judgement (" + j + " > 2). Keep the decision human; automate only the data-gathering around it." : "Fails: frequency + friction + impact is " + sum + ", below 10. Not worth automating yet.";
+    return '<div class="card"><div class="row between"><h3>Use-case quick test</h3>' + srcTag("IITM-D") + '</div><p class="small muted">Week 5 rule, 1–5 scale: automate only if (Frequency + Friction + Impact) ≥ 10 and Judgement Required ≤ 2. Also check the avoid list: high-ambiguity decisions, contract interpretation, sensitive escalations, unowned processes.</p><div class="grid g4">' + G.QUICK_TEST.map(function (s) {
+      return '<label class="lbl small">' + esc(s.label) + ' <span class="muted">' + esc(s.hint) + '</span><input type="range" min="1" max="5" step="1" value="' + val(s.id) + '" data-act-input="suit" data-lab="' + cur + '" data-k="' + s.id + '" aria-valuetext="' + val(s.id) + '"><span class="num small">' + val(s.id) + "/5</span></label>";
+    }).join("") + '</div><p><b class="num">' + sum + " / 15 · judgement " + j + "</b> · " + esc(verdict) + "</p></div>";
   }
 
   /* =============== BUILD =============== */
@@ -635,7 +634,7 @@
     return '<div class="head"><div class="eyebrow">Evidence-based progress</div><h1>My Progress</h1></div>' +
       '<section class="grid g4">' + stat(sum.mastery, "%", "Mastery", meter(sum.mastery)) + stat(sum.readiness, "%", "Exam readiness", meter(sum.readiness, [70, 80])) + stat(sum.practical, "%", "Practical skills", meter(sum.practical)) + stat(sum.completion, "%", "Concept completion (Competent or better)", meter(sum.completion)) + stat(sum.accuracy30 == null ? "–" : sum.accuracy30, sum.accuracy30 == null ? "" : "%", "Quiz accuracy, 30 days · all-time " + (sum.accuracyAll == null ? "–" : sum.accuracyAll + "%")) + stat(sum.projectsDone, " / 8", "Projects at 70%+") + "</section>" +
       '<div class="card"><h3>Recommended next action</h3>' + (rec.top ? "<p>Revise " + conceptLink(rec.top.id) + ' <span class="small muted">(highest revision priority, ' + rec.top.p + ")</span></p>" : rec.lesson ? "<p>Start " + conceptLink(rec.lesson.id) + "</p>" : "<p>Take a quiz to generate evidence.</p>") + "</div>" +
-      '<div class="card"><h3>Status of all 76 concepts</h3><div class="row">' + counts.map(function (n, i) { return '<span class="chip st' + i + '">' + STN[i] + ": " + n + "</span>"; }).join("") + "</div></div>" +
+      '<div class="card"><h3>Status of all ' + C.concepts.length + ' concepts</h3><div class="row">' + counts.map(function (n, i) { return '<span class="chip st' + i + '">' + STN[i] + ": " + n + "</span>"; }).join("") + "</div></div>" +
       '<div class="card"><h3>Topic breakdown</h3><div class="table-wrap"><table><thead><tr><th>Topic</th><th class="num">Attempts</th><th class="num">Accuracy</th><th>Mastery</th><th class="num">Mastery</th></tr></thead><tbody>' + tb.map(function (r) { return "<tr><td>" + esc(r.name) + '</td><td class="num">' + r.n + '</td><td class="num">' + (r.acc == null ? "–" : r.acc + "%") + "</td><td style=\"min-width:120px\">" + meter(r.mastery, [], r.name) + '</td><td class="num">' + r.mastery + "</td></tr>"; }).join("") + "</tbody></table></div></div>" +
       '<div class="card"><h3>Weakest studied concepts</h3>' + (weak.length ? '<ul class="clean">' + weak.map(function (x) { return '<li class="row between">' + conceptLink(x.id) + '<span class="small muted num">mastery ' + x.st.m + " · priority " + x.p + "</span></li>"; }).join("") + "</ul>" : '<p class="small muted">Nothing studied yet.</p>') + "</div>" +
       '<details class="card"><summary><b>How these numbers are calculated</b></summary><ul class="bul small"><li>Concept mastery = 20% concept check + 30% quiz (recency-weighted, harder questions count more) + 20% practice + 15% project use + 15% spaced-review retention, minus a penalty for repeated mistakes. No test → capped at 60; no practice → 55; no passed spaced review → 84.</li><li>Course mastery weights concepts by exam importance (H 3, M 2, L 1).</li><li>Exam readiness = 60% recent test accuracy + 25% share of high-importance concepts at Competent + 15% last mock exam.</li><li>Practical skills = 50% average lab score + 50% project-ladder progress.</li><li>Mastered requires mastery 85+, two passed reviews at least 7 days apart, and use in a project or a teach-back of 80%+.</li></ul></details>' +
@@ -866,13 +865,6 @@
     "psummary-close": function () { U.psummary = false; render(); },
     pcopy: function () { var sess = S.practice[U.psession]; copy("# " + sess.idea + "\n\n" + G.PRACTICE_STEPS.map(function (s, j) { return "## " + (j + 1) + ". " + s.label + " (" + s.c + ")\n" + (sess.answers[s.id] || "_Not answered_"); }).join("\n\n"), "Session copied as Markdown"); },
     labtab: function (el) { U.labTab[el.dataset.g] = el.dataset.v; render(); },
-    costar: function () {
-      var L = S.labs.prompt || (S.labs.prompt = { fields: {} }); L.fields = L.fields || {};
-      var cur = L.fields.prompt || "";
-      if (/CONTEXT:/i.test(cur)) { toast("The scaffold is already in your prompt"); return; }
-      L.fields.prompt = "CONTEXT:\n\nOBJECTIVE:\n\nSTYLE:\n\nTONE:\n\nAUDIENCE:\n\nRESPONSE (format):\n\nCONSTRAINTS (what not to do or invent):\n\nIF INFORMATION IS MISSING:\n" + (cur ? "\n---\n" + cur : "");
-      changed(); render();
-    },
     "lab-check": function (el) {
       var id = el.dataset.lab, L = S.labs[id] || (S.labs[id] = {});
       if (!L.fields || !Object.keys(L.fields).some(function (k) { return String(L.fields[k]).trim(); })) { toast("Write your answers first"); return; }
@@ -884,7 +876,7 @@
     "lab-version": function (el) { var id = el.dataset.lab, L = S.labs[id] || (S.labs[id] = {}); L.versions = L.versions || []; L.versions.push({ ts: now(), fields: Object.assign({}, L.fields || {}), score: L.score }); if (L.versions.length > 8) L.versions.shift(); changed(); render(); toast("Version saved"); },
     "prompt-improve": function () {
       var L = S.labs.prompt || {}; U.evals["lab-prompt"] = '<div class="reveal small">Thinking…</div>'; render();
-      sample(G.TUTOR_RULES + "\n\nThe learner asked to see an improved version of their prompt after scoring it. Scenario: " + (L.brief || LABS.prompt.brief) + "\nTheir prompt:\n<<<\n" + ((L.fields || {}).prompt || "") + "\n>>>\nWrite the improved prompt using COSTAR plus constraints and a failure rule. Then list the three changes that matter most, one line each. Plain text.", { modelTier: "default" }).then(function (r) { U.evals["lab-prompt"] = '<div class="reveal"><b>Improved version</b><pre class="out">' + esc(r.text) + '</pre><p class="small muted">Compare it with yours, revise in your own words, save a version and re-score.</p></div>'; render(); }, function (e) { U.evals["lab-prompt"] = '<div class="note warn small">' + esc(tutorError(e)) + "</div>"; render(); });
+      sample(G.TUTOR_RULES + "\n\nThe learner asked to see an improved version of their prompt after scoring it. Scenario: " + (L.brief || LABS.prompt.brief) + "\nTheir prompt:\n<<<\n" + labAnswerText("prompt") + "\n>>>\nWrite the improved prompt in the course structure (Role · Context · Rules · Output Format) as a reusable blueprint with {variables} and a self-check. Then list the three changes that matter most, one line each. Plain text.", { modelTier: "default" }).then(function (r) { U.evals["lab-prompt"] = '<div class="reveal"><b>Improved version</b><pre class="out">' + esc(r.text) + '</pre><p class="small muted">Compare it with yours, revise in your own words, save a version and re-score.</p></div>'; render(); }, function (e) { U.evals["lab-prompt"] = '<div class="note warn small">' + esc(tutorError(e)) + "</div>"; render(); });
     },
     want: function () {
       var v = ($("#want").value || "").toLowerCase(); if (!v) { toast("Describe what you want to build"); return; }
