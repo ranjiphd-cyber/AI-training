@@ -25,3 +25,7 @@ The dashboard's "Requisition review" view reads this data from the `settings/req
 ## Feedback on recruiter behaviour
 
 Feedback from HRBPs, hiring managers and the TA Head is stored in the dashboard's `feedback` collection. Each entry holds: person, date, from (role and name), behaviour area, type, details, feedback, agreed action, owner, due date, status and progress. It appears on the Feedback log page and on the person's Behaviours tab (under the matching behaviour), Development plan tab (agreed actions) and Overview tab. Include it in recruiter reviews. Overdue open actions are shown in light red.
+
+## Monthly review consolidation
+
+The TA Head uploads the monthly input workbook (`TA_Monthly_Input_YYYY-MM.xlsx`). Run `ta-performance-system/monthly/consolidate.py <workbook> <out_dir>`, report the validation errors first, then give per-recruiter performance (points vs pro-rated target, rating band, in-scope hiring quality), requirement status by owner, and the attention list. Push `reqReview.json` and `feedback.json` to the dashboard when the TA Head confirms the numbers. See `ta-performance-system/monthly/README.md`.
