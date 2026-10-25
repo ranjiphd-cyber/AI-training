@@ -12,7 +12,9 @@ Whenever the TA Head asks for a review of recruiters (or recruiter leads), alway
 3. **Vendor usage**: vendor-sourced share of offered and joined positions, per recruiter, per team and overall.
 4. **Time-bound requirements**: for each requirement with a target, show target, joined, yet to join, % closed (joined ÷ target) and whether it is closed or not closed.
 
-**Scope for cycle time, vendor usage, diversity, declines and referrals:** lateral, FTC and every conversion to employment (FTC, contract or consultant, GAT, and NATS or ExcelHER trainees converted to regular employment), each reported as its own stream as well as in total. Exclude talent-pipeline programme hiring itself (NATS, ExcelHER, AICTE/PhD, interns) and campus/fresher hires.
+**Scope for cycle time, vendor usage, diversity, declines and referrals:** lateral, FTC and every conversion to employment (FTC, contract or consultant, GAT, and NATS or ExcelHER trainees converted to regular employment), each reported as its own stream as well as in total. Campus intern-to-employment conversions count as lateral hiring. Exclude talent-pipeline programme hiring itself (NATS, ExcelHER, AICTE/PhD, interns) and other campus/fresher hires.
+
+Where data is not available, never fill it in: leave a clearly marked "[To fill]" field for the TA Head.
 
 Style: use as few colours as possible: grey and Volvo blue only. Use light red only for cells that need attention (cycle time over 90 days, women below 25% or vendor above 15% where there are at least 5 positions, requirement not closed).
 
