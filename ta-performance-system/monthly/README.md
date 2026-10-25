@@ -27,6 +27,8 @@ Row 4 of each input sheet is an example and is never read; data starts on row 5.
 
 - In scope for cycle time, vendor, diversity, decline and referral measures: Lateral (incl. campus intern conversions), FTC and every conversion to employment, each as its own stream and in total. Programme hiring (NATS, ExcelHER, AICTE/PhD, interns) and other campus/fresher hires are reported separately.
 - Points: every offer released this year scores per `Points_Rules` (grade band, women bonus, decline adjustment). Target to date = cadence × points of a lateral offer at the target grade × working days elapsed ÷ 10. Leads are rated on the average of own and team attainment. Rating bands: 130 / 110 / 95 / 85.
+- Internal (IJP) moves are included as offers (stream `Internal (IJP)`, with grade): SG8 and above 2 points, up to SG7 1 point. Internships score 1 point each. Targets are the regular targets (TA Head, confirmed).
+- Checked against the 16 Oct 2026 dashboard scorecard: points and attainment match for 6 of 8 recruiters and are within 1 point for the other 2 (grade ambiguity in the old tracker); all 2026 ratings match.
 - Missing data is never estimated: it is reported as `[To fill]`.
 
 ## Outputs
