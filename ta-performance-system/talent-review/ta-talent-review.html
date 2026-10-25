@@ -110,6 +110,7 @@ td.who { min-width: 150px; } td.who b { white-space: nowrap; }
 .fig .f { font-size: 12px; color: var(--muted); margin-top: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px 2px 6px; border-radius: 999px; white-space: nowrap; }
 .chip svg { width: 12px; height: 12px; flex: none; }
+.fb-late { background: var(--bad-bg) !important; color: var(--bad) !important; }
 table.rq th.c { text-align: center; } table.rq td.rq-att { background: var(--bad-bg); color: var(--bad); } table.rq tr.rq-team td { background: var(--none-bg); } table.rq tr.rq-all td { background: var(--none-bg); font-weight: 700; color: var(--accent); }
 .chip.good { color: var(--good); background: var(--good-bg); } .chip.watch { color: var(--watch); background: var(--watch-bg); } .chip.below { color: var(--bad); background: var(--bad-bg); } .chip.none { color: var(--none); background: var(--none-bg); }
 .tag { display: inline-flex; font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 6px; background: var(--card-2); color: var(--ink-2); border: 1px solid var(--line); white-space: nowrap; }
@@ -348,7 +349,7 @@ const chip = (s, text) => `<span class="chip ${s}">${ICON[s]}${esc(text || ST[s]
 const statusOf = a => a == null ? 'none' : a >= 1 ? 'good' : a >= .85 ? 'watch' : 'below';
 
 /* ===================== store ===================== */
-const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis', 'leadPlans'];
+const COLS = ['people', 'delivery', 'projects', 'learning', 'plans', 'behaviours', 'reviews', 'teams', 'settings', 'comments', 'programmes', 'opsKpis', 'leadPlans', 'feedback'];
 const OPS_LABELS = { 5: ['Outstanding', 'Exceptional'], 4: ['Exceeds Expectations', 'High'], 3: ['Meets Expectations', 'Good'], 2: ['Needs Improvement', 'Adequate'], 1: ['Unsatisfactory', 'Low'] };
 const OPS_KEYS = ['timely', 'errors', 'volume', 'experience'];
 const THEMES = ['Role', 'University relations & talent pipeline', 'Strategic initiative', 'Process improvement', 'Capability', 'Development area', 'Delivery note', 'Leadership', 'Promotion', 'Other'];
@@ -556,7 +557,7 @@ function ringSvg(a, stat) {
   const col = { good: 'var(--good)', watch: 'var(--watch)', below: 'var(--bad)', none: 'var(--rail-muted)' }[stat];
   return `<svg class="ring" viewBox="0 0 28 28" aria-hidden="true"><circle cx="14" cy="14" r="${r}" fill="none" stroke="var(--rail-line)" stroke-width="3"/><circle cx="14" cy="14" r="${r}" fill="none" stroke="${col}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${c * f} ${c}" transform="rotate(-90 14 14)"/></svg>`;
 }
-const NAV = [['team', 'Team overview', '<path d="M3 13h4v5H3zM8 8h4v10H8zM13 3h4v15h-4z" fill="currentColor"/>'], ['programmes', 'Programmes & projects', '<path d="M10 2l8 4-8 4-8-4z" fill="currentColor"/><path d="M2 10l8 4 8-4M2 14l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['reqs', 'Requisition review', '<path d="M3 3h14v3H3zM3 8.5h14v3H3zM3 14h14v3H3z" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['promotion', 'Promotion board', '<path d="M10 2l3 6 6 .9-4.5 4.3 1 6.3L10 16.5 4.5 19.5l1-6.3L1 8.9 7 8z" fill="currentColor"/>'], ['manage', 'People & teams', '<circle cx="7" cy="7" r="3.2" fill="currentColor"/><circle cx="14.5" cy="8" r="2.6" fill="currentColor"/><path d="M1.5 17c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5zM12.5 17c.3-1.9.1-3.4-.8-4.6 2.5-.5 5.2.8 6.3 4.6z" fill="currentColor"/>'], ['log', 'Change log', '<path d="M4 3h12v14H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.6"/>']];
+const NAV = [['team', 'Team overview', '<path d="M3 13h4v5H3zM8 8h4v10H8zM13 3h4v15h-4z" fill="currentColor"/>'], ['programmes', 'Programmes & projects', '<path d="M10 2l8 4-8 4-8-4z" fill="currentColor"/><path d="M2 10l8 4 8-4M2 14l8 4 8-4" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['reqs', 'Requisition review', '<path d="M3 3h14v3H3zM3 8.5h14v3H3zM3 14h14v3H3z" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['feedback', 'Feedback log', '<path d="M3 4h14v9H8l-4 3v-3H3z" fill="none" stroke="currentColor" stroke-width="1.6"/>'], ['promotion', 'Promotion board', '<path d="M10 2l3 6 6 .9-4.5 4.3 1 6.3L10 16.5 4.5 19.5l1-6.3L1 8.9 7 8z" fill="currentColor"/>'], ['manage', 'People & teams', '<circle cx="7" cy="7" r="3.2" fill="currentColor"/><circle cx="14.5" cy="8" r="2.6" fill="currentColor"/><path d="M1.5 17c.6-3.3 2.8-5 5.5-5s4.9 1.7 5.5 5zM12.5 17c.3-1.9.1-3.4-.8-4.6 2.5-.5 5.2.8 6.3 4.6z" fill="currentColor"/>'], ['log', 'Change log', '<path d="M4 3h12v14H4z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.6"/>']];
 function renderRail() {
   $('#rnav').innerHTML = NAV.filter(([k]) => canWrite || k !== 'log').map(([k, t, ic]) => `<button class="rbtn ${route.view === k ? 'on' : ''}" data-nav="${k}" type="button"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true">${ic}</svg>${t}</button>`).join('');
   const ppl = peopleList(), groups = [];
@@ -720,6 +721,8 @@ function pOverview(E) {
     <div class="card pad"><div class="sec-h"><h3>Projects</h3><span class="hint">${E.projs.length}</span></div>${E.projs.length ? `<div class="items">${E.projs.slice(0, 3).map(x => `<div class="item"><div class="t">${esc(x.title)} <span class="tag">${esc(x.status || 'In progress')}</span></div></div>`).join('')}</div>` : '<div class="empty-note">No projects recorded.</div>'}</div></div>`;
   const cm = commentsOf(p.id);
   h += `<div class="card pad sec"><div class="sec-h"><h3>Contribution highlights</h3><span class="hint">${cm.length} comments</span><span class="sp"></span><button class="btn link" data-tab="comments" data-person-tab="${esc(p.id)}" type="button">All comments</button></div>${cm.length ? `<div class="items">${cm.filter(c => c.theme !== 'Role').slice(0, 4).map(c => `<div class="item"><div class="t"><span class="tag acc">${esc(c.theme)}</span></div><div class="d" style="color:var(--ink)">${esc(c.text)}</div></div>`).join('')}</div>` : '<div class="empty-note">No comments yet.</div>'}</div>`;
+  const fbo = feedbackOf(p.id);
+  if (fbo.length) h += `<div class="card pad sec"><div class="sec-h"><h3>Feedback from others</h3><span class="hint">${fbo.length} entries · ${fbo.filter(fbOpen).length} open actions${fbo.some(fbLate) ? ' · ' + fbo.filter(fbLate).length + ' overdue' : ''}</span><span class="sp"></span><button class="btn link" data-tab="behaviours" data-person-tab="${esc(p.id)}" type="button">All feedback</button></div><div class="items">${fbo.slice(0, 2).map(x => fbItem(x)).join('')}</div></div>`;
   h += `<div class="card pad sec"><div class="sec-h"><h3>Promotion readiness</h3><span class="hint">advisory</span><span class="sp"></span><button class="btn link" data-tab="promotion" data-person-tab="${esc(p.id)}" type="button">Details</button></div><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>${esc(pr.level)}</b><span class="sub" style="color:var(--muted)">${pr.met} of 5 criteria met</span>${E.rv.promoDecision ? `<span class="tag acc">Your decision: ${esc(E.rv.promoDecision)}</span>` : ''}</div></div>`;
   if ((p.notes || []).length) h += `<div class="note warn sec"><b>Data notes.</b> ${p.notes.map(esc).join(' · ')}</div>`;
   return h;
@@ -793,6 +796,7 @@ function pBehaviours(E) {
   const b = E.beh, C = E.comps, id = E.p.id, rated = C.filter(c => (b[c] || {}).head != null || (b[c] || {}).self != null), custom = Array.isArray((S.behaviours[id] || {}).list);
   let h = `<div class="sec-h"><h3>Behaviours</h3><span class="hint">${C.length} behaviours${custom ? ` set for ${esc(E.p.name)}` : ` for a ${esc(roleKey(E.p).toLowerCase())}`} · 1–5 · self-ratings are additional input; your TA Head rating is the one that counts · not part of the score</span><span class="sp"></span>${canWrite ? `<button class="btn sm" data-act="addBeh" data-id="${esc(id)}" type="button">Add behaviour</button> <button class="btn sm pri" data-act="editBehaviours" data-id="${esc(id)}" type="button">Rate all</button>` : ''}</div>`;
   h += p4pNote(E);
+  const fbl = feedbackOf(id);
   if (rated.length) {
     h += `<div class="card pad"><div class="legend"><span><i style="background:var(--accent);border-radius:50%"></i>TA Head</span><span><i style="border:2px solid var(--ink-2);border-radius:50%;background:transparent"></i>Self</span></div><div class="beh"><div></div>${[1, 2, 3, 4, 5].map(n => `<div class="hdr">${n}</div>`).join('')}<div class="hdr" style="text-align:left;padding-left:8px">Feedback</div>`;
     for (const c of C) {
@@ -809,7 +813,9 @@ function pBehaviours(E) {
       ${ind.length ? `<div class="d" style="margin-top:4px"><b>Indicators</b><ul style="margin:4px 0 0;padding-left:18px">${ind.map(t => `<li>${esc(t)}${ie[t] ? `<div style="color:var(--ink);font-size:12.5px;margin:2px 0 4px">Evidence: ${esc(ie[t])}</div>` : ''}</li>`).join('')}</ul></div>` : '<div class="d">No indicators yet. Use Edit to add them.</div>'}
       ${x.evidence ? `<div class="d" style="color:var(--ink);font-size:13px;margin-top:6px"><b>Feedback:</b> ${esc(x.evidence)}</div>` : ''}${x.selfEvidence ? `<div class="d" style="margin-top:6px"><b>Self-assessment${num(x.self) != null ? ` (${num(x.self)} of 5)` : ''}:</b> ${esc(x.selfEvidence)}</div>` : ''}
       ${acts.length ? `<div class="d" style="margin-top:6px"><b>Actions to consider</b><ul style="margin:4px 0 0;padding-left:18px">${acts.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}${x.target ? `<div class="d" style="margin-top:6px"><b>Target and plan:</b> ${esc(x.target)}</div>` : ''}
+      ${(fl => fl.length ? `<div class="d" style="margin-top:6px"><b>Feedback from others (${fl.length})</b><ul style="margin:4px 0 0;padding-left:18px">${fl.map(f => `<li>${f.date ? nice(f.date) + ' · ' : ''}${esc(f.fromRole || '')}${f.fromName ? ' (' + esc(f.fromName) + ')' : ''}: ${esc(f.feedback || '')}${f.action ? ` <span class="tag${fbLate(f) ? ' fb-late' : ''}">action ${esc((f.status || 'Not started').toLowerCase())}</span>` : ''}</li>`).join('')}</ul></div>` : '')(fbl.filter(f => f.area === c))}
       ${origNote(x.original)}</div>`; }).join('')}</div></div>`;
+  h += fbCard(id, 'Feedback from HRBPs, hiring managers and TA Head', fbl);
   const big = C.filter(c => { const x = b[c] || {}; return num(x.head) != null && num(x.self) != null && Math.abs(num(x.self) - num(x.head)) > 1; });
   h += scaleCard();
   if (big.length) h += `<div class="note sec">Self and TA Head ratings differ by more than one level on ${big.map(esc).join(', ')}. Use these as discussion points.</div>`;
@@ -824,7 +830,7 @@ function scaleCard() {
 }
 function itemActions(kind, id) { return canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-${kind}" data-id="${esc(id)}" type="button">Edit</button><button class="btn sm danger" data-act="del-${kind}" data-id="${esc(id)}" type="button">Delete</button></span>` : ''; }
 function pDevelopment(E) {
-  let h = `<div class="sec-h"><h3>Development plan</h3><span class="hint">actions and areas for improvement</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-plan" data-id="${esc(E.p.id)}" type="button">Add item</button>` : ''}</div>` + p4pNote(E);
+  let h = `<div class="sec-h"><h3>Development plan</h3><span class="hint">actions and areas for improvement</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-plan" data-id="${esc(E.p.id)}" type="button">Add item</button>` : ''}</div>` + p4pNote(E) + fbActions(E);
   const have = new Set(E.plans.map(x => (x.action || '').trim().toLowerCase())), lib = (roleLib()[roleKey(E.p)] || []).map((x, i) => [x, i]).filter(([x]) => !have.has(String(x[0]).trim().toLowerCase()));
   const sugg = lib.length ? `<div class="card pad sec"><div class="sec-h"><h3>Suggested for a ${esc(roleKey(E.p).toLowerCase())}</h3><span class="hint">pick what fits, then set the date and details · edit the list under People &amp; teams</span></div><div class="tw"><table><thead><tr><th>Action</th><th>Behaviour</th><th>How we'll know</th><th></th></tr></thead><tbody>${lib.map(([x, i]) => `<tr><td>${esc(x[0])}</td><td class="sub" style="font-size:12.5px">${esc(x[1] || '')}</td><td class="sub" style="font-size:12.5px">${esc(x[2] || '')}</td><td class="n nw">${canWrite ? `<button class="btn sm" data-act="sugg-plan" data-id="${esc(E.p.id)}" data-idx="${i}" type="button">Add to plan</button>` : ''}</td></tr>`).join('')}</tbody></table></div></div>` : '';
   if (!E.plans.length) return h + `<div class="empty-note">No development plan yet. Add your own item, or pick from the suggestions for this role below.</div>` + sugg;
@@ -978,6 +984,48 @@ function commentForm(emp, idx) {
 function delComment(emp, idx) {
   const items = commentsOf(emp).map(({ idx, ...c }) => c);
   confirmBox('Delete this comment?', esc(items[idx]?.text || ''), 'Delete', () => write('comments/' + emp, { items: items.filter((_, i) => i !== Number(idx)) }, `Deleted a comment for ${S.people[emp]?.name}`));
+}
+
+/* ===================== FEEDBACK ===================== */
+const FB_FROM = ['HRBP', 'Hiring manager', 'TA Head', 'Other'], FB_TYPE = ['Appreciation', 'Development area', 'Concern'], FB_STATUS = ['Not started', 'In progress', 'Completed', 'Dropped'];
+const FB_GENERAL = 'General / not behaviour-specific';
+function feedbackOf(id) { return Object.entries(S.feedback || {}).map(([k, v]) => ({ id: k, ...v })).filter(x => !id || x.emp === id).sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))); }
+const fbOpen = x => x.action && x.status !== 'Completed' && x.status !== 'Dropped';
+const fbLate = x => fbOpen(x) && x.due && x.due < new Date().toISOString().slice(0, 10);
+function fbItem(x, opt = {}) {
+  const who = S.people[x.emp];
+  return `<div class="item"><div class="t">${opt.person && who ? `<button class="btn link" data-person="${esc(x.emp)}" data-tab="behaviours" type="button"><b>${esc(who.name)}</b></button> ` : ''}<span class="tag acc">${esc(x.fromRole || 'Other')}${x.fromName ? ' · ' + esc(x.fromName) : ''}</span> <span class="tag">${esc(x.type || 'Feedback')}</span>${!opt.noArea ? ` <span class="tag">${esc(x.area || FB_GENERAL)}</span>` : ''}<span class="sub" style="font-size:12px;color:var(--muted);margin-left:6px">${x.date ? nice(x.date) : 'no date'}</span>${canWrite ? `<span class="acts"><button class="btn sm" data-act="edit-fb" data-id="${esc(x.id)}" type="button">Edit</button><button class="btn sm danger" data-act="del-fb" data-id="${esc(x.id)}" type="button">Delete</button></span>` : ''}</div>
+    ${x.details ? `<div class="d"><b>Context:</b> ${esc(x.details)}</div>` : ''}<div style="font-size:13.5px;margin-top:4px">${esc(x.feedback || '')}</div>
+    ${x.action ? `<div class="d" style="margin-top:6px"><b>Agreed action:</b> ${esc(x.action)}${x.owner ? ` · owner ${esc(x.owner)}` : ''}${x.due ? ` · due ${nice(x.due)}` : ''} <span class="tag${fbLate(x) ? ' fb-late' : ''}">${esc(x.status || 'Not started')}${fbLate(x) ? ' · overdue' : ''}</span></div>` : ''}
+    ${x.progress ? `<div class="d" style="margin-top:4px"><b>Progress${x.progressDate ? ' (' + nice(x.progressDate) + ')' : ''}:</b> ${esc(x.progress)}</div>` : ''}</div>`;
+}
+function fbCard(id, title, list, hint) {
+  return `<div class="card pad sec"><div class="sec-h"><h3>${title}</h3><span class="hint">${hint || `${list.length} ${list.length === 1 ? 'entry' : 'entries'} · ${list.filter(fbOpen).length} open ${list.filter(fbOpen).length === 1 ? 'action' : 'actions'}`}</span><span class="sp"></span>${canWrite ? `<button class="btn sm pri" data-act="add-fb" data-id="${esc(id || '')}" type="button">Add feedback</button>` : ''}</div>${list.length ? `<div class="items">${list.map(x => fbItem(x, { person: !id })).join('')}</div>` : '<div class="empty-note">No feedback recorded yet.</div>'}</div>`;
+}
+function fbActions(E) {
+  const l = feedbackOf(E.p.id).filter(x => x.action);
+  return l.length ? `<div class="card pad sec"><div class="sec-h"><h3>Actions agreed from feedback</h3><span class="hint">${l.filter(fbOpen).length} open of ${l.length}</span></div><div class="tw"><table><thead><tr><th>Received</th><th>From</th><th>Behaviour area</th><th>Agreed action</th><th>Owner</th><th>Due</th><th>Status</th><th>Progress</th></tr></thead><tbody>${l.map(x => `<tr><td>${x.date ? nice(x.date) : '—'}</td><td>${esc(x.fromRole || '')}${x.fromName ? '<br><span class="sub" style="font-size:12px;color:var(--muted)">' + esc(x.fromName) + '</span>' : ''}</td><td>${esc(x.area || FB_GENERAL)}</td><td>${esc(x.action)}</td><td>${esc(x.owner || '—')}</td><td>${x.due ? nice(x.due) : '—'}</td><td${fbLate(x) ? ' class="fb-late"' : ''}>${esc(x.status || 'Not started')}${fbLate(x) ? ' · overdue' : ''}</td><td>${esc(x.progress || '—')}</td></tr>`).join('')}</tbody></table></div></div>` : '';
+}
+function viewFeedback() {
+  const all = feedbackOf(null).filter(x => S.people[x.emp] && S.people[x.emp].status !== 'Left'), open = all.filter(fbOpen), late = all.filter(fbLate);
+  let h = `<div class="phead"><div><h2>Feedback log</h2><div class="meta"><span>Feedback on behaviour from HRBPs, hiring managers and the TA Head, with agreed actions and progress</span></div></div></div>`;
+  h += `<div class="grid c4"><div class="card fig"><div class="l">Feedback entries</div><div class="v">${all.length}</div></div><div class="card fig"><div class="l">From HRBPs</div><div class="v">${all.filter(x => x.fromRole === 'HRBP').length}</div></div><div class="card fig"><div class="l">From hiring managers</div><div class="v">${all.filter(x => x.fromRole === 'Hiring manager').length}</div></div><div class="card fig"><div class="l">Open actions</div><div class="v">${open.length}</div><div class="f">${late.length ? `<span class="fb-late" style="padding:1px 6px;border-radius:4px">${late.length} overdue</span>` : 'none overdue'}</div></div></div>`;
+  return h + fbCard(null, 'All feedback', all);
+}
+function fbForm(emp, fid) {
+  const x = fid ? S.feedback[fid] : { emp, date: new Date().toISOString().slice(0, 10), fromRole: 'HRBP', type: 'Development area', status: 'Not started' };
+  const people = peopleList().filter(p => p.status !== 'Left').sort((a, b) => a.name.localeCompare(b.name)).map(p => [p.id, p.name]);
+  const areas = [...new Set([...(x.emp && S.people[x.emp] ? evalPerson({ id: x.emp, ...S.people[x.emp] }).comps : []), ...allBehNames()]), FB_GENERAL];
+  openForm({ title: fid ? 'Edit feedback' : 'Add feedback', values: { ...x, area: x.area || FB_GENERAL }, del: fid ? () => confirmBox('Delete this feedback?', esc(x.feedback || ''), 'Delete', () => remove('feedback/' + fid, `Deleted feedback for ${S.people[x.emp]?.name}`)) : null, fields: [
+    { k: 'emp', label: 'About', type: 'select', options: people, req: true }, { k: 'date', label: 'Date received', type: 'date', req: true },
+    { k: 'fromRole', label: 'From', type: 'select', options: FB_FROM, blank: false }, { k: 'fromName', label: 'Name of the person giving feedback', hint: 'optional' },
+    { k: 'area', label: 'Behaviour area', type: 'select', options: areas, blank: false }, { k: 'type', label: 'Type', type: 'select', options: FB_TYPE, blank: false },
+    { k: 'details', label: 'Details (context: role, requisition, situation)', type: 'textarea', full: true }, { k: 'feedback', label: 'Feedback', type: 'textarea', full: true, req: true },
+    { section: 'Agreed action plan and progress' },
+    { k: 'action', label: 'Agreed action plan', type: 'textarea', full: true }, { k: 'owner', label: 'Action owner' }, { k: 'due', label: 'Due date', type: 'date' },
+    { k: 'status', label: 'Status', type: 'select', options: FB_STATUS, blank: false }, { k: 'progressDate', label: 'Progress as of', type: 'date' },
+    { k: 'progress', label: 'Progress update', type: 'textarea', full: true },
+  ], save: async v => { if (!v.emp) return 'Choose who the feedback is about.'; if (!v.date) return 'Enter the date.'; if (!v.feedback) return 'Write the feedback.'; return write('feedback/' + (fid || uid('FB')), { ...x, ...v, area: v.area === FB_GENERAL ? null : v.area, updated: new Date().toISOString() }, `${fid ? 'Edited' : 'Added'} feedback (${v.fromRole}) for ${S.people[v.emp]?.name}`); } });
 }
 
 /* ===================== PROGRAMMES & PROJECTS ===================== */
@@ -1306,7 +1354,7 @@ function render() {
   renderRail();
   const v = $('#view');
   if (!Object.keys(S.people).length) { v.innerHTML = `<div class="state"><h2>No team data yet</h2><p>${canWrite ? 'Add the first person to start.' : 'The TA Head hasn\'t added anyone yet.'}</p>${canWrite ? '<button class="btn pri" data-act="addPerson" type="button">Add person</button>' : ''}</div>`; return; }
-  v.innerHTML = route.view === 'person' ? viewPerson(route.id) : route.view === 'programmes' ? viewProgrammes() : route.view === 'reqs' ? viewReqs() : route.view === 'promotion' ? viewPromotion() : route.view === 'manage' ? viewManage() : route.view === 'log' ? viewLog() : viewTeam();
+  v.innerHTML = route.view === 'person' ? viewPerson(route.id) : route.view === 'programmes' ? viewProgrammes() : route.view === 'reqs' ? viewReqs() : route.view === 'feedback' ? viewFeedback() : route.view === 'promotion' ? viewPromotion() : route.view === 'manage' ? viewManage() : route.view === 'log' ? viewLog() : viewTeam();
   bindTips(v);
 }
 
@@ -1591,6 +1639,7 @@ document.addEventListener('click', e => {
       'add-project': () => projectForm(id), 'edit-project': () => projectForm(curP, id), 'del-project': () => confirmBox('Delete this project?', esc(S.projects[id]?.title || ''), 'Delete', () => remove('projects/' + id, `Deleted project ${S.projects[id]?.title}`)),
       editScale: () => scaleForm(id), editScoring: () => scoringForm(),
       'add-comment': () => commentForm(id), 'edit-comment': () => commentForm(id, Number(act.dataset.idx)), 'del-comment': () => delComment(id, Number(act.dataset.idx)),
+      'add-fb': () => fbForm(id || curP || null), 'edit-fb': () => fbForm(null, id), 'del-fb': () => confirmBox('Delete this feedback?', esc(S.feedback[id]?.feedback || ''), 'Delete', () => remove('feedback/' + id, `Deleted feedback for ${S.people[S.feedback[id]?.emp]?.name}`)),
       'add-prog': () => progForm(null), 'edit-prog': () => progForm(id),
       ppt: () => pptDialog(), pptOne: async () => { act.disabled = true; const t = act.textContent; act.textContent = 'Creating…'; try { await buildDeck({ one: id, people: true }); } catch (e) { toast(e && e.message === 'load' ? 'Couldn\'t load the PowerPoint tool.' : 'Couldn\'t create the deck.'); } act.disabled = false; act.textContent = t; }, editLead: () => leadForm(id), ratePillars: () => pillarForm(id), 'add-opsrow': () => opsRowForm(id), 'edit-opsrow': () => opsRowForm(id, Number(act.dataset.idx)), 'del-opsrow': () => delOpsRow(id, Number(act.dataset.idx)),
       addTeam: () => teamForm(null), editTeam: () => teamForm(id), delTeam: () => { const n = S.teams[id]?.name, c = peopleList().filter(p => p.team === n).length; confirmBox(`Delete team ${n}?`, c ? `${c} people are in this team. They'll show under "No team yet" until you move them.` : 'Nobody is in this team.', 'Delete', () => remove('teams/' + id, `Deleted team ${n}`)); },

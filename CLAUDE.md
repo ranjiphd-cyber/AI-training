@@ -17,3 +17,7 @@ Style: grey and Volvo blue only. Use light red only for cells that need attentio
 Use only the data the TA Head provides. Ask when anything is unclear, and never invent figures.
 
 The dashboard's "Requisition review" view reads this data from the `settings/reqReview` document. Keep people's names out of committed files.
+
+## Feedback on recruiter behaviour
+
+Feedback from HRBPs, hiring managers and the TA Head is stored in the dashboard's `feedback` collection. Each entry holds: person, date, from (role and name), behaviour area, type, details, feedback, agreed action, owner, due date, status and progress. It appears on the Feedback log page and on the person's Behaviours tab (under the matching behaviour), Development plan tab (agreed actions) and Overview tab. Include it in recruiter reviews. Overdue open actions are shown in light red.
