@@ -206,7 +206,7 @@ table.data td.num{white-space:nowrap;font-variant-numeric:tabular-nums}
 """
 
 
-def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="", counselor_summary=""):
+def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="", counselor_summary="", further=None):
     name = profile.get("name") or "Candidate"
     today = dt.date.today().strftime("%d %B %Y")
     ranked_by_id = {r["id"]: r for r in ranked}
@@ -292,6 +292,12 @@ def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="",
         f"<tr><td><b>{e(m['issue'])}</b></td><td>{e(m['risk'])}</td><td>{e(m['protocol'])}</td><td>{e(m['measure'])}</td></tr>"
         for m in mitigation_protocols(profile)
     )
+    further_rows = "".join(
+        f"<tr><td class='num'>{i + 1}</td><td><b>{e(PATHWAY_BY_ID[r['id']]['title'])}</b><br><span class='muted'>{e(', '.join(PATHWAY_BY_ID[r['id']]['roles'][:2]))}</span></td>"
+        f"<td><b>{e(r['level'])}</b><br><span class='muted'>{r['score']:.0f}/100</span></td><td>{e('; '.join(r['reasons'][:3]))}</td>"
+        f"<td>{e(', '.join(PATHWAY_BY_ID[r['id']]['exams'][:3]))}</td></tr>"
+        for i, r in enumerate(further or [])
+    )
     plus = profile.get("plus_points") or []
     blind = profile.get("blind_spots") or []
 
@@ -356,6 +362,10 @@ def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="",
 <h2>8. Blind-Spot Mitigation Protocols</h2>
 <table class="data"><thead><tr><th>Area</th><th>Risk</th><th>Protocol</th><th>Checkpoint</th></tr></thead><tbody>{mit_rows}</tbody></table>
 
+<h2>9. Ten Further Career Options</h2>
+<p class="muted">Beyond the three headline trajectories, these careers also suit the profile, in order of fit.</p>
+<table class="data"><thead><tr><th>#</th><th style="width:30%">Career</th><th>Suitability</th><th>Why it suits</th><th>Entry route</th></tr></thead><tbody>{further_rows}</tbody></table>
+
 <div class="avoid-break"><h2>Appendix · Pathway Fit Ranking</h2>
 <p class="muted">Composite of aptitude, interest, motivator, cluster and behavioural fit, adjusted for interview evidence. Highlighted bars are the recommended trajectories.</p>
 {hbar_svg(fit_rows, tier_titles, width=640, max_value=100, label_w=250)}</div>
@@ -366,3 +376,32 @@ def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="",
 </div>
 <p class="disclaimer">This dossier interprets psychometric results together with a structured counselling interview. Scores describe present tendencies, not fixed limits. Salary bands are indicative Indian-market ranges; entrance-exam windows, eligibility, cut-offs and fees change every cycle and must be confirmed on the official websites listed above before any application decision.</p>
 </div></body></html>"""
+
+
+def question_sheet_html(profile, questions):
+    """Printable interview guide with space to write answers."""
+    from .questions import SECTIONS
+    name = profile.get("name") or "Candidate"
+    blocks = []
+    n = 0
+    for section in SECTIONS:
+        qs = [q for q in questions if q["section"] == section]
+        if not qs:
+            continue
+        items = ""
+        for q in qs:
+            n += 1
+            items += (f"<div class='q avoid-break'><p><b>{n}. {e(q['question'].replace('*', ''))}</b></p>"
+                      f"<p class='muted'>Listen for: {e(q['listen'])}</p>"
+                      "<div class='ans'></div><p class='sig'>☐ Confirms &nbsp; ☐ Partly &nbsp; ☐ Contradicts</p></div>")
+        blocks.append(f"<h2>{e(section)}</h2>{items}")
+    apt = ", ".join(f"{APTITUDES[k]['short']} {v}" for k, v in profile["aptitudes"].items())
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interview Guide — {e(name)}</title><style>{DOSSIER_CSS}
+.q{{border-bottom:1px solid var(--line);padding:6px 0 8px}} .ans{{height:52px;border:1px dashed var(--line);border-radius:4px;margin:4px 0}}
+.sig{{font-size:9pt;color:var(--ink2)}}</style></head><body>
+<div class="printbar no-print">Interview Guide &nbsp; <button onclick="window.print()">Print / Save as PDF</button></div>
+<div class="page"><header class="masthead"><div class="brand">Personality Researcher<small>Counselling Interview Guide</small></div>
+<div class="meta">Candidate <b>{e(name)}</b><br>Holland {e(profile.get('riasec_code') or '—')} · {e(apt)}</div></header>
+{''.join(blocks)}
+<p class="disclaimer">Prepared by {OWNER['name']}, {OWNER['title']}, {OWNER['org']} · {OWNER['phone']}</p></div></body></html>"""

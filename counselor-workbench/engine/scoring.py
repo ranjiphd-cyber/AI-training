@@ -6,6 +6,8 @@ Score (0–100) = 38% aptitude fit + 24% Holland fit + 14% motivator fit
 Every component is returned so the counselor can explain *why* a pathway ranks.
 """
 
+import re
+
 from .knowledge import APTITUDES, PATHWAYS, PATHWAY_BY_ID, RIASEC
 
 WEIGHTS = {"aptitude": .38, "riasec": .24, "motivator": .14, "cluster": .14, "traits": .10}
@@ -21,6 +23,65 @@ ASPIRATION_MAP = {
     "High-income specialist": ["software_ai", "finance", "consulting", "medicine", "law_policy"],
     "Global career / settle abroad": ["software_ai", "comp_bio", "data_science", "ux_design"],
 }
+
+
+# Words a candidate might say that point towards a pathway. Matched against
+# everything typed in the interview (responses, nuances, observations).
+KEYWORDS = {
+    "software_ai": ["coding", "programming", "software", "app", "apps", "python", "java", "ai", "machine learning", "computer", "website", "algorithm"],
+    "data_science": ["data", "statistics", "analytics", "excel", "patterns", "numbers", "dashboard", "prediction"],
+    "comp_bio": ["genetics", "dna", "genome", "bioinformatics", "protein", "biology", "drug discovery", "biotech"],
+    "agritech": ["farm", "farming", "agriculture", "crops", "soil", "plants", "drone", "drones", "irrigation", "village", "food"],
+    "ux_design": ["design", "designing", "ui", "ux", "figma", "user experience", "interface", "drawing", "sketch"],
+    "architecture": ["architecture", "buildings", "building design", "interiors", "city", "cities", "construction", "spaces"],
+    "robotics": ["robot", "robots", "robotics", "arduino", "machines", "electronics", "mechanical", "automation", "cars", "ev", "engines"],
+    "aerospace": ["space", "rocket", "rockets", "satellite", "aircraft", "planes", "isro", "astronomy", "flying", "aviation"],
+    "life_research": ["research", "lab", "laboratory", "experiment", "experiments", "science", "biology", "chemistry", "scientist"],
+    "medicine": ["doctor", "medicine", "medical", "hospital", "patients", "surgery", "neet", "mbbs", "health", "nursing"],
+    "biomed": ["medical devices", "healthcare technology", "prosthetic", "biomedical", "health tech", "wearable"],
+    "psychology": ["psychology", "counselling", "counseling", "mind", "behaviour", "behavior", "mental health", "listening", "therapy"],
+    "consulting": ["strategy", "consulting", "consultant", "business problems", "case study", "mba", "corporate"],
+    "product_mgmt": ["product", "startup idea", "user needs", "launch", "product manager", "roadmap"],
+    "entrepreneur": ["business", "startup", "own company", "entrepreneur", "selling", "sell", "venture", "family business", "shop"],
+    "finance": ["finance", "stocks", "investing", "money", "accounts", "ca", "banking", "trading", "economics"],
+    "law_policy": ["law", "lawyer", "legal", "justice", "policy", "debate", "debating", "rights", "constitution", "mun"],
+    "media": ["writing", "journalism", "news", "content", "youtube", "videos", "blog", "podcast", "storytelling", "film", "social media"],
+    "climate": ["climate", "environment", "sustainability", "pollution", "nature", "wildlife", "forest", "renewable", "solar", "recycling"],
+    "geospatial": ["maps", "mapping", "gis", "geography", "satellite images", "navigation", "terrain"],
+    "cyber": ["hacking", "security", "cybersecurity", "ethical hacking", "privacy", "networks", "ctf"],
+    "supply_chain": ["logistics", "operations", "supply chain", "warehouse", "planning", "delivery", "organising"],
+    "education": ["teaching", "teach", "teacher", "tutoring", "explaining", "students", "children", "kids", "education"],
+    "civil_services": ["ias", "ips", "upsc", "civil services", "army", "navy", "air force", "defence", "nda", "government", "public service"],
+}
+NEGATIONS = r"(?:hate|hates|don'?t like|do not like|dislike|dislikes|not interested|boring|bored|never want|avoid|scared of|not good at)"
+
+
+def text_signals(text):
+    """Return {pathway_id: (positive_hits, negative_hits)} from free-text interview notes."""
+    low = " " + (text or "").lower() + " "
+    found = {}
+    for pid, words in KEYWORDS.items():
+        pos, neg = [], []
+        for w in words:
+            for m in re.finditer(rf"(?<![a-z]){re.escape(w)}(?![a-z])", low):
+                before = re.split(r"[.;!?,]|\bbut\b|\band\b", low[max(0, m.start() - 30): m.start()])[-1]
+                (neg if re.search(NEGATIONS, before) else pos).append(w)
+        if pos or neg:
+            found[pid] = (sorted(set(pos)), sorted(set(neg)))
+    return found
+
+
+def suitability(score):
+    """Map a 0–100 fit score to a counselling-friendly suitability level."""
+    if score >= 85:
+        return "Very high"
+    if score >= 75:
+        return "High"
+    if score >= 65:
+        return "Moderate"
+    if score >= 55:
+        return "Possible with effort"
+    return "Low"
 
 
 def _cluster_match(pathway, careers):
@@ -107,6 +168,13 @@ def score_pathway(p, profile, interview, effects):
     for asp in interview.get("parent_aspirations", []):
         if p["id"] in ASPIRATION_MAP.get(asp, []):
             adj += 2
+    pos, neg = effects.get("keywords", {}).get(p["id"], ([], []))
+    if pos:
+        adj += min(6, 2 * len(pos))
+        reasons.append("Mentioned in interview: " + ", ".join(pos[:4]))
+    if neg:
+        adj -= min(9, 3 * len(neg))
+        cautions.append("Spoke negatively about: " + ", ".join(neg[:4]))
     live = effects.get("pathway", {}).get(p["id"], 0)
     if live:
         adj += live
@@ -115,12 +183,14 @@ def score_pathway(p, profile, interview, effects):
     return {
         "id": p["id"], "title": p["title"], "score": round(max(0, min(100, base + adj)), 1),
         "base": round(base, 1), "adjustment": round(adj, 1), "components": components,
-        "reasons": reasons, "cautions": cautions,
+        "reasons": reasons, "cautions": cautions, "level": suitability(max(0, min(100, base + adj))),
     }
 
 
 def rank_pathways(profile, interview, effects=None):
-    effects = effects or {}
+    effects = dict(effects or {})
+    notes = " ".join(str(interview.get(k, "")) for k in ("trait_notes", "observations", "confirmed_direction", "parent_notes", "constraints"))
+    effects["keywords"] = text_signals(notes + "\n" + effects.get("text", ""))
     results = [score_pathway(p, profile, interview, effects) for p in PATHWAYS]
     return sorted(results, key=lambda r: r["score"], reverse=True)
 
@@ -161,3 +231,9 @@ def friction_points(profile):
         (k, v, top) for k, v in sorted(apt.items(), key=lambda kv: kv[1])
         if top - v >= 3 or v <= 5
     ]
+
+
+def further_careers(ranked, tiers, n=10):
+    """The next-best careers after the three headline trajectories."""
+    chosen = set(tiers.values())
+    return [r for r in ranked if r["id"] not in chosen][:n]

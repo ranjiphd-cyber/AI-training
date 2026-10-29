@@ -221,14 +221,18 @@ def build_questions(profile, interview, tier_ids):
 
 def answer_effects(questions, answers):
     """Translate counselor signals into score adjustments and live insights."""
-    effects = {"riasec": {}, "pathway": {}}
+    effects = {"riasec": {}, "pathway": {}, "text": ""}
     insights = []
+    texts = []
     for q in questions:
         a = answers.get(q["id"]) or {}
         signal = a.get("signal", "Not asked")
-        if signal == "Not asked":
+        response = a.get("response", "").strip()
+        if response:
+            texts.append(response)
+        if signal == "Not asked" and not response:
             continue
-        eff = q.get("effect")
+        eff = q.get("effect") if signal != "Not asked" else None
         if eff and eff["type"] == "riasec":
             effects["riasec"][eff["key"]] = effects["riasec"].get(eff["key"], 0) + eff.get(signal, 0)
         elif eff and eff["type"] == "pathway":
@@ -241,8 +245,9 @@ def answer_effects(questions, answers):
         follow = q["followups"].get(signal)
         insights.append({
             "section": q["section"], "question": q["question"], "signal": signal,
-            "response": a.get("response", "").strip(), "followup": follow,
+            "response": response, "followup": follow,
         })
+    effects["text"] = "\n".join(texts)
     return effects, insights
 
 

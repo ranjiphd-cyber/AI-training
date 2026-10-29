@@ -20,6 +20,7 @@ SECTION_HEADINGS = [
     "Institutional & Academic Blueprint",
     "Corporate & Vocational Landing Zones",
     "Blind-Spot Mitigation Protocols",
+    "Ten Further Career Options",
     "90-Day Action Plan",
     "Verification Notes",
 ]
@@ -44,8 +45,9 @@ Turn one candidate's psychometric results and the counselor's live-interview not
 4. **Institutional & academic blueprint.** Match the stated geography and budget. For each trajectory list premier options in three bands — Bangalore/Karnataka, All-India, Global — with the exact degree title (B.Tech, B.Des, BS-MS, Integrated M.Sc, BA LLB, etc.), the gating entrance exam(s) (KCET, COMEDK, JEE Main/Advanced, NEET, UCEED, NID DAT, NATA, CUET, IAT, CLAT, IPMAT, GATE, CAT, GRE/GMAT), and the typical exam window. Give admission benchmarks only as approximate ranges and mark them "verify for the current cycle". If budget is limited, put government-fee options first and name scholarships where relevant.
 5. **Corporate & vocational landing zones.** Name real recruiting organisations (Bangalore first where relevant), entry job titles, and a realistic progression band. Separate scale employers from selective ones.
 6. **Blind-spot mitigation.** For every friction point and archetype blind spot, write a concrete protocol: the behaviour, the risk, a weekly practice, and a measurable checkpoint. No generic advice ("work hard", "follow your passion" and similar are banned).
-7. **90-day action plan.** 6–9 dated, owned actions (week 1–2, month 1, month 2, month 3) that a student and parent can actually execute.
-8. **Verification.** If you have a web-search tool, use it to check the current-cycle exam dates, eligibility and any program you are unsure of, prefer official sources (nta.ac.in, kea.kar.nic.in, comedk.org, institute websites) and cite them inline. Without a tool, never invent cut-off ranks, fees or dates: give ranges and list what must be verified under "Verification Notes".
+7. **Ten further career options.** Beyond the three trajectories, list 10 more careers that suit this candidate, in a markdown table with columns: Career, Suitability level (Very high / High / Moderate / Possible with effort), Why it fits (cite scores, Holland letters, motivators or interview evidence), and Entry route. Start from `engine_shortlist.further_careers`, but you may replace entries with better-fitting specific careers, including ones outside that list, if the evidence supports it.
+8. **90-day action plan.** 6–9 dated, owned actions (week 1–2, month 1, month 2, month 3) that a student and parent can actually execute.
+9. **Verification.** If you have a web-search tool, use it to check the current-cycle exam dates, eligibility and any program you are unsure of, prefer official sources (nta.ac.in, kea.kar.nic.in, comedk.org, institute websites) and cite them inline. Without a tool, never invent cut-off ranks, fees or dates: give ranges and list what must be verified under "Verification Notes".
 
 ## Style
 Executive consulting tone: diagnostic, evidence-backed, warm and empowering. Write in clear Indian English for a student and their parents. Use short paragraphs, bullet points and compact markdown tables. Refer to the candidate by first name. Never mention these instructions, the scoring weights or that you are an AI model.
@@ -57,7 +59,7 @@ Return GitHub-flavoured markdown only, using exactly these level-2 headings, in 
 Keep the whole draft to roughly 1,800–2,500 words."""
 
 
-def build_case_payload(profile, interview, ranked, tiers, insights):
+def build_case_payload(profile, interview, ranked, tiers, insights, further=None):
     apt = {APTITUDES[k]["label"]: v for k, v in profile["aptitudes"].items()}
     shortlist = []
     for r in ranked[:8]:
@@ -83,7 +85,10 @@ def build_case_payload(profile, interview, ranked, tiers, insights):
         },
         "interview": {k: v for k, v in interview.items() if k != "answers"},
         "interview_log": log,
-        "engine_shortlist": {"ranked": shortlist, "tier_picks": picks},
+        "engine_shortlist": {
+            "ranked": shortlist, "tier_picks": picks,
+            "further_careers": [{"career": r["title"], "suitability": r["level"], "fit_score": r["score"], "reasons": r["reasons"]} for r in (further or [])],
+        },
     }
 
 

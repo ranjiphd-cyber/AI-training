@@ -18,7 +18,8 @@ from engine.knowledge import (
 from engine.parser import empty_profile, extract_text, parse_report, riasec_from_code, sample_profile
 from engine.prompts import ADVISORY_SYSTEM_PROMPT, build_case_payload, build_user_message, run_synthesis
 from engine.questions import SECTIONS, SIGNALS, answer_effects, build_questions, candidate_guidance
-from engine.scoring import friction_points, pick_tiers, rank_pathways
+from engine.dossier import question_sheet_html
+from engine.scoring import friction_points, further_careers, pick_tiers, rank_pathways
 
 NAVY, GOLD, MUTED = "#1F3A5F", "#A8742A", "#B9C4D3"
 
@@ -211,12 +212,69 @@ with tabs[0]:
         st.rerun()
 
 # ----------------------------------------------------------------------------- shared computation
+INTAKE_WIDGETS = {
+    "stage": "stage", "stream": "stream", "marks": "marks", "ug_major": "ug", "current_role": "role", "experience": "exp",
+    "likes": "likes", "dislikes": "dislikes", "trait_notes": "tnotes", "geography": "geo", "budget": "budget",
+    "aspirations": "asp", "parent_aspirations": "pasp", "parent_notes": "pnotes", "constraints": "cons",
+    "observations": "obs", "confirmed_direction": "dir",
+}
+
+
+def sync_interview_widgets():
+    """Pull the latest Interview-tab widget values before scoring.
+
+    Those widgets render after the recommendations are computed, so without this
+    every edit would only show up one rerun later.
+    """
+    for field, name in INTAKE_WIDGETS.items():
+        if k(name) in ss:
+            I[field] = ss[k(name)]
+    suffix = f"__{ss.ver}"
+    for key in list(ss.keys()):
+        if not (isinstance(key, str) and key.endswith(suffix)):
+            continue
+        base = key[: -len(suffix)]
+        for prefix, field in (("resp_", "response"), ("sig_", "signal")):
+            if base.startswith(prefix):
+                ss.answers.setdefault(base[len(prefix):], {"response": "", "signal": "Not asked"})[field] = ss[key]
+
+
+sync_interview_widgets()
 tiers_guess = pick_tiers(rank_pathways(P, I), ss.overrides)
 questions = build_questions(P, I, tiers_guess)
 effects, insights = answer_effects(questions, ss.answers)
 ranked = rank_pathways(P, I, effects)
 tiers = pick_tiers(ranked, ss.overrides)
 ranked_by_id = {r["id"]: r for r in ranked}
+further = further_careers(ranked, tiers, 10)
+LEVEL_ICON = {"Very high": "🟢", "High": "🟢", "Moderate": "🟡", "Possible with effort": "🟠", "Low": "🔴"}
+
+
+def render_top_three(tiers):
+    cols = st.columns(3)
+    for col, (tier, pid) in zip(cols, tiers.items()):
+        r = ranked_by_id[pid]
+        col.metric(TIER_LABELS[tier][1], PATHWAY_BY_ID[pid]["title"].split(",")[0][:30], help=PATHWAY_BY_ID[pid]["title"])
+        col.caption(f"{LEVEL_ICON[r['level']]} Suitability: **{r['level']}** · {r['score']:.0f}/100")
+
+
+def render_further(items):
+    st.dataframe(
+        [{"#": i + 1, "Career": PATHWAY_BY_ID[r["id"]]["title"], "Example roles": ", ".join(PATHWAY_BY_ID[r["id"]]["roles"][:2]),
+          "Suitability": f"{LEVEL_ICON[r['level']]} {r['level']}", "Fit score": r["score"],
+          "Why": "; ".join(r["reasons"][:3]), "Watch-outs": "; ".join(r["cautions"][:2]) or "—"} for i, r in enumerate(items)],
+        width="stretch", hide_index=True,
+        column_config={"Fit score": st.column_config.ProgressColumn("Fit score", min_value=0, max_value=100, format="%.0f")},
+    )
+    for i, r in enumerate(items):
+        p = PATHWAY_BY_ID[r["id"]]
+        with st.expander(f"{i + 1}. {p['title']} — {r['level']} ({r['score']:.0f}/100)"):
+            c = st.columns(2)
+            c[0].markdown("**Why it suits**\n" + "\n".join(f"- {x}" for x in r["reasons"]) +
+                          ("\n\n**Watch-outs**\n" + "\n".join(f"- {x}" for x in r["cautions"]) if r["cautions"] else ""))
+            c[1].markdown(f"**Roles:** {', '.join(p['roles'])}  \n**Degrees:** {'; '.join(p['degrees'][:3])}  \n"
+                          f"**Entrance exams:** {', '.join(p['exams'][:4])}  \n**Top institutes (Karnataka):** {', '.join(p['inst_local'][:3])}  \n"
+                          f"**Pay (indicative):** {' → '.join(p['salary'])}")
 
 
 def plot_layout(fig, height):
@@ -281,8 +339,8 @@ with tabs[1]:
 
 # ----------------------------------------------------------------------------- ③ interview
 with tabs[2]:
-    sub = st.tabs(["Intake & baseline", "Question bank", "Live insights"])
-    with sub[0]:
+    sub = st.tabs(["❓ Questions to ask", "Intake & baseline", "Live insights", "🎯 Career suggestions"])
+    with sub[1]:
         c = st.columns(3)
         I["stage"] = c[0].selectbox("Life stage", LIFE_STAGES, index=LIFE_STAGES.index(I.get("stage") or LIFE_STAGES[1]), key=k("stage"))
         I["stream"] = c[1].text_input("Class 10/12 stream & board", I.get("stream", ""), placeholder="e.g. PCMB, CBSE", key=k("stream"))
@@ -317,11 +375,14 @@ with tabs[2]:
                                          placeholder="Body language, confidence, decision style, consistency with the report…", key=k("obs"))
         I["confirmed_direction"] = st.text_area("Confirmed direction / decisions agreed in session", I.get("confirmed_direction", ""), height=70, key=k("dir"))
 
-    with sub[1]:
+    with sub[0]:
         asked = sum(1 for q in questions if ss.answers.get(q["id"], {}).get("signal", "Not asked") != "Not asked")
         st.progress(asked / max(1, len(questions)), text=f"{asked} of {len(questions)} questions covered")
-        st.caption("Questions are generated from this candidate's scores, intake and current top pathways. "
-                   "Record what they say and mark the signal — scores, follow-ups and the dossier update instantly.")
+        st.caption("Questions are generated from this candidate's psychometric report, intake and current top pathways. "
+                   "Type what the candidate says and mark the signal — the career suggestions, follow-ups and dossier update instantly. "
+                   "Words they use (e.g. 'drones', 'hate coding', 'want to teach') are also read and factored into the suggestions.")
+        st.download_button("⬇ Printable question sheet", question_sheet_html(P, questions), file_name=f"{fname}_Question_Sheet.html",
+                           mime="text/html")
         for section in SECTIONS:
             qs = [q for q in questions if q["section"] == section]
             if not qs:
@@ -341,8 +402,12 @@ with tabs[2]:
                     if follow:
                         (st.error if a["signal"] == "Contradicts" else st.info)(f"↳ {follow}")
                     st.divider()
-        if st.button("Recalculate with latest answers", type="primary"):
-            st.rerun()
+
+    with sub[3]:
+        st.caption("Live recommendations from the psychometric report plus everything entered in this interview.")
+        render_top_three(tiers)
+        st.markdown("#### 10 more careers to consider")
+        render_further(further)
 
     with sub[2]:
         conf = [i for i in insights if i["signal"] == "Confirms"]
@@ -420,6 +485,10 @@ with tabs[4]:
             st.markdown("**Employers:** " + ", ".join(p["employers"]))
             st.markdown("**Pay (indicative):** " + " → ".join(p["salary"]))
 
+    st.markdown("### 10 more careers suitable for this candidate")
+    st.caption("Ranked by fit to the psychometric report and the interview input. Suitability: 🟢 Very high ≥85 · 🟢 High ≥75 · 🟡 Moderate ≥65 · 🟠 Possible with effort ≥55 · 🔴 Low.")
+    render_further(further)
+
     with st.expander("Full ranking with score components"):
         st.dataframe(
             [{"Pathway": r["title"], "Fit": r["score"], "Aptitude": round(r["components"]["aptitude"] * 100),
@@ -430,7 +499,7 @@ with tabs[4]:
 
 # ----------------------------------------------------------------------------- ⑥ dossier
 with tabs[5]:
-    payload = build_case_payload(P, I, ranked, tiers, insights)
+    payload = build_case_payload(P, I, ranked, tiers, insights, further)
     st.markdown("#### Strategic synthesis")
     st.caption("Generate a narrative with Claude (with live verification of exams and programs), or paste one from any Claude chat. "
                "Edit it freely — your edits are what goes into the dossier.")
@@ -455,7 +524,7 @@ with tabs[5]:
     ss.narrative = st.text_area("Synthesis narrative (markdown, editable)", ss.narrative, height=260, key=k("narr"),
                                 placeholder="Leave empty to use the built-in rule-based synthesis.")
 
-    html_doc = render_dossier(P, I, ranked, tiers, insights, ss.narrative, ss.summary)
+    html_doc = render_dossier(P, I, ranked, tiers, insights, ss.narrative, ss.summary, further)
     c = st.columns(3)
     c[0].download_button("⬇ Download dossier (HTML · print to PDF)", html_doc, file_name=f"{fname}_Career_Dossier.html",
                          mime="text/html", type="primary", width="stretch")
