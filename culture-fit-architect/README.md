@@ -12,10 +12,25 @@ Open `index.html` in any browser. No install or build is needed. Every input rec
 | **G1 · Organization** | CVF/OCAI (lived and espoused), Denison, Barrett entropy, Groysberg 8-style profile (current vs. target), internal engagement pulse (e.g., Glint), analyst data caveats, review sentiment (Glassdoor / AmbitionBox / Indeed / Kununu counts plus pasted text), leadership discourse, news signals, enterprise operating norms |
 | **G2 · Team subculture** | Load a unit from the case file's team library (business-unit diagnostics), team CVF, local norms (pace, risk, conflict, autonomy), manager style, interview transcripts, variance from the enterprise |
 | **G3 · Individual** | Hogan HPI / HDS / MVPI percentiles. Big Five, SHL OPQ32 or Korn Ferry KF4D can also be entered as Big Five domains and are mapped to HPI-equivalents. |
+| **⤒ Evidence & uploads** | Upload PDF / Word / PowerPoint / Excel / text files or paste text: psychometric reports (Hogan, Big Five/NEO, OPQ32, Korn Ferry), culture assessments (OCAI/CVF, Denison, Groysberg, Barrett, engagement pulses), reviews, leadership statements, interview transcripts. Each upload becomes a review card of proposed values that you can edit or untick before applying. Includes an evidence register and interview records, each with add / edit / delete. |
 | **G5 · Data audit & clarification** | Sources catalog, evidence confidence (High / Moderate / Low), contradiction flags, targeted clarifying questions |
 | **Report & export** | Live report preview, plus downloads: report `.html` (prints to PDF), report `.md`, scores `.csv`, and case `.json` save/load |
 
 The text-analysis helpers infer CVF profiles from leadership text and interview transcripts, and extract sentiment polarity and turnover themes from reviews.
+
+## Reading uploaded documents
+
+- **On claude.ai (hosted)**, Claude reads each document and proposes values. This uses the viewer's Claude usage and asks for consent on first use. Unknown fields and non-numeric values are discarded.
+- **Opened as a local file**, a built-in parser reads standard score layouts: Hogan HPI/HDS/MVPI, Big Five, OPQ32 stens rolled up to Big Five, CVF now/preferred, Denison, Groysberg current/target, Barrett entropy, review ratings. Everything else is kept as evidence text.
+- PDFs are read with pdf.js and Office files with JSZip, both loaded from cdnjs on first use. Scanned (image-only) PDFs have no text layer, so paste their text instead.
+- Interview records count toward team evidence (hiring manager, peers, direct reports, cross-functional). Their notes feed the team-culture cue analysis. Senior-leader interviews feed the leadership-discourse analysis.
+
+## Editing, roster and saving
+
+- Every score and text field is editable. **Reset** buttons clear an instrument or culture block and its evidence flag. Deletes ask for a second click to confirm.
+- The **candidate roster** (Individual tab) holds several candidates. Each keeps its own scores, and the dashboard and report compare them against the same team and organization.
+- The **team library** can save, load and delete units.
+- **Autosave:** to the viewer's own private storage on claude.ai, or to browser storage when opened locally. Choose a case in **Load case** to start over.
 
 ## Case files & team library
 

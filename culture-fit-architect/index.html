@@ -184,6 +184,20 @@ ul.clean li b { font-weight: 600; }
 .themes .trow .b { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
 .themes .trow .b i { display: block; height: 100%; background: var(--series-1); border-radius: 4px; }
 pre.ascii { font-family: var(--f-mono); font-size: .76rem; line-height: 1.35; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; margin: 0; white-space: pre; }
+.drop { display: block; border: 2px dashed var(--line); border-radius: var(--r); padding: 28px 16px; text-align: center; background: var(--panel); cursor: pointer; }
+.drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.linkbtn { background: none; border: 0; padding: 0; color: var(--accent); text-decoration: underline; cursor: pointer; font: inherit; text-align: left; }
+.rev { border: 1px solid var(--line); border-radius: var(--r); padding: 14px; background: var(--panel); }
+.rev textarea { min-height: 54px; }
+.stack > *, .rev { min-width: 0; }
+.rev .minihead h3 { overflow-wrap: anywhere; }
+.rev .chip, details.item > summary { white-space: normal; overflow-wrap: anywhere; }
+select { max-width: 100%; }
+.ledger label { flex-wrap: wrap; max-width: 100%; }
+details.item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; background: var(--panel); }
+details.item > summary { cursor: pointer; font-size: .88rem; }
+.btn.sm { padding: 3px 9px; font-size: .78rem; }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 8px; z-index: 60; max-width: min(560px, calc(100vw - 32px)); font-size: .86rem; box-shadow: var(--shadow); }
 iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); border-radius: var(--r); background: #fff; }
 .foot { font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
 .addlist li { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
@@ -206,6 +220,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
           <option value="blank">Blank engagement</option>
         </select>
       </label>
+      <span class="chip" id="saveStatus" role="status">○ Not saved yet</span>
       <button class="btn" id="themeBtn" type="button" aria-label="Toggle colour theme">◐ Theme</button>
       <button class="btn primary" id="quickReport" type="button">⤓ Download report</button>
     </div>
@@ -221,6 +236,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
     <button class="tab" role="tab" data-tab="org" aria-selected="false"><span class="gate">G1</span>Organization</button>
     <button class="tab" role="tab" data-tab="team" aria-selected="false"><span class="gate">G2</span>Team subculture</button>
     <button class="tab" role="tab" data-tab="ind" aria-selected="false"><span class="gate">G3</span>Individual</button>
+    <button class="tab" role="tab" data-tab="upl" aria-selected="false">⤒ Evidence &amp; uploads<span id="uplBadge"></span></button>
     <button class="tab" role="tab" data-tab="evid" aria-selected="false"><span class="gate">G5</span>Data audit &amp; clarification</button>
     <button class="tab" role="tab" data-tab="report" aria-selected="false">Report &amp; export</button>
   </nav>
@@ -285,6 +301,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
         <div id="values"></div>
       </div>
     </div>
+    <div class="card" id="cmpCard" hidden><h2>Candidate comparison</h2><p class="sub">Every candidate in the roster, scored against the same team and organization, best overall match first. Click a name to open that candidate.</p><div class="tbl-wrap" id="cmp"></div></div>
     <div class="g2">
       <div class="card"><h2>Priority interview probes</h2><p class="sub">Use these to verify the highest-risk hypotheses before deciding.</p><div id="probes"></div></div>
       <div class="card"><h2>90-day onboarding preview</h2><p class="sub">The full plan, with manager guidance, is in the downloadable report.</p><div id="onb"></div></div>
@@ -300,9 +317,9 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
     </div>
     <div class="g2">
       <div class="card">
-        <div class="minihead"><h3>Tier 1 · CVF / OCAI: current (lived) culture</h3></div>
+        <div class="minihead"><h3>Tier 1 · CVF / OCAI: current (lived) culture</h3><button class="btn sm" type="button" data-reset="org.cvfNow">Reset</button></div>
         <div class="sliders" id="cvfNow"></div>
-        <div class="minihead"><h3>Denison quadrants &amp; Barrett entropy</h3></div>
+        <div class="minihead"><h3>Denison quadrants &amp; Barrett entropy</h3><button class="btn sm" type="button" data-reset="org.denison">Reset</button></div>
         <div class="sliders" id="denison"></div>
       </div>
       <div class="card">
@@ -330,7 +347,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
     </div>
     <div class="g2">
       <div class="card">
-        <div class="minihead"><h3>Groysberg 8-style culture profile</h3><span class="muted" style="font-size:.78rem">Groysberg et al., HBR 2018</span></div>
+        <div class="minihead"><h3>Groysberg 8-style culture profile</h3><button class="btn sm" type="button" data-reset="org.groys">Reset</button></div>
         <p class="muted" style="font-size:.8rem;margin-bottom:8px">The current profile drives the lived-culture style match. The target profile drives the aspiration match. Each profile's shape is compared to the candidate's implied style preferences (from HPI/MVPI), so different scoring scales stay comparable.</p>
         <div class="g2" style="gap:12px"><div><b style="font-size:.8rem">Current</b><div class="sliders" id="groysCur"></div></div><div><b style="font-size:.8rem">Target / aspiration</b><div class="sliders" id="groysAsp"></div></div></div>
       </div>
@@ -350,11 +367,12 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
       <h2>Gate 2 · Team subculture model</h2>
       <p class="sub">Model the hiring team's micro-culture from interviews with the hiring manager, peers, and cross-functional partners. Record what you received.</p>
       <div class="ledger" id="teamLedger"></div>
-      <div class="row" id="libRow" style="margin-top:10px" hidden><label class="row" style="gap:8px;font-size:.85rem"><b>Load team subculture from case library</b><select id="libSelect"></select></label><span class="muted" style="font-size:.78rem">Sets team CVF, norms and evidence notes from a business-unit diagnostic in the loaded case file.</span></div>
+      <div class="ledger" id="libRow" style="margin-top:10px"><b style="font-size:.8rem">Team library:</b><select id="libSelect" aria-label="Load a unit from the team library"></select><input type="text" id="libName" placeholder="Unit name" aria-label="Unit name" style="min-width:180px"><button class="btn sm" type="button" id="libSave">Save current team as unit</button><button class="btn sm" type="button" id="libDel">Delete selected unit</button></div>
+      <p class="muted" style="font-size:.78rem;margin-top:6px">Choosing a unit loads its CVF profile, norms and evidence notes. Saving stores the current team settings under the name shown, and overwrites a unit with the same name.</p>
     </div>
     <div class="g2">
       <div class="card">
-        <div class="minihead"><h3>Team CVF profile</h3><button class="btn" type="button" id="inferTeam">Infer from transcripts</button></div>
+        <div class="minihead"><h3>Team CVF profile <button class="btn sm" type="button" data-reset="team.cvf">Reset</button></h3><button class="btn" type="button" id="inferTeam">Infer from transcripts</button></div>
         <div class="sliders" id="cvfTeam"></div>
         <div class="minihead"><h3>Local behavioral norms</h3></div>
         <div class="sliders" id="teamOps"></div>
@@ -376,22 +394,47 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
       <p class="sub">Enter percentile scores against the stated norm group. Hogan HPI is the default operating-style instrument. If you have Big Five / NEO-PI-R domain scores instead, switch to them and they are mapped to HPI-equivalents.</p>
       <div class="ledger" id="indLedger"></div>
     </div>
+    <div class="card">
+      <div class="minihead"><h3>Candidates</h3><span class="muted" id="candCount" style="font-size:.8rem"></span></div>
+      <div class="row"><select id="candSelect" aria-label="Active candidate" style="min-width:240px"></select><button class="btn" id="candSave" type="button">Save to roster</button><button class="btn" id="candNew" type="button">+ New candidate</button><button class="btn" id="candDup" type="button">Duplicate</button><button class="btn" id="candDel" type="button">Delete</button></div>
+      <p class="muted" style="font-size:.8rem;margin-top:6px">Each candidate keeps their own scores and notes. Name, role and level come from the Engagement strip. With two or more candidates in the roster, the dashboard compares them side by side against the same team and organization.</p>
+    </div>
     <div class="g3">
       <div class="card">
-        <div class="minihead"><h3 id="styleHead">Day-to-day operating style (HPI)</h3></div>
+        <div class="minihead"><h3 id="styleHead">Day-to-day operating style (HPI)</h3><button class="btn sm" type="button" data-reset="ind.style">Reset</button></div>
         <div class="sliders" id="hpi"></div>
         <div class="sliders" id="big5"></div>
       </div>
       <div class="card">
-        <div class="minihead"><h3>Derailers under stress (HDS)</h3></div>
+        <div class="minihead"><h3>Derailers under stress (HDS)</h3><button class="btn sm" type="button" data-reset="ind.hds">Reset</button></div>
         <div class="sliders" id="hds"></div>
       </div>
       <div class="card">
-        <div class="minihead"><h3>Core drivers &amp; values (MVPI)</h3></div>
+        <div class="minihead"><h3>Core drivers &amp; values (MVPI)</h3><button class="btn sm" type="button" data-reset="ind.mvpi">Reset</button></div>
         <div class="sliders" id="mvpi"></div>
         <div class="minihead"><h3>Assessor notes</h3></div>
         <textarea data-path="ind.notes" data-debounce aria-label="Assessor notes" placeholder="Debrief observations, OPQ32 / Korn Ferry highlights, reference-check themes…"></textarea>
       </div>
+    </div>
+  </section>
+
+  <!-- EVIDENCE & UPLOADS -->
+  <section data-panel="upl" class="stack" hidden>
+    <div class="card">
+      <h2>Upload evidence</h2>
+      <p class="sub">Upload psychometric reports (Hogan, Big Five/NEO, SHL OPQ32, Korn Ferry…), culture assessments (OCAI/CVF, Denison, Groysberg, Barrett, engagement pulses), employee reviews, leadership statements and interview transcripts, as PDF, Word, PowerPoint, Excel, text, Markdown, CSV or HTML. Nothing changes until you approve it.</p>
+      <label class="drop" id="drop"><input type="file" id="uplFile" multiple accept=".pdf,.docx,.pptx,.xlsx,.txt,.md,.csv,.tsv,.json,.html,.htm" hidden><b>Drop files here</b> or <span class="linkbtn">browse your computer</span></label>
+      <div class="row" style="margin-top:10px"><label class="row" style="gap:6px;white-space:nowrap"><input type="checkbox" id="aiOn"> Read with Claude</label><span class="muted" id="aiNote" style="font-size:.8rem;flex:1;min-width:220px"></span></div>
+      <p class="provisional" id="uplStatus" style="margin-top:10px" hidden></p>
+      <details style="margin-top:12px"><summary><b>Or paste text</b> <span class="muted">(interview notes, a report section, review excerpts)</span></summary>
+        <div class="field" style="margin-top:8px"><label for="pasteName">Name</label><input type="text" id="pasteName" placeholder="e.g., Interview: hiring manager, 3 Nov"></div>
+        <textarea id="pasteText" style="margin-top:6px;min-height:140px" aria-label="Pasted text" placeholder="Paste text…"></textarea>
+        <div class="row" style="margin-top:6px"><button class="btn" type="button" id="pasteAdd">Read pasted text</button></div></details>
+    </div>
+    <div class="card" id="queueCard" hidden><h2>Review extracted data</h2><p class="sub">Check each proposed value, edit it if needed, untick anything you don't want, then apply. The current value is shown for comparison.</p><div id="queue" class="stack"></div></div>
+    <div class="g2">
+      <div class="card"><div class="minihead"><h2>Evidence register</h2><button class="btn sm" type="button" id="docAdd">+ Add record</button></div><p class="sub">Every document applied to this workspace. Edit or delete records here. The register is printed in the report appendix.</p><div id="docList" class="stack" style="gap:8px"></div></div>
+      <div class="card"><div class="minihead"><h2>Interviews</h2><button class="btn sm" type="button" id="ivAdd">+ Add interview</button></div><p class="sub" id="ivCounts"></p><div id="ivList" class="stack" style="gap:8px"></div></div>
     </div>
   </section>
 
@@ -444,6 +487,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
   <p class="foot">Decision-support tool. Psychometric fit is one input to a structured, job-related selection process. Never use it as the sole basis for a hiring decision. Interpret Hogan, SHL, and NEO scores only under the publisher's qualification requirements and published norms. All example cases are fictional.</p>
 </div>
 <div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
 
 <script>
 (() => {
@@ -604,6 +648,7 @@ const blankCase = () => ({
   },
   provisional: false,
   teamLibrary: [],
+  docs: [], interviews: [], candidates: [], activeCand: null,
 });
 const PRESETS = {
   A: () => { const c = blankCase(); Object.assign(c.meta, { candidate: 'Priya Raman', role: 'Head of Digital Product', level: 'Senior leader', org: 'Meridian Trust Bank', team: 'Digital Ventures Squad', manager: 'Elena Fischer, Chief Digital Officer', assessor: 'C-Psych Advisory · Talent Diagnostics', req: 'MTB-DV-0417' });
@@ -749,9 +794,9 @@ function derailers(S, env, health) {
     .sort((a, b) => b.act - a.act);
 }
 function confidence(S, sent, teamVar, sayDo) {
-  const o = S.org.ledger, t = S.team.ledger, i = S.ind.ledger, flags = [], qs = [];
+  const o = S.org.ledger, t = teamLedger(S), i = S.ind.ledger, flags = [], qs = [];
   let org = Math.min(100, (o.survey ? 20 : 0) + (o.denison ? 10 : 0) + (o.barrett || o.groysberg ? 10 : 0) + (o.internal ? (S.org.internal.n >= 300 ? 10 : 5) : 0) + (o.reviews ? (revN(S.org) >= 50 ? 20 : 10) : 0) + (o.leadership ? 15 : 0) + (o.news ? 15 : 0));
-  let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(S.team.transcript).trim().length > 150 ? 20 : 0) + (t.bu ? 15 : 0);
+  let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(teamText(S)).trim().length > 150 ? 20 : 0) + (t.bu ? 15 : 0);
   team = Math.min(100, team);
   let ind = (i.hpi ? 35 : 0) + (i.hds ? 25 : 0) + (i.mvpi ? 25 : 0) + (String(S.ind.norm).trim() ? 15 : 0);
   const Q = (vec, q, why) => qs.push({ vec, q, why });
@@ -976,7 +1021,7 @@ function frictionClass(R) {
   return { prod, dest };
 }
 function sourcesCatalog(R) {
-  const S = R.S, o = S.org.ledger, t = S.team.ledger, i = S.ind.ledger, rows = [];
+  const S = R.S, o = S.org.ledger, t = teamLedger(S), i = S.ind.ledger, rows = [];
   const add = (tier, src, detail, ok, rigor) => rows.push({ tier, src, detail, ok, rigor });
   add('Organization', 'OCAI / Competing Values Framework', 'Current & preferred profile', o.survey, 'High: validated instrument');
   add('Organization', 'Denison Organizational Culture Survey', 'Four traits', o.denison, 'High: validated instrument');
@@ -986,11 +1031,12 @@ function sourcesCatalog(R) {
   for (const [k, l] of PLATFORMS) { const n = +S.org.platforms[k] || 0; add('Organization', `${l} reviews`, `n = ${n}`, o.reviews && n > 0 ? true : n === 0 && o.reviews && revN(S.org) > 0 ? null : false, n >= 100 ? 'Moderate: self-selected sample' : n >= 30 ? 'Low–Moderate: small sample' : 'Low: anecdotal'); }
   add('Organization', 'Leadership discourse', 'CEO letters, town halls, declared values', o.leadership, 'Moderate: espoused, not lived');
   add('Organization', 'News & public signals', SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'None flagged', o.news, 'Moderate: contextual');
-  add('Team', 'Business-unit culture diagnostic', S.team.ledger.bu ? 'Secondary BU-level data' : '—', S.team.ledger.bu, 'Moderate: unit average, not hiring team');
+  add('Team', 'Business-unit culture diagnostic', t.bu ? 'Secondary BU-level data' : '—', t.bu, 'Moderate: unit average, not hiring team');
   add('Team', 'Hiring-manager interview', t.manager ? 'n = 1' : '—', t.manager, 'Moderate: single senior view');
   add('Team', 'Peer interviews', `n = ${t.peers}`, t.peers > 0, t.peers >= 2 ? 'Moderate: triangulated' : 'Low: single view');
   add('Team', 'Direct-report interviews', `n = ${t.reports}`, t.reports > 0, 'Moderate: downward perspective');
   add('Team', 'Cross-functional interviews', `n = ${t.xfn}`, t.xfn > 0, 'Moderate: boundary perspective');
+  for (const d of S.docs || []) add(TARGETS[d.target] || 'Organization', `Uploaded: ${d.name}`, `${KINDS[d.kind] || d.kind}; ${d.applied?.length || 0} value(s) applied`, true, d.method === 'ai' ? 'Read by Claude, reviewed by assessor' : d.method === 'parser' ? 'Parsed, reviewed by assessor' : 'Assessor record');
   add('Individual', INSTR[S.ind.instrument], S.ind.norm || 'Norm group not stated', i.hpi, S.ind.instrument === 'hogan' ? 'High: normed percentiles' : 'Moderate: mapped via Big Five');
   add('Individual', 'Hogan Development Survey (HDS)', '11 derailer scales', i.hds, 'High: normed percentiles');
   add('Individual', 'Hogan MVPI', '10 motive scales', i.mvpi, 'High: normed percentiles');
@@ -1133,9 +1179,7 @@ function buildInputs() {
   $('#big5').innerHTML = BIG5.map(([k, l, h]) => sliderRow(`ind.big5.${k}`, l, h)).join('');
   $('#hds').innerHTML = HDS.map(h => sliderRow(`ind.hds.${h.k}`, h.n, h.cl)).join('');
   $('#mvpi').innerHTML = MVPI.map(([k, l]) => sliderRow(`ind.mvpi.${k}`, l)).join('');
-  const lib = S.teamLibrary || [];
-  $('#libRow').hidden = !lib.length;
-  $('#libSelect').innerHTML = '<option value="">Choose a unit…</option>' + lib.map((u, i) => `<option value="${i}" ${S.meta.team === u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('');
+  renderLibrary(); renderRoster(); renderEvidence(); renderQueue();
   for (const ta of $$('textarea[data-path]')) ta.value = getP(S, ta.dataset.path) || '';
   $('[data-path="provisional"]').checked = !!S.provisional;
   syncInstrument();
@@ -1145,6 +1189,7 @@ function syncInstrument() { const b = S.ind.instrument !== 'hogan'; $('#hpi').hi
 /* ============================== render ============================== */
 const statusChip = (label, [cls, ic]) => `<span class="chip st-${cls}"><span class="ic" aria-hidden="true">${ic}</span>${esc(label)}</span>`;
 function render() {
+  syncActiveCand();
   R = compute(S);
   for (const [id, base] of [['sumNow', 'org.cvfNow'], ['sumEsp', 'org.cvfEsp'], ['sumTeam', 'team.cvf']]) { const s = sumQ(getP(S, base)); $('#' + id).innerHTML = `Total: <b class="${Math.abs(s - 100) > 1 ? 'bad' : ''}">${s}</b> / 100`; }
   const hide = R.halted, pv = R.provisional ? ' <span class="tag" style="background:var(--warn-soft)">Provisional</span>' : '';
@@ -1177,8 +1222,8 @@ function render() {
   const sent = R.sent, th = Object.entries(sent.themes).sort((a, b) => b[1] - a[1]), tmax = Math.max(1, ...th.map(t => t[1]));
   $('#sentOut').innerHTML = sent.has ? `<div class="row" style="margin-bottom:8px">${statusChip(`Polarity ${sent.pol >= 0 ? '+' : ''}${sent.pol.toFixed(2)}`, sent.pol >= 0.2 ? ['good', '●'] : sent.pol > -0.2 ? ['warn', '▲'] : ['critical', '■'])}${statusChip(`Health index ${r0(R.health)}`, scoreStatus(R.health))}<span class="muted" style="font-size:.8rem">${sent.pos} positive / ${sent.neg} negative cues</span></div><div class="themes">${th.map(([k, v]) => `<div class="trow"><span>${k}</span><div class="b"><i style="width:${v / tmax * 100}%"></i></div><span class="mono">${v}</span></div>`).join('')}</div>`
     : `<span class="muted" style="font-size:.82rem">Paste review text to extract sentiment polarity and turnover themes. Health index (ratings only): ${r0(R.health)}.</span>`;
-  const lc = inferCvf(S.org.leaderText); $('#leaderCues').textContent = lc ? `Detected cues: Clan ${lc.counts.clan} · Adhocracy ${lc.counts.adhoc} · Market ${lc.counts.market} · Hierarchy ${lc.counts.hier}. Say–do gap vs lived culture: ${r0(R.sayDo)} pts.` : 'No culture cues detected yet.';
-  const tc = inferCvf(S.team.transcript), oc = Object.fromEntries(Object.keys(OPS_LEX).map(k => [k, countTerms(S.team.transcript, OPS_LEX[k])]));
+  const lc = inferCvf(leaderTextAll(S)); $('#leaderCues').textContent = lc ? `Detected cues: Clan ${lc.counts.clan} · Adhocracy ${lc.counts.adhoc} · Market ${lc.counts.market} · Hierarchy ${lc.counts.hier}. Say–do gap vs lived culture: ${r0(R.sayDo)} pts.` : 'No culture cues detected yet.';
+  const tt = teamText(S), tc = inferCvf(tt), oc = Object.fromEntries(Object.keys(OPS_LEX).map(k => [k, countTerms(tt, OPS_LEX[k])]));
   $('#teamCues').textContent = tc ? `Cues: Clan ${tc.counts.clan} · Adhocracy ${tc.counts.adhoc} · Market ${tc.counts.market} · Hierarchy ${tc.counts.hier} | pace ${oc.pace} · risk ${oc.risk} · conflict ${oc.conflict} · autonomy ${oc.autonomy}` : 'No cues detected yet.';
   $('#teamVar').innerHTML = `<table class="t"><thead><tr><th>Dimension</th><th class="num">Team</th><th class="num">Org</th><th class="num">Variance</th></tr></thead><tbody>${DIMS.map(d => { const v = R.team[d.k] - R.org[d.k]; return `<tr><td>${d.name}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num" style="font-weight:${Math.abs(v) >= 20 ? 700 : 400}">${v > 0 ? '+' : ''}${r0(v)}</td></tr>`; }).join('')}</tbody></table><p class="muted" style="font-size:.8rem;margin-top:6px">Mean absolute variance: ${r0(R.teamVar)} pts${R.teamVar > 18 ? '. This is a distinct subculture, so the hire must bridge both contexts.' : '.'}</p>`;
   // gate 5
@@ -1187,7 +1232,9 @@ function render() {
   $('#ascii').textContent = asciiMatrix(R);
   $('#flags').innerHTML = R.conf.flags.length ? `<ul class="clean">${R.conf.flags.map(([v, t]) => `<li><span class="tag">${v}</span>${esc(t)}</li>`).join('')}</ul>` : '<p class="muted">No contradictions detected across sources.</p>';
   $('#questions').innerHTML = R.conf.qs.length ? `<ul class="clean">${R.conf.qs.map((q, i) => `<li><span class="tag">${q.vec}</span><b>Q${i + 1}.</b> ${esc(q.q)}<div class="muted" style="font-size:.8rem;margin-top:3px">Why it matters: ${esc(q.why)}</div></li>`).join('')}</ul>` : '<p class="muted">Evidence is sufficient across all three vectors. No clarification needed.</p>';
+  renderCompare();
   if (currentTab === 'report') refreshPreview();
+  scheduleSave();
 }
 
 /* ============================== report builders ============================== */
@@ -1301,7 +1348,11 @@ ${S.ind.notes ? `<div class="call"><div class="h">Assessor notes</div>${esc(S.in
 
 <h2><span class="secno">APPX A</span>Verification interview probes</h2>
 <ol>${PB.map(p => `<li><span class="tag">${esc(p.tag)}</span><span style="color:#52607A;font-size:9pt">${esc(p.why)}</span><br>${esc(p.q)}</li>`).join('')}</ol>
-<h2><span class="secno">APPX B</span>Methodology &amp; limitations</h2>
+${(S.docs || []).length || (S.interviews || []).length ? `<h2 class="pb"><span class="secno">APPX B</span>Evidence register</h2>
+${(S.docs || []).length ? `<h3>Documents</h3><table class="t"><thead><tr><th>Document</th><th>Type</th><th>Read by</th><th>Summary &amp; key quotes</th></tr></thead><tbody>${S.docs.map(d => `<tr><td><b>${esc(d.name)}</b><br><span style="color:#52607A;font-size:8.5pt">${esc(d.added || '')} · ${esc(TARGETS[d.target] || '')}</span></td><td style="font-size:9pt">${esc(KINDS[d.kind] || d.kind)}</td><td style="font-size:9pt">${d.method === 'ai' ? 'Claude + assessor review' : d.method === 'parser' ? 'Parser + assessor review' : 'Assessor'}</td><td style="font-size:9pt">${esc(d.summary)}${d.quotes ? `<ul>${String(d.quotes).split('\n').filter(Boolean).map(q => `<li><i>"${esc(q)}"</i></li>`).join('')}</ul>` : ''}${d.applied?.length ? `<div style="color:#52607A">Applied: ${esc(d.applied.join(' · '))}</div>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
+${(S.interviews || []).length ? `<h3>Interviews</h3><table class="t"><thead><tr><th>Interviewee</th><th>Relation</th><th>Date</th><th>Notes (excerpt)</th></tr></thead><tbody>${S.interviews.map(v => `<tr><td>${esc(v.name || '—')}</td><td>${esc(REL[v.relation] || v.relation)}</td><td>${esc(v.date || '')}</td><td style="font-size:9pt">${esc(String(v.notes || '').slice(0, 600))}${String(v.notes || '').length > 600 ? '…' : ''}</td></tr>`).join('')}</tbody></table>` : ''}` : ''}
+${(S.candidates || []).length >= 2 ? `<h2><span class="secno">APPX C</span>Candidate comparison</h2><p class="lead">Every candidate in the roster, scored against the same team and organization.</p><table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th></tr></thead><tbody>${compareRows().map(({ c, r }) => `<tr><td><b>${esc(c.candidate)}</b><br><span style="color:#52607A;font-size:8.5pt">${esc(c.role || '')}</span></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${pill(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td style="font-size:9pt">${esc(r.rec)}${r.halted ? ' (evidence hold)' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td></tr>`).join('')}</tbody></table>` : ''}
+<h2><span class="secno">APPX ${(S.candidates || []).length >= 2 ? 'D' : (S.docs || []).length || (S.interviews || []).length ? 'C' : 'B'}</span>Methodology &amp; limitations</h2>
 <p><b>Model.</b> Organization, team, and candidate are projected onto eight axes: four Competing Values quadrants (Clan, Adhocracy, Market, Hierarchy) and four operating norms (decision velocity, risk tolerance, conflict directness, autonomy). Candidate coordinates are weighted composites of HPI (or OPQ32, KF4D, or NEO mapped through Big Five domains to HPI-equivalents), MVPI, and selected HDS scales. Axis fit = 100 − 1.3 × |gap|, weighted by environmental intensity (0.5–1.5).</p>
 <p><b>Indices.</b> Team synergy = 70% axis alignment + 15% manager-style fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career-velocity fit (with a Groysberg profile: 45% / 30% / 10% + 15% style-shape match). Overall = 50% team + 40% org + 10% derailer resilience. Derailer activation = HDS percentile × a context multiplier (0.6–1.4, plus a seniority uplift) based on organizational triggers. Organizational health blends ratings, psychological safety, management credibility, recommendation rate, review polarity, and Barrett entropy. Culture debt blends the say–do gap, the health deficit, and entropy.</p>
 <p><b>Evidence gating.</b> A diagnostic inquiry hold is triggered whenever any vector falls below 60% evidence confidence. Scores are released only once the gaps are clarified, or explicitly as provisional.</p>
@@ -1336,7 +1387,7 @@ function buildReportMD() {
   m += `### High-pressure vulnerabilities\n\n\`\`\`\n${R.der.map(d => `${pad(d.n, 13)}${asciiBar(d.score, 20)} ${pad(d.score, 4)}${pad(d.band, 9)} activation ${r0(d.act)}`).join('\n')}\n\`\`\`\n\n| Derailer | HDS | Activation | Organizational trigger |\n|---|---|---|---|\n${R.der.filter(d => d.act >= 55).map(d => `| ${d.n} | ${d.score} | ${r0(d.act)} | ${d.trig} |`).join('\n')}\n\n`;
   m += `### Friction classification\n\n**Productive friction**\n${ul(FC.prod) || '- None identified.'}\n\n**Destructive friction**\n${ul(FC.dest) || '- None above threshold.'}\n\n`;
   m += `## Phase 5: 30-60-90 day development blueprint\n\n**Days 1–30: Acculturation & psychological safety**\n${ul(P.p30)}\n\n_Enterprise landmines:_\n${ul(P.landmines)}\n\n**Days 31–60: Behavioral calibration**\n${ul(P.p60)}\n\n**Days 61–90: Impact & value realization**\n${ul(P.p90)}\n\n**Manager: do** ${P.doList.join('; ')}.  \n**Manager: avoid** ${P.avoid.join('; ')}.\n\n**Milestones**\n${ul(P.kpis)}\n\n`;
-  m += `## Appendix A: Verification probes\n\n${PB.map((p, i) => `${i + 1}. **[${p.tag}]** ${p.q} _(${p.why})_`).join('\n')}\n\n## Appendix B: Methodology & limitations\n\nTeam synergy = 70% axis alignment + 15% manager fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career velocity. Overall = 50% team + 40% org + 10% derailer resilience. These are decision-support indices, not validated predictive probabilities. Use them alongside competence evidence, monitor for adverse impact, and process psychometric data under applicable privacy law.\n`;
+  m += `## Appendix A: Verification probes\n\n${PB.map((p, i) => `${i + 1}. **[${p.tag}]** ${p.q} _(${p.why})_`).join('\n')}\n\n${(S.docs || []).length ? `## Appendix: Evidence register\n\n| Document | Type | Read by | Summary |\n|---|---|---|---|\n${S.docs.map(d => `| ${d.name} | ${KINDS[d.kind] || d.kind} | ${d.method} | ${String(d.summary).replace(/\n|\|/g, ' ')} |`).join('\n')}\n\n` : ''}${(S.interviews || []).length ? `**Interviews:** ${S.interviews.map(v => `${v.name || '—'} (${REL[v.relation] || v.relation}${v.date ? ', ' + v.date : ''})`).join('; ')}\n\n` : ''}${(S.candidates || []).length >= 2 ? `## Appendix: Candidate comparison\n\n| Candidate | Overall | Team | Org | Friction | Archetype | Recommendation |\n|---|---|---|---|---|---|---|\n${compareRows().map(({ c, r }) => `| ${c.candidate} | ${r0(r.overall)}% | ${r0(r.teamScore)}% | ${r0(r.orgScore)}% | ${r.fBand} | ${r.valueAdd} | ${r.rec} |`).join('\n')}\n\n` : ''}## Appendix: Methodology & limitations\n\nTeam synergy = 70% axis alignment + 15% manager fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career velocity. Overall = 50% team + 40% org + 10% derailer resilience. These are decision-support indices, not validated predictive probabilities. Use them alongside competence evidence, monitor for adverse impact, and process psychometric data under applicable privacy law.\n`;
   return m;
 }
 function buildCSV() {
@@ -1362,7 +1413,7 @@ function download(name, text, type) {
   if (!dlNs) return blobDownload(name, text, type);
   dlNs.save({ filename: name, data: text }).catch(e => {
     if (e?.code === 'declined' || e?.code === 'rate_limited') return;
-    if (e?.code === 'bad_request' || e?.code === 'rejected_extension') return alert(`Could not save ${name}: ${e.message || e.code}`);
+    if (e?.code === 'bad_request' || e?.code === 'rejected_extension') return toast(`Could not save ${name}: ${e.message || e.code}`);
     blobDownload(name, text, type);
   });
 }
@@ -1373,6 +1424,7 @@ let currentTab = 'dash', timer = null;
 function setTab(t) { currentTab = t; for (const b of $$('.tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t)); for (const p of $$('[data-panel]')) p.hidden = p.dataset.panel !== t; if (t === 'report') refreshPreview(); window.scrollTo({ top: $('.tabs').offsetTop - 10, behavior: 'smooth' }); }
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
+  if (e.target.closest('button')) markDirty();
   const g = e.target.closest('[data-goto]'); if (g) setTab(g.dataset.goto);
   if (e.target.id === 'goProv') { S.provisional = true; $('[data-path="provisional"]').checked = true; render(); }
   const n = e.target.closest('[data-normalize]'); if (n) { const base = n.dataset.normalize, c = getP(S, base), s = sumQ(c) || 1; const vals = QUADS.map(([k]) => Math.round(c[k] / s * 100)); vals[vals.indexOf(Math.max(...vals))] += 100 - vals.reduce((a, b) => a + b, 0); QUADS.forEach(([k], i) => c[k] = vals[i]); syncFields(base); render(); }
@@ -1385,16 +1437,18 @@ document.addEventListener('input', e => {
   setP(S, p, v);
   for (const o of $$(`[data-path="${p}"]`)) if (o !== el && o.type !== 'checkbox') o.value = v;
   if (p === 'ind.instrument') syncInstrument();
+  markDirty();
+  if (el.dataset.list) { const det = el.closest('details.item'), i = +det.dataset.i, L = el.dataset.list; det.querySelector('summary').innerHTML = L === 'docs' ? docSummary(S.docs[i]) : ivSummary(S.interviews[i]); if (L === 'interviews') renderIvCounts(); }
   if (el.hasAttribute('data-debounce')) { clearTimeout(timer); timer = setTimeout(render, 200); } else render();
 });
 document.addEventListener('change', e => { if (e.target.tagName === 'SELECT' && e.target.dataset.path) e.target.dispatchEvent(new Event('input', { bubbles: true })); });
 $('#libSelect').addEventListener('change', e => { const u = (S.teamLibrary || [])[+e.target.value]; if (!u) return;
   S.team.cvf = { ...u.cvf }; if (u.ops) S.team.ops = { ...u.ops }; S.team.transcript = u.evidence || ''; S.team.ledger.bu = true; S.meta.team = u.name; if (u.mgrStyle) S.team.mgrStyle = u.mgrStyle;
-  buildInputs(); render(); });
-$('#preset').addEventListener('change', e => { S = PRESETS[e.target.value](); buildInputs(); render(); });
-$('#inferEsp').addEventListener('click', () => { const r = inferCvf(S.org.leaderText); if (!r) return alert('Paste leadership discourse text first.'); S.org.cvfEsp = r.profile; S.org.ledger.leadership = true; syncFields('org'); render(); });
-$('#inferTeam').addEventListener('click', () => { const r = inferCvf(S.team.transcript); if (!r) return alert('Paste interview transcripts first.'); S.team.cvf = r.profile;
-  for (const k of Object.keys(OPS_LEX)) { const c = countTerms(S.team.transcript, OPS_LEX[k]); if (c) S.team.ops[k] = clamp(50 + c * 8); }
+  markDirty(); buildInputs(); render(); });
+$('#preset').addEventListener('change', e => { S = PRESETS[e.target.value](); markDirty(); buildInputs(); render(); });
+$('#inferEsp').addEventListener('click', () => { const r = inferCvf(leaderTextAll(S)); if (!r) return toast('Paste leadership discourse text first.'); S.org.cvfEsp = r.profile; S.org.ledger.leadership = true; syncFields('org'); render(); });
+$('#inferTeam').addEventListener('click', () => { const tt = teamText(S), r = inferCvf(tt); if (!r) return toast('Add interview transcripts first.'); S.team.cvf = r.profile;
+  for (const k of Object.keys(OPS_LEX)) { const c = countTerms(tt, OPS_LEX[k]); if (c) S.team.ops[k] = clamp(50 + c * 8); }
   syncFields('team'); render(); });
 $('#deriveOps').addEventListener('click', () => { const c = cvfDims(S.org.cvfNow), d = S.org.denison;
   S.org.ops = { pace: r0(clamp(0.4 * d.adapt + 0.3 * c.innov + 0.3 * c.results - 0.2 * (c.struct - 50))), risk: r0(clamp(0.4 * c.innov + 0.3 * d.adapt + 0.3 * (100 - c.struct))), conflict: r0(clamp(0.4 * c.results + 0.3 * d.inv + 0.3 * (100 - c.collab))), autonomy: r0(clamp(0.4 * d.inv + 0.3 * c.innov + 0.3 * (100 - c.struct))) };
@@ -1405,9 +1459,391 @@ $('#dlMd').addEventListener('click', () => download(`fitment-report-${slug()}.md
 $('#dlCsv').addEventListener('click', () => download(`fitment-scores-${slug()}.csv`, buildCSV(), 'text/csv'));
 $('#dlJson').addEventListener('click', () => download(`fitment-case-${slug()}.json`, JSON.stringify(S, null, 2), 'application/json'));
 $('#printPdf').addEventListener('click', () => { const f = $('#preview'); f.srcdoc = buildReportHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch { dlHtml(); } f.onload = null; }; });
-$('#loadJson').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { const data = JSON.parse(await file.text()); const base = blankCase();
-  const merge = (a, b) => { for (const k of Object.keys(b)) { if (Array.isArray(b[k])) a[k] = b[k]; else if (a[k] && typeof a[k] === 'object' && typeof b[k] === 'object') merge(a[k], b[k]); else if (k in a) a[k] = b[k]; } return a; };
-  S = merge(base, data); buildInputs(); render(); } catch { alert('This file is not a valid case JSON.'); } e.target.value = ''; });
+$('#loadJson').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { S = mergeInto(blankCase(), JSON.parse(await file.text())); markDirty(); buildInputs(); render(); toast(`Loaded ${file.name}.`); } catch { toast('This file is not a valid case JSON.'); } e.target.value = ''; });
+/* ============================== evidence, uploads & workspace ============================== */
+const uid = () => Math.random().toString(36).slice(2, 10);
+const clone = o => JSON.parse(JSON.stringify(o));
+function mergeInto(a, b) { for (const k of Object.keys(b || {})) { if (Array.isArray(b[k])) a[k] = b[k]; else if (b[k] && a[k] && typeof a[k] === 'object' && typeof b[k] === 'object') mergeInto(a[k], b[k]); else if (k in a) a[k] = b[k]; } return a; }
+function toast(msg, ms = 4200) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, ms); }
+// two-step confirmation without window.confirm (blocked in some sandboxed views)
+function armed(btn) { if (btn.dataset.armed === '1') return true; const label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = 'Click again to confirm'; setTimeout(() => { btn.dataset.armed = ''; btn.textContent = label; }, 3000); return false; }
+
+const REL = { hiring_manager: 'Hiring manager', peer: 'Peer', direct_report: 'Direct report', cross_functional: 'Cross-functional partner', candidate: 'Candidate', reference: 'Reference', leadership: 'Senior leader', other: 'Other' };
+const TEAM_REL = ['hiring_manager', 'peer', 'direct_report', 'cross_functional'];
+const KINDS = { hogan: 'Hogan (HPI / HDS / MVPI)', big5: 'Big Five / NEO-PI-R', opq32: 'SHL OPQ32', kf4d: 'Korn Ferry KF4D', other_psychometric: 'Other psychometric', culture_survey: 'Culture survey (CVF / OCAI / Denison)', groysberg: 'Groysberg culture profile', barrett: 'Barrett values assessment', employee_reviews: 'Employee reviews', internal_pulse: 'Internal engagement pulse', leadership: 'Leadership statements', news: 'News / public signals', interview: 'Interview transcript / notes', other: 'Other document' };
+const TARGETS = { individual: 'Individual', team: 'Team', organization: 'Organization' };
+
+function teamLedger(S) {
+  const L = S.team.ledger, iv = S.interviews || [], n = r => iv.filter(i => i.relation === r).length;
+  return { manager: !!L.manager || n('hiring_manager') > 0, peers: Math.max(+L.peers || 0, n('peer')), reports: Math.max(+L.reports || 0, n('direct_report')), xfn: Math.max(+L.xfn || 0, n('cross_functional')), bu: !!L.bu };
+}
+const teamText = S => [S.team.transcript, ...(S.interviews || []).filter(i => TEAM_REL.includes(i.relation)).map(i => i.notes)].filter(Boolean).join('\n\n');
+const leaderTextAll = S => [S.org.leaderText, ...(S.interviews || []).filter(i => i.relation === 'leadership').map(i => i.notes)].filter(Boolean).join('\n\n');
+
+/* ---------- field registry: every value an upload may propose ---------- */
+const FIELDS = [];
+const addF = (path, label, group, min = 0, max = 100) => FIELDS.push({ path, label, group, min, max });
+HPI.forEach(([k, l]) => addF(`ind.hpi.${k}`, `HPI ${l}`, 'hpi'));
+HDS.forEach(h => addF(`ind.hds.${h.k}`, `HDS ${h.n}`, 'hds'));
+MVPI.forEach(([k, l]) => addF(`ind.mvpi.${k}`, `MVPI ${l}`, 'mvpi'));
+BIG5.forEach(([k, l]) => addF(`ind.big5.${k}`, `Big Five ${l} (percentile; N = neuroticism)`, 'big5'));
+QUADS.forEach(([k, l]) => { addF(`org.cvfNow.${k}`, `Organization CVF lived/current · ${l}`, 'cvfNow'); addF(`org.cvfEsp.${k}`, `Organization CVF preferred/espoused · ${l}`, 'cvfEsp'); addF(`team.cvf.${k}`, `Team CVF · ${l}`, 'teamCvf'); });
+DEN.forEach(([k, l]) => addF(`org.denison.${k}`, `Denison ${l}`, 'denison'));
+GROYS.forEach(([k, l]) => { addF(`org.groys.cur.${k}`, `Groysberg current · ${l}`, 'groys'); addF(`org.groys.asp.${k}`, `Groysberg target/aspired · ${l}`, 'groys'); });
+OPS.forEach(([k, l]) => { addF(`org.ops.${k}`, `Organization norm · ${l} (0-100)`, 'orgOps'); addF(`team.ops.${k}`, `Team norm · ${l} (0-100)`, 'teamOps'); });
+addF('org.barrett.entropy', 'Barrett cultural entropy %', 'barrett', 0, 60);
+addF('org.rating', 'Average employee review rating (1-5)', 'reviews', 1, 5);
+PLATFORMS.forEach(([k, l]) => addF(`org.platforms.${k}`, `${l} review count`, 'reviews', 0, 1e7));
+addF('org.psych', 'Psychological safety (1-5)', 'reviews', 1, 5);
+addF('org.cred', 'Management credibility (1-5)', 'reviews', 1, 5);
+addF('org.recommend', 'Recommend-to-a-friend %', 'reviews');
+addF('org.internal.n', 'Internal pulse respondents (n)', 'internal', 0, 1e7);
+const FIELD_BY = Object.fromEntries(FIELDS.map(f => [f.path, f]));
+const TEXT_SET = { 'meta.candidate': 'Candidate name', 'meta.role': 'Role', 'ind.norm': 'Norm group', 'org.internal.name': 'Internal survey name' };
+const TEXT_APPEND = { 'org.reviewText': 'Review excerpts', 'org.leaderText': 'Leadership discourse', 'org.newsNotes': 'News & public signals', 'org.internal.notes': 'Internal pulse notes', 'ind.notes': 'Assessor notes', 'org.dataNotes': 'Analyst data caveats', 'org.barrett.values': 'Barrett values' };
+const GROUP_LEDGER = { hpi: ['ind.ledger.hpi', 'Operating-style assessment received'], big5: ['ind.ledger.hpi', 'Operating-style assessment received'], hds: ['ind.ledger.hds', 'HDS derailers received'], mvpi: ['ind.ledger.mvpi', 'MVPI values received'], cvfNow: ['org.ledger.survey', 'CVF/OCAI survey received'], denison: ['org.ledger.denison', 'Denison survey received'], groys: ['org.ledger.groysberg', 'Groysberg profile received'], barrett: ['org.ledger.barrett', 'Barrett assessment received'], reviews: ['org.ledger.reviews', 'Employee reviews received'], internal: ['org.ledger.internal', 'Internal pulse received'] };
+const KIND_LEDGER = { leadership: ['org.ledger.leadership', 'Leadership discourse received'], news: ['org.ledger.news', 'News / public signals received'], employee_reviews: ['org.ledger.reviews', 'Employee reviews received'], internal_pulse: ['org.ledger.internal', 'Internal pulse received'] };
+
+/* ---------- reading files ---------- */
+const LIBS = { pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js', pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js', zip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js' };
+const scriptCache = {};
+function loadScript(url) { return scriptCache[url] ||= new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { delete scriptCache[url]; rej(new Error('Could not load a reader library (check your connection).')); }; document.head.appendChild(s); }); }
+async function pdfText(buf) {
+  await loadScript(LIBS.pdf); await loadScript(LIBS.pdfWorker); // worker script defines globalThis.pdfjsWorker, so pdf.js runs it in-page
+  const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const doc = await lib.getDocument({ data: buf }).promise, out = [];
+  for (let p = 1; p <= doc.numPages; p++) { const c = await (await doc.getPage(p)).getTextContent(); out.push(c.items.map(i => i.str + (i.hasEOL ? '\n' : ' ')).join('')); }
+  return out.join('\n\n');
+}
+const xmlDoc = s => new DOMParser().parseFromString(s, 'application/xml');
+const kids = (el, name) => [...el.children].filter(c => c.localName === name);
+function ooText(el, para, run) { // paragraphs & tables from WordprocessingML / DrawingML
+  const lines = [];
+  const walk = node => { for (const c of node.children) {
+    if (c.localName === 'tbl') { for (const tr of c.getElementsByTagNameNS('*', 'tr')) lines.push([...tr.children].filter(x => x.localName === 'tc').map(tc => [...tc.getElementsByTagNameNS('*', run)].map(t => t.textContent).join('').trim()).join(' | ')); }
+    else if (c.localName === para) { const t = [...c.getElementsByTagNameNS('*', run)].map(t => t.textContent).join(''); if (t.trim()) lines.push(t); }
+    else walk(c); } };
+  walk(el); return lines.join('\n');
+}
+async function zipText(buf, ext) {
+  await loadScript(LIBS.zip); const z = await window.JSZip.loadAsync(buf);
+  if (ext === 'docx') return ooText(xmlDoc(await z.file('word/document.xml').async('string')).documentElement, 'p', 't');
+  if (ext === 'pptx') { const slides = Object.keys(z.files).filter(f => /^ppt\/slides\/slide\d+\.xml$/.test(f)).sort((a, b) => +a.match(/\d+/)[0] - +b.match(/\d+/)[0]);
+    const out = []; for (const f of slides) out.push(`--- Slide ${f.match(/\d+/)[0]} ---\n` + ooText(xmlDoc(await z.file(f).async('string')).documentElement, 'p', 't')); return out.join('\n'); }
+  if (ext === 'xlsx') { const ss = z.file('xl/sharedStrings.xml') ? [...xmlDoc(await z.file('xl/sharedStrings.xml').async('string')).getElementsByTagNameNS('*', 'si')].map(si => [...si.getElementsByTagNameNS('*', 't')].map(t => t.textContent).join('')) : [];
+    const out = []; for (const f of Object.keys(z.files).filter(f => /^xl\/worksheets\/sheet\d+\.xml$/.test(f)).sort()) { out.push(`--- ${f.split('/').pop()} ---`);
+      for (const row of xmlDoc(await z.file(f).async('string')).getElementsByTagNameNS('*', 'row')) out.push(kids(row, 'c').map(c => { const t = c.getAttribute('t'), v = kids(c, 'v')[0]?.textContent ?? ''; return t === 's' ? ss[+v] ?? '' : t === 'inlineStr' ? c.textContent : v; }).join(' | ')); }
+    return out.join('\n'); }
+  throw new Error('Unsupported Office file.');
+}
+async function fileText(file) {
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if (['txt', 'md', 'csv', 'tsv', 'json', 'rtf', 'log'].includes(ext) || file.type.startsWith('text/')) return file.text();
+  if (ext === 'html' || ext === 'htm') { const d = new DOMParser().parseFromString(await file.text(), 'text/html'); return d.body?.innerText || d.body?.textContent || ''; }
+  if (ext === 'pdf') return pdfText(await file.arrayBuffer());
+  if (['docx', 'pptx', 'xlsx'].includes(ext)) return zipText(await file.arrayBuffer(), ext);
+  if (['doc', 'ppt', 'xls'].includes(ext)) throw new Error(`.${ext} (old Office format) cannot be read. Save it as .${ext}x or PDF and upload again.`);
+  throw new Error(`.${ext} files are not supported. Use PDF, Word, PowerPoint, Excel or text.`);
+}
+
+/* ---------- built-in parser (works offline; Claude reads documents better) ---------- */
+const NUM = '(\\d{1,3}(?:\\.\\d+)?)';
+const SYN = {
+  hpi: { adj: 'adjustment', amb: 'ambition', soc: 'sociability', ips: 'interpersonal sensitivity', pru: 'prudence', inq: 'inquisitive', lrn: 'learning approach' },
+  hds: { excitable: 'excitable', skeptical: 'skeptical|sceptical', cautious: 'cautious', reserved: 'reserved', leisurely: 'leisurely', bold: 'bold', mischievous: 'mischievous', colorful: 'colou?rful', imaginative: 'imaginative', diligent: 'diligent', dutiful: 'dutiful' },
+  mvpi: { rec: 'recognition', pow: 'power', hed: 'hedonism', alt: 'altruistic', aff: 'affiliation', tra: 'tradition', sec: 'security', com: 'commerce', aes: 'aesthetics', sci: 'science' },
+  big5: { O: 'openness(?: to experience)?', C: 'conscientiousness', E: 'extra[vo]ersion', A: 'agreeableness', N: 'neuroticism' },
+  denison: { inv: 'involvement', cons: 'consistency', adapt: 'adaptability', mission: 'mission' },
+  cvf: { clan: 'clan', adhoc: 'adhocracy', market: 'market', hier: 'hierarchy' },
+  groys: { caring: 'caring', purpose: 'purpose', learning: 'learning', enjoyment: 'enjoyment', results: 'results', authority: 'authority', safety: 'safety', order: 'order' },
+};
+const OPQ = { E: ['persuasive', 'controlling', 'outspoken', 'outgoing', 'affiliative', 'socially confident'], O: ['conceptual', 'innovative', 'variety seeking', '-conventional'], C: ['forward thinking', 'detail conscious', 'conscientious', 'rule following', 'achieving'], A: ['modest', 'democratic', 'caring', 'trusting', '-competitive'], N: ['worrying', '-relaxed', '-tough minded', '-optimistic'] };
+const STEN_PCT = [0, 1, 4, 11, 23, 40, 60, 77, 89, 96, 99];
+function numAfter(text, names, two = false) {
+  const re = new RegExp(`(?:^|[^a-z])(?:${names})(?![a-z])[^\\d\\n]{0,40}?${NUM}${two ? `[^\\d\\n]{1,30}?${NUM}` : ''}`, 'i');
+  const m = text.match(re); if (!m) return null; const a = +m[1], b = two ? +m[2] : null;
+  return a <= 100 && (b === null || b <= 100) ? (two ? [a, b] : a) : null;
+}
+function detectKind(text, name) {
+  const t = (name + '\n' + text.slice(0, 20000)).toLowerCase(), sc = {};
+  const add = (k, re, w = 1) => { sc[k] = (sc[k] || 0) + ((t.match(re) || []).length * w); };
+  add('hogan', /hogan|\bhpi\b|\bhds\b|\bmvpi\b|personality inventory|development survey|motives,? values/g, 3);
+  add('big5', /big five|neo-?pi|five[- ]factor|\bocean\b/g, 3); add('opq32', /opq32|\bopq\b|\bshl\b/g, 3); add('kf4d', /korn ferry|kf4d/g, 3);
+  add('culture_survey', /competing values|\bocai\b|adhocracy|denison/g, 2); add('groysberg', /groysberg|culture styles?/g, 2); add('barrett', /barrett|cultural entropy/g, 3);
+  add('employee_reviews', /glassdoor|ambitionbox|kununu|indeed|reviews?\b/g, 1); add('internal_pulse', /glint|gallup|qualtrics|pulse survey|engagement survey|favou?rab/g, 1);
+  add('interview', /interview|transcript|\binterviewer\b|^q:|\nq:/g, 2); add('leadership', /\bceo\b|town hall|annual report|our vision|chairman|letter to/g, 1); add('news', /press release|announced|reported|news/g, 0.5);
+  const best = Object.entries(sc).sort((a, b) => b[1] - a[1])[0];
+  return best && best[1] > 0 ? best[0] : 'other';
+}
+const kindTarget = k => ['hogan', 'big5', 'opq32', 'kf4d', 'other_psychometric'].includes(k) ? 'individual' : k === 'interview' ? 'team' : 'organization';
+function relationOf(text, name) {
+  const t = (name + ' ' + text.slice(0, 1500)).toLowerCase();
+  return /hiring manager/.test(t) ? 'hiring_manager' : /direct report|reportee/.test(t) ? 'direct_report' : /cross[- ]functional|stakeholder|partner/.test(t) ? 'cross_functional' : /\bpeer|colleague/.test(t) ? 'peer'
+    : /reference/.test(t) ? 'reference' : /candidate/.test(t) ? 'candidate' : /\b(ceo|md|cxo|president|chief|head of)\b/.test(t) ? 'leadership' : 'other';
+}
+function keyQuotes(text, n = 4) {
+  const cues = [...LEX.pos, ...LEX.neg, ...Object.values(CVF_LEX).flat()];
+  return text.replace(/\s+/g, ' ').split(/(?<=[.!?])\s+/).filter(s => s.length > 40 && s.length < 260).map(s => [s, countTerms(s, cues)]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, n).map(x => x[0]);
+}
+function parseDoc(text, name) {
+  const kind = detectKind(text, name), values = {}, notes = [], textOut = {};
+  const grab = (group, prefix, two) => { for (const [k, names] of Object.entries(SYN[group])) { const v = numAfter(text, names, two); if (v !== null) { if (two) { values[`${prefix[0]}.${k}`] = v[0]; values[`${prefix[1]}.${k}`] = v[1]; } else values[`${prefix}.${k}`] = v; } } };
+  if (kind === 'hogan') { grab('hpi', 'ind.hpi'); grab('hds', 'ind.hds'); grab('mvpi', 'ind.mvpi'); }
+  if (kind === 'big5' || kind === 'kf4d') { grab('big5', 'ind.big5'); const stab = numAfter(text, 'emotional stability'); if (stab !== null && values['ind.big5.N'] === undefined) { values['ind.big5.N'] = 100 - stab; notes.push('Neuroticism derived as 100 − Emotional Stability.'); } }
+  if (kind === 'opq32') { const sten = {}; for (const list of Object.values(OPQ)) for (const s of list) { const v = numAfter(text, s.replace('-', '')); if (v !== null && v <= 10) sten[s.replace('-', '')] = v; }
+    for (const [d, list] of Object.entries(OPQ)) { const vals = list.map(s => { const v = sten[s.replace('-', '')]; return v === undefined ? null : s.startsWith('-') ? 11 - v : v; }).filter(v => v !== null);
+      if (vals.length >= 2) values[`ind.big5.${d}`] = STEN_PCT[Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)]; }
+    if (Object.keys(values).length) notes.push('OPQ32 stens were rolled up to approximate Big Five domains and converted to percentiles. Treat them as indicative.'); }
+  if (kind === 'culture_survey') { const two = /prefer|desired|future/i.test(text); grab('cvf', two ? ['org.cvfNow', 'org.cvfEsp'] : 'org.cvfNow', two); grab('denison', 'org.denison'); }
+  if (kind === 'groysberg') { const two = /target|aspir|desired/i.test(text); grab('groys', two ? ['org.groys.cur', 'org.groys.asp'] : 'org.groys.cur', two); }
+  if (kind === 'barrett') { const e = numAfter(text, 'entropy'); if (e !== null) values['org.barrett.entropy'] = e; }
+  if (kind === 'employee_reviews') { const r = text.match(/(\d\.\d)\s*(?:\/\s*5|★|stars?|out of 5)/i); if (r) values['org.rating'] = +r[1]; const rec = (text.match(/(\d{1,3})\s*%[^.\n]{0,25}recommend/i) || [])[1] ?? numAfter(text, 'recommend'); if (rec !== null && +rec <= 100) values['org.recommend'] = +rec; textOut['org.reviewText'] = text.slice(0, 12000); }
+  if (kind === 'leadership') textOut['org.leaderText'] = text.slice(0, 12000);
+  if (kind === 'news') textOut['org.newsNotes'] = text.slice(0, 4000);
+  if (kind === 'internal_pulse') textOut['org.internal.notes'] = text.slice(0, 4000);
+  const cand = (text.slice(0, 3000).match(/(?:[Cc]andidate|[Pp]articipant|[Nn]ame|[Pp]repared for|[Aa]ssessee)[ \t]*[:\-][ \t]*([A-Z][\w.'-]+(?:[ \t][A-Z][\w.'-]+){0,3})/) || [])[1] || null;
+  const norm = (text.match(/norm(?:\s*group)?\s*[:\-]\s*([^\n|]{3,80})/i) || [])[1]?.trim() || null;
+  const nv = Object.keys(values).length;
+  const summary = `${KINDS[kind]} detected by the built-in parser${nv ? `; ${nv} score(s) found` : ''}. ${text.replace(/\s+/g, ' ').slice(0, 280)}…`;
+  if (!nv && ['hogan', 'big5', 'opq32', 'kf4d', 'culture_survey', 'groysberg'].includes(kind)) notes.push('No scores were recognised in this layout. With Claude available, use "Read with Claude", or enter the scores manually.');
+  return { kind, target: kindTarget(kind), summary, quotes: keyQuotes(text), candidateName: cand, normGroup: norm, values, text: textOut, interview: kind === 'interview' ? { interviewee: ((text.match(/interviewee\s*[:\-]\s*([^\n|]{2,80})/i) || [])[1] || name.replace(/\.[^.]+$/, '')).split(/,|\(|\.\s|\s-\s/)[0].trim(), relation: relationOf(text, name), date: (text.match(/date\s*[:\-]\s*(\d{4}-\d{2}-\d{2})/i) || [])[1] || null } : null, notes };
+}
+
+/* ---------- Claude reads the document (hosted claude.ai views) ---------- */
+let sampleFn = null;
+function aiPrompt(text, name) {
+  const fl = FIELDS.map(f => `${f.path}: ${f.label} (${f.min}-${f.max})`).join('\n');
+  return `You extract structured data from a document for an organizational-psychology culture-fit tool. Reply with ONLY one JSON object:
+{"kind": one of ${JSON.stringify(Object.keys(KINDS))},
+ "target": "individual" | "team" | "organization",
+ "summary": "3-5 sentence factual summary of what the document shows",
+ "quotes": ["up to 5 short verbatim quotes that reveal culture, behaviour or risk"],
+ "candidateName": string or null, "normGroup": string or null,
+ "values": {"<field key>": number},
+ "text": {"<text key>": "text to add to that field"},
+ "interview": null or {"interviewee": string, "relation": one of ${JSON.stringify(Object.keys(REL))}, "date": "YYYY-MM-DD" or null},
+ "notes": ["conversions you made, caveats, data-quality concerns"]}
+Rules:
+- Report only numbers the document states, or standard conversions of them: sten 1-10 to percentile (1:1, 2:4, 3:11, 4:23, 5:40, 6:60, 7:77, 8:89, 9:96, 10:99); T-score to percentile via the normal distribution. Never invent or guess values.
+- Ratings on 1-5 scales stay on 1-5 for the 1-5 fields. Culture quadrant scores may be raw 0-100 scores; the tool normalizes them.
+- SHL OPQ32 / Korn Ferry / other instruments: fill ind.big5.* only if the report states Big Five domains or a clear documented rollup exists; explain any rollup in notes.
+- Interviews: set "interview"; fill team.ops.* or team.cvf.* only when the interview clearly describes pace, risk appetite, conflict norms, autonomy or culture emphasis, and justify each in notes.
+- Employee reviews: put representative excerpts (max 3000 characters) in text["org.reviewText"]. Leadership statements go in text["org.leaderText"]. News goes in text["org.newsNotes"]. Assessor or debrief observations about a person go in text["ind.notes"].
+Field keys:
+${fl}
+Text keys: ${Object.keys(TEXT_APPEND).join(', ')}
+Document name: ${name}
+Document text:
+"""
+${text.slice(0, 150000)}
+"""`;
+}
+async function aiDoc(text, name) {
+  const r = await sampleFn.json(aiPrompt(text, name));
+  if (!r || typeof r !== 'object') throw { code: 'invalid_json' };
+  const out = { kind: KINDS[r.kind] ? r.kind : 'other', target: TARGETS[r.target] ? r.target : kindTarget(r.kind), summary: String(r.summary || ''), quotes: Array.isArray(r.quotes) ? r.quotes.map(String).slice(0, 6) : [],
+    candidateName: r.candidateName ? String(r.candidateName) : null, normGroup: r.normGroup ? String(r.normGroup) : null, values: {}, text: {}, notes: Array.isArray(r.notes) ? r.notes.map(String) : [], interview: null };
+  for (const [k, v] of Object.entries(r.values || {})) if (FIELD_BY[k] && Number.isFinite(+v)) out.values[k] = +v;
+  for (const [k, v] of Object.entries(r.text || {})) if (TEXT_APPEND[k] && String(v).trim()) out.text[k] = String(v);
+  if (r.interview && typeof r.interview === 'object') out.interview = { interviewee: String(r.interview.interviewee || name), relation: REL[r.interview.relation] ? r.interview.relation : 'other', date: r.interview.date || null };
+  return out;
+}
+
+/* ---------- proposals & review ---------- */
+const queue = [];
+function toProposal(ex, name, method, text) {
+  const ch = [];
+  for (const [path, v] of Object.entries(ex.values)) { const f = FIELD_BY[path]; ch.push({ path, label: f.label, type: 'num', value: Math.round(clamp(v, f.min, f.max) * 10) / 10, on: true }); }
+  const groups = new Set(Object.keys(ex.values).map(p => FIELD_BY[p].group)), flags = new Map();
+  for (const g of groups) if (GROUP_LEDGER[g]) flags.set(...GROUP_LEDGER[g]);
+  if (KIND_LEDGER[ex.kind]) flags.set(...KIND_LEDGER[ex.kind]);
+  for (const [path, label] of flags) ch.push({ path, label: `Evidence: ${label}`, type: 'bool', value: true, on: true });
+  if (groups.has('hpi')) ch.push({ path: 'ind.instrument', label: 'Operating-style instrument', type: 'text', value: 'hogan', on: true });
+  else if (groups.has('big5')) ch.push({ path: 'ind.instrument', label: 'Operating-style instrument', type: 'text', value: ['opq32', 'kf4d'].includes(ex.kind) ? ex.kind : 'big5', on: true });
+  if (ex.candidateName && ex.target === 'individual') ch.push({ path: 'meta.candidate', label: TEXT_SET['meta.candidate'], type: 'text', value: ex.candidateName, on: !S.meta.candidate || /illustrative/i.test(S.meta.candidate) });
+  if (ex.normGroup && ex.target === 'individual') ch.push({ path: 'ind.norm', label: TEXT_SET['ind.norm'], type: 'text', value: ex.normGroup, on: true });
+  for (const [path, v] of Object.entries(ex.text)) ch.push({ path, label: `Add to ${TEXT_APPEND[path]}`, type: 'append', value: v, on: true });
+  return { id: uid(), name, method, kind: ex.kind, target: ex.target, summary: ex.summary, quotes: ex.quotes.join('\n'), notes: ex.notes, changes: ch, excerpt: text.slice(0, 6000), chars: text.length,
+    interview: ex.interview ? { ...ex.interview, notes: text.slice(0, 12000), on: true } : null, applyTo: 'current', newName: ex.candidateName || '' };
+}
+async function ingest(text, name, useAI) {
+  if (!text || text.trim().length < 20) { toast(`${name}: no readable text found. If it is a scanned PDF, paste the text instead.`, 7000); return; }
+  let ex, method = 'parser';
+  if (useAI && sampleFn) {
+    setUplStatus(`Claude is reading ${name}… (a consent prompt may appear the first time)`);
+    try { ex = await aiDoc(text, name); method = 'ai'; }
+    catch (e) { const c = e?.code; if (c === 'not_granted' || c === 'sampling_disabled' || c === 'capability_disabled' || c === 'not_declared') { sampleFn = null; syncAI(); }
+      toast(`Claude could not read ${name} (${c || 'error'}). Using the built-in parser instead.`, 7000); }
+  }
+  if (!ex) ex = parseDoc(text, name);
+  queue.push(toProposal(ex, name, method, text)); setUplStatus(''); renderQueue(); setTab('upl');
+}
+function setUplStatus(t) { const el = $('#uplStatus'); el.textContent = t; el.hidden = !t; }
+function curDisplay(c) { const v = getP(S, c.path); return c.type === 'append' ? `${String(v || '').length} chars` : c.type === 'bool' ? (v ? 'yes' : 'no') : v === undefined || v === '' ? '—' : String(v); }
+function renderQueue() {
+  $('#uplBadge').textContent = queue.length ? ` (${queue.length})` : '';
+  $('#queueCard').hidden = !queue.length;
+  $('#queue').innerHTML = queue.map((q, qi) => `<div class="rev" data-q="${qi}">
+    <div class="minihead"><h3>${esc(q.name)}</h3><span class="chip">${q.method === 'ai' ? '✦ Read by Claude' : '⚙ Built-in parser'} · ${(q.chars / 1000).toFixed(1)}k chars</span></div>
+    <div class="engage"><div class="field"><label>Document type</label><select data-qf="kind">${Object.entries(KINDS).map(([k, l]) => `<option value="${k}" ${q.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Relates to</label><select data-qf="target">${Object.entries(TARGETS).map(([k, l]) => `<option value="${k}" ${q.target === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      ${q.target === 'individual' ? `<div class="field"><label>Apply to</label><select data-qf="applyTo"><option value="current" ${q.applyTo === 'current' ? 'selected' : ''}>Current candidate${S.meta.candidate ? ` (${esc(S.meta.candidate)})` : ''}</option><option value="new" ${q.applyTo === 'new' ? 'selected' : ''}>New candidate in roster</option></select></div>
+      <div class="field" ${q.applyTo === 'new' ? '' : 'hidden'}><label>New candidate name</label><input type="text" data-qf="newName" value="${esc(q.newName)}"></div>` : ''}</div>
+    <div class="field" style="margin-top:8px"><label>Summary (kept in the evidence register)</label><textarea data-qf="summary" style="min-height:70px">${esc(q.summary)}</textarea></div>
+    ${q.notes.length ? `<ul class="clean" style="margin-top:8px">${q.notes.map(n => `<li class="muted">⚑ ${esc(n)}</li>`).join('')}</ul>` : ''}
+    ${q.interview ? `<div class="ledger" style="margin-top:8px"><label><input type="checkbox" data-qi="on" ${q.interview.on ? 'checked' : ''}> Add as interview record</label><label>Interviewee <input type="text" data-qi="interviewee" value="${esc(q.interview.interviewee)}"></label><label>Relation <select data-qi="relation">${Object.entries(REL).map(([k, l]) => `<option value="${k}" ${q.interview.relation === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label><label>Date <input type="date" data-qi="date" value="${esc(q.interview.date || '')}"></label></div>` : ''}
+    ${q.changes.length ? `<div class="tbl-wrap" style="margin-top:8px"><table class="t"><thead><tr><th><input type="checkbox" data-qall ${q.changes.every(c => c.on) ? 'checked' : ''} aria-label="Select all"></th><th>Field</th><th class="num">Current</th><th>Proposed</th></tr></thead><tbody>${q.changes.map((c, ci) => `<tr><td><input type="checkbox" data-qc="${ci}" ${c.on ? 'checked' : ''} aria-label="Apply ${esc(c.label)}"></td><td>${esc(c.label)}<div class="muted" style="font-size:.7rem">${c.path}</div></td><td class="num">${esc(curDisplay(c))}</td><td>${c.type === 'num' ? `<input type="number" step="0.1" data-qv="${ci}" value="${c.value}" style="width:80px">` : c.type === 'bool' ? 'yes' : c.type === 'append' ? `<textarea data-qv="${ci}" style="min-height:54px">${esc(c.value)}</textarea>` : `<input type="text" data-qv="${ci}" value="${esc(c.value)}">`}</td></tr>`).join('')}</tbody></table></div>`
+      : '<p class="muted" style="margin-top:8px">No scores were extracted. The document will still be kept in the evidence register with its summary.</p>'}
+    <div class="row" style="margin-top:10px"><button class="btn primary" type="button" data-qapply>Apply selected</button><button class="btn" type="button" data-qdrop>Discard</button></div></div>`).join('');
+}
+function applyProposal(q) {
+  const isNew = q.target === 'individual' && q.applyTo === 'new';
+  if (isNew) { saveCand(); S.activeCand = null; S.ind = blankCase().ind; S.meta.candidate = q.newName || 'New candidate'; }
+  const applied = [];
+  for (const c of q.changes) { if (!c.on || (isNew && c.path === 'meta.candidate')) continue;
+    if (c.type === 'append') { const cur = String(getP(S, c.path) || ''); setP(S, c.path, (cur ? cur + '\n\n' : '') + `[${q.name}] ${c.value}`); }
+    else setP(S, c.path, c.type === 'num' ? +c.value : c.value);
+    applied.push(c.label); }
+  if (q.interview?.on) S.interviews.push({ id: uid(), name: q.interview.interviewee, relation: q.interview.relation, date: q.interview.date || '', notes: q.interview.notes, source: q.name });
+  S.docs.push({ id: uid(), name: q.name, kind: q.kind, target: q.target, method: q.method, summary: q.summary, quotes: q.quotes, notes: q.notes.join('\n'), applied, excerpt: q.excerpt, added: new Date().toISOString().slice(0, 10) });
+  if (q.target === 'individual') saveCand();
+  markDirty(); buildInputs(); render(); toast(`${q.name}: applied ${applied.length} value(s)${q.interview?.on ? ' and added an interview record' : ''}.`);
+}
+
+/* ---------- evidence register & interviews (add / edit / delete) ---------- */
+const docSummary = d => `<b>${esc(d.name || 'Untitled')}</b> <span class="muted">· ${esc(KINDS[d.kind] || d.kind)} · ${esc(TARGETS[d.target] || '')} · ${d.method === 'ai' ? 'Claude' : d.method === 'parser' ? 'parser' : 'manual'} · ${d.applied?.length || 0} value(s) applied · ${esc(d.added || '')}</span>`;
+const ivSummary = v => `<b>${esc(v.name || 'Unnamed')}</b> <span class="muted">· ${REL[v.relation] || v.relation} · ${esc(v.date || 'no date')} · ${String(v.notes || '').split(/\s+/).filter(Boolean).length} words</span>`;
+function renderIvCounts() { const tl = teamLedger(S); $('#ivCounts').textContent = `Counts toward team evidence: hiring manager ${tl.manager ? '✓' : '✗'} · peers ${tl.peers} · direct reports ${tl.reports} · cross-functional ${tl.xfn}. Team-member interview notes feed the team culture analysis.`; }
+function renderEvidence() {
+  $('#docList').innerHTML = S.docs.length ? S.docs.map((d, i) => `<details class="item" data-item="docs" data-i="${i}"><summary>${docSummary(d)}</summary>
+    <div class="engage" style="margin-top:8px"><div class="field"><label>Name</label><input type="text" data-path="docs.${i}.name" data-list="docs" value="${esc(d.name)}"></div>
+      <div class="field"><label>Type</label><select data-path="docs.${i}.kind" data-list="docs">${Object.entries(KINDS).map(([k, l]) => `<option value="${k}" ${d.kind === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Relates to</label><select data-path="docs.${i}.target" data-list="docs">${Object.entries(TARGETS).map(([k, l]) => `<option value="${k}" ${d.target === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="field" style="margin-top:6px"><label>Summary</label><textarea data-path="docs.${i}.summary" data-list="docs" data-debounce>${esc(d.summary)}</textarea></div>
+    <div class="field" style="margin-top:6px"><label>Key quotes (one per line)</label><textarea data-path="docs.${i}.quotes" data-list="docs" data-debounce>${esc(d.quotes || '')}</textarea></div>
+    ${d.applied?.length ? `<p class="muted" style="font-size:.78rem;margin-top:6px">Applied: ${esc(d.applied.join(' · '))}. Deleting this record does not undo applied values; edit them in the gate tabs.</p>` : ''}
+    ${d.excerpt ? `<details style="margin-top:6px"><summary class="muted">Show text excerpt</summary><pre class="ascii" style="white-space:pre-wrap;max-height:260px;overflow:auto">${esc(d.excerpt)}</pre></details>` : ''}
+    <div class="row" style="margin-top:8px"><button class="btn" type="button" data-del="docs" data-i="${i}">Delete record</button></div></details>`).join('') : '<p class="muted">No documents yet. Upload files or paste text above.</p>';
+  renderIvCounts();
+  $('#ivList').innerHTML = S.interviews.length ? S.interviews.map((v, i) => `<details class="item" data-item="interviews" data-i="${i}"><summary>${ivSummary(v)}</summary>
+    <div class="engage" style="margin-top:8px"><div class="field"><label>Interviewee</label><input type="text" data-path="interviews.${i}.name" data-list="interviews" value="${esc(v.name)}"></div>
+      <div class="field"><label>Relation</label><select data-path="interviews.${i}.relation" data-list="interviews">${Object.entries(REL).map(([k, l]) => `<option value="${k}" ${v.relation === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label>Date</label><input type="date" data-path="interviews.${i}.date" data-list="interviews" value="${esc(v.date || '')}"></div></div>
+    <div class="field" style="margin-top:6px"><label>Notes / transcript</label><textarea data-path="interviews.${i}.notes" data-list="interviews" data-debounce style="min-height:120px">${esc(v.notes || '')}</textarea></div>
+    <div class="row" style="margin-top:8px"><button class="btn" type="button" data-del="interviews" data-i="${i}">Delete interview</button></div></details>`).join('') : '<p class="muted">No interviews yet. Upload a transcript or add one manually.</p>';
+}
+
+/* ---------- candidate roster ---------- */
+function syncActiveCand() { if (!S.activeCand) return; const c = S.candidates.find(c => c.id === S.activeCand); if (c) Object.assign(c, { candidate: S.meta.candidate, role: S.meta.role, level: S.meta.level, ind: clone(S.ind) }); }
+function saveCand() { if (S.activeCand && S.candidates.some(c => c.id === S.activeCand)) return syncActiveCand(); const id = uid(); S.candidates.push({ id, candidate: S.meta.candidate || 'Unnamed candidate', role: S.meta.role, level: S.meta.level, ind: clone(S.ind) }); S.activeCand = id; }
+function switchCand(id) { syncActiveCand(); const c = S.candidates.find(c => c.id === id); if (!c) return; S.activeCand = id; S.meta.candidate = c.candidate; S.meta.role = c.role || S.meta.role; S.meta.level = c.level || S.meta.level; S.ind = mergeInto(blankCase().ind, clone(c.ind)); markDirty(); buildInputs(); render(); }
+function renderRoster() {
+  $('#candSelect').innerHTML = (S.activeCand ? '' : `<option value="" selected>${esc(S.meta.candidate || 'Current (not saved to roster)')}</option>`) + S.candidates.map(c => `<option value="${c.id}" ${c.id === S.activeCand ? 'selected' : ''}>${esc(c.candidate || 'Unnamed')}${c.role ? ` · ${esc(c.role)}` : ''}</option>`).join('');
+  $('#candCount').textContent = `${S.candidates.length} in roster`;
+}
+function compareRows() {
+  syncActiveCand();
+  return S.candidates.map(c => { const T = clone(S); T.meta.candidate = c.candidate; T.meta.role = c.role || T.meta.role; T.meta.level = c.level || T.meta.level; T.ind = mergeInto(blankCase().ind, clone(c.ind)); const r = compute(T); return { c, r }; })
+    .sort((a, b) => b.r.overall - a.r.overall);
+}
+function renderCompare() {
+  const show = S.candidates.length >= 2; $('#cmpCard').hidden = !show; if (!show) return;
+  const rows = compareRows();
+  $('#cmp').innerHTML = `<table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th></tr></thead><tbody>${rows.map(({ c, r }) => `<tr${c.id === S.activeCand ? ' style="font-weight:600"' : ''}><td><button class="linkbtn" type="button" data-cand="${c.id}">${esc(c.candidate || 'Unnamed')}</button><div class="muted" style="font-size:.72rem">${esc(c.role || '')}</div></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${statusChip(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td>${esc(r.rec)}${r.halted ? ' <span class="muted">(evidence hold)</span>' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ---------- team library (add / edit / delete) ---------- */
+function renderLibrary() {
+  const lib = S.teamLibrary || [];
+  $('#libSelect').innerHTML = '<option value="">Choose a unit…</option>' + lib.map((u, i) => `<option value="${i}" ${S.meta.team === u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('');
+  $('#libName').value = S.meta.team || '';
+}
+
+/* ---------- workspace persistence ---------- */
+const LS_KEY = 'cpa-workspace:' + document.title;
+let dirty = false, saveTimer = null, lastSaved = '', saving = Promise.resolve(), acct = null;
+function markDirty() { dirty = true; }
+function setSave(t, cls = '') { const el = $('#saveStatus'); el.textContent = t; el.className = 'chip ' + cls; }
+function packState() {
+  let s = JSON.stringify(S);
+  if (s.length > 240000) { const T = clone(S); for (const d of T.docs) d.excerpt = (d.excerpt || '').slice(0, 1500); for (const v of T.interviews) v.notes = (v.notes || '').slice(0, 5000); s = JSON.stringify(T); }
+  return s;
+}
+function scheduleSave() {
+  if (!dirty) return; clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { const s = packState(); if (s === lastSaved) return; lastSaved = s;
+    try { localStorage.setItem(LS_KEY, s); } catch {}
+    if (!acct) { setSave(`● Saved in this browser · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 'st-good'); return; }
+    setSave('Saving…');
+    saving = saving.then(() => acct.ref.set({ v: 1, savedAt: new Date().toISOString(), state: JSON.parse(s) }))
+      .then(() => setSave(`● Saved to your account · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, 'st-good'))
+      .catch(e => setSave(`▲ Not saved to account (${e?.code || 'error'}); kept in this browser`, 'st-warn'));
+  }, 1500);
+}
+function restore(state, from) {
+  S = mergeInto(blankCase(), state); lastSaved = JSON.stringify(S); buildInputs(); render();
+  toast(`Restored your saved workspace${from ? ` (${from})` : ''}. Choose a case in "Load case" to start over.`);
+}
+async function initWorkspace() {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) { restore(JSON.parse(raw), 'this browser'); setSave('● Saved in this browser', 'st-good'); } } catch {}
+  if (!window.claude?.use) { if (!lastSaved) setSave('○ Not saved yet; edits save in this browser'); return; }
+  const [db, user, smp] = await Promise.all([claude.use('db'), claude.use('user'), claude.use('sample')].map(p => p.catch(() => null)));
+  sampleFn = smp; syncAI();
+  const id = user ? await user.id().catch(() => null) : null;
+  if (!db || !id) { setSave(lastSaved ? '● Saved in this browser' : '○ Edits save in this browser'); return; }
+  acct = { ref: db.doc(`data/users/${id}/workspace`) };
+  try { const snap = await acct.ref.get(); const st = snap.exists ? snap.data()?.state : null;
+    if (st && !dirty) { restore(clone(st), `your account, ${new Date(snap.data().savedAt).toLocaleString()}`); setSave('● Saved to your account', 'st-good'); }
+    else setSave(dirty ? 'Saving…' : '○ Edits save to your account automatically'); if (dirty) scheduleSave(); }
+  catch (e) { acct = null; setSave('▲ Account storage unavailable; edits save in this browser', 'st-warn'); }
+}
+function syncAI() { const on = !!sampleFn; $('#aiOn').disabled = !on; if (!on) $('#aiOn').checked = false; else if (!syncAI.done) { $('#aiOn').checked = true; syncAI.done = true; } $('#aiNote').textContent = on ? 'Claude reads each document and proposes values. This uses your Claude usage, and you approve every value before it is applied.' : 'Claude reading is available when this app is opened on claude.ai. Here, the built-in parser reads standard score layouts (Hogan, Big Five, OPQ32 stens, CVF, Denison, Groysberg, Barrett) and keeps everything else as evidence text.'; }
+
+/* ---------- evidence & workspace events ---------- */
+async function handleFiles(files) {
+  for (const f of files) {
+    setUplStatus(`Reading ${f.name}…`);
+    let text; try { text = await fileText(f); } catch (e) { setUplStatus(''); toast(`${f.name}: ${e.message || 'could not be read'}`, 7000); continue; }
+    await ingest(text, f.name, $('#aiOn').checked);
+  }
+  setUplStatus('');
+}
+$('#uplFile').addEventListener('change', e => { const fs = [...e.target.files]; e.target.value = ''; handleFiles(fs); });
+const drop = $('#drop');
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => handleFiles([...e.dataTransfer.files]));
+$('#pasteAdd').addEventListener('click', async () => { const t = $('#pasteText').value; if (!t.trim()) return toast('Paste some text first.'); await ingest(t, $('#pasteName').value.trim() || 'Pasted text', $('#aiOn').checked); $('#pasteText').value = ''; $('#pasteName').value = ''; });
+const qOf = el => queue[+el.closest('[data-q]').dataset.q];
+$('#queue').addEventListener('input', e => { const el = e.target, q = qOf(el); if (!q) return;
+  if (el.dataset.qf) { q[el.dataset.qf] = el.value; if (['target', 'applyTo'].includes(el.dataset.qf)) renderQueue(); }
+  if (el.dataset.qi) q.interview[el.dataset.qi] = el.type === 'checkbox' ? el.checked : el.value;
+  if (el.dataset.qc !== undefined) q.changes[+el.dataset.qc].on = el.checked;
+  if (el.dataset.qv !== undefined) q.changes[+el.dataset.qv].value = el.value;
+  if (el.hasAttribute('data-qall')) { q.changes.forEach(c => { c.on = el.checked; }); renderQueue(); } });
+$('#queue').addEventListener('change', e => { if (e.target.tagName === 'SELECT') e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+$('#queue').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const qi = +b.closest('[data-q]').dataset.q, q = queue[qi];
+  if (b.hasAttribute('data-qapply')) { queue.splice(qi, 1); applyProposal(q); renderQueue(); }
+  if (b.hasAttribute('data-qdrop')) { queue.splice(qi, 1); renderQueue(); } });
+document.addEventListener('click', e => {
+  const del = e.target.closest('[data-del]'); if (del) { if (!armed(del)) return; S[del.dataset.del].splice(+del.dataset.i, 1); markDirty(); renderEvidence(); render(); }
+  const cb = e.target.closest('[data-cand]'); if (cb) { switchCand(cb.dataset.cand); setTab('ind'); }
+  const rs = e.target.closest('[data-reset]'); if (rs) { if (!armed(rs)) return; resetSection(rs.dataset.reset); }
+});
+const RESETS = { 'ind.style': [['ind.hpi', 50], ['ind.big5', 50], 'ind.ledger.hpi'], 'ind.hds': [['ind.hds', 50], 'ind.ledger.hds'], 'ind.mvpi': [['ind.mvpi', 50], 'ind.ledger.mvpi'], 'org.cvfNow': [['org.cvfNow', 25], 'org.ledger.survey'], 'org.denison': [['org.denison', 50], 'org.ledger.denison'], 'org.groys': [['org.groys.cur', 50], ['org.groys.asp', 50], 'org.ledger.groysberg'], 'team.cvf': [['team.cvf', 25]] };
+function resetSection(key) { for (const r of RESETS[key]) { if (typeof r === 'string') setP(S, r, false); else { const o = getP(S, r[0]); for (const k of Object.keys(o)) o[k] = r[1]; } } markDirty(); buildInputs(); render(); toast('Section reset. Its evidence flag was cleared.'); }
+$('#docAdd').addEventListener('click', () => { S.docs.push({ id: uid(), name: 'New evidence record', kind: 'other', target: 'organization', method: 'manual', summary: '', quotes: '', notes: '', applied: [], excerpt: '', added: new Date().toISOString().slice(0, 10) }); markDirty(); renderEvidence(); render(); $('#docList').lastElementChild.open = true; });
+$('#ivAdd').addEventListener('click', () => { S.interviews.push({ id: uid(), name: '', relation: 'peer', date: new Date().toISOString().slice(0, 10), notes: '', source: 'manual' }); markDirty(); renderEvidence(); render(); $('#ivList').lastElementChild.open = true; });
+$('#candSelect').addEventListener('change', e => { if (e.target.value) switchCand(e.target.value); });
+$('#candSave').addEventListener('click', () => { saveCand(); renderRoster(); render(); toast(`${S.meta.candidate || 'Candidate'} saved to the roster.`); });
+$('#candNew').addEventListener('click', () => { saveCand(); S.activeCand = null; S.ind = blankCase().ind; S.meta.candidate = ''; buildInputs(); render(); toast('New candidate started. Enter a name in the Engagement strip, then add scores or upload a report.'); });
+$('#candDup').addEventListener('click', () => { saveCand(); const id = uid(); S.candidates.push({ id, candidate: `${S.meta.candidate || 'Candidate'} (copy)`, role: S.meta.role, level: S.meta.level, ind: clone(S.ind) }); switchCand(id); });
+$('#candDel').addEventListener('click', e => { if (!S.activeCand) return toast('This candidate is not in the roster yet.'); if (!armed(e.currentTarget)) return;
+  S.candidates = S.candidates.filter(c => c.id !== S.activeCand); S.activeCand = null; if (S.candidates.length) switchCand(S.candidates[0].id); else { buildInputs(); render(); } toast('Candidate removed from the roster.'); });
+$('#libSave').addEventListener('click', () => { const name = $('#libName').value.trim() || S.meta.team || 'Unnamed unit'; S.teamLibrary ||= [];
+  const u = { name, cvf: clone(S.team.cvf), ops: clone(S.team.ops), evidence: S.team.transcript, mgrStyle: S.team.mgrStyle }, i = S.teamLibrary.findIndex(x => x.name === name);
+  if (i >= 0) S.teamLibrary[i] = u; else S.teamLibrary.push(u); S.meta.team = name; markDirty(); buildInputs(); render(); toast(`Saved "${name}" to the team library.`); });
+$('#libDel').addEventListener('click', e => { const i = $('#libSelect').value; if (i === '') return toast('Choose a unit to delete first.'); if (!armed(e.currentTarget)) return; const [u] = S.teamLibrary.splice(+i, 1); markDirty(); renderLibrary(); toast(`Deleted "${u.name}" from the team library.`); });
 // theme
 const root = document.documentElement;
 try { const t = localStorage.getItem('cpa-theme'); if (t) root.dataset.theme = t; } catch {}
@@ -1416,7 +1852,7 @@ $('#themeBtn').addEventListener('click', () => { const dark = root.dataset.theme
 const tip = $('#tip');
 document.addEventListener('mousemove', e => { const t = e.target.closest?.('[data-tip]'); if (!t) { tip.hidden = true; return; } tip.textContent = t.getAttribute('data-tip'); tip.hidden = false; const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = e.clientY + 16 + tip.offsetHeight > innerHeight ? e.clientY - tip.offsetHeight - 10 : e.clientY + 16; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
 
-buildInputs(); render();
+buildInputs(); render(); lastSaved = packState(); syncAI(); initWorkspace();
 })();
 </script>
 </body>
