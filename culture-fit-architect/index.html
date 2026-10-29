@@ -1354,7 +1354,18 @@ function buildCSV() {
   return rows.map(r => r.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\n');
 }
 function slug() { return (S.meta.candidate || 'candidate').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'candidate'; }
-function download(name, text, type) { const b = new Blob([text], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+// Hosted (claude.ai) views save through the downloads capability; a locally opened file uses a plain browser download.
+let dlNs = null;
+try { window.claude?.use?.('downloads').then(ns => { dlNs = ns; }, () => {}); } catch {}
+function blobDownload(name, text, type) { const b = new Blob([text], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function download(name, text, type) {
+  if (!dlNs) return blobDownload(name, text, type);
+  dlNs.save({ filename: name, data: text }).catch(e => {
+    if (e?.code === 'declined' || e?.code === 'rate_limited') return;
+    if (e?.code === 'bad_request' || e?.code === 'rejected_extension') return alert(`Could not save ${name}: ${e.message || e.code}`);
+    blobDownload(name, text, type);
+  });
+}
 function refreshPreview() { $('#preview').srcdoc = buildReportHTML(); }
 
 /* ============================== events ============================== */
