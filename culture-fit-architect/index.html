@@ -1,0 +1,1321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C-Psych Architect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* C-Psych Architect: culture & psychometric fit diagnostics.
+   Layout: masthead, engagement strip, tabbed workspace (Dashboard, Gates 1-3 inputs,
+   Gate 5 evidence review, Report & export). Every input recomputes the model live.
+   Series identity is fixed: Individual = slot 1, Team = slot 2, Org (lived) = slot 3,
+   Org (espoused) = slot 4. Radar uses only slots 1-3 (all-pairs validated). */
+:root {
+  --bg: #F3F4F6;
+  --card: #FFFFFF;
+  --panel: #F8F9FB;
+  --ink: #0F1B2D;
+  --muted: #52607A;
+  --line: #DDE2EA;
+  --accent: #1F3A5F;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #E5ECF5;
+  --gold: #9C7A3C;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --grid: #E6E9EF;
+  --heat: #2a78d6;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --good-soft: #E3F4E3; --warn-soft: #FDF2D8; --serious-soft: #FCE7DE; --critical-soft: #F8E0E0;
+  --shadow: 0 1px 2px rgba(15,27,45,.05), 0 6px 18px rgba(15,27,45,.06);
+  --f-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --r: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161C; --card: #1A1F27; --panel: #161B22; --ink: #EEF1F5; --muted: #A9B3C3; --line: #2C3440;
+    --accent: #8FB3E0; --accent-ink: #0F1B2D; --accent-soft: #223247; --gold: #D2B07A;
+    --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+    --grid: #262D38; --heat: #3987e5;
+    --good-soft: #1B2E1C; --warn-soft: #33290F; --serious-soft: #3A2419; --critical-soft: #3A1C1C;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161C; --card: #1A1F27; --panel: #161B22; --ink: #EEF1F5; --muted: #A9B3C3; --line: #2C3440;
+  --accent: #8FB3E0; --accent-ink: #0F1B2D; --accent-soft: #223247; --gold: #D2B07A;
+  --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500;
+  --grid: #262D38; --heat: #3987e5;
+  --good-soft: #1B2E1C; --warn-soft: #33290F; --serious-soft: #3A2419; --critical-soft: #3A1C1C;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.3);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14.5px; line-height: 1.55; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 20px 20px 64px; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; margin: 0; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(1.5rem, 3vw, 2.05rem); }
+h2 { font-size: 1.25rem; }
+h3 { font-size: 1.02rem; }
+p { margin: 0; }
+.eyebrow { font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+button, select, textarea, input { font: inherit; color: inherit; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); box-shadow: var(--shadow); padding: 18px; min-width: 0; }
+.card > h2, .card > h3 { margin-bottom: 4px; }
+.card .sub { color: var(--muted); font-size: .86rem; margin-bottom: 12px; }
+
+/* masthead */
+.mast { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px; border-bottom: 2px solid var(--accent); padding-bottom: 14px; }
+.mast .brand { display: grid; gap: 4px; }
+.mast .brand p { color: var(--muted); max-width: 70ch; font-size: .9rem; }
+.mast .tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 12px; cursor: pointer; font-weight: 500; font-size: .88rem; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .tab:focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px; }
+select, input[type=text], input[type=number], input[type=date], textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; min-width: 0; }
+textarea { width: 100%; resize: vertical; min-height: 96px; line-height: 1.45; font-size: .88rem; }
+
+/* engagement strip */
+.engage { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 14px; }
+.field { display: grid; gap: 3px; }
+.field label { font-size: .72rem; font-weight: 600; color: var(--muted); letter-spacing: .04em; text-transform: uppercase; }
+.field input, .field select { width: 100%; }
+
+/* tabs */
+.tabs { display: flex; gap: 4px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
+.tab { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; font-size: .9rem; }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .gate { font-family: var(--f-mono); font-size: .72rem; color: var(--gold); margin-right: 4px; }
+
+/* grids */
+.g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.g3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.g-wide { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 900px) { .g2, .g3, .g-wide { grid-template-columns: 1fr; } }
+.stack { display: grid; gap: 18px; }
+
+/* decision banner */
+.decision { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; border-left: 6px solid var(--accent); }
+.decision .verdict { font-family: var(--f-display); font-size: 1.3rem; font-weight: 600; }
+.decision .why { color: var(--muted); font-size: .9rem; margin-top: 4px; }
+@media (max-width: 700px) { .decision { grid-template-columns: 1fr; } }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: .78rem; font-weight: 600; border: 1px solid var(--line); background: var(--panel); white-space: nowrap; }
+.chip .ic { font-size: .8em; }
+.st-good { background: var(--good-soft); } .st-good .ic { color: var(--good); }
+.st-warn { background: var(--warn-soft); } .st-warn .ic { color: var(--warn); }
+.st-serious { background: var(--serious-soft); } .st-serious .ic { color: var(--serious); }
+.st-critical { background: var(--critical-soft); } .st-critical .ic { color: var(--critical); }
+
+/* KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1000px) { .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .kpis { grid-template-columns: 1fr; } }
+.kpi { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; box-shadow: var(--shadow); display: grid; gap: 6px; align-content: start; }
+.kpi .lbl { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.kpi .val { font-family: var(--f-display); font-size: 2rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.kpi .val small { font-size: .5em; color: var(--muted); }
+.kpi .meter { height: 6px; border-radius: 3px; background: var(--grid); overflow: hidden; }
+.kpi .meter > i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.kpi .note { font-size: .78rem; color: var(--muted); }
+
+/* charts */
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.legend i.dash { height: 0; border-top: 2px dashed var(--muted); border-radius: 0; width: 16px; }
+.tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--card); padding: 7px 10px; border-radius: 7px; font-size: .8rem; max-width: 280px; z-index: 50; box-shadow: var(--shadow); line-height: 1.4; }
+
+/* tables */
+.tbl-wrap { overflow-x: auto; }
+table.t { width: 100%; border-collapse: collapse; font-size: .84rem; }
+table.t th { text-align: left; font-size: .7rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.t td { padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+table.t td.num, table.t th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.heat { border-radius: 5px; text-align: center !important; }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+/* sliders */
+.sliders { display: grid; gap: 8px; }
+.sl { display: grid; grid-template-columns: minmax(120px, 1.1fr) minmax(90px, 2fr) 62px; gap: 10px; align-items: center; }
+.sl label { font-size: .84rem; }
+.sl label small { display: block; color: var(--muted); font-size: .72rem; line-height: 1.3; }
+.sl input[type=range] { width: 100%; accent-color: var(--accent); }
+.sl input[type=number] { width: 62px; text-align: right; font-family: var(--f-mono); padding: 4px 6px; }
+@media (max-width: 520px) { .sl { grid-template-columns: 1fr 62px; } .sl input[type=range] { grid-column: 1 / -1; grid-row: 2; } }
+.sumline { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: .82rem; color: var(--muted); padding-top: 4px; }
+.sumline .bad { color: var(--critical); font-weight: 600; }
+.ledger { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 10px 12px; border: 1px dashed var(--line); border-radius: 8px; background: var(--panel); font-size: .85rem; }
+.ledger label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.ledger input[type=number] { width: 56px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.minihead { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 0 8px; }
+.minihead:first-child { margin-top: 0; }
+.minihead h3 { font-size: .95rem; }
+
+/* lists */
+ul.clean { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+ul.clean li { padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); font-size: .86rem; }
+ul.clean li b { font-weight: 600; }
+.tag { font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; margin-right: 6px; border: 1px solid var(--line); }
+.halt { border: 1px solid var(--critical); background: var(--critical-soft); border-radius: var(--r); padding: 16px 18px; display: grid; gap: 10px; }
+.halt h2 { font-size: 1.1rem; }
+.provisional { background: var(--warn-soft); border: 1px solid var(--warn); border-radius: 8px; padding: 8px 12px; font-size: .85rem; }
+.conf-row { display: grid; grid-template-columns: 150px 1fr 48px; gap: 10px; align-items: center; font-size: .86rem; }
+.conf-row .bar { height: 10px; background: var(--grid); border-radius: 5px; position: relative; overflow: hidden; }
+.conf-row .bar i { position: absolute; inset: 0 auto 0 0; border-radius: 5px; }
+.conf-row .bar::after { content: ""; position: absolute; left: 60%; top: -2px; bottom: -2px; border-left: 2px dashed var(--ink); opacity: .5; }
+.themes { display: grid; gap: 5px; font-size: .82rem; }
+.themes .trow { display: grid; grid-template-columns: 170px 1fr 30px; gap: 8px; align-items: center; }
+.themes .trow .b { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+.themes .trow .b i { display: block; height: 100%; background: var(--series-1); border-radius: 4px; }
+pre.ascii { font-family: var(--f-mono); font-size: .76rem; line-height: 1.35; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; margin: 0; white-space: pre; }
+iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); border-radius: var(--r); background: #fff; }
+.foot { font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+.addlist li { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div class="brand">
+      <span class="eyebrow">Culture &amp; Psychometric Fit Diagnostics</span>
+      <h1>C-Psych Architect</h1>
+      <p>Compare an individual's psychometric profile with the team subculture and the organization's culture. The model runs five analytical gates and produces a decision-grade fitment report.</p>
+    </div>
+    <div class="tools">
+      <label class="field" style="min-width:230px"><label for="preset">Load case</label>
+        <select id="preset">
+          <option value="A">Case A · Digital product lead, bank</option>
+          <option value="B">Case B · Sales director, SaaS scale-up</option>
+          <option value="C">Case C · Sparse inputs (Gate 5 demo)</option>
+          <option value="blank">Blank engagement</option>
+        </select>
+      </label>
+      <button class="btn" id="themeBtn" type="button" aria-label="Toggle colour theme">◐ Theme</button>
+      <button class="btn primary" id="quickReport" type="button">⤓ Download report</button>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="engH">
+    <div class="minihead"><h3 id="engH">Engagement</h3><span class="muted" style="font-size:.8rem">These details appear on the report cover.</span></div>
+    <div class="engage" id="engage"></div>
+  </section>
+
+  <nav class="tabs" role="tablist" aria-label="Workspace">
+    <button class="tab" role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
+    <button class="tab" role="tab" data-tab="org" aria-selected="false"><span class="gate">G1</span>Organization</button>
+    <button class="tab" role="tab" data-tab="team" aria-selected="false"><span class="gate">G2</span>Team subculture</button>
+    <button class="tab" role="tab" data-tab="ind" aria-selected="false"><span class="gate">G3</span>Individual</button>
+    <button class="tab" role="tab" data-tab="evid" aria-selected="false"><span class="gate">G5</span>Data audit &amp; clarification</button>
+    <button class="tab" role="tab" data-tab="report" aria-selected="false">Report &amp; export</button>
+  </nav>
+
+  <!-- DASHBOARD -->
+  <section data-panel="dash" class="stack">
+    <div id="haltBox"></div>
+    <div class="card decision" id="decision"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="g-wide">
+      <div class="card chart">
+        <h2>Comparative culture radar</h2>
+        <p class="sub">Eight fit dimensions on a 0–100 scale. The individual's position comes from their psychometric profile. Team and organization positions come from the culture diagnostics.</p>
+        <div class="legend" id="radarLegend"></div>
+        <div id="radar"></div>
+      </div>
+      <div class="card">
+        <h2>Alignment heatmap</h2>
+        <p class="sub">Darker cells mean larger gaps. A signed gap shows where the individual sits relative to each context (+ means higher). Weight shows how strongly the environment expresses that dimension.</p>
+        <div class="tbl-wrap" id="heatmap"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Visual comparative matrix</h2>
+      <p class="sub">Text distribution of organization macro-culture, team subculture and candidate on the four CVF axes and the operating norms. Δ is the context minus the candidate. This exact block appears in the Markdown report.</p>
+      <pre class="ascii" id="ascii"></pre>
+    </div>
+    <div class="g2">
+      <div class="card chart">
+        <h2>Competing Values profile</h2>
+        <p class="sub">Share of culture energy across the four CVF quadrants (sums to 100). The individual's bars are their preference implied by HPI/MVPI.</p>
+        <div class="legend" id="cvfLegend"></div>
+        <div id="cvfChart"></div>
+      </div>
+      <div class="card chart">
+        <h2>Derailer risk under pressure</h2>
+        <p class="sub">The bar is the HDS percentile. The ◆ marker is contextual activation: the score weighted by how strongly this team and organization trigger that derailer.</p>
+        <div class="legend"><span><i style="background:var(--good)"></i>● Low (&lt;70)</span><span><i style="background:var(--warn)"></i>▲ Moderate (70–89)</span><span><i style="background:var(--critical)"></i>■ High (90+)</span><span>◆ Activation in context</span></div>
+        <div id="derailChart"></div>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="card">
+        <h2>Culture add vs. culture fit</h2>
+        <p class="sub">Healthy friction moves the organization toward its stated aspiration. Disruptive friction works against it.</p>
+        <div id="addFit"></div>
+      </div>
+      <div class="card">
+        <h2>Friction drivers</h2>
+        <p class="sub">What drives the friction risk rating, largest first.</p>
+        <div id="drivers"></div>
+      </div>
+      <div class="card">
+        <h2>Values &amp; trajectory</h2>
+        <p class="sub">MVPI motives compared with the value system each context rewards.</p>
+        <div id="values"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card"><h2>Priority interview probes</h2><p class="sub">Use these to verify the highest-risk hypotheses before deciding.</p><div id="probes"></div></div>
+      <div class="card"><h2>90-day onboarding preview</h2><p class="sub">The full plan, with manager guidance, is in the downloadable report.</p><div id="onb"></div></div>
+    </div>
+  </section>
+
+  <!-- GATE 1 -->
+  <section data-panel="org" class="stack" hidden>
+    <div class="card">
+      <h2>Gate 1 · Organization culture baseline</h2>
+      <p class="sub">Combine four tiers of evidence: formal diagnostics, employee sentiment, leadership discourse, and public signals. Tick each source you actually received. Gate 5 uses this to decide whether scores can be released.</p>
+      <div class="ledger" id="orgLedger"></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="minihead"><h3>Tier 1 · CVF / OCAI: current (lived) culture</h3></div>
+        <div class="sliders" id="cvfNow"></div>
+        <div class="minihead"><h3>Denison quadrants &amp; Barrett entropy</h3></div>
+        <div class="sliders" id="denison"></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Tier 3 · Espoused culture (leadership discourse)</h3><button class="btn" type="button" id="inferEsp">Infer from text</button></div>
+        <textarea data-path="org.leaderText" data-debounce aria-label="Leadership discourse text" placeholder="Paste CEO letters, town-hall transcripts, strategy statements…"></textarea>
+        <div id="leaderCues" class="muted" style="font-size:.8rem;margin:6px 0 10px"></div>
+        <div class="sliders" id="cvfEsp"></div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="minihead"><h3>Tier 2 · Employee sentiment &amp; external reviews</h3></div>
+        <div class="engage" id="sentFields"></div>
+        <div class="minihead"><h3>Review excerpts (Glassdoor, AmbitionBox, Kununu, Indeed)</h3></div>
+        <textarea data-path="org.reviewText" data-debounce aria-label="Review text" placeholder="Paste representative review excerpts…" style="min-height:130px"></textarea>
+        <div id="sentOut" style="margin-top:10px"></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Tier 4 · Public signals &amp; news</h3></div>
+        <div class="ledger" id="signals"></div>
+        <textarea data-path="org.newsNotes" data-debounce aria-label="News notes" placeholder="Recent milestones, layoffs, leadership churn, regulatory findings…" style="margin-top:10px;min-height:70px"></textarea>
+        <div class="minihead"><h3>Enterprise operating norms</h3><button class="btn" type="button" id="deriveOps">Derive from diagnostics</button></div>
+        <div class="sliders" id="orgOps"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GATE 2 -->
+  <section data-panel="team" class="stack" hidden>
+    <div class="card">
+      <h2>Gate 2 · Team subculture model</h2>
+      <p class="sub">Model the hiring team's micro-culture from interviews with the hiring manager, peers, and cross-functional partners. Record what you received.</p>
+      <div class="ledger" id="teamLedger"></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <div class="minihead"><h3>Team CVF profile</h3><button class="btn" type="button" id="inferTeam">Infer from transcripts</button></div>
+        <div class="sliders" id="cvfTeam"></div>
+        <div class="minihead"><h3>Local behavioral norms</h3></div>
+        <div class="sliders" id="teamOps"></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Interview transcripts &amp; notes</h3></div>
+        <textarea data-path="team.transcript" data-debounce aria-label="Team interview transcript" style="min-height:180px" placeholder="Hiring manager, peers, cross-functional partners…"></textarea>
+        <div id="teamCues" class="muted" style="font-size:.8rem;margin-top:6px"></div>
+        <div class="minihead"><h3>Variance from enterprise culture</h3></div>
+        <div id="teamVar"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GATE 3 -->
+  <section data-panel="ind" class="stack" hidden>
+    <div class="card">
+      <h2>Gate 3 · Individual psychometric profile</h2>
+      <p class="sub">Enter percentile scores against the stated norm group. Hogan HPI is the default operating-style instrument. If you have Big Five / NEO-PI-R domain scores instead, switch to them and they are mapped to HPI-equivalents.</p>
+      <div class="ledger" id="indLedger"></div>
+    </div>
+    <div class="g3">
+      <div class="card">
+        <div class="minihead"><h3 id="styleHead">Day-to-day operating style (HPI)</h3></div>
+        <div class="sliders" id="hpi"></div>
+        <div class="sliders" id="big5"></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Derailers under stress (HDS)</h3></div>
+        <div class="sliders" id="hds"></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Core drivers &amp; values (MVPI)</h3></div>
+        <div class="sliders" id="mvpi"></div>
+        <div class="minihead"><h3>Assessor notes</h3></div>
+        <textarea data-path="ind.notes" data-debounce aria-label="Assessor notes" placeholder="Debrief observations, OPQ32 / Korn Ferry highlights, reference-check themes…"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <!-- GATE 5 -->
+  <section data-panel="evid" class="stack" hidden>
+    <div class="card">
+      <h2>Phase 1 · Detected sources &amp; frameworks</h2>
+      <p class="sub">A catalog of every instrument and data source ingested, with sample sizes and rigor.</p>
+      <div class="tbl-wrap" id="srcCat"></div>
+    </div>
+    <div class="g2">
+      <div class="card">
+        <h2>Gate 5 · Evidence confidence</h2>
+        <p class="sub">Each fit vector needs at least 60% evidence confidence (dashed line) before final scores are released.</p>
+        <div id="confBars" style="display:grid;gap:10px"></div>
+        <div style="margin-top:14px" class="row">
+          <label class="row" style="gap:6px;cursor:pointer"><input type="checkbox" data-path="provisional"> Release provisional scores despite gaps (they are marked PROVISIONAL)</label>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Contradictions &amp; data-quality flags</h2>
+        <p class="sub">Inconsistencies found across sources. Each one lowers confidence in the affected vector.</p>
+        <div id="flags"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Clarification protocol</h2>
+      <p class="sub">Targeted questions to send to the hiring sponsor, HRBP, or assessment provider before the final read-out.</p>
+      <div id="questions"></div>
+    </div>
+  </section>
+
+  <!-- REPORT -->
+  <section data-panel="report" class="stack" hidden>
+    <div class="card">
+      <h2>Report &amp; export</h2>
+      <p class="sub">A consultant-grade fitment report: executive summary, scorecard, charts, the analysis for each gate, derailer risk register, interview probes, 90-day onboarding plan, and methodology. Download it as HTML, which opens in any browser and prints to PDF, or as Markdown. You can also export the raw scores.</p>
+      <div class="row">
+        <button class="btn primary" type="button" id="dlHtml">⤓ Report (.html)</button>
+        <button class="btn" type="button" id="printPdf">⎙ Print / Save as PDF</button>
+        <button class="btn" type="button" id="dlMd">⤓ Report (.md)</button>
+        <button class="btn" type="button" id="dlCsv">⤓ Scores (.csv)</button>
+        <button class="btn" type="button" id="dlJson">⤓ Save case (.json)</button>
+        <label class="btn" style="display:inline-flex;gap:6px;align-items:center">⤒ Load case (.json)<input type="file" id="loadJson" accept="application/json,.json" hidden></label>
+      </div>
+    </div>
+    <iframe class="preview" id="preview" title="Report preview"></iframe>
+  </section>
+
+  <p class="foot">Decision-support tool. Psychometric fit is one input to a structured, job-related selection process. Never use it as the sole basis for a hiring decision. Interpret Hogan, SHL, and NEO scores only under the publisher's qualification requirements and published norms. All example cases are fictional.</p>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(() => {
+'use strict';
+/* ============================== constants ============================== */
+const DIMS = [
+  { k: 'collab', name: 'Collaboration & Belonging', short: 'Collaboration', q: 'Clan',
+    hi: 'Seeks more consultation, relational warmth and consensus than this context typically offers; transactional exchanges may read as coldness and erode engagement.',
+    lo: 'Operates more independently than local norms expect; may be perceived as bypassing consensus or not being "one of us".',
+    probeHi: 'Tell us about delivering a result in a team where people worked largely in silos. How did you adapt your style?',
+    probeLo: 'Describe a decision you could have made faster alone but chose to build consensus on. What did it cost and what did it gain?',
+    actHi: 'Assign an onboarding buddy and schedule structured 1:1s with 6–8 key stakeholders in the first 30 days to build relational capital quickly.',
+    actLo: 'Make consultation expectations explicit: agree a RACI for the first two major decisions and name who must be brought along.' },
+  { k: 'innov', name: 'Innovation & Experimentation', short: 'Innovation', q: 'Adhocracy',
+    hi: 'Generates ideas and pushes change faster than this context absorbs; risks "initiative overload" perceptions and frustration with approval cycles.',
+    lo: 'Prefers proven methods where the context rewards experimentation; may appear resistant to change or slow to adopt new ways of working.',
+    probeHi: 'Tell us about an idea you championed that the organization was not ready for. What did you do next?',
+    probeLo: 'Describe the last time you abandoned a proven approach to try something untested. What triggered it?',
+    actHi: 'Channel innovation into one sanctioned pilot with explicit governance gates; agree an "ideas backlog" the manager reviews monthly.',
+    actLo: 'Pair with an experimentation-oriented peer; set a learning goal on one method (A/B testing, design sprint, test-and-learn).' },
+  { k: 'results', name: 'Results & Competitive Drive', short: 'Results', q: 'Market',
+    hi: 'Carries stronger competitive and commercial drive than the context; may push targets and pace beyond norms and strain collegiality.',
+    lo: 'Less target-driven than the context demands; may underperform on visible scorecard metrics and be read as lacking urgency.',
+    probeHi: 'Tell us about a time hitting your number put you at odds with colleagues. How did you resolve it?',
+    probeLo: 'Describe the most aggressive target you have owned. How did you mobilize yourself and others to hit it?',
+    actHi: 'Co-define success metrics that include collaboration and quality indicators, not only output, to keep drive constructive.',
+    actLo: 'Set 30/60/90-day measurable commitments with visible tracking; review weekly in the first quarter.' },
+  { k: 'struct', name: 'Structure & Process Control', short: 'Structure', q: 'Hierarchy',
+    hi: 'Values rules, documentation and predictability more than the context provides; ambiguity and improvisation may cause stress.',
+    lo: 'Low tolerance for process, controls and approvals; risk of governance shortcuts and friction with risk, compliance or finance partners.',
+    probeHi: 'Tell us about a time you had to deliver with no defined process. What did you put in place, and how fast?',
+    probeLo: 'Describe a time a control or approval process blocked you. What did you do, and what would the control owner say about it?',
+    actHi: 'Provide a written "how decisions get made here" guide and an explicit escalation map in week one.',
+    actLo: 'Front-load governance onboarding (risk appetite, approval thresholds, compliance obligations) and name a control-function ally.' },
+  { k: 'pace', name: 'Decision Velocity', short: 'Pace', q: null,
+    hi: 'Decides and moves faster than the local cadence; may bypass review cycles and be perceived as impulsive or unilateral.',
+    lo: 'Deliberates longer than the local cadence; may be perceived as a bottleneck in fast-moving decisions.',
+    probeHi: 'Tell us about a fast decision you later had to reverse. What would you do differently in a slower-moving organization?',
+    probeLo: 'Describe a high-stakes decision you made under heavy time pressure with incomplete data.',
+    actHi: 'Agree which decision classes need consultation versus which the hire owns outright; publish the decision log.',
+    actLo: 'Use decision deadlines and "good-enough" thresholds; manager to model fast, reversible decision-making.' },
+  { k: 'risk', name: 'Risk Tolerance', short: 'Risk', q: null,
+    hi: 'More comfortable with uncertainty and downside risk than the context; risk-appetite conflict with control functions is likely.',
+    lo: 'More risk-averse than the context; may slow bets and miss windows in an environment that rewards calculated risk.',
+    probeHi: 'Describe a calculated risk that did not pay off. How did you manage the fallout with stakeholders?',
+    probeLo: 'Tell us about a time you backed a bet with significant downside. How did you size and manage the risk?',
+    actHi: 'Make the risk appetite statement and limits explicit; pre-agree "safe-to-fail" boundaries for experiments.',
+    actLo: 'Create low-stakes experimentation opportunities with explicit air cover from the manager.' },
+  { k: 'conflict', name: 'Conflict Directness', short: 'Conflict', q: null,
+    hi: 'More direct and challenging than local norms; candour may be experienced as abrasive and reduce psychological safety for others.',
+    lo: 'Less direct than local norms; issues may go unspoken and positions may be under-defended in robust debates.',
+    probeHi: 'Tell us about feedback you gave that landed badly. What did you learn about your delivery?',
+    probeLo: 'Describe a time you strongly disagreed with a peer or senior leader. What exactly did you say?',
+    actHi: 'Coach on "candour with care": calibrate delivery to local norms; seek feedback from two peers at day 45.',
+    actLo: 'Create structured forums (pre-reads, written dissent) where challenge is expected; manager to invite disagreement explicitly.' },
+  { k: 'autonomy', name: 'Autonomy Need / Latitude', short: 'Autonomy', q: null,
+    hi: 'Needs more latitude than the context grants; close supervision and approval layers are a primary disengagement trigger.',
+    lo: 'Expects more direction than the context provides; may stall or over-escalate in ambiguous, self-directed work.',
+    probeHi: 'Tell us about working for a manager who wanted close visibility of your work. How did you make it work?',
+    probeLo: 'Describe a time you had to define your own priorities with little guidance. How did you decide?',
+    actHi: 'Agree explicit decision rights and a lightweight reporting rhythm; manager to supervise by outcome, not activity.',
+    actLo: 'Provide clear priorities and weekly check-ins in month one, then taper deliberately to build independence.' },
+];
+const HPI = [['adj','Adjustment','Composure under pressure'],['amb','Ambition','Drive, competitiveness, leadership'],['soc','Sociability','Need for social interaction'],['ips','Interpersonal Sensitivity','Tact, warmth, perceptiveness'],['pru','Prudence','Conscientiousness, rule-following'],['inq','Inquisitive','Curiosity, strategic imagination'],['lrn','Learning Approach','Achievement-oriented learning']];
+const BIG5 = [['O','Openness','Curiosity, novelty-seeking'],['C','Conscientiousness','Order, discipline, dependability'],['E','Extraversion','Energy, assertiveness, sociability'],['A','Agreeableness','Cooperation, trust, warmth'],['N','Neuroticism','Emotional reactivity (high = less stable)']];
+const MVPI = [['rec','Recognition'],['pow','Power'],['hed','Hedonism'],['alt','Altruistic'],['aff','Affiliation'],['tra','Tradition'],['sec','Security'],['com','Commerce'],['aes','Aesthetics'],['sci','Science']];
+const MOTIVE_REWARD = { rec: { market: .6, adhoc: .4 }, pow: { market: .6, hier: .4 }, hed: { clan: .5, adhoc: .5 }, alt: { clan: 1 }, aff: { clan: 1 }, tra: { hier: .7, clan: .3 }, sec: { hier: 1 }, com: { market: 1 }, aes: { adhoc: 1 }, sci: { adhoc: .6, market: .4 } };
+const LEVER = {
+  rec: 'Give visible, public credit for milestones; showcase their work in leadership forums.',
+  pow: 'Hand over ownership of a consequential decision area with a visible mandate to influence.',
+  hed: 'Build variety and enjoyment into the work; protect informal team rituals.',
+  alt: 'Connect deliverables explicitly to customer, patient or employee impact.',
+  aff: 'Embed them in cross-team rituals and give them relationship-rich assignments.',
+  tra: 'Explain how changes respect established principles; involve them in codifying standards.',
+  sec: 'Give clear expectations, stable priorities and advance notice of change.',
+  com: 'Tie goals to commercial outcomes and transparent incentive mechanics.',
+  aes: 'Give ownership of quality, design and the end-customer experience.',
+  sci: 'Give them data-rich problems; make decisions on evidence and show the reasoning.',
+};
+const ARCH = { stab: 'Culture Stabilizer', add: 'Accretive Culture Add', dis: 'Disruptive Misfit' };
+const PLATFORMS = [['glassdoor','Glassdoor'],['ambitionbox','AmbitionBox'],['indeed','Indeed'],['kununu','Kununu']];
+const INSTR = { hogan: 'Hogan HPI', big5: 'Big Five / NEO-PI-R', opq32: 'SHL OPQ32 (rolled up to Big Five domains)', kf4d: 'Korn Ferry KF4D (rolled up to Big Five domains)' };
+const revN = o => PLATFORMS.reduce((s, [k]) => s + (+o.platforms[k] || 0), 0);
+const confLvl = v => v >= 75 ? 'High' : v >= 60 ? 'Moderate' : 'Low';
+const HDS = [
+  { k:'excitable', trig:'Tight deadlines combined with low psychological safety', self:'Notice early signs of frustration (terse messages, abrupt exits); apply a 24-hour rule before reacting to setbacks.', n:'Excitable', cl:'Moving away', looks:'Volatile moods, emotional outbursts, quick disappointment with people and projects.', mit:'Agree an escalation "pause" protocol; manager gives early, private feedback; resilience coaching.', probe:'Tell us about a time a project you cared about was cancelled. What did you do in the first 48 hours?' },
+  { k:'skeptical', trig:'Leadership churn, restructuring and low management credibility', self:'Ask about motives directly before acting on assumptions; keep a facts-vs-interpretations log.', n:'Skeptical', cl:'Moving away', looks:'Cynicism, mistrust, reading hidden motives into decisions, argumentativeness.', mit:'Make decision rationale transparent; deliver early trust-building wins; avoid surprises.', probe:'Describe a time you found out leadership had not told you the full story. How did you respond?' },
+  { k:'cautious', trig:'High-velocity, high-risk decisions and public accountability for failure', self:'Set a personal decision deadline; ask \u2018what does not deciding cost?\u2019', n:'Cautious', cl:'Moving away', looks:'Risk aversion, resistance to change, slow decisions driven by fear of criticism.', mit:'Set decision deadlines with explicit safe-to-fail boundaries; recognize reasoned risk-taking publicly.', probe:'Tell us about a significant decision you made with less than 60% of the information you wanted.' },
+  { k:'reserved', trig:'Collaboration-heavy, conflict-rich forums and constant stakeholder demands', self:'Schedule proactive updates even when busy; check in on team mood weekly.', n:'Reserved', cl:'Moving away', looks:'Withdrawal, poor communication, indifference to others’ concerns under pressure.', mit:'Set a structured communication cadence; run stakeholder pulse checks at day 30 and day 60.', probe:'How do you keep stakeholders informed when you are under heavy delivery pressure?' },
+  { k:'leisurely', trig:'Target pressure combined with low autonomy and frequent interruptions', self:'Voice disagreement in the meeting, not after it; renegotiate commitments openly.', n:'Leisurely', cl:'Moving away', looks:'Passive resistance, covert non-cooperation, resentment of requests and interruptions.', mit:'Put commitments in writing; legitimize open disagreement so it is not expressed covertly.', probe:'Describe a time you agreed to a request you disagreed with. What happened next?' },
+  { k:'bold', trig:'Hyper-governance, consensus requirements and challenge from peers', self:'Ask \u2018what could I be wrong about?\u2019 in every major decision; credit others first.', n:'Bold', cl:'Moving against', looks:'Overconfidence, entitlement, difficulty admitting mistakes or sharing credit.', mit:'Run 360 feedback at day 60; pair with a candid peer challenger; hold blameless post-mortems.', probe:'Tell us about a significant mistake you made and how you made it visible to others.' },
+  { k:'mischievous', trig:'Hyper-governance, control sign-offs and regulatory scrutiny', self:'Pre-clear any rule exception with the control owner; document the risk trade-off.', n:'Mischievous', cl:'Moving against', looks:'Limit-testing, impulsive risk-taking, bending rules, charming manipulation.', mit:'Set clear risk-appetite and control boundaries; complete compliance onboarding before any delegated authority.', probe:'Describe a time you bent a rule to get a result. Looking back, what would you do differently?' },
+  { k:'colorful', trig:'Formal, consensus-driven settings where the stage must be shared', self:'Cap concurrent commitments; let team members present shared successes.', n:'Colorful', cl:'Moving against', looks:'Attention-seeking, dramatic, over-commitment and weak follow-through.', mit:'Define success by delivery metrics; deliberately share the stage with the team.', probe:'Tell us about a commitment you made publicly and later struggled to deliver.' },
+  { k:'imaginative', trig:'Governance-heavy, low-innovation settings that demand practical delivery', self:'Pressure-test ideas with an execution partner before going public.', n:'Imaginative', cl:'Moving against', looks:'Eccentric or impractical ideas, unpredictability, poor practical judgment.', mit:'Pair with an execution-focused partner; require an idea-to-business-case discipline.', probe:'Walk us through how you turned an unconventional idea into an executable, funded plan.' },
+  { k:'diligent', trig:'Speed demands and the need to delegate under workload', self:'Agree \u2018good-enough\u2019 standards up front; track time spent re-working delegated tasks.', n:'Diligent', cl:'Moving toward', looks:'Perfectionism, micromanagement, reluctance to delegate.', mit:'Set delegation targets; define "good-enough" quality thresholds per deliverable.', probe:'What did you delegate last quarter that you were tempted to do yourself?' },
+  { k:'dutiful', trig:'High autonomy, ambiguous decision rights and expectations of open challenge', self:'Bring a recommendation rather than a question to the manager; practise one respectful challenge per week.', n:'Dutiful', cl:'Moving toward', looks:'Over-reliance on authority, avoiding independent decisions, ingratiation.', mit:'Pre-agree decision rights; the manager declines to make decisions that belong to the hire.', probe:'Tell us about a time you challenged a senior leader’s decision. What was the outcome?' },
+];
+const QUADS = [['clan','Clan'],['adhoc','Adhocracy'],['market','Market'],['hier','Hierarchy']];
+const DEN = [['inv','Involvement'],['cons','Consistency'],['adapt','Adaptability'],['mission','Mission']];
+const OPS = [['pace','Decision velocity','Speed of decisions & delivery'],['risk','Risk tolerance','Appetite for uncertainty'],['conflict','Conflict directness','Tolerance for open challenge'],['autonomy','Autonomy granted','Latitude given to individuals']];
+const SIGNALS = [['layoffs','Recent layoffs'],['churn','Leadership churn'],['restructure','Restructuring / reorg'],['regulatory','Regulatory findings'],['growth','Growth milestone'],['mna','M&A activity']];
+const MGR = { directive: ['Directive', 25], consultative: ['Consultative', 50], coaching: ['Coaching', 55], delegating: ['Delegating', 80] };
+const LEX = {
+  pos: ['great','supportive','flexible','growth','learning','innovative','collaborative','transparent','inclusive','respect','respectful','empower','empowered','opportunity','opportunities','friendly','balance','autonomy','mentor','mentoring','fair','recognition','benefits','stable','trust','caring','smart','fun','proud'],
+  neg: ['toxic','micromanage','micromanagement','micromanaging','bureaucracy','bureaucratic','politics','political','layoffs','burnout','overworked','slow','chaotic','favoritism','favouritism','blame','fear','poor','lack','unclear','stressful','turnover','silos','rigid','red tape','disorganized','pressure','uncertainty','frustrating','outdated'],
+};
+const THEMES = {
+  'Psychological safety': ['fear','blame','speak up','retaliation','safe','trust','afraid'],
+  'Workload & burnout': ['burnout','overworked','long hours','stressful','workload','work-life','balance','pressure'],
+  'Bureaucracy & pace': ['bureaucracy','bureaucratic','red tape','slow','approvals','approval','rigid','silos','process'],
+  'Management credibility': ['management','leadership','micromanage','micromanagement','favoritism','transparent','communication','senior leaders'],
+  'Growth & learning': ['growth','learning','career','promotion','mentor','opportunity','opportunities'],
+  'Job security & change': ['layoffs','restructuring','reorg','job security','turnover','attrition','uncertainty'],
+  'Innovation': ['innovative','innovation','experiment','agile','new ideas','digital','transformation'],
+};
+const CVF_LEX = {
+  clan: ['people','family','together','care','caring','team','collaboration','collaborate','belonging','trust','inclusive','empower','mentor','community','support','supportive','wellbeing','consensus'],
+  adhoc: ['innovation','innovate','innovative','agile','disrupt','experiment','experiments','creative','future','digital','transform','transformation','bold','pioneer','new ideas','test and learn','startup','ship','prototype','iterate'],
+  market: ['customer','customers','win','winning','growth','results','market share','revenue','performance','target','targets','competitive','accountability','deliver','outcomes','profit','quota','pipeline','numbers'],
+  hier: ['efficiency','compliance','discipline','process','processes','control','controls','risk','governance','standard','standards','policy','stability','quality','consistent','regulation','regulatory','approval','approvals','audit','sign-off'],
+};
+const OPS_LEX = {
+  pace: ['fast','quickly','speed','urgent','ship','weekly','sprint','move fast'],
+  risk: ['experiment','bet','fail fast','risk-taking','try things'],
+  conflict: ['challenge','debate','push back','candid','direct','disagree'],
+  autonomy: ['ownership','own it','autonomy','empowered','trust you','self-directed'],
+};
+
+/* ============================== presets ============================== */
+const blankCase = () => ({
+  meta: { candidate: '', role: '', level: 'Manager', org: '', team: '', manager: '', assessor: '', date: new Date().toISOString().slice(0,10), req: '' },
+  org: {
+    ledger: { survey: false, denison: false, barrett: false, reviews: false, leadership: false, news: false }, barrett: { entropy: 20, values: '' },
+    cvfNow: { clan: 25, adhoc: 25, market: 25, hier: 25 }, cvfEsp: { clan: 25, adhoc: 25, market: 25, hier: 25 },
+    denison: { inv: 50, cons: 50, adapt: 50, mission: 50 },
+    rating: 3.5, platforms: { glassdoor: 0, ambitionbox: 0, indeed: 0, kununu: 0 }, psych: 3, cred: 3, recommend: 60, reviewText: '', leaderText: '',
+    signals: { layoffs: false, churn: false, restructure: false, regulatory: false, growth: false, mna: false }, newsNotes: '',
+    ops: { pace: 50, risk: 50, conflict: 50, autonomy: 50 },
+  },
+  team: { ledger: { manager: false, peers: 0, reports: 0, xfn: 0 }, mgrStyle: 'consultative', cvf: { clan: 25, adhoc: 25, market: 25, hier: 25 }, ops: { pace: 50, risk: 50, conflict: 50, autonomy: 50 }, transcript: '' },
+  ind: {
+    instrument: 'hogan', ledger: { hpi: false, hds: false, mvpi: false }, norm: '',
+    hpi: { adj: 50, amb: 50, soc: 50, ips: 50, pru: 50, inq: 50, lrn: 50 }, big5: { O: 50, C: 50, E: 50, A: 50, N: 50 },
+    hds: Object.fromEntries(HDS.map(h => [h.k, 50])),
+    mvpi: Object.fromEntries(MVPI.map(m => [m[0], 50])), notes: '',
+  },
+  provisional: false,
+});
+const PRESETS = {
+  A: () => { const c = blankCase(); Object.assign(c.meta, { candidate: 'Priya Raman', role: 'Head of Digital Product', level: 'Senior leader', org: 'Meridian Trust Bank', team: 'Digital Ventures Squad', manager: 'Elena Fischer, Chief Digital Officer', assessor: 'C-Psych Advisory · Talent Diagnostics', req: 'MTB-DV-0417' });
+    Object.assign(c.org, {
+      ledger: { survey: true, denison: true, barrett: true, reviews: true, leadership: true, news: true }, barrett: { entropy: 31, values: 'Lived top values: control, bureaucracy, risk-aversion, compliance, job security. Desired: innovation, customer focus, agility.' },
+      cvfNow: { clan: 20, adhoc: 10, market: 25, hier: 45 }, cvfEsp: { clan: 20, adhoc: 30, market: 30, hier: 20 },
+      denison: { inv: 48, cons: 74, adapt: 36, mission: 61 }, rating: 3.4, platforms: { glassdoor: 310, ambitionbox: 85, indeed: 25, kununu: 0 }, psych: 2.8, cred: 2.9, recommend: 58,
+      reviewText: 'Stable employer with good benefits, but the bureaucracy is exhausting. Every decision needs three approvals and the red tape slows everything. Senior leadership talks about digital transformation and innovation yet middle management is risk-averse and rigid. Some teams feel fear of blame when projects fail. Work-life balance is fair. Recent restructuring created uncertainty and turnover in tech. Career growth is slow unless you know the right people – politics matter.',
+      leaderText: 'Our strategy is to become a digital-first bank. We will innovate boldly, experiment with new customer propositions and transform how we work with agile teams. We remain committed to winning in our core markets and delivering growth for shareholders, while caring for our people and maintaining the trust of our customers and regulators.',
+      signals: { layoffs: false, churn: true, restructure: true, regulatory: true, growth: false, mna: false },
+      newsNotes: 'Q2: regulator issued findings on operational-risk controls. CTO departed in March; digital unit re-organized under new CDO. Announced 3-year transformation programme.',
+      ops: { pace: 35, risk: 25, conflict: 40, autonomy: 30 } });
+    Object.assign(c.team, { ledger: { manager: true, peers: 2, reports: 1, xfn: 1 }, mgrStyle: 'delegating', cvf: { clan: 25, adhoc: 40, market: 25, hier: 10 }, ops: { pace: 78, risk: 70, conflict: 60, autonomy: 75 },
+      transcript: 'Hiring manager: We are deliberately run like a startup inside the bank. We ship every two weeks, experiment constantly and I expect people to own their outcomes – I will trust you and stay out of the way. Direct report (product manager): She would inherit a team that values being trusted to run with things. Peer (engineering lead): Debate is healthy here, we challenge each other directly. Peer (design): The team is close-knit and supportive. Risk partner (cross-functional): The squad moves fast; our concern is that controls and approvals are sometimes treated as an afterthought, which matters given the regulatory findings.' });
+    Object.assign(c.ind, { instrument: 'hogan', ledger: { hpi: true, hds: true, mvpi: true }, norm: 'Hogan Global Managerial Norm (2023)',
+      hpi: { adj: 62, amb: 84, soc: 66, ips: 48, pru: 28, inq: 88, lrn: 72 },
+      hds: { excitable: 45, skeptical: 38, cautious: 20, reserved: 35, leisurely: 40, bold: 82, mischievous: 74, colorful: 68, imaginative: 91, diligent: 30, dutiful: 18 },
+      mvpi: { rec: 70, pow: 78, hed: 55, alt: 40, aff: 45, tra: 15, sec: 18, com: 66, aes: 72, sci: 85 },
+      notes: 'Debrief: highly strategic, energised by building new propositions. References describe her as visionary and decisive; one noted impatience with governance forums and a tendency to commit to launch dates before risk sign-off.' });
+    return c; },
+  B: () => { const c = blankCase(); Object.assign(c.meta, { candidate: 'Daniel Okafor', role: 'Regional Sales Director, EMEA', level: 'Senior leader', org: 'Nimbus Cloud Software', team: 'EMEA Enterprise Sales', manager: 'Marcus Lindqvist, CRO', assessor: 'C-Psych Advisory · Talent Diagnostics', req: 'NCS-SAL-2291' });
+    Object.assign(c.org, { ledger: { survey: true, denison: true, barrett: true, reviews: true, leadership: true, news: true },
+      cvfNow: { clan: 20, adhoc: 22, market: 45, hier: 13 }, cvfEsp: { clan: 25, adhoc: 25, market: 40, hier: 10 },
+      denison: { inv: 66, cons: 52, adapt: 71, mission: 78 }, rating: 4.1, platforms: { glassdoor: 420, ambitionbox: 0, indeed: 60, kununu: 160 }, barrett: { entropy: 14, values: 'Lived: customer focus, achievement, accountability, teamwork. Desired: wellbeing, collaboration.' }, psych: 3.9, cred: 3.8, recommend: 79,
+      reviewText: 'Fast-paced, high-performance culture with great growth opportunities. Compensation and recognition for top performers is excellent. Pressure to hit targets every quarter can be stressful, and work-life balance suffers at quarter end. Leadership is transparent and accessible. Lots of learning and smart colleagues; some teams are chaotic as we scale.',
+      leaderText: 'We win by obsessing over customers and delivering outstanding results. Growth and accountability are in our DNA. We move fast, experiment, and empower our people to own their numbers, supported by a team that celebrates winning together.',
+      signals: { layoffs: false, churn: false, restructure: false, regulatory: false, growth: true, mna: true },
+      newsNotes: 'Series E raised; acquired a German analytics start-up; ARR growth 48% YoY.', ops: { pace: 75, risk: 62, conflict: 64, autonomy: 66 } });
+    Object.assign(c.team, { ledger: { manager: true, peers: 3, reports: 2, xfn: 2 }, mgrStyle: 'coaching', cvf: { clan: 22, adhoc: 18, market: 50, hier: 10 }, ops: { pace: 78, risk: 60, conflict: 66, autonomy: 70 },
+      transcript: 'CRO: I want a leader who owns the number and builds a winning team. We review pipeline weekly, debate deals candidly and celebrate wins together. Peer (Sales Director, NA): We share playbooks and push back on each other directly. Peer (Customer Success): Collaboration at handover is important – customers come first. Finance partner: Discount governance is light but approvals for non-standard terms are required.' });
+    Object.assign(c.ind, { instrument: 'hogan', ledger: { hpi: true, hds: true, mvpi: true }, norm: 'Hogan Global Sales Leadership Norm (2024)',
+      hpi: { adj: 70, amb: 90, soc: 80, ips: 58, pru: 46, inq: 60, lrn: 55 },
+      hds: { excitable: 40, skeptical: 30, cautious: 15, reserved: 25, leisurely: 35, bold: 76, mischievous: 60, colorful: 72, imaginative: 50, diligent: 35, dutiful: 30 },
+      mvpi: { rec: 85, pow: 82, hed: 60, alt: 45, aff: 65, tra: 25, sec: 30, com: 88, aes: 35, sci: 40 },
+      notes: 'Consistent over-achievement (115–130% of quota) over five years. References highlight energy, coaching of reps and strong customer presence.' });
+    return c; },
+  C: () => { const c = blankCase(); Object.assign(c.meta, { candidate: 'Sofia Mendes', role: 'Operations Manager, Patient Flow', level: 'Manager', org: 'Riverside Health Partners', team: 'Acute Care Operations', manager: 'Dr. James Whitaker', assessor: 'C-Psych Advisory · Talent Diagnostics', req: 'RHP-OPS-118' });
+    Object.assign(c.org, { ledger: { survey: false, denison: false, barrett: false, reviews: true, leadership: false, news: false }, rating: 3.1, platforms: { glassdoor: 9, ambitionbox: 0, indeed: 3, kununu: 0 }, psych: 4.3, cred: 3, recommend: 52,
+      reviewText: 'Understaffed and stressful. Management blames staff when targets are missed and there is a culture of fear. Burnout is common. Colleagues are caring and supportive.', cvfNow: { clan: 30, adhoc: 10, market: 20, hier: 35 } });
+    Object.assign(c.team, { ledger: { manager: true, peers: 0, reports: 0, xfn: 0 }, cvf: { clan: 20, adhoc: 30, market: 30, hier: 20 }, transcript: 'Manager: we need someone who keeps things moving.' });
+    Object.assign(c.ind, { instrument: 'big5', ledger: { hpi: true, hds: false, mvpi: true }, norm: '', big5: { O: 55, C: 82, E: 48, A: 70, N: 35 },
+      mvpi: { rec: 40, pow: 45, hed: 35, alt: 80, aff: 70, tra: 60, sec: 72, com: 45, aes: 30, sci: 50 } });
+    return c; },
+  blank: blankCase,
+};
+
+/* ============================== helpers ============================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const clamp = (v, a = 0, b = 100) => Math.max(a, Math.min(b, v));
+const r0 = v => Math.round(v);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const getP = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
+const setP = (o, p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
+const sumQ = c => QUADS.reduce((s, [k]) => s + (+c[k] || 0), 0);
+const normCvf = c => { const s = sumQ(c) || 1; return Object.fromEntries(QUADS.map(([k]) => [k, (+c[k] || 0) / s * 100])); };
+const cvfDims = c => { const n = normCvf(c), f = p => clamp(50 + (p - 25) * 2); return { collab: f(n.clan), innov: f(n.adhoc), results: f(n.market), struct: f(n.hier) }; };
+const countTerms = (text, terms) => { const t = ' ' + String(text || '').toLowerCase().replace(/[^a-z0-9\- ]+/g, ' ') + ' '; let n = 0; for (const w of terms) { const re = new RegExp('(^|[^a-z])' + w.replace(/[-]/g, '\\-') + '(?=[^a-z]|$)', 'g'); n += (t.match(re) || []).length; } return n; };
+const band = v => v >= 80 ? 'strong' : v >= 65 ? 'solid' : v >= 50 ? 'partial' : 'weak';
+const hdsBand = v => v >= 90 ? 'High' : v >= 70 ? 'Moderate' : 'Low';
+const STATUS = { Low: ['good','●'], Moderate: ['warn','▲'], High: ['serious','◆'], Critical: ['critical','■'] };
+const hdsStatus = v => v >= 90 ? ['critical','■'] : v >= 70 ? ['warn','▲'] : ['good','●'];
+const scoreStatus = v => v >= 75 ? ['good','●'] : v >= 60 ? ['warn','▲'] : v >= 45 ? ['serious','◆'] : ['critical','■'];
+
+function inferCvf(text) {
+  const counts = Object.fromEntries(QUADS.map(([k]) => [k, countTerms(text, CVF_LEX[k])]));
+  const tot = Object.values(counts).reduce((a, b) => a + b, 0);
+  if (!tot) return null;
+  const raw = QUADS.map(([k]) => (counts[k] + 0.5) / (tot + 2) * 100);
+  const rounded = raw.map(Math.round); let diff = 100 - rounded.reduce((a, b) => a + b, 0);
+  rounded[raw.indexOf(Math.max(...raw))] += diff;
+  return { profile: Object.fromEntries(QUADS.map(([k], i) => [k, rounded[i]])), counts };
+}
+function sentiment(text) {
+  const p = countTerms(text, LEX.pos), n = countTerms(text, LEX.neg);
+  const pol = p + n ? (p - n) / (p + n) : 0;
+  const themes = Object.fromEntries(Object.entries(THEMES).map(([k, t]) => [k, countTerms(text, t)]));
+  return { pos: p, neg: n, pol, themes, has: String(text || '').trim().length > 40 };
+}
+
+/* ============================== model ============================== */
+function hpiEq(ind) {
+  if (ind.instrument === 'hogan') return { ...ind.hpi };
+  const b = ind.big5;
+  return { adj: 100 - b.N, amb: (b.E + b.C) / 2, soc: b.E, ips: b.A, pru: b.C, inq: b.O, lrn: b.O * 0.7 + b.C * 0.3 };
+}
+function indDims(ind) {
+  const h = hpiEq(ind), v = ind.mvpi, d = ind.hds;
+  return {
+    collab: 0.35*v.aff + 0.25*v.alt + 0.25*h.ips + 0.15*h.soc,
+    innov: 0.35*h.inq + 0.2*v.sci + 0.2*v.aes + 0.15*(100 - v.tra) + 0.1*h.lrn,
+    results: 0.4*h.amb + 0.25*v.com + 0.2*v.pow + 0.15*v.rec,
+    struct: 0.4*h.pru + 0.3*v.tra + 0.3*v.sec,
+    pace: 0.35*h.amb + 0.25*(100 - h.pru) + 0.15*h.soc + 0.25*(100 - d.cautious),
+    risk: 0.35*(100 - v.sec) + 0.25*(100 - h.pru) + 0.2*h.inq + 0.2*(100 - d.cautious),
+    conflict: 0.35*(100 - h.ips) + 0.25*h.amb + 0.2*v.pow + 0.2*h.adj,
+    autonomy: 0.3*(100 - d.dutiful) + 0.2*(100 - v.aff) + 0.2*h.amb + 0.15*(100 - v.tra) + 0.15*h.inq,
+  };
+}
+const ctxDims = (cvf, ops) => ({ ...cvfDims(cvf), ...ops });
+function alignment(x, env) {
+  let sw = 0, s = 0; const per = {};
+  for (const d of DIMS) {
+    const gap = x[d.k] - env[d.k], w = 0.5 + Math.abs(env[d.k] - 50) / 50, fit = clamp(100 - Math.abs(gap) * 1.3);
+    per[d.k] = { gap, w, fit }; sw += w; s += w * fit;
+  }
+  return { score: s / sw, per };
+}
+function valueShares(v) {
+  const q = { clan: (v.aff + v.alt) / 2, adhoc: (v.sci + v.aes) / 2, market: (v.com + v.pow + v.rec) / 3, hier: (v.tra + v.sec) / 2 };
+  const s = Object.values(q).reduce((a, b) => a + b, 0) || 1;
+  return Object.fromEntries(Object.entries(q).map(([k, x]) => [k, x / s * 100]));
+}
+function valuesCongruence(v, cvf) {
+  const a = valueShares(v), b = normCvf(cvf);
+  const dist = QUADS.reduce((s, [k]) => s + Math.abs(a[k] - b[k]), 0);
+  return clamp(100 - dist);
+}
+function orgHealth(o, sent) {
+  const parts = [[(o.rating - 1) / 4 * 100, .3], [(o.psych - 1) / 4 * 100, .25], [(o.cred - 1) / 4 * 100, .2], [o.recommend, .15]];
+  if (sent.has) parts.push([(sent.pol + 1) / 2 * 100, .1]);
+  if (o.ledger.barrett) parts.push([clamp(100 - o.barrett.entropy * 2), .15]);
+  const w = parts.reduce((s, p) => s + p[1], 0);
+  return clamp(parts.reduce((s, p) => s + p[0] * p[1], 0) / w);
+}
+function derailers(S, env, health) {
+  const sg = S.org.signals, stress = Math.min(100, 25*sg.layoffs + 25*sg.churn + 20*sg.restructure + 15*sg.regulatory);
+  const lvl = S.meta.level === 'Executive' ? 0.1 : S.meta.level === 'Senior leader' ? 0.05 : 0;
+  const ctx = {
+    excitable: (env.pace + (100 - health)) / 2,
+    skeptical: ((100 - health) + stress + (100 - (S.org.cred - 1) / 4 * 100)) / 3,
+    cautious: (env.risk + env.pace + env.innov) / 3,
+    reserved: (env.collab + env.conflict) / 2,
+    leisurely: (env.results + (100 - env.autonomy)) / 2,
+    bold: (env.struct + env.collab) / 2,
+    mischievous: Math.min(100, env.struct * 0.7 + (sg.regulatory ? 30 : 0)),
+    colorful: (env.struct + env.collab) / 2,
+    imaginative: (env.struct + (100 - env.innov)) / 2,
+    diligent: (env.pace + env.autonomy) / 2,
+    dutiful: (env.autonomy + env.conflict) / 2,
+  };
+  return HDS.map(h => { const score = S.ind.hds[h.k], mult = 0.6 + ctx[h.k] / 100 * 0.8 + lvl; return { ...h, score, ctx: ctx[h.k], mult, act: Math.min(100, score * mult), band: hdsBand(score) }; })
+    .sort((a, b) => b.act - a.act);
+}
+function confidence(S, sent, teamVar, sayDo) {
+  const o = S.org.ledger, t = S.team.ledger, i = S.ind.ledger, flags = [], qs = [];
+  let org = (o.survey ? 25 : 0) + (o.denison ? 10 : 0) + (o.barrett ? 10 : 0) + (o.reviews ? (revN(S.org) >= 50 ? 25 : 12) : 0) + (o.leadership ? 15 : 0) + (o.news ? 15 : 0);
+  let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(S.team.transcript).trim().length > 150 ? 20 : 0);
+  let ind = (i.hpi ? 35 : 0) + (i.hds ? 25 : 0) + (i.mvpi ? 25 : 0) + (String(S.ind.norm).trim() ? 15 : 0);
+  const Q = (vec, q, why) => qs.push({ vec, q, why });
+  // missing-evidence questions
+  if (!o.survey) Q('Organization', 'Can you provide OCAI/CVF survey results (current-state profile, n ≥ 30 respondents) for the enterprise or the relevant business unit?', 'The lived-culture baseline currently rests on assessor estimates rather than formal diagnostic data.');
+  if (!o.reviews) Q('Organization', 'Please share a representative sample (≥ 50) of recent employee reviews from Glassdoor, AmbitionBox, Kununu, or Indeed, ideally from the last 18 months.', 'There is no external sentiment evidence to triangulate psychological safety and management credibility.');
+  else if (revN(S.org) < 50) Q('Organization', `Only ${revN(S.org)} reviews are available. Can we add internal engagement-survey data (eNPS, safety items) to strengthen the sentiment read?`, 'A small review sample has high variance and may over-represent leavers.');
+  if (!o.leadership) Q('Organization', 'Can you share the most recent CEO letter, strategy narrative, or town-hall transcript?', 'Without leadership discourse we cannot separate espoused (intended) values from lived values.');
+  if (!o.news) Q('Organization', 'Have there been layoffs, leadership departures, reorganizations, or regulatory findings in the last 12 months?', 'Public signals change derailer activation (e.g., Skeptical under churn) and the career-velocity outlook.');
+  if (!o.barrett) Q('Organization', 'Is a Barrett Cultural Values Assessment available (cultural entropy %, top-10 lived vs. desired values)?', 'Cultural entropy quantifies culture debt, the energy lost to bureaucracy, blame and control.');
+  if (!o.denison) Q('Organization', 'Is Denison Organizational Culture Survey data available (Involvement, Consistency, Adaptability, Mission)?', 'Denison data would cross-validate the CVF profile and the operating-norm estimates.');
+  if (!t.manager) Q('Team', 'Please schedule a 45-minute structured interview with the hiring manager covering decision rights, pace, conflict norms, and their management style.', 'The team micro-culture cannot be modeled without hiring-manager evidence.');
+  if (t.peers < 2) Q('Team', `Can we interview ${2 - t.peers} more team peer(s) to triangulate day-to-day norms?`, 'A single viewpoint cannot separate team norms from individual preference.');
+  if (S.meta.level !== 'Individual contributor' && t.reports < 1) Q('Team', 'Can we interview at least one prospective direct report about how they want to be led?', 'Downward fit (leader-to-team expectations) is a leading indicator of early leadership derailment.');
+  if (t.xfn < 1) Q('Team', 'Can we speak with one cross-functional partner (e.g., Risk, Finance, Customer Success) who works with this team weekly?', 'Cross-functional friction (e.g., with control functions) is often where fit fails.');
+  if (!i.hpi) Q('Individual', 'Please provide the candidate’s day-to-day personality scores (Hogan HPI, SHL OPQ32, or NEO-PI-R domains) as percentiles.', 'Operating style is the main driver of team fit.');
+  if (!i.hds) Q('Individual', 'Can the candidate complete the Hogan Development Survey (HDS) or an equivalent derailer measure?', 'Without derailer data, friction risk under stress is estimated from defaults (50th percentile) and is unreliable.');
+  if (!i.mvpi) Q('Individual', 'Can the candidate complete the MVPI (or a validated values inventory)?', 'Values congruence accounts for 35% of organizational fit.');
+  if (!String(S.ind.norm).trim()) Q('Individual', 'Which norm group were the percentiles scored against (e.g., global managerial, sales, healthcare professional)?', 'Percentiles have no meaning for benchmarking without a stated reference norm.');
+  // contradictions
+  if (Math.abs(sumQ(S.org.cvfNow) - 100) > 1) { flags.push(['Organization', `Current CVF profile sums to ${sumQ(S.org.cvfNow)}, not 100. It has been normalized automatically.`]); org -= 5; }
+  if (Math.abs(sumQ(S.team.cvf) - 100) > 1) { flags.push(['Team', `Team CVF profile sums to ${sumQ(S.team.cvf)}, not 100. It has been normalized automatically.`]); team -= 5; }
+  if (sent.has && S.org.psych >= 4 && sent.pol < -0.2) { flags.push(['Organization', `Psychological-safety rating is high (${S.org.psych}/5) but review text is net negative (polarity ${sent.pol.toFixed(2)}), and fear/blame themes are present.`]); org -= 8;
+    Q('Organization', 'The psychological-safety score conflicts with the review sentiment. Which source covers the hiring unit, and how was the safety score collected (anonymous survey, n=?)?', 'Contradictory safety signals change how the Skeptical and Excitable derailers are triggered.'); }
+  if (S.org.rating >= 4 && (S.org.signals.layoffs || S.org.signals.churn)) { flags.push(['Organization', 'High review rating alongside recent layoffs or leadership churn. The ratings may predate these events.']); org -= 5; }
+  if (sayDo > 30) Q('Organization', `The espoused culture differs from the lived culture by ${r0(sayDo)} points. Which profile should the hire be assessed against, and how far along is the transformation?`, 'A large say–do gap changes whether this candidate is a culture add or a misfit.');
+  if (teamVar > 25 && t.peers < 2) { flags.push(['Team', `The team diverges strongly from the enterprise (mean variance ${r0(teamVar)} pts) on limited team evidence.`]); team -= 8; }
+  const vals = Object.values(hpiEq(S.ind));
+  if (vals.every(v => v === 50)) { flags.push(['Individual', 'All operating-style scores are exactly 50. These look like defaults, not real assessment data.']); ind -= 20; }
+  if (Object.values(S.ind.hds).every(v => v === 50) && i.hds) { flags.push(['Individual', 'HDS is marked as received but every scale is exactly 50. Check the data entry.']); ind -= 15; }
+  if (S.ind.instrument !== 'hogan') { flags.push(['Individual', `${INSTR[S.ind.instrument]} scores are mapped to HPI-equivalents through Big Five domains. This is an approximation, so treat dimension coordinates as ±10 pts.`]); ind -= 5; }
+  const highD = HDS.filter(h => S.ind.hds[h.k] >= 90 && i.hds);
+  if (highD.length) Q('Individual', `Ask the assessment provider for debrief evidence on the high-risk scale(s): ${highD.map(h => h.n).join(', ')}. Has the candidate shown this in references or interviews?`, 'High HDS scores are hypotheses. They need behavioral corroboration before they drive a decision.');
+  return { org: clamp(org), team: clamp(team), ind: clamp(ind), flags, qs };
+}
+function compute(S) {
+  const sent = sentiment(S.org.reviewText);
+  const x = indDims(S.ind);
+  const team = ctxDims(S.team.cvf, S.team.ops), org = ctxDims(S.org.cvfNow, S.org.ops), esp = { ...cvfDims(S.org.cvfEsp), ...S.org.ops };
+  const env = Object.fromEntries(DIMS.map(d => [d.k, team[d.k] * 0.6 + org[d.k] * 0.4]));
+  const health = orgHealth(S.org, sent);
+  const aTeam = alignment(x, team), aOrg = alignment(x, org), aEsp = alignment(x, esp);
+  const vcTeam = valuesCongruence(S.ind.mvpi, S.team.cvf), vcOrg = valuesCongruence(S.ind.mvpi, S.org.cvfNow), vcEsp = valuesCongruence(S.ind.mvpi, S.org.cvfEsp);
+  const h = hpiEq(S.ind), v = S.ind.mvpi, sg = S.org.signals;
+  const mgrT = MGR[S.team.mgrStyle][1];
+  const mgrFit = clamp(100 - Math.abs(x.autonomy - mgrT) * 1.2 + (S.team.mgrStyle === 'coaching' ? (h.lrn - 50) * 0.2 : 0));
+  const velocity = clamp(40 + 0.25 * org.results + 0.15 * org.innov + (sg.growth ? 20 : 0) - (sg.layoffs ? 20 : 0) - (sg.restructure ? 10 : 0) + (sg.mna ? 5 : 0));
+  const need = (h.amb + v.pow + v.rec) / 3;
+  const velFit = clamp(100 - Math.max(0, need - velocity) * 1.5);
+  const teamScore = 0.7 * aTeam.score + 0.15 * mgrFit + 0.15 * vcTeam;
+  const orgScore = 0.5 * aOrg.score + 0.35 * vcOrg + 0.15 * velFit;
+  const aspScore = 0.6 * aEsp.score + 0.4 * vcEsp;
+  const der = derailers(S, env, health);
+  const derLoad = (der[0].act + der[1].act + der[2].act) / 3;
+  const sayDo = QUADS.reduce((s, [k]) => s + Math.abs(normCvf(S.org.cvfEsp)[k] - normCvf(S.org.cvfNow)[k]), 0) / 2;
+  const overall = 0.5 * teamScore + 0.4 * orgScore + 0.1 * (100 - derLoad);
+  const fparts = [
+    ['Team misalignment', 0.30 * (100 - teamScore)], ['Enterprise misalignment', 0.25 * (100 - orgScore)],
+    ['Derailer activation (top 3)', 0.25 * derLoad], ['Organizational health deficit', 0.10 * (100 - health)], ['Say–do culture gap', 0.10 * Math.min(100, sayDo * 2)],
+  ];
+  const friction = fparts.reduce((s, p) => s + p[1], 0);
+  const fBand = friction < 28 ? 'Low' : friction < 42 ? 'Moderate' : friction < 58 ? 'High' : 'Critical';
+  // culture add vs fit
+  const addRows = DIMS.map(d => {
+    const now = org[d.k], asp = esp[d.k], xi = x[d.k], dirA = asp - now, dirX = xi - now;
+    let add = 0, dis = 0, kind = 'neutral';
+    if (Math.abs(dirA) >= 8 && Math.sign(dirA) === Math.sign(dirX)) { add = Math.min(Math.abs(dirX), Math.abs(dirA)); dis = Math.max(0, Math.abs(dirX) - Math.abs(dirA)) * 0.6; }
+    else dis = Math.max(0, Math.abs(dirX) - 15);
+    if (Math.abs(xi - team[d.k]) < 15) dis *= 0.5;
+    if (add >= 8 && add >= dis) kind = 'healthy'; else if (dis >= 8) kind = 'disruptive';
+    return { d, add, dis, kind, now, asp, xi };
+  });
+  const addSum = addRows.reduce((s, r) => s + r.add, 0), disSum = addRows.reduce((s, r) => s + r.dis, 0);
+  let valueAdd = ARCH.stab;
+  if ((disSum >= 90 && disSum > addSum) || (disSum >= 60 && addSum < 40) || fBand === 'Critical') valueAdd = ARCH.dis;
+  else if (addSum >= 40 && addSum >= disSum * 0.8) valueAdd = ARCH.add;
+  const minVec = Math.min(teamScore, orgScore);
+  let rec, recWhy, recSt;
+  if (overall >= 75 && (fBand === 'Low' || fBand === 'Moderate') && minVec >= 60) { rec = 'Proceed: strong fit'; recSt = 'good'; recWhy = 'Alignment is strong at both team and enterprise level, and friction risk is manageable with standard onboarding.'; }
+  else if (overall >= 60 && fBand !== 'Critical' && minVec >= 45) { rec = 'Proceed with conditions'; recSt = 'warn'; recWhy = 'Fit is sound overall. Make the offer conditional on a targeted onboarding plan, explicit manager contracting, and verification of the flagged derailers.'; }
+  else if (overall >= 58 && minVec < 45 && fBand !== 'Critical') { rec = 'Conditional: structural safeguards required'; recSt = 'serious'; recWhy = `One vector is weak (${teamScore < orgScore ? 'team' : 'enterprise'} ${r0(minVec)}%). Proceed only with executive sponsorship, protected decision rights, and a 90-day fit review.`; }
+  else if (overall >= 48) { rec = 'Hold: further verification required'; recSt = 'serious'; recWhy = 'The evidence points to material misalignment. Run the priority probes and reference checks before deciding.'; }
+  else { rec = 'Not recommended for this context'; recSt = 'critical'; recWhy = 'Misalignment and friction risk are high enough that success would depend on the individual sustaining significant adaptation.'; }
+  const teamVar = DIMS.reduce((s, d) => s + Math.abs(team[d.k] - org[d.k]), 0) / DIMS.length;
+  const conf = confidence(S, sent, teamVar, sayDo);
+  const halted = Math.min(conf.org, conf.team, conf.ind) < 60 && !S.provisional;
+  const provisional = Math.min(conf.org, conf.team, conf.ind) < 60 && S.provisional;
+  // strengths & gaps (team-weighted)
+  const ranked = DIMS.map(d => ({ d, gT: aTeam.per[d.k].gap, gO: aOrg.per[d.k].gap, wT: aTeam.per[d.k].w, wO: aOrg.per[d.k].w,
+    sev: Math.max(Math.abs(aTeam.per[d.k].gap) * aTeam.per[d.k].w * 1.1, Math.abs(aOrg.per[d.k].gap) * aOrg.per[d.k].w) }));
+  const gaps = [...ranked].sort((a, b) => b.sev - a.sev);
+  const strengths = [...ranked].sort((a, b) => (Math.abs(a.gT) + Math.abs(a.gO) * .6) - (Math.abs(b.gT) + Math.abs(b.gO) * .6));
+  return { S, sent, x, team, org, esp, env, health, aTeam, aOrg, aEsp, vcTeam, vcOrg, vcEsp, mgrFit, velocity, need, velFit,
+    teamScore, orgScore, aspScore, der, derLoad, sayDo, overall, fparts, friction, fBand, addRows, addSum, disSum, valueAdd,
+    rec, recWhy, recSt, conf, halted, provisional, gaps, strengths, teamVar };
+}
+
+/* ============================== narrative ============================== */
+function gapText(d, gap, ctxName) { if (Math.abs(gap) < 15) return null; return `${d.name}: ${gap > 0 ? 'higher' : 'lower'} than ${ctxName} by ${r0(Math.abs(gap))} pts. ${gap > 0 ? d.hi : d.lo}`; }
+function probes(R) {
+  const out = [];
+  for (const g of R.gaps.slice(0, 3)) { const gap = Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? g.gT : g.gO; if (Math.abs(gap) < 12) continue; out.push({ tag: g.d.short, why: `${gap > 0 ? 'Above' : 'Below'} ${Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? 'team' : 'enterprise'} norm by ${r0(Math.abs(gap))} pts`, q: gap > 0 ? g.d.probeHi : g.d.probeLo }); }
+  for (const h of R.der.filter(h => h.act >= 65).slice(0, 2)) out.push({ tag: h.n, why: `HDS ${h.score} · activation ${r0(h.act)}`, q: h.probe });
+  if (R.vcOrg < 55) out.push({ tag: 'Values', why: `Enterprise values congruence ${r0(R.vcOrg)}%`, q: 'What kind of organization brings out the worst in you? Tell us about a time an employer’s values conflicted with yours.' });
+  return out;
+}
+function landmines(R) {
+  const S = R.S, o = S.org, L = [], lived = QUADS.reduce((a, q) => normCvf(o.cvfNow)[q[0]] > normCvf(o.cvfNow)[a[0]] ? q : a, QUADS[0]);
+  if (o.signals.regulatory) L.push('Committing to launch dates, or working around control sign-offs, while regulatory findings remain open.');
+  if (R.org.struct >= 70) L.push('Skipping formal approval chains or escalating outside the hierarchy, even when the team subculture tolerates it.');
+  if (R.sayDo > 20) L.push(`Taking transformation rhetoric at face value. The lived system still rewards ${lived[1]}-type behaviors (${r0(normCvf(o.cvfNow)[lived[0]])}% of culture energy).`);
+  if (o.psych < 3.2) L.push('Openly challenging senior leaders in large forums. Psychological safety is low, so test positions privately first.');
+  if (o.signals.churn || o.signals.restructure) L.push('Aligning visibly with one leadership faction while the reorganization or leadership transition is still settling.');
+  if (o.signals.layoffs) L.push('Proposing headcount-heavy initiatives or "efficiency" language that echoes the recent layoffs.');
+  if (R.teamVar > 18) L.push('Carrying team-level norms (pace, autonomy, candour) into enterprise forums without translating them.');
+  if (!L.length) L.push('Assuming informal norms match the interview narrative. Validate unwritten rules with an onboarding buddy.');
+  return L;
+}
+function plan(R) {
+  const top = R.gaps.filter(g => g.sev > 12).slice(0, 3), der = R.der.filter(h => h.act >= 60).slice(0, 3);
+  const act = g => { const gap = Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? g.gT : g.gO; return gap > 0 ? g.d.actHi : g.d.actLo; };
+  const motives = [...MVPI].sort((a, b) => R.S.ind.mvpi[b[0]] - R.S.ind.mvpi[a[0]]).slice(0, 3);
+  const rw = rewardMap(R);
+  const p30 = [
+    'Build social capital: map 8–10 critical stakeholders (formal authority and informal influencers) and hold listening 1:1s before proposing any change.',
+    'Hold a manager–hire working-style contracting session using this report’s dimension profile: agree decision rights, communication cadence, and escalation norms.',
+    'Assign an onboarding buddy from outside the reporting line to decode unspoken norms and give safe, early feedback.',
+  ];
+  if (top[0]) p30.push(act(top[0]));
+  if ((R.S.org.signals.regulatory || R.x.struct < R.org.struct - 20) && !p30.some(x => /governance onboarding/.test(x))) p30.push('Complete governance, risk-appetite, and compliance onboarding before taking on delegated authority.');
+  const p60 = [];
+  for (const h of der) p60.push(`${h.n} (activation ${r0(h.act)}). Boundary: ${h.mit} Self-monitoring: ${h.self}`);
+  if (top[1]) p60.push(act(top[1]));
+  p60.push('Run a 360 pulse at day 45–60 (manager, 3 peers, 1 cross-functional partner, direct reports where applicable) on the top two dimensions and derailer behaviors.');
+  if (R.vcOrg < 60) p60.push('Hold a values conversation: make explicit which enterprise values are non-negotiable and where the team subculture allows latitude.');
+  const p90 = motives.map(([k, l]) => { const r = rw.find(x => x.k === k); return `Leverage ${l} (MVPI ${R.S.ind.mvpi[k]}): ${LEVER[k]}${r.reward < 45 ? ' The enterprise rewards this motive weakly, so the manager must supply it directly.' : ''}`; });
+  if (top[2]) p90.push(act(top[2]));
+  if (R.valueAdd === ARCH.add) p90.push('Use the hire’s culture-add potential deliberately: sponsor one visible initiative aligned with the espoused culture, with an executive sponsor providing air cover.');
+  if (R.valueAdd === ARCH.dis) p90.push('Hold a formal 90-day fit review with HRBP: assess whether the friction is producing value or damage, and decide on role design changes.');
+  p90.push('Review the 90-day success indicators. Agree the development plan for months 4–12 and whether executive coaching on the HDS themes should continue.');
+  const doList = [], avoid = [];
+  if (R.x.autonomy > R.team.autonomy + 12) { doList.push('Manage by outcomes and agreed milestones'); avoid.push('Activity-level supervision or approval layers that are not needed'); }
+  if (R.x.autonomy < R.team.autonomy - 12) { doList.push('Give clear priorities and frequent early check-ins'); avoid.push('Assuming the hire will self-direct from day one'); }
+  if (R.x.conflict > R.team.conflict + 12) { doList.push('Channel candour into structured debate forums'); avoid.push('Letting abrasive moments go unaddressed'); }
+  if (R.x.conflict < R.team.conflict - 12) { doList.push('Explicitly invite dissent and challenge'); avoid.push('Reading silence as agreement'); }
+  if (R.x.pace > R.env.pace + 12) { doList.push('Pre-agree which decisions need consultation'); avoid.push('Surprising them with late-stage review gates'); }
+  if (R.x.struct < R.env.struct - 15) { doList.push('Pair with a control-function ally early'); avoid.push('Delegating authority before governance onboarding'); }
+  if (R.x.innov > R.env.innov + 15) { doList.push('Provide a sanctioned outlet for new ideas'); avoid.push('Dismissing ideas without a visible path to evaluation'); }
+  for (const h of der.slice(0, 2)) avoid.push(`Creating the conditions that trigger ${h.n} behavior: ${h.trig.toLowerCase()}`);
+  if (!doList.length) doList.push('Hold regular 1:1s focused on integration and early wins');
+  const kpis = ['Day 30: stakeholder map completed and ≥ 8 listening 1:1s held', 'Day 60: 360 pulse ≥ 4/5 on collaboration and derailer items', 'Day 90: delivery against the objectives agreed on day 1, with no unresolved governance incidents', 'Day 90: self-reported engagement and intent-to-stay ≥ 4/5'];
+  return { p30, p60, p90, doList, avoid, kpis, landmines: landmines(R) };
+}
+function rewardMap(R) {
+  const sh = normCvf(R.S.org.cvfNow);
+  return MVPI.map(([k, l]) => { const reward = clamp(Object.entries(MOTIVE_REWARD[k]).reduce((s, [q, w]) => s + sh[q] * w, 0) * 2.2); const score = R.S.ind.mvpi[k];
+    const flag = score >= 65 && reward < 45 ? 'Unmet driver: disengagement risk' : score <= 35 && reward >= 65 ? 'Reward mismatch: low pull from promotion mechanics' : score >= 65 && reward >= 65 ? 'Reinforced: motive is rewarded' : '—';
+    return { k, l, score, reward, flag }; });
+}
+function reality(R) {
+  const S = R.S, o = S.org, now = normCvf(o.cvfNow), esp = normCvf(o.cvfEsp);
+  const claims = QUADS.filter(([k]) => esp[k] - now[k] >= 8).map(([k, l]) => `Leadership messaging emphasizes ${l} (+${r0(esp[k] - now[k])} pts above lived culture)`);
+  const negThemes = Object.entries(R.sent.themes).filter(t => t[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(t => t[0]);
+  const debt = clamp(0.4 * Math.min(100, R.sayDo * 2.5) + 0.35 * (100 - R.health) + 0.25 * (o.ledger.barrett ? o.barrett.entropy * 2 : 100 - R.health));
+  const psych = o.psych >= 4 ? 'High' : o.psych >= 3.2 ? 'Moderate' : 'Low';
+  const pace = R.org.pace >= 65 ? 'Fast' : R.org.pace >= 40 ? 'Measured' : 'Slow / approval-bound';
+  const entropy = o.ledger.barrett ? (o.barrett.entropy <= 10 ? 'healthy' : o.barrett.entropy <= 20 ? 'minor issues' : o.barrett.entropy <= 30 ? 'significant issues' : o.barrett.entropy <= 40 ? 'serious issues' : 'critical issues') : null;
+  let verdict;
+  if (R.sayDo > 20 && (R.sent.pol < 0 || R.health < 55)) verdict = 'Aspirational branding. The external employee experience does not yet corroborate the declared values, so treat executive messaging as intent rather than reality.';
+  else if (R.sayDo > 12) verdict = 'Partially lived. The declared values are directionally visible, but not yet consistently rewarded.';
+  else verdict = 'Authentic. The declared values are broadly corroborated by employee experience.';
+  return { claims, negThemes, debt, psych, pace, entropy, verdict };
+}
+function divergence(R) {
+  return DIMS.map(d => ({ d, t: R.team[d.k], o: R.org[d.k], v: R.team[d.k] - R.org[d.k] })).sort((a, b) => Math.abs(b.v) - Math.abs(a.v)).slice(0, 3).filter(x => Math.abs(x.v) >= 10)
+    .map(x => `${x.d.name}: the team runs ${x.v > 0 ? 'higher' : 'lower'} than the enterprise (${r0(x.t)} vs ${r0(x.o)}, ${x.v > 0 ? '+' : ''}${r0(x.v)}). ${x.v > 0 ? 'Behaviors rewarded inside the team may be read as non-conforming outside it.' : 'The team is more conservative than the enterprise on this axis.'}`);
+}
+function dayToDay(R) {
+  const h = hpiEq(R.S.ind), t = R.team, out = [];
+  if (h.soc - t.collab > 20) out.push(`Sociability (${r0(h.soc)}) exceeds the team's relational density (${r0(t.collab)}). They will seek more interaction than the team offers, so channel it into stakeholder work.`);
+  else if (t.collab - h.soc > 20) out.push(`Sociability (${r0(h.soc)}) is lower than this relationally dense team expects (${r0(t.collab)}). They may be read as distant, so build visibility deliberately.`);
+  if (h.ips < 40 && t.conflict >= 60) out.push(`Low Interpersonal Sensitivity (${r0(h.ips)}) matches the team's candid debate norm (${r0(t.conflict)}). Directness will be accepted inside the team but may land harder with enterprise partners.`);
+  else if (h.ips < 40 && t.conflict < 50) out.push(`Low Interpersonal Sensitivity (${r0(h.ips)}) in a harmony-oriented team (conflict norm ${r0(t.conflict)}). Expect blunt feedback to breach unspoken norms.`);
+  else if (h.ips >= 65 && t.conflict >= 65) out.push(`High Interpersonal Sensitivity (${r0(h.ips)}) in a team with robust debate (${r0(t.conflict)}). They may soften necessary challenge or find exchanges abrasive.`);
+  if (h.adj < 40 && (t.pace > 65 || R.health < 50)) out.push(`Adjustment (${r0(h.adj)}) is below average for a context with high pace or pressure. Monitor for visible stress and emotional spill-over.`);
+  else if (h.adj >= 65) out.push(`Adjustment (${r0(h.adj)}) is a stabilizing asset. Composure under pressure should help their credibility in the first 90 days.`);
+  if (h.pru - t.struct > 25) out.push(`Prudence (${r0(h.pru)}) exceeds the team's structure norm (${r0(t.struct)}). They may introduce process that the team experiences as drag.`);
+  else if (R.env.struct - h.pru > 25) out.push(`Prudence (${r0(h.pru)}) sits well below the governance the context demands (blended ${r0(R.env.struct)}). Expect friction on documentation, approvals, and follow-through on controls.`);
+  if (R.org.struct - h.pru > 40 && !(R.env.struct - h.pru > 25)) out.push(`Prudence (${r0(h.pru)}) matches the team's informal norms but sits far below enterprise governance (${r0(R.org.struct)}). Day-to-day friction will surface at enterprise interfaces (risk, finance, audit) rather than inside the team.`);
+  if (h.amb - t.results > 25) out.push(`Ambition (${r0(h.amb)}) outstrips the team's competitive intensity (${r0(t.results)}). They will push pace, scope, and visibility.`);
+  if (h.lrn >= 65 && t.innov >= 60) out.push(`Learning Approach (${r0(h.lrn)}) suits the team's experimentation rhythm.`);
+  if (!out.length) out.push('Baseline operating style sits within tolerance of the team’s communication and execution norms. No material day-to-day friction is expected.');
+  return out;
+}
+function frictionClass(R) {
+  const prod = R.addRows.filter(r => r.kind === 'healthy').map(r => `${r.d.name}: moves the enterprise toward its stated aspiration (${r0(r.now)} → ${r0(r.xi)}, target ${r0(r.asp)}). This is cognitive diversity that can drive change.`);
+  const dest = R.addRows.filter(r => r.kind === 'disruptive').map(r => `${r.d.name}: diverges from both lived and espoused culture (ind ${r0(r.xi)} vs org ${r0(r.now)}). Risk of interpersonal drag and misalignment.`);
+  for (const h of R.der.filter(h => h.act >= 75)) dest.push(`${h.n} derailer (activation ${r0(h.act)}): ${h.looks.toLowerCase()} Triggered by: ${h.trig.toLowerCase()}.`);
+  return { prod, dest };
+}
+function sourcesCatalog(R) {
+  const S = R.S, o = S.org.ledger, t = S.team.ledger, i = S.ind.ledger, rows = [];
+  const add = (tier, src, detail, ok, rigor) => rows.push({ tier, src, detail, ok, rigor });
+  add('Organization', 'OCAI / Competing Values Framework', 'Current & preferred profile', o.survey, 'High: validated instrument');
+  add('Organization', 'Denison Organizational Culture Survey', 'Four traits', o.denison, 'High: validated instrument');
+  add('Organization', 'Barrett Cultural Values Assessment', o.barrett ? `Entropy ${S.org.barrett.entropy}%` : '—', o.barrett, 'High: validated instrument');
+  for (const [k, l] of PLATFORMS) { const n = +S.org.platforms[k] || 0; add('Organization', `${l} reviews`, `n = ${n}`, o.reviews && n > 0 ? true : n === 0 && o.reviews && revN(S.org) > 0 ? null : false, n >= 100 ? 'Moderate: self-selected sample' : n >= 30 ? 'Low–Moderate: small sample' : 'Low: anecdotal'); }
+  add('Organization', 'Leadership discourse', 'CEO letters, town halls, declared values', o.leadership, 'Moderate: espoused, not lived');
+  add('Organization', 'News & public signals', SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'None flagged', o.news, 'Moderate: contextual');
+  add('Team', 'Hiring-manager interview', t.manager ? 'n = 1' : '—', t.manager, 'Moderate: single senior view');
+  add('Team', 'Peer interviews', `n = ${t.peers}`, t.peers > 0, t.peers >= 2 ? 'Moderate: triangulated' : 'Low: single view');
+  add('Team', 'Direct-report interviews', `n = ${t.reports}`, t.reports > 0, 'Moderate: downward perspective');
+  add('Team', 'Cross-functional interviews', `n = ${t.xfn}`, t.xfn > 0, 'Moderate: boundary perspective');
+  add('Individual', INSTR[S.ind.instrument], S.ind.norm || 'Norm group not stated', i.hpi, S.ind.instrument === 'hogan' ? 'High: normed percentiles' : 'Moderate: mapped via Big Five');
+  add('Individual', 'Hogan Development Survey (HDS)', '11 derailer scales', i.hds, 'High: normed percentiles');
+  add('Individual', 'Hogan MVPI', '10 motive scales', i.mvpi, 'High: normed percentiles');
+  return rows;
+}
+function asciiMatrix(R) {
+  const pad = (s, n) => String(s).padEnd(n).slice(0, n), bar = v => { const f = Math.round(clamp(v) / 100 * 20); return '█'.repeat(f) + '░'.repeat(20 - f); };
+  const axes = [['collab', 'CLAN · Collaboration'], ['innov', 'ADHOCRACY · Innovation'], ['results', 'MARKET · Results'], ['struct', 'HIERARCHY · Governance']];
+  const ops = [['pace', 'Decision velocity'], ['risk', 'Risk tolerance'], ['conflict', 'Conflict directness'], ['autonomy', 'Autonomy']];
+  let s = `${pad('AXIS', 24)}${pad('', 11)}0         50        100   Δ vs Cand\n${'─'.repeat(72)}\n`;
+  const block = list => { for (const [k, l] of list) { s += `${pad(l, 24)}${pad('Org macro', 11)}${bar(R.org[k])} ${pad(r0(R.org[k]), 4)}${pad((R.org[k] - R.x[k] > 0 ? '+' : '') + r0(R.org[k] - R.x[k]), 5)}\n${pad('', 24)}${pad('Team sub', 11)}${bar(R.team[k])} ${pad(r0(R.team[k]), 4)}${pad((R.team[k] - R.x[k] > 0 ? '+' : '') + r0(R.team[k] - R.x[k]), 5)}\n${pad('', 24)}${pad('Candidate', 11)}${bar(R.x[k])} ${r0(R.x[k])}\n${'·'.repeat(72)}\n`; } };
+  block(axes); s += `OPERATING NORMS\n`; block(ops);
+  return s.replace(/·+\n$/, '');
+}
+function summary(R) {
+  const M = R.S.meta, who = M.candidate || 'The candidate';
+  if (R.halted) return `${who} is being assessed for the ${M.role || 'target'} role in ${M.team || 'the hiring team'} at ${M.org || 'the organization'}. The evidence base is not yet strong enough to support conclusive scoring (Organization ${r0(R.conf.org)}%, Team ${r0(R.conf.team)}%, Individual ${r0(R.conf.ind)}% confidence; threshold 60%), so match indices, friction level and culture archetype are withheld. The profile observations below are exploratory hypotheses to test while the clarification questions in Phase 1 are answered.`;
+  const drv = [...R.fparts].sort((a, b) => b[1] - a[1]).slice(0, 2).map(p => p[0].toLowerCase());
+  const vaTxt = { [ARCH.stab]: 'they would reinforce the existing culture rather than reshape it', [ARCH.add]: 'their differences point toward the organization’s stated aspiration, so the friction is largely healthy', [ARCH.dis]: 'their differences work against the culture rather than toward its aspiration, so the friction is likely to be disruptive' }[R.valueAdd];
+  return `${who} shows a ${band(R.overall)} overall match (${r0(R.overall)}%) to the ${M.role || 'target'} role in ${M.team || 'the hiring team'} at ${M.org || 'the organization'}. Alignment is ${band(R.teamScore)} at team level (${r0(R.teamScore)}%) and ${band(R.orgScore)} at enterprise level (${r0(R.orgScore)}%). Friction risk is ${R.fBand.toLowerCase()}, driven mainly by ${drv.join(' and ')}. We classify the candidate as ${/^[AEIOU]/.test(R.valueAdd) ? 'an' : 'a'} ${R.valueAdd}: ${vaTxt}. Against the espoused (target) culture, alignment would be ${r0(R.aspScore)}%.`;
+}
+function findings(R) {
+  const f = [];
+  const s = R.strengths.slice(0, 2).map(g => g.d.name);
+  f.push(['Strength', `Closest alignment on ${s.join(' and ')}. Expect these to act as an integration anchor in the first 90 days.`]);
+  for (const g of R.gaps.slice(0, 2)) { const t = gapText(g.d, Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? g.gT : g.gO, Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? 'the team' : 'the enterprise'); if (t) f.push(['Gap', t]); }
+  const d0 = R.der[0]; if (d0 && d0.act >= 60) f.push(['Derailer', `${d0.n} (HDS ${d0.score}, ${d0.band.toLowerCase()} risk) is the most likely derailer here, with contextual activation of ${r0(d0.act)}. Under pressure it may look like: ${d0.looks.toLowerCase()}`]);
+  if (!R.halted) f.push(['Values', `Values congruence is ${r0(R.vcTeam)}% with the team and ${r0(R.vcOrg)}% with the enterprise (${r0(R.vcEsp)}% with its espoused values). Career-velocity fit is ${r0(R.velFit)}% (ambition need ${r0(R.need)} vs. organizational velocity ${r0(R.velocity)}).`]);
+  if (R.sayDo > 15) f.push(['Context', `The organization has a ${r0(R.sayDo)}-point say–do gap between espoused and lived culture. Leadership asks for change that the operating system does not yet reward.`]);
+  if (R.teamVar > 18) f.push(['Context', `The team subculture differs from the enterprise by ${r0(R.teamVar)} pts on average. The hire will need to bridge two cultures.`]);
+  return f;
+}
+
+/* ============================== charts (shared by dashboard & report) ============================== */
+const PAL_LIVE = { s1: 'var(--series-1)', s2: 'var(--series-2)', s3: 'var(--series-3)', s4: 'var(--series-4)', grid: 'var(--grid)', ink: 'var(--ink)', muted: 'var(--muted)', surface: 'var(--card)', good: 'var(--good)', warn: 'var(--warn)', critical: 'var(--critical)' };
+const PAL_PRINT = { s1: '#2a78d6', s2: '#eb6834', s3: '#1baf7a', s4: '#eda100', grid: '#E3E6EC', ink: '#0F1B2D', muted: '#52607A', surface: '#FFFFFF', good: '#0ca30c', warn: '#fab219', critical: '#d03b3b' };
+function radarSVG(R, P, live) {
+  const W = 520, H = 420, cx = W / 2, cy = 205, rad = 150, n = DIMS.length;
+  const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n, pt = (i, v) => [cx + Math.cos(ang(i)) * rad * v / 100, cy + Math.sin(ang(i)) * rad * v / 100];
+  let g = '';
+  for (const lv of [25, 50, 75, 100]) g += `<polygon points="${DIMS.map((_, i) => pt(i, lv).join(',')).join(' ')}" style="fill:none;stroke:${P.grid};stroke-width:1"/>`;
+  DIMS.forEach((d, i) => { const [x2, y2] = pt(i, 100), [lx, ly] = pt(i, 118); const anchor = Math.abs(lx - cx) < 8 ? 'middle' : lx > cx ? 'start' : 'end';
+    g += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" style="stroke:${P.grid};stroke-width:1"/><text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" style="fill:${P.muted};font:500 12px Inter,system-ui,sans-serif">${d.short}</text>`; });
+  for (const lv of [50, 100]) g += `<text x="${cx + 4}" y="${cy - rad * lv / 100 + 12}" style="fill:${P.muted};font:10px 'IBM Plex Mono',monospace">${lv}</text>`;
+  const series = [['Organization (lived)', P.s3, R.org], ['Team', P.s2, R.team], ['Individual', P.s1, R.x]];
+  for (const [name, col, vals] of series) {
+    const pts = DIMS.map((d, i) => pt(i, vals[d.k]));
+    g += `<polygon points="${pts.map(p => p.join(',')).join(' ')}" style="fill:${col};fill-opacity:.10;stroke:${col};stroke-width:2;stroke-linejoin:round"/>`;
+    pts.forEach((p, i) => { const tip = live ? ` data-tip="${esc(name)} · ${esc(DIMS[i].name)}: ${r0(vals[DIMS[i].k])}"` : ''; g += `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" style="fill:${col};stroke:${P.surface};stroke-width:2"${tip}/>`; if (live) g += `<circle cx="${p[0]}" cy="${p[1]}" r="11" style="fill:transparent"${tip}/>`; });
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar chart comparing individual, team and organization on eight culture dimensions">${g}</svg>`;
+}
+function roundTop(x, y, w, h, r) { r = Math.min(r, w / 2, h); if (h <= 0) return ''; return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; }
+function cvfSVG(R, P, live) {
+  const S = R.S, W = 520, H = 280, padL = 34, padB = 34, padT = 12, ch = H - padB - padT, cw = W - padL - 8;
+  const indShares = (() => { const t = R.x.collab + R.x.innov + R.x.results + R.x.struct; return { clan: R.x.collab / t * 100, adhoc: R.x.innov / t * 100, market: R.x.results / t * 100, hier: R.x.struct / t * 100 }; })();
+  const series = [['Individual (implied)', P.s1, indShares], ['Team', P.s2, normCvf(S.team.cvf)], ['Org lived', P.s3, normCvf(S.org.cvfNow)], ['Org espoused', P.s4, normCvf(S.org.cvfEsp)]];
+  const max = Math.max(50, ...series.flatMap(s => Object.values(s[2]))) , ymax = Math.ceil(max / 10) * 10;
+  const y = v => padT + ch - v / ymax * ch; let g = '';
+  for (let v = 0; v <= ymax; v += 10) g += `<line x1="${padL}" x2="${W - 8}" y1="${y(v)}" y2="${y(v)}" style="stroke:${P.grid};stroke-width:1"/><text x="${padL - 6}" y="${y(v) + 4}" text-anchor="end" style="fill:${P.muted};font:10px 'IBM Plex Mono',monospace">${v}</text>`;
+  const gw = cw / 4, bw = Math.min(26, (gw - 24) / 4 - 2);
+  QUADS.forEach(([k, label], qi) => {
+    const gx = padL + qi * gw + (gw - (bw * 4 + 6)) / 2;
+    series.forEach(([name, col, vals], si) => { const v = vals[k], bx = gx + si * (bw + 2), by = y(v);
+      g += `<path d="${roundTop(bx, by, bw, padT + ch - by, 4)}" style="fill:${col}"${live ? ` data-tip="${esc(name)} · ${label}: ${r0(v)}%"` : ''}/>`; });
+    g += `<text x="${padL + qi * gw + gw / 2}" y="${H - 12}" text-anchor="middle" style="fill:${P.ink};font:600 12px Inter,system-ui,sans-serif">${label}</text>`;
+  });
+  g += `<line x1="${padL}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" style="stroke:${P.muted};stroke-width:1"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Grouped bars of Competing Values Framework profiles">${g}</svg>`;
+}
+function derailSVG(R, P, live) {
+  const rows = HDS.map(h => R.der.find(d => d.k === h.k));
+  const W = 520, rowH = 24, padT = 22, padL = 96, padR = 40, H = padT + rows.length * rowH + 8, cw = W - padL - padR, X = v => padL + v / 100 * cw;
+  let g = '';
+  for (const [v, lab] of [[70, 'Moderate'], [90, 'High']]) g += `<line x1="${X(v)}" x2="${X(v)}" y1="${padT - 6}" y2="${H - 4}" style="stroke:${P.muted};stroke-width:1;stroke-dasharray:3 3"/><text x="${X(v)}" y="${padT - 10}" text-anchor="middle" style="fill:${P.muted};font:10px Inter,system-ui,sans-serif">${lab} ${v}</text>`;
+  rows.forEach((d, i) => {
+    const yy = padT + i * rowH, col = d.score >= 90 ? P.critical : d.score >= 70 ? P.warn : P.good, bh = 12, by = yy + (rowH - bh) / 2;
+    const tip = live ? ` data-tip="${esc(d.n)} (${d.cl}) · HDS ${d.score} (${d.band}) · activation ${r0(d.act)} · trigger strength ${r0(d.ctx)}"` : '';
+    g += `<text x="${padL - 8}" y="${yy + rowH / 2 + 4}" text-anchor="end" style="fill:${P.ink};font:500 12px Inter,system-ui,sans-serif">${d.n}</text>`;
+    g += `<rect x="${padL}" y="${by}" width="${cw}" height="${bh}" rx="3" style="fill:${P.grid}"/>`;
+    g += `<rect x="${padL}" y="${by}" width="${Math.max(2, X(d.score) - padL)}" height="${bh}" rx="3" style="fill:${col}"${tip}/>`;
+    const ax = X(d.act); g += `<path d="M${ax},${by - 4} L${ax + 6},${by + bh / 2} L${ax},${by + bh + 4} L${ax - 6},${by + bh / 2} Z" style="fill:${P.ink};stroke:${P.surface};stroke-width:1.5"${tip}/>`;
+    g += `<text x="${W - padR + 6}" y="${yy + rowH / 2 + 4}" style="fill:${P.muted};font:11px 'IBM Plex Mono',monospace">${d.score}</text>`;
+    if (live) g += `<rect x="0" y="${yy}" width="${W}" height="${rowH}" style="fill:transparent"${tip}/>`;
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Derailer risk bars with contextual activation markers">${g}</svg>`;
+}
+function heatTable(R, live) {
+  const cell = (gap) => { const a = Math.min(1, Math.abs(gap) / 50) * 0.55; const bg = live ? `color-mix(in srgb, var(--heat) ${r0(a * 100)}%, transparent)` : `rgba(42,120,214,${a.toFixed(2)})`; const fg = a > 0.38 ? (live ? 'var(--card)' : '#fff') : 'inherit';
+    return `<td class="num heat" style="background:${bg};color:${fg}"${live ? ` data-tip="Gap ${gap > 0 ? '+' : ''}${r0(gap)} pts"` : ''}>${gap > 0 ? '+' : ''}${r0(gap)}</td>`; };
+  let h = `<table class="t"><thead><tr><th>Dimension</th><th class="num">Ind.</th><th class="num">Team</th><th class="num">Org</th><th class="num">Δ Team</th><th class="num">Δ Org</th><th class="num">Fit T</th><th class="num">Fit O</th><th class="num">Wt</th></tr></thead><tbody>`;
+  for (const d of DIMS) { const pt = R.aTeam.per[d.k], po = R.aOrg.per[d.k];
+    h += `<tr><td>${d.name}${d.q ? ` <span class="muted" style="font-size:.75em">(${d.q})</span>` : ''}</td><td class="num">${r0(R.x[d.k])}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td>${cell(pt.gap)}${cell(po.gap)}<td class="num">${r0(pt.fit)}</td><td class="num">${r0(po.fit)}</td><td class="num">${((pt.w + po.w) / 2).toFixed(2)}</td></tr>`; }
+  return h + `</tbody></table>`;
+}
+
+/* ============================== UI build ============================== */
+let S = PRESETS.A(), R = null;
+function sliderRow(path, label, hint = '', min = 0, max = 100, step = 1) {
+  const v = getP(S, path), id = 'f_' + path.replace(/\./g, '_');
+  return `<div class="sl"><label for="${id}">${esc(label)}${hint ? `<small>${esc(hint)}</small>` : ''}</label><input type="range" id="${id}" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${v}"><input type="number" data-path="${path}" min="${min}" max="${max}" step="${step}" value="${v}" aria-label="${esc(label)} value"></div>`;
+}
+const cvfBlock = (base, sumId) => QUADS.map(([k, l]) => sliderRow(`${base}.${k}`, l, { clan: 'Collaborate · people', adhoc: 'Create · innovation', market: 'Compete · results', hier: 'Control · process' }[k])).join('') + `<div class="sumline"><span id="${sumId}"></span><button class="btn" type="button" data-normalize="${base}">Normalize to 100</button></div>`;
+const field = (path, label, type = 'text', extra = '') => `<div class="field"><label for="e_${path.replace(/\./g, '_')}">${label}</label><input id="e_${path.replace(/\./g, '_')}" type="${type}" data-path="${path}" value="${esc(getP(S, path))}" ${extra}></div>`;
+const chk = (path, label) => `<label><input type="checkbox" data-path="${path}" ${getP(S, path) ? 'checked' : ''}> ${label}</label>`;
+function buildInputs() {
+  $('#engage').innerHTML = field('meta.candidate', 'Candidate') + field('meta.role', 'Role') +
+    `<div class="field"><label for="e_meta_level">Level</label><select id="e_meta_level" data-path="meta.level">${['Individual contributor', 'Manager', 'Senior leader', 'Executive'].map(l => `<option ${S.meta.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` +
+    field('meta.org', 'Organization') + field('meta.team', 'Team / unit') + field('meta.manager', 'Hiring manager') + field('meta.assessor', 'Prepared by') + field('meta.date', 'Assessment date', 'date') + field('meta.req', 'Requisition ID');
+  $('#orgLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('org.ledger.survey', 'CVF/OCAI survey') + chk('org.ledger.denison', 'Denison survey') + chk('org.ledger.barrett', 'Barrett CVA') + chk('org.ledger.reviews', 'Employee reviews') + chk('org.ledger.leadership', 'Leadership discourse') + chk('org.ledger.news', 'News / public signals');
+  $('#cvfNow').innerHTML = cvfBlock('org.cvfNow', 'sumNow');
+  $('#cvfEsp').innerHTML = cvfBlock('org.cvfEsp', 'sumEsp');
+  $('#denison').innerHTML = DEN.map(([k, l]) => sliderRow(`org.denison.${k}`, l)).join('') + sliderRow('org.barrett.entropy', 'Barrett cultural entropy %', '0–10 healthy · 21–30 significant · >40 critical', 0, 60);
+  $('#sentFields').innerHTML = PLATFORMS.map(([k, l]) => field(`org.platforms.${k}`, `${l} (n)`, 'number', 'min="0" step="1"')).join('') + field('org.rating', 'Avg. rating (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.psych', 'Psych. safety (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.cred', 'Mgmt credibility (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.recommend', 'Recommend to friend %', 'number', 'min="0" max="100" step="1"');
+  $('#signals').innerHTML = SIGNALS.map(([k, l]) => chk(`org.signals.${k}`, l)).join('');
+  $('#orgOps').innerHTML = OPS.map(([k, l, h]) => sliderRow(`org.ops.${k}`, l, h)).join('');
+  $('#teamLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('team.ledger.manager', 'Hiring-manager interview') + `<label>Peer interviews <input type="number" min="0" max="10" data-path="team.ledger.peers" value="${S.team.ledger.peers}"></label><label>Direct reports <input type="number" min="0" max="10" data-path="team.ledger.reports" value="${S.team.ledger.reports}"></label><label>Cross-functional <input type="number" min="0" max="10" data-path="team.ledger.xfn" value="${S.team.ledger.xfn}"></label>` +
+    `<label>Manager style <select data-path="team.mgrStyle">${Object.entries(MGR).map(([k, [l]]) => `<option value="${k}" ${S.team.mgrStyle === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  $('#cvfTeam').innerHTML = cvfBlock('team.cvf', 'sumTeam');
+  $('#teamOps').innerHTML = OPS.map(([k, l, h]) => sliderRow(`team.ops.${k}`, l, h)).join('');
+  $('#indLedger').innerHTML = `<label>Operating-style instrument <select data-path="ind.instrument">${Object.entries(INSTR).map(([k, l]) => `<option value="${k}" ${S.ind.instrument === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>` +
+    '<b style="font-size:.8rem">Received:</b>' + chk('ind.ledger.hpi', 'Operating style') + chk('ind.ledger.hds', 'HDS derailers') + chk('ind.ledger.mvpi', 'MVPI values') +
+    `<label>Norm group <input type="text" data-path="ind.norm" value="${esc(S.ind.norm)}" placeholder="e.g. Hogan Global Managerial" style="min-width:220px"></label>`;
+  $('#hpi').innerHTML = HPI.map(([k, l, h]) => sliderRow(`ind.hpi.${k}`, l, h)).join('');
+  $('#big5').innerHTML = BIG5.map(([k, l, h]) => sliderRow(`ind.big5.${k}`, l, h)).join('');
+  $('#hds').innerHTML = HDS.map(h => sliderRow(`ind.hds.${h.k}`, h.n, h.cl)).join('');
+  $('#mvpi').innerHTML = MVPI.map(([k, l]) => sliderRow(`ind.mvpi.${k}`, l)).join('');
+  for (const ta of $$('textarea[data-path]')) ta.value = getP(S, ta.dataset.path) || '';
+  $('[data-path="provisional"]').checked = !!S.provisional;
+  syncInstrument();
+}
+function syncInstrument() { const b = S.ind.instrument !== 'hogan'; $('#hpi').hidden = b; $('#big5').hidden = !b; $('#styleHead').textContent = `Day-to-day operating style (${INSTR[S.ind.instrument]})`; }
+
+/* ============================== render ============================== */
+const statusChip = (label, [cls, ic]) => `<span class="chip st-${cls}"><span class="ic" aria-hidden="true">${ic}</span>${esc(label)}</span>`;
+function render() {
+  R = compute(S);
+  for (const [id, base] of [['sumNow', 'org.cvfNow'], ['sumEsp', 'org.cvfEsp'], ['sumTeam', 'team.cvf']]) { const s = sumQ(getP(S, base)); $('#' + id).innerHTML = `Total: <b class="${Math.abs(s - 100) > 1 ? 'bad' : ''}">${s}</b> / 100`; }
+  const hide = R.halted, pv = R.provisional ? ' <span class="tag" style="background:var(--warn-soft)">Provisional</span>' : '';
+  // halt box
+  $('#haltBox').innerHTML = hide ? `<div class="halt"><h2>■ Diagnostic inquiry hold: final scores paused</h2><p>At least one fit vector is below the 60% evidence-confidence threshold (Organization ${r0(R.conf.org)}%, Team ${r0(R.conf.team)}%, Individual ${r0(R.conf.ind)}%). Releasing scores now would risk a decision on unreliable data. Profiles are shown for exploration only.</p><ul class="clean">${R.conf.qs.slice(0, 4).map(q => `<li><span class="tag">${q.vec}</span>${esc(q.q)}</li>`).join('')}</ul><div class="row"><button class="btn" type="button" data-goto="evid">Review all ${R.conf.qs.length} clarification questions</button><button class="btn" type="button" id="goProv">Release provisional scores</button></div></div>`
+    : R.provisional ? `<div class="provisional">▲ <b>Provisional scores.</b> Evidence confidence is below threshold for at least one vector. Treat all scores as directional until the Gate 5 questions are answered.</div>` : '';
+  $('#decision').innerHTML = hide ? `<div class="eyebrow">Recommendation</div><div><div class="verdict">Decision deferred: insufficient evidence</div><div class="why">Complete the clarification protocol (Gate 5) to release the scorecard.</div></div>${statusChip('Withheld', ['critical', '■'])}`
+    : `<div class="eyebrow">Recommendation</div><div><div class="verdict">${esc(R.rec)}${pv}</div><div class="why">${esc(R.recWhy)}</div></div>${statusChip(`${confLvl(Math.min(R.conf.org, R.conf.team, R.conf.ind))} confidence · ${r0(Math.min(R.conf.org, R.conf.team, R.conf.ind))}%`, Math.min(R.conf.org, R.conf.team, R.conf.ind) >= 75 ? ['good', '●'] : ['warn', '▲'])}`;
+  $('#decision').style.borderLeftColor = hide ? 'var(--critical)' : `var(--${R.recSt === 'good' ? 'good' : R.recSt === 'warn' ? 'warn' : R.recSt === 'serious' ? 'serious' : 'critical'})`;
+  const tile = (lbl, v, note, st) => `<div class="kpi"><span class="lbl">${lbl}</span><span class="val mono">${hide ? '—' : r0(v)}<small>${hide ? '' : '%'}</small></span><div class="meter"><i style="width:${hide ? 0 : clamp(v)}%"></i></div><span class="note">${hide ? 'Withheld (Gate 5)' : note}</span>${hide ? '' : statusChip(band(v), st)}</div>`;
+  $('#kpis').innerHTML = tile('Overall match index', R.overall, 'Team 50% · Org 40% · Derailer resilience 10%', scoreStatus(R.overall)) + tile('Team synergy score', R.teamScore, `Dimensions, manager fit ${r0(R.mgrFit)}, values ${r0(R.vcTeam)}`, scoreStatus(R.teamScore)) + tile('Org alignment score', R.orgScore, `Dimensions, values ${r0(R.vcOrg)}, velocity ${r0(R.velFit)}`, scoreStatus(R.orgScore)) +
+    `<div class="kpi"><span class="lbl">Friction risk level</span><span class="val">${hide ? '—' : R.fBand}</span><div class="meter"><i style="width:${hide ? 0 : clamp(R.friction)}%;background:var(--${STATUS[R.fBand][0]})"></i></div><span class="note">${hide ? 'Withheld (Gate 5)' : `Index ${r0(R.friction)} / 100`}</span>${hide ? '' : statusChip(R.fBand, STATUS[R.fBand])}</div>` +
+    `<div class="kpi"><span class="lbl">Culture archetype</span><span class="val" style="font-size:1.35rem">${hide ? '—' : R.valueAdd}</span><span class="note">${hide ? 'Withheld (Gate 5)' : `Healthy friction ${r0(R.addSum)} · disruptive ${r0(R.disSum)}`}</span></div>`;
+  $('#radarLegend').innerHTML = `<span><i style="background:var(--series-1)"></i>Individual</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Organization (lived)</span>`;
+  $('#radar').innerHTML = radarSVG(R, PAL_LIVE, true);
+  $('#heatmap').innerHTML = heatTable(R, true);
+  $('#cvfLegend').innerHTML = `<span><i style="background:var(--series-1)"></i>Individual (implied)</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Org lived</span><span><i style="background:var(--series-4)"></i>Org espoused</span>`;
+  $('#cvfChart').innerHTML = cvfSVG(R, PAL_LIVE, true);
+  $('#derailChart').innerHTML = derailSVG(R, PAL_LIVE, true);
+  $('#addFit').innerHTML = `<ul class="clean addlist">${R.addRows.map(r => `<li><span><b>${r.d.short}</b> <span class="muted">· ind ${r0(r.xi)} vs org ${r0(r.now)} → aspires ${r0(r.asp)}</span></span>${r.kind === 'healthy' ? statusChip('Healthy', ['good', '●']) : r.kind === 'disruptive' ? statusChip('Disruptive', ['critical', '■']) : statusChip('Aligned', ['warn', '▲']).replace('st-warn', '')}</li>`).join('')}</ul>`;
+  const fp = [...R.fparts].sort((a, b) => b[1] - a[1]);
+  $('#drivers').innerHTML = `<div class="themes">${fp.map(([n, v]) => `<div class="trow"><span>${n}</span><div class="b"><i style="width:${clamp(v / 30 * 100)}%;background:var(--series-2)"></i></div><span class="mono">${hide ? '–' : v.toFixed(1)}</span></div>`).join('')}</div><p class="muted" style="font-size:.78rem;margin-top:10px">Health index ${r0(R.health)} · say–do gap ${r0(R.sayDo)} pts · team–org variance ${r0(R.teamVar)} pts</p>`;
+  $('#values').innerHTML = `<table class="t"><tbody>${[['Values congruence: team', R.vcTeam], ['Values congruence: enterprise (lived)', R.vcOrg], ['Values congruence: enterprise (espoused)', R.vcEsp], ['Manager-style fit', R.mgrFit], ['Career-velocity fit', R.velFit], ['Alignment to espoused culture', R.aspScore]].map(([l, v]) => `<tr><td>${l}</td><td class="num">${r0(v)}%</td></tr>`).join('')}</tbody></table>`;
+  $('#probes').innerHTML = `<ul class="clean">${probes(R).map(p => `<li><span class="tag">${esc(p.tag)}</span><span class="muted" style="font-size:.78rem">${esc(p.why)}</span><div style="margin-top:4px">${esc(p.q)}</div></li>`).join('') || '<li>No material gaps. Use the standard structured interview.</li>'}</ul>`;
+  const P = plan(R);
+  $('#onb').innerHTML = `<ul class="clean">${[['Days 1–30 · Orient & contract', P.p30], ['Days 31–60 · Calibrate', P.p60], ['Days 61–90 · Integrate & extend', P.p90]].map(([h, l]) => `<li><b>${h}</b><div class="muted" style="margin-top:3px">${esc(l[0])}${l.length > 1 ? ` <i>+${l.length - 1} more</i>` : ''}</div></li>`).join('')}</ul>`;
+  // gate panels live readouts
+  const sent = R.sent, th = Object.entries(sent.themes).sort((a, b) => b[1] - a[1]), tmax = Math.max(1, ...th.map(t => t[1]));
+  $('#sentOut').innerHTML = sent.has ? `<div class="row" style="margin-bottom:8px">${statusChip(`Polarity ${sent.pol >= 0 ? '+' : ''}${sent.pol.toFixed(2)}`, sent.pol >= 0.2 ? ['good', '●'] : sent.pol > -0.2 ? ['warn', '▲'] : ['critical', '■'])}${statusChip(`Health index ${r0(R.health)}`, scoreStatus(R.health))}<span class="muted" style="font-size:.8rem">${sent.pos} positive / ${sent.neg} negative cues</span></div><div class="themes">${th.map(([k, v]) => `<div class="trow"><span>${k}</span><div class="b"><i style="width:${v / tmax * 100}%"></i></div><span class="mono">${v}</span></div>`).join('')}</div>`
+    : `<span class="muted" style="font-size:.82rem">Paste review text to extract sentiment polarity and turnover themes. Health index (ratings only): ${r0(R.health)}.</span>`;
+  const lc = inferCvf(S.org.leaderText); $('#leaderCues').textContent = lc ? `Detected cues: Clan ${lc.counts.clan} · Adhocracy ${lc.counts.adhoc} · Market ${lc.counts.market} · Hierarchy ${lc.counts.hier}. Say–do gap vs lived culture: ${r0(R.sayDo)} pts.` : 'No culture cues detected yet.';
+  const tc = inferCvf(S.team.transcript), oc = Object.fromEntries(Object.keys(OPS_LEX).map(k => [k, countTerms(S.team.transcript, OPS_LEX[k])]));
+  $('#teamCues').textContent = tc ? `Cues: Clan ${tc.counts.clan} · Adhocracy ${tc.counts.adhoc} · Market ${tc.counts.market} · Hierarchy ${tc.counts.hier} | pace ${oc.pace} · risk ${oc.risk} · conflict ${oc.conflict} · autonomy ${oc.autonomy}` : 'No cues detected yet.';
+  $('#teamVar').innerHTML = `<table class="t"><thead><tr><th>Dimension</th><th class="num">Team</th><th class="num">Org</th><th class="num">Variance</th></tr></thead><tbody>${DIMS.map(d => { const v = R.team[d.k] - R.org[d.k]; return `<tr><td>${d.name}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num" style="font-weight:${Math.abs(v) >= 20 ? 700 : 400}">${v > 0 ? '+' : ''}${r0(v)}</td></tr>`; }).join('')}</tbody></table><p class="muted" style="font-size:.8rem;margin-top:6px">Mean absolute variance: ${r0(R.teamVar)} pts${R.teamVar > 18 ? '. This is a distinct subculture, so the hire must bridge both contexts.' : '.'}</p>`;
+  // gate 5
+  $('#confBars').innerHTML = [['Organization', R.conf.org], ['Team subculture', R.conf.team], ['Individual', R.conf.ind]].map(([l, v]) => `<div class="conf-row"><span>${l}</span><div class="bar"><i style="width:${v}%;background:var(--${v >= 75 ? 'good' : v >= 60 ? 'warn' : 'critical'})"></i></div><span class="mono">${r0(v)}%</span></div>`).join('') + `<p style="margin-top:6px">Overall confidence rating: ${statusChip(confLvl(Math.min(R.conf.org, R.conf.team, R.conf.ind)), Math.min(R.conf.org, R.conf.team, R.conf.ind) >= 75 ? ['good', '●'] : Math.min(R.conf.org, R.conf.team, R.conf.ind) >= 60 ? ['warn', '▲'] : ['critical', '■'])}</p>`;
+  $('#srcCat').innerHTML = `<table class="t"><thead><tr><th>Tier</th><th>Source / instrument</th><th>Coverage</th><th>Status</th><th>Rigor</th></tr></thead><tbody>${sourcesCatalog(R).map(r => `<tr><td>${r.tier}</td><td>${esc(r.src)}</td><td>${esc(r.detail)}</td><td>${r.ok ? statusChip('Ingested', ['good', '●']) : r.ok === null ? statusChip('Not supplied', ['warn', '▲']) : statusChip('Missing', ['critical', '■'])}</td><td class="muted">${esc(r.rigor)}</td></tr>`).join('')}</tbody></table>`;
+  $('#ascii').textContent = asciiMatrix(R);
+  $('#flags').innerHTML = R.conf.flags.length ? `<ul class="clean">${R.conf.flags.map(([v, t]) => `<li><span class="tag">${v}</span>${esc(t)}</li>`).join('')}</ul>` : '<p class="muted">No contradictions detected across sources.</p>';
+  $('#questions').innerHTML = R.conf.qs.length ? `<ul class="clean">${R.conf.qs.map((q, i) => `<li><span class="tag">${q.vec}</span><b>Q${i + 1}.</b> ${esc(q.q)}<div class="muted" style="font-size:.8rem;margin-top:3px">Why it matters: ${esc(q.why)}</div></li>`).join('')}</ul>` : '<p class="muted">Evidence is sufficient across all three vectors. No clarification needed.</p>';
+  if (currentTab === 'report') refreshPreview();
+}
+
+/* ============================== report builders ============================== */
+function reportId() { const s = `${S.meta.candidate}|${S.meta.org}|${S.meta.date}`; let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `CPA-${(S.meta.date || '').replace(/-/g, '')}-${(h % 9000 + 1000)}`; }
+const REPORT_CSS = `@page{size:A4;margin:16mm 15mm 18mm}*{box-sizing:border-box}body{margin:0;font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#0F1B2D;font-size:10.5pt;line-height:1.5;background:#fff}
+.page{max-width:820px;margin:0 auto;padding:28px 34px}h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#0F1B2D;margin:0}h2{font-size:17pt;margin:28px 0 4px;padding-top:10px;border-top:2px solid #1F3A5F}h3{font-size:12pt;margin:16px 0 6px}
+.cover{background:#0F1B2D;color:#fff;padding:46px 40px 36px;border-radius:4px;margin-bottom:22px}.cover .k{font-size:8.5pt;letter-spacing:.2em;text-transform:uppercase;color:#D2B07A}.cover h1{color:#fff;font-size:26pt;margin:10px 0 6px}.cover .s{color:#C8D2E0;font-size:12pt}
+.cover table{margin-top:26px;width:100%;border-collapse:collapse;font-size:9.5pt}.cover td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.15);color:#E7ECF3}.cover td:first-child{color:#9FB0C8;width:34%}.conf{margin-top:18px;font-size:8pt;color:#9FB0C8;letter-spacing:.06em}
+.secno{font-family:'IBM Plex Mono',monospace;color:#9C7A3C;font-size:10pt;margin-right:8px}.lead{color:#3D4A60;margin:6px 0 10px}
+table.t{width:100%;border-collapse:collapse;font-size:9.5pt;margin:8px 0}table.t th{text-align:left;font-size:7.8pt;letter-spacing:.06em;text-transform:uppercase;color:#52607A;border-bottom:1.5px solid #0F1B2D;padding:5px 6px}table.t td{padding:5px 6px;border-bottom:1px solid #E3E6EC;vertical-align:top}table.t td.num,table.t th.num{text-align:right;font-family:'IBM Plex Mono',monospace}
+.score{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}.score>div{border:1px solid #DDE2EA;border-top:3px solid #1F3A5F;padding:10px;border-radius:3px}.score .l{font-size:7.5pt;text-transform:uppercase;letter-spacing:.08em;color:#52607A}.score .v{font-family:'Source Serif 4',Georgia,serif;font-size:19pt;line-height:1.15}
+.verdict{background:#F3F6FA;border-left:5px solid #1F3A5F;padding:12px 16px;margin:10px 0}.verdict b{font-family:'Source Serif 4',Georgia,serif;font-size:14pt}
+.call{background:#FBF7EF;border:1px solid #E9DCC2;padding:10px 14px;border-radius:3px;margin:10px 0;font-size:9.8pt}.call .h{font-size:7.8pt;text-transform:uppercase;letter-spacing:.1em;color:#9C7A3C;font-weight:700}
+.pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #DDE2EA;border-radius:99px;padding:1px 8px;font-size:8.5pt;font-weight:600;white-space:nowrap}.pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.hb{display:inline-block;width:110px;height:7px;background:#E3E6EC;border-radius:4px;vertical-align:middle;margin-right:6px;overflow:hidden}.hb i{display:block;height:100%;border-radius:4px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fig{border:1px solid #E3E6EC;border-radius:3px;padding:10px;margin:8px 0;break-inside:avoid}.fig .cap{font-size:8.5pt;color:#52607A;margin-top:4px}.leg{font-size:8.5pt;color:#52607A;display:flex;gap:12px;flex-wrap:wrap}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+ul{margin:4px 0 8px;padding-left:18px}li{margin:3px 0}.kf li{margin:6px 0}.tag{font-size:7.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid #C9D1DD;border-radius:3px;padding:0 5px;margin-right:6px;color:#1F3A5F}
+.phase{border:1px solid #DDE2EA;border-radius:3px;padding:10px 12px;break-inside:avoid}.phase h3{margin-top:0}.halt{border:1.5px solid #d03b3b;background:#FBEDED;padding:12px 14px;border-radius:3px}.prov{border:1.5px solid #fab219;background:#FEF6E2;padding:8px 12px;border-radius:3px;font-size:9.5pt}
+.foot{margin-top:30px;border-top:1px solid #DDE2EA;padding-top:8px;font-size:8pt;color:#52607A}.pb{break-before:page}svg{width:100%;height:auto}
+h2,h3{break-after:avoid}.phase h3{break-after:auto}@media print{.page{padding:0}.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+@media (max-width:640px){.score{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.page{padding:16px}}
+pre.ascii{font-family:'IBM Plex Mono',monospace;font-size:8.2pt;line-height:1.35;background:#F6F8FB;border:1px solid #E3E6EC;padding:10px 12px;border-radius:3px;overflow-x:auto;white-space:pre}`;
+function buildReportHTML() {
+  const M = S.meta, P = plan(R), F = findings(R), PB = probes(R), id = reportId(), hide = R.halted;
+  const RC = reality(R), DV = divergence(R), RW = rewardMap(R), DD = dayToDay(R), FC = frictionClass(R), SRC = sourcesCatalog(R);
+  const sc = v => hide ? '—' : `${r0(v)}%`;
+  const stc = ([cls]) => ({ good: '#0ca30c', warn: '#fab219', serious: '#ec835a', critical: '#d03b3b' }[cls]);
+  const pill = (t, st) => `<span class="pill"><i style="background:${stc(st)}"></i>${esc(t)}</span>`;
+  const bar = (v, col = '#1F3A5F') => `<span class="hb"><i style="width:${clamp(v)}%;background:${col}"></i></span>`;
+  const list = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  const lvl = v => pill(confLvl(v), v >= 75 ? ['good'] : v >= 60 ? ['warn'] : ['critical']);
+  const minC = Math.min(R.conf.org, R.conf.team, R.conf.ind);
+  const derRows = R.der.map(d => `<tr><td><b>${d.n}</b><br><span style="color:#52607A;font-size:8.5pt">${d.cl}</span></td><td class="num">${d.score}</td><td>${pill(d.band, hdsStatus(d.score))}</td><td class="num">${r0(d.act)}</td><td>${esc(d.trig)}</td><td>${esc(d.looks)}</td></tr>`).join('');
+  const dimRows = DIMS.map(d => { const gt = R.aTeam.per[d.k].gap, go = R.aOrg.per[d.k].gap, t = gapText(d, Math.abs(gt) >= Math.abs(go) ? gt : go, Math.abs(gt) >= Math.abs(go) ? 'team' : 'enterprise');
+    return `<tr><td><b>${d.name}</b></td><td class="num">${r0(R.x[d.k])}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num">${gt > 0 ? '+' : ''}${r0(gt)}</td><td class="num">${go > 0 ? '+' : ''}${r0(go)}</td><td style="font-size:9pt">${t ? esc((x => x.charAt(0).toUpperCase() + x.slice(1))(t.split(': ').slice(1).join(': '))) : '<span style="color:#52607A">Within tolerance (&lt;15 pts).</span>'}</td></tr>`; }).join('');
+  const hpi = hpiEq(S.ind), th = Object.entries(R.sent.themes).sort((a, b) => b[1] - a[1]);
+  const exploratory = hide ? `<div class="prov">Exploratory only: final scoring is paused pending the Phase 1 clarification check.</div>` : '';
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Culture & Psychometric Fitment Audit: ${esc(M.candidate)}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"><style>${REPORT_CSS}</style></head><body><div class="page">
+<div class="cover"><div class="k">Talent Diagnostics · Culture &amp; Psychometric Fitment Audit</div><h1>${esc(M.candidate || 'Candidate')}</h1><div class="s">${esc(M.role)}${M.team ? ` · ${esc(M.team)}` : ''}${M.org ? ` · ${esc(M.org)}` : ''}</div>
+<table><tr><td>Report ID</td><td>${id}</td></tr><tr><td>Role level</td><td>${esc(M.level)}</td></tr><tr><td>Hiring manager</td><td>${esc(M.manager)}</td></tr><tr><td>Requisition</td><td>${esc(M.req)}</td></tr><tr><td>Assessment date</td><td>${esc(M.date)}</td></tr><tr><td>Prepared by</td><td>${esc(M.assessor)}</td></tr><tr><td>Evidence confidence</td><td>${confLvl(minC)} (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%)</td></tr><tr><td>Norm group</td><td>${esc(S.ind.norm || 'Not specified')}</td></tr></table>
+<div class="conf">CONFIDENTIAL · PREPARED FOR THE HIRING COMMITTEE · NOT FOR DISTRIBUTION TO THE CANDIDATE WITHOUT A QUALIFIED DEBRIEF</div></div>
+
+<h2><span class="secno">00</span>Decision brief</h2>
+${hide ? `<div class="halt"><b>Diagnostic inquiry hold.</b> Conclusive scoring is paused because at least one vector is below the 60% evidence threshold (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%). See Phase 1 for the analytical risks and the clarifying questions.</div>` : ''}
+${R.provisional ? `<div class="prov"><b>Provisional.</b> At least one vector is below the evidence threshold. Scores are directional only.</div>` : ''}
+${hide ? '' : `<div class="verdict"><div style="font-size:8pt;letter-spacing:.12em;text-transform:uppercase;color:#52607A">Recommendation</div><b>${esc(R.rec)}</b><div style="margin-top:4px">${esc(R.recWhy)}</div></div>`}
+<p class="lead">${esc(summary(R))}</p>
+<h3>Key findings</h3><ul class="kf">${F.map(([t, x]) => `<li><span class="tag">${t}</span>${esc(x)}</li>`).join('')}</ul>
+
+<h2><span class="secno">PHASE 1</span>Data ingestion &amp; diagnostic audit</h2>
+<h3>1.1 Detected sources &amp; frameworks</h3>
+<table class="t"><thead><tr><th>Tier</th><th>Source / instrument</th><th>Coverage</th><th>Status</th><th>Rigor</th></tr></thead><tbody>${SRC.map(r => `<tr><td>${r.tier}</td><td>${esc(r.src)}</td><td>${esc(r.detail)}</td><td>${r.ok ? pill('Ingested', ['good']) : r.ok === null ? pill('Not supplied', ['warn']) : pill('Missing', ['critical'])}</td><td style="font-size:9pt">${esc(r.rigor)}</td></tr>`).join('')}</tbody></table>
+<h3>1.2 Confidence rating</h3>
+<table class="t"><tbody>${[['Organization (macro-culture)', R.conf.org], ['Team (subculture)', R.conf.team], ['Individual (psychometrics)', R.conf.ind]].map(([l, v]) => `<tr><td>${l}</td><td class="num">${r0(v)}%</td><td>${bar(v, v >= 60 ? '#0ca30c' : '#d03b3b')}</td><td>${lvl(v)}</td></tr>`).join('')}<tr><td><b>Overall evidence confidence</b></td><td class="num"><b>${r0(minC)}%</b></td><td></td><td>${lvl(minC)}</td></tr></tbody></table>
+${R.conf.flags.length ? `<h3>Data-quality &amp; contradiction flags</h3><ul>${R.conf.flags.map(([v, t]) => `<li><span class="tag">${v}</span>${esc(t)}</li>`).join('')}</ul>` : ''}
+<h3>1.3 Clarification check</h3>
+${hide ? `<div class="halt"><b>Hold triggered.</b> Releasing scores now carries these analytical risks: ${[R.conf.org < 60 ? 'the enterprise baseline could reflect PR branding rather than lived culture' : '', R.conf.team < 60 ? 'the team subculture is not anchored, so team synergy cannot be separated from enterprise fit' : '', R.conf.ind < 60 ? 'psychometric scores are not anchored to a norm group or complete instrument set, so percentiles and derailer thresholds cannot be interpreted' : ''].filter(Boolean).join('; ')}. Please answer the questions below.</div>` : `<p>${pill('Passed', ['good'])} Every vector meets the 60% evidence threshold. The questions below are residual and do not block the decision, but answering them will tighten the estimates.</p>`}
+${R.conf.qs.length ? `<ol>${R.conf.qs.map(q => `<li><span class="tag">${q.vec}</span>${esc(q.q)}<br><span style="color:#52607A;font-size:9pt">Risk if unanswered: ${esc(q.why)}</span></li>`).join('')}</ol>` : '<p>No outstanding questions.</p>'}
+
+<h2 class="pb"><span class="secno">PHASE 2</span>Executive culture &amp; alignment dashboard</h2>
+${exploratory}
+<div class="score"><div><div class="l">Overall match index</div><div class="v">${sc(R.overall)}</div></div><div><div class="l">Team synergy score</div><div class="v">${sc(R.teamScore)}</div></div><div><div class="l">Org alignment score</div><div class="v">${sc(R.orgScore)}</div></div><div><div class="l">Friction risk level</div><div class="v" style="font-size:15pt">${hide ? '—' : R.fBand}</div></div><div><div class="l">Culture archetype</div><div class="v" style="font-size:12.5pt">${hide ? '—' : R.valueAdd}</div></div></div>
+<table class="t"><thead><tr><th>Component</th><th class="num">Score</th><th>Distribution</th><th>Band</th></tr></thead><tbody>
+${[['Dimension alignment: team', R.aTeam.score], ['Dimension alignment: enterprise (lived)', R.aOrg.score], ['Dimension alignment: enterprise (espoused)', R.aEsp.score], ['Value congruency: team', R.vcTeam], ['Value congruency: enterprise', R.vcOrg], ['Manager-style fit', R.mgrFit], ['Career-velocity fit', R.velFit], ['Derailer resilience (100 − top-3 activation)', 100 - R.derLoad], ['Organizational health index', R.health]].map(([l, v]) => `<tr><td>${l}</td><td class="num">${hide ? '—' : r0(v)}</td><td>${hide ? '' : bar(v)}</td><td>${hide ? '' : pill(band(v), scoreStatus(v))}</td></tr>`).join('')}
+</tbody></table>
+<h3>Visual comparative matrix: Org macro-culture vs. team subculture vs. candidate</h3>
+<pre class="ascii">${esc(asciiMatrix(R))}</pre>
+<div class="g2"><div class="fig"><div class="leg"><span><i style="background:#2a78d6"></i>Candidate</span><span><i style="background:#eb6834"></i>Team</span><span><i style="background:#1baf7a"></i>Org (lived)</span></div>${radarSVG(R, PAL_PRINT, false)}<div class="cap">Figure 1. Eight-axis culture radar (0–100).</div></div>
+<div class="fig"><div class="leg"><span><i style="background:#2a78d6"></i>Candidate</span><span><i style="background:#eb6834"></i>Team</span><span><i style="background:#1baf7a"></i>Org lived</span><span><i style="background:#eda100"></i>Org espoused</span></div>${cvfSVG(R, PAL_PRINT, false)}<div class="cap">Figure 2. Competing Values profiles (% of culture energy).</div></div></div>
+<div class="fig">${heatTable(R, false)}<div class="cap">Figure 3. Comparative variance heatmap. Shading is proportional to gap size. Wt is how strongly the environment expresses the axis (0.5 neutral to 1.5 extreme).</div></div>
+<div class="call"><div class="h">How to read this</div>Indices run from 0 to 100 and are not probabilities of success. Bands: ≥80 strong · 65–79 solid · 50–64 partial · &lt;50 weak. Friction index ${hide ? '—' : r0(R.friction)}: &lt;28 Low · 28–41 Moderate · 42–57 High · ≥58 Critical.</div>
+
+<h2 class="pb"><span class="secno">PHASE 3</span>Triangulated qualitative diagnosis</h2>
+<h3>3.1 Corporate reality check: declared vs. lived</h3>
+<div class="g2"><table class="t"><thead><tr><th>CVF quadrant</th><th class="num">Lived</th><th class="num">Declared</th><th class="num">Gap</th></tr></thead><tbody>${QUADS.map(([k, l]) => { const a = normCvf(S.org.cvfNow)[k], b = normCvf(S.org.cvfEsp)[k]; return `<tr><td>${l}</td><td class="num">${r0(a)}</td><td class="num">${r0(b)}</td><td class="num">${b - a > 0 ? '+' : ''}${r0(b - a)}</td></tr>`; }).join('')}</tbody></table>
+<table class="t"><tbody><tr><td>Culture debt index</td><td class="num">${r0(RC.debt)}</td><td>${bar(RC.debt, '#d03b3b')}</td></tr><tr><td>Say–do gap</td><td class="num">${r0(R.sayDo)} pts</td><td></td></tr><tr><td>Psychological safety</td><td class="num">${S.org.psych}/5</td><td>${pill(RC.psych, RC.psych === 'High' ? ['good'] : RC.psych === 'Moderate' ? ['warn'] : ['critical'])}</td></tr><tr><td>Operational pace</td><td class="num">${r0(R.org.pace)}</td><td>${esc(RC.pace)}</td></tr>${RC.entropy ? `<tr><td>Barrett cultural entropy</td><td class="num">${S.org.barrett.entropy}%</td><td>${esc(RC.entropy)}</td></tr>` : ''}<tr><td>Health index</td><td class="num">${r0(R.health)}</td><td>${bar(R.health, '#1baf7a')}</td></tr></tbody></table></div>
+<p><b>Verdict:</b> ${esc(RC.verdict)}</p>
+<ul>${RC.claims.map(c => `<li>${esc(c)}</li>`).join('')}${R.sent.has ? `<li>External sentiment (${revN(S.org)} reviews across ${PLATFORMS.filter(([k]) => S.org.platforms[k] > 0).map(p => p[1]).join(', ') || 'unspecified platforms'}; avg ${S.org.rating}/5): polarity ${R.sent.pol >= 0 ? '+' : ''}${R.sent.pol.toFixed(2)}; dominant themes ${th.filter(t => t[1]).slice(0, 4).map(([k, v]) => `${esc(k)} (${v})`).join(', ') || 'none detected'}.</li>` : ''}${S.org.barrett.values && S.org.ledger.barrett ? `<li>Barrett values: ${esc(S.org.barrett.values)}</li>` : ''}${S.org.newsNotes ? `<li>News: ${esc(S.org.newsNotes)}</li>` : ''}</ul>
+<p style="font-size:9pt;color:#52607A">Denison: ${DEN.map(([k, l]) => `${l} ${S.org.denison[k]}`).join(' · ')}. Public signals: ${SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'none'}.</p>
+<h3>3.2 Team-to-enterprise divergence</h3>
+<p>${esc(M.team || 'The hiring team')} runs a ${MGR[S.team.mgrStyle][0].toLowerCase()} management style. Mean variance from the enterprise is <b>${r0(R.teamVar)} pts</b>${R.teamVar > 18 ? ', so this is a distinct subculture' : ', so the team broadly mirrors the enterprise'}.</p>
+${DV.length ? list(DV) : '<p>No material divergence (all axes within 10 pts).</p>'}
+<table class="t"><thead><tr><th>Axis</th><th class="num">Team</th><th class="num">Enterprise</th><th class="num">Variance</th></tr></thead><tbody>${DIMS.map(d => { const v = R.team[d.k] - R.org[d.k]; return `<tr><td>${d.name}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num">${v > 0 ? '+' : ''}${r0(v)}</td></tr>`; }).join('')}</tbody></table>
+<h3>3.3 Individual-to-culture fitment: motives vs. reward &amp; promotion mechanics</h3>
+<table class="t"><thead><tr><th>MVPI motive</th><th class="num">Candidate</th><th class="num">Enterprise reward</th><th>Signal</th></tr></thead><tbody>${[...RW].sort((a, b) => b.score - a.score).map(r => `<tr><td>${r.l}</td><td class="num">${r.score}</td><td class="num">${r0(r.reward)}</td><td>${r.flag.startsWith('Unmet') ? pill(r.flag, ['critical']) : r.flag.startsWith('Reward') ? pill(r.flag, ['warn']) : r.flag.startsWith('Reinforced') ? pill(r.flag, ['good']) : '—'}</td></tr>`).join('')}</tbody></table>
+<p style="font-size:9pt;color:#52607A">Enterprise reward intensity is inferred from the lived CVF profile: Clan rewards loyalty and relationships, Adhocracy rewards novelty, Market rewards results and status, Hierarchy rewards reliability and compliance. Value congruency: team ${r0(R.vcTeam)}% · enterprise ${r0(R.vcOrg)}% · espoused ${r0(R.vcEsp)}%. Career-velocity fit ${r0(R.velFit)}%.</p>
+<table class="t"><thead><tr><th>Axis</th><th class="num">Cand.</th><th class="num">Team</th><th class="num">Org</th><th class="num">Δ T</th><th class="num">Δ O</th><th>Diagnostic implication</th></tr></thead><tbody>${dimRows}</tbody></table>
+${S.ind.notes ? `<div class="call"><div class="h">Assessor notes</div>${esc(S.ind.notes)}</div>` : ''}
+
+<h2 class="pb"><span class="secno">PHASE 4</span>Stress dynamics &amp; derailment analysis</h2>
+<h3>4.1 Day-to-day behavioral dynamics</h3>
+<div class="g2"><div><table class="t"><thead><tr><th>${S.ind.instrument === 'hogan' ? 'HPI scale' : 'HPI-equivalent'}</th><th class="num">%ile</th><th></th></tr></thead><tbody>${HPI.map(([k, l]) => `<tr><td>${l}</td><td class="num">${r0(hpi[k])}</td><td>${bar(hpi[k], '#2a78d6')}</td></tr>`).join('')}</tbody></table></div><div>${list(DD)}</div></div>
+<h3>4.2 High-pressure vulnerabilities</h3>
+<div class="fig">${derailSVG(R, PAL_PRINT, false)}<div class="cap">Figure 4. HDS percentiles (bars; 70 = moderate, 90 = high-risk threshold) and contextual activation (◆) in this environment.</div></div>
+<table class="t"><thead><tr><th>Scale</th><th class="num">HDS</th><th>Band</th><th class="num">Activation</th><th>Organizational trigger</th><th>Under pressure</th></tr></thead><tbody>${derRows}</tbody></table>
+<h3>4.3 Friction classification</h3>
+<div class="g2"><div class="phase"><h3 style="color:#0a7a0a">Productive friction</h3>${FC.prod.length ? list(FC.prod) : '<p>None identified. The candidate largely mirrors the current culture.</p>'}</div><div class="phase"><h3 style="color:#b22d2d">Destructive friction</h3>${FC.dest.length ? list(FC.dest) : '<p>None identified above threshold.</p>'}</div></div>
+<table class="t" style="margin-top:12px"><tbody>${[...R.fparts].sort((a, b) => b[1] - a[1]).map(([n, v]) => `<tr><td>${n}</td><td class="num">${hide ? '—' : v.toFixed(1)}</td><td>${hide ? '' : bar(v / 30 * 100, '#eb6834')}</td></tr>`).join('')}<tr><td><b>Friction index → level</b></td><td class="num"><b>${hide ? '—' : r0(R.friction)}</b></td><td>${hide ? '' : pill(R.fBand, STATUS[R.fBand])}</td></tr></tbody></table>
+
+<h2 class="pb"><span class="secno">PHASE 5</span>Tailored 30-60-90 day development blueprint</h2>
+<div class="phase"><h3>Days 1–30 · Acculturation &amp; psychological safety</h3>${list(P.p30)}<b style="font-size:9.5pt">Enterprise landmines to avoid</b>${list(P.landmines)}</div>
+<div class="phase" style="margin-top:12px"><h3>Days 31–60 · Behavioral calibration</h3>${list(P.p60)}</div>
+<div class="phase" style="margin-top:12px"><h3>Days 61–90 · Impact &amp; value realization</h3>${list(P.p90)}</div>
+<div class="g2" style="margin-top:12px"><div class="phase"><h3>Manager coaching: do</h3>${list(P.doList)}</div><div class="phase"><h3>Manager coaching: avoid</h3>${list(P.avoid)}</div></div>
+<div class="phase" style="margin-top:12px"><h3>Milestone success indicators</h3>${list(P.kpis)}</div>
+
+<h2><span class="secno">APPX A</span>Verification interview probes</h2>
+<ol>${PB.map(p => `<li><span class="tag">${esc(p.tag)}</span><span style="color:#52607A;font-size:9pt">${esc(p.why)}</span><br>${esc(p.q)}</li>`).join('')}</ol>
+<h2><span class="secno">APPX B</span>Methodology &amp; limitations</h2>
+<p><b>Model.</b> Organization, team, and candidate are projected onto eight axes: four Competing Values quadrants (Clan, Adhocracy, Market, Hierarchy) and four operating norms (decision velocity, risk tolerance, conflict directness, autonomy). Candidate coordinates are weighted composites of HPI (or OPQ32, KF4D, or NEO mapped through Big Five domains to HPI-equivalents), MVPI, and selected HDS scales. Axis fit = 100 − 1.3 × |gap|, weighted by environmental intensity (0.5–1.5).</p>
+<p><b>Indices.</b> Team synergy = 70% axis alignment + 15% manager-style fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career-velocity fit. Overall = 50% team + 40% org + 10% derailer resilience. Derailer activation = HDS percentile × a context multiplier (0.6–1.4, plus a seniority uplift) based on organizational triggers. Organizational health blends ratings, psychological safety, management credibility, recommendation rate, review polarity, and Barrett entropy. Culture debt blends the say–do gap, the health deficit, and entropy.</p>
+<p><b>Evidence gating.</b> A diagnostic inquiry hold is triggered whenever any vector falls below 60% evidence confidence. Scores are released only once the gaps are clarified, or explicitly as provisional.</p>
+<p><b>Limitations &amp; ethical use.</b> These are decision-support indices, not validated predictive scores for this role. Fit must never override job-related competence evidence. "Culture fit" can encode affinity bias, so weigh accretive culture add deliberately and monitor selection outcomes for adverse impact. Psychometric data is sensitive personal data. Process it under GDPR/DPDP-compliant consent and retention, and give the candidate a qualified debrief on request. Review-sentiment analytics are lexicon-based and indicative only.</p>
+<div class="foot">Report ${id} · Generated ${new Date().toLocaleString()} · C-Psych Architect · Confidential</div>
+</div></body></html>`;
+}
+function asciiBar(v, n = 10) { const f = Math.round(clamp(v) / 100 * n); return '█'.repeat(f) + '░'.repeat(n - f); }
+function heatGlyph(g) { const a = Math.abs(g); return a < 10 ? '░' : a < 20 ? '▒' : a < 35 ? '▓' : '█'; }
+function buildReportMD() {
+  const M = S.meta, P = plan(R), F = findings(R), PB = probes(R), hide = R.halted, sc = v => hide ? '—' : `${r0(v)}%`;
+  const RC = reality(R), DV = divergence(R), RW = rewardMap(R), DD = dayToDay(R), FC = frictionClass(R), SRC = sourcesCatalog(R), minC = Math.min(R.conf.org, R.conf.team, R.conf.ind);
+  const pad = (s, n) => String(s).padEnd(n).slice(0, n), ul = a => a.map(x => `- ${x}`).join('\n');
+  let m = `# Culture & Psychometric Fitment Audit\n\n**${M.candidate || 'Candidate'}**: ${M.role}, ${M.team} · ${M.org}  \nReport ID: ${reportId()} · Level: ${M.level} · Hiring manager: ${M.manager} · Date: ${M.date} · Prepared by: ${M.assessor}\n\n> CONFIDENTIAL: prepared for the hiring committee.\n\n`;
+  m += `## Decision brief\n\n`;
+  m += hide ? `> **■ Diagnostic inquiry hold.** Conclusive scoring is paused (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%; threshold 60%).\n\n` : `**Recommendation: ${R.rec}${R.provisional ? ' (PROVISIONAL)' : ''}.** ${R.recWhy}\n\n`;
+  m += summary(R) + '\n\n' + F.map(([t, x]) => `- **${t}:** ${x}`).join('\n') + '\n\n';
+  m += `## Phase 1: Data ingestion & diagnostic audit\n\n### Detected sources & frameworks\n\n| Tier | Source | Coverage | Status | Rigor |\n|---|---|---|---|---|\n${SRC.map(r => `| ${r.tier} | ${r.src} | ${r.detail} | ${r.ok ? '✓ Ingested' : r.ok === null ? '– Not supplied' : '✗ Missing'} | ${r.rigor} |`).join('\n')}\n\n`;
+  m += `### Confidence rating\n\n\`\`\`\n${[['Organization', R.conf.org], ['Team', R.conf.team], ['Individual', R.conf.ind]].map(([l, v]) => `${pad(l, 14)}${asciiBar(v, 20)} ${pad(r0(v) + '%', 5)} ${confLvl(v)}`).join('\n')}\n\`\`\`\nOverall: **${confLvl(minC)}** (${r0(minC)}%)\n\n${R.conf.flags.map(([v, t]) => `- ⚑ [${v}] ${t}`).join('\n')}\n\n`;
+  m += `### Clarification check\n\n${hide ? '**HOLD.** Final scores are paused until these questions are answered:' : '**Passed.** Residual, non-blocking questions:'}\n\n${R.conf.qs.map((q, i) => `${i + 1}. [${q.vec}] ${q.q}\n   _Risk if unanswered: ${q.why}_`).join('\n') || 'None.'}\n\n`;
+  m += `## Phase 2: Executive culture & alignment dashboard\n\n| KPI | Value |\n|---|---|\n| Overall Match Index | ${sc(R.overall)} |\n| Team Synergy Score | ${sc(R.teamScore)} |\n| Org Alignment Score | ${sc(R.orgScore)} |\n| Friction Risk Level | ${hide ? '—' : `${R.fBand} (index ${r0(R.friction)})`} |\n| Culture Archetype | ${hide ? '—' : R.valueAdd} |\n| Alignment to espoused culture | ${sc(R.aspScore)} |\n\n`;
+  m += `### Visual comparative matrix\n\n\`\`\`\n${asciiMatrix(R)}\n\`\`\`\n\n**Variance heatmap** (░ <10 · ▒ 10–19 · ▓ 20–34 · █ ≥35)\n\n| Axis | Δ Team | Δ Org | Fit T | Fit O |\n|---|---|---|---|---|\n`;
+  for (const d of DIMS) { const t = R.aTeam.per[d.k], o = R.aOrg.per[d.k]; m += `| ${d.name} | ${heatGlyph(t.gap)} ${t.gap > 0 ? '+' : ''}${r0(t.gap)} | ${heatGlyph(o.gap)} ${o.gap > 0 ? '+' : ''}${r0(o.gap)} | ${r0(t.fit)} | ${r0(o.fit)} |\n`; }
+  m += `\n## Phase 3: Triangulated qualitative diagnosis\n\n### Corporate reality check\n\n**Verdict:** ${RC.verdict}\n\n| Quadrant | Lived | Declared | Gap |\n|---|---|---|---|\n${QUADS.map(([k, l]) => { const a = normCvf(S.org.cvfNow)[k], b = normCvf(S.org.cvfEsp)[k]; return `| ${l} | ${r0(a)} | ${r0(b)} | ${r0(b - a)} |`; }).join('\n')}\n\n`;
+  m += ul([`Culture debt index: **${r0(RC.debt)}** · say–do gap ${r0(R.sayDo)} pts · health ${r0(R.health)}`, `Psychological safety: **${RC.psych}** (${S.org.psych}/5) · operational pace: **${RC.pace}**`, ...(RC.entropy ? [`Barrett entropy ${S.org.barrett.entropy}% (${RC.entropy})`] : []), ...RC.claims, `Reviews: n=${revN(S.org)} (${PLATFORMS.map(([k, l]) => `${l} ${S.org.platforms[k]}`).join(', ')}); themes: ${Object.entries(R.sent.themes).filter(t => t[1]).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} (${v})`).join(', ') || 'n/a'}`]) + '\n\n';
+  m += `### Team-to-enterprise divergence\n\nMean variance ${r0(R.teamVar)} pts · manager style ${MGR[S.team.mgrStyle][0]}\n\n${ul(DV) || 'No material divergence.'}\n\n`;
+  m += `### Individual-to-culture fitment\n\n| MVPI motive | Candidate | Enterprise reward | Signal |\n|---|---|---|---|\n${[...RW].sort((a, b) => b.score - a.score).map(r => `| ${r.l} | ${asciiBar(r.score)} ${r.score} | ${asciiBar(r.reward)} ${r0(r.reward)} | ${r.flag} |`).join('\n')}\n\nValue congruency: team ${r0(R.vcTeam)}% · enterprise ${r0(R.vcOrg)}% · espoused ${r0(R.vcEsp)}%.\n\n`;
+  const hp = hpiEq(S.ind);
+  m += `## Phase 4: Stress dynamics & derailment\n\n### Day-to-day behavioral dynamics\n\n\`\`\`\n${HPI.map(([k, l]) => `${pad(l, 26)}${asciiBar(hp[k], 20)} ${r0(hp[k])}`).join('\n')}\n\`\`\`\n\n${ul(DD)}\n\n`;
+  m += `### High-pressure vulnerabilities\n\n\`\`\`\n${R.der.map(d => `${pad(d.n, 13)}${asciiBar(d.score, 20)} ${pad(d.score, 4)}${pad(d.band, 9)} activation ${r0(d.act)}`).join('\n')}\n\`\`\`\n\n| Derailer | HDS | Activation | Organizational trigger |\n|---|---|---|---|\n${R.der.filter(d => d.act >= 55).map(d => `| ${d.n} | ${d.score} | ${r0(d.act)} | ${d.trig} |`).join('\n')}\n\n`;
+  m += `### Friction classification\n\n**Productive friction**\n${ul(FC.prod) || '- None identified.'}\n\n**Destructive friction**\n${ul(FC.dest) || '- None above threshold.'}\n\n`;
+  m += `## Phase 5: 30-60-90 day development blueprint\n\n**Days 1–30: Acculturation & psychological safety**\n${ul(P.p30)}\n\n_Enterprise landmines:_\n${ul(P.landmines)}\n\n**Days 31–60: Behavioral calibration**\n${ul(P.p60)}\n\n**Days 61–90: Impact & value realization**\n${ul(P.p90)}\n\n**Manager: do** ${P.doList.join('; ')}.  \n**Manager: avoid** ${P.avoid.join('; ')}.\n\n**Milestones**\n${ul(P.kpis)}\n\n`;
+  m += `## Appendix A: Verification probes\n\n${PB.map((p, i) => `${i + 1}. **[${p.tag}]** ${p.q} _(${p.why})_`).join('\n')}\n\n## Appendix B: Methodology & limitations\n\nTeam synergy = 70% axis alignment + 15% manager fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career velocity. Overall = 50% team + 40% org + 10% derailer resilience. These are decision-support indices, not validated predictive probabilities. Use them alongside competence evidence, monitor for adverse impact, and process psychometric data under applicable privacy law.\n`;
+  return m;
+}
+function buildCSV() {
+  const rows = [['metric', 'value']];
+  const add = (k, v) => rows.push([k, typeof v === 'number' ? v.toFixed(1) : v]);
+  add('candidate', S.meta.candidate); add('role', S.meta.role); add('organization', S.meta.org); add('team', S.meta.team); add('report_id', reportId());
+  add('gate5_halted', R.halted ? 'yes' : 'no'); add('provisional', R.provisional ? 'yes' : 'no');
+  add('overall_match', R.overall); add('team_synergy', R.teamScore); add('org_alignment', R.orgScore); add('espoused_alignment', R.aspScore);
+  add('friction_index', R.friction); add('friction_band', R.fBand); add('culture_archetype', R.valueAdd); add('recommendation', R.rec);
+  add('values_congruence_team', R.vcTeam); add('values_congruence_org', R.vcOrg); add('manager_fit', R.mgrFit); add('career_velocity_fit', R.velFit); add('org_health', R.health); add('say_do_gap', R.sayDo);
+  add('confidence_org', R.conf.org); add('confidence_team', R.conf.team); add('confidence_individual', R.conf.ind);
+  for (const d of DIMS) { add(`dim_${d.k}_individual`, R.x[d.k]); add(`dim_${d.k}_team`, R.team[d.k]); add(`dim_${d.k}_org`, R.org[d.k]); add(`dim_${d.k}_fit_team`, R.aTeam.per[d.k].fit); add(`dim_${d.k}_fit_org`, R.aOrg.per[d.k].fit); }
+  for (const d of R.der) { add(`hds_${d.k}_score`, d.score); add(`hds_${d.k}_activation`, d.act); }
+  return rows.map(r => r.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\n');
+}
+function slug() { return (S.meta.candidate || 'candidate').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'candidate'; }
+function download(name, text, type) { const b = new Blob([text], { type }); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); }
+function refreshPreview() { $('#preview').srcdoc = buildReportHTML(); }
+
+/* ============================== events ============================== */
+let currentTab = 'dash', timer = null;
+function setTab(t) { currentTab = t; for (const b of $$('.tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t)); for (const p of $$('[data-panel]')) p.hidden = p.dataset.panel !== t; if (t === 'report') refreshPreview(); window.scrollTo({ top: $('.tabs').offsetTop - 10, behavior: 'smooth' }); }
+$$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-goto]'); if (g) setTab(g.dataset.goto);
+  if (e.target.id === 'goProv') { S.provisional = true; $('[data-path="provisional"]').checked = true; render(); }
+  const n = e.target.closest('[data-normalize]'); if (n) { const base = n.dataset.normalize, c = getP(S, base), s = sumQ(c) || 1; const vals = QUADS.map(([k]) => Math.round(c[k] / s * 100)); vals[vals.indexOf(Math.max(...vals))] += 100 - vals.reduce((a, b) => a + b, 0); QUADS.forEach(([k], i) => c[k] = vals[i]); syncFields(base); render(); }
+});
+function syncFields(prefix) { for (const el of $$('[data-path]')) { if (!el.dataset.path.startsWith(prefix)) continue; const v = getP(S, el.dataset.path); if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } }
+document.addEventListener('input', e => {
+  const el = e.target; if (!el.dataset || !el.dataset.path) return;
+  const p = el.dataset.path; let v;
+  if (el.type === 'checkbox') v = el.checked; else if (el.type === 'range' || el.type === 'number') { v = el.value === '' ? 0 : +el.value; if (el.max !== '' && el.type === 'range') v = clamp(v, +el.min, +el.max); } else v = el.value;
+  setP(S, p, v);
+  for (const o of $$(`[data-path="${p}"]`)) if (o !== el && o.type !== 'checkbox') o.value = v;
+  if (p === 'ind.instrument') syncInstrument();
+  if (el.hasAttribute('data-debounce')) { clearTimeout(timer); timer = setTimeout(render, 200); } else render();
+});
+document.addEventListener('change', e => { if (e.target.tagName === 'SELECT' && e.target.dataset.path) e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+$('#preset').addEventListener('change', e => { S = PRESETS[e.target.value](); buildInputs(); render(); });
+$('#inferEsp').addEventListener('click', () => { const r = inferCvf(S.org.leaderText); if (!r) return alert('Paste leadership discourse text first.'); S.org.cvfEsp = r.profile; S.org.ledger.leadership = true; syncFields('org'); render(); });
+$('#inferTeam').addEventListener('click', () => { const r = inferCvf(S.team.transcript); if (!r) return alert('Paste interview transcripts first.'); S.team.cvf = r.profile;
+  for (const k of Object.keys(OPS_LEX)) { const c = countTerms(S.team.transcript, OPS_LEX[k]); if (c) S.team.ops[k] = clamp(50 + c * 8); }
+  syncFields('team'); render(); });
+$('#deriveOps').addEventListener('click', () => { const c = cvfDims(S.org.cvfNow), d = S.org.denison;
+  S.org.ops = { pace: r0(clamp(0.4 * d.adapt + 0.3 * c.innov + 0.3 * c.results - 0.2 * (c.struct - 50))), risk: r0(clamp(0.4 * c.innov + 0.3 * d.adapt + 0.3 * (100 - c.struct))), conflict: r0(clamp(0.4 * c.results + 0.3 * d.inv + 0.3 * (100 - c.collab))), autonomy: r0(clamp(0.4 * d.inv + 0.3 * c.innov + 0.3 * (100 - c.struct))) };
+  syncFields('org.ops'); render(); });
+const dlHtml = () => download(`fitment-report-${slug()}.html`, buildReportHTML(), 'text/html');
+$('#dlHtml').addEventListener('click', dlHtml); $('#quickReport').addEventListener('click', dlHtml);
+$('#dlMd').addEventListener('click', () => download(`fitment-report-${slug()}.md`, buildReportMD(), 'text/markdown'));
+$('#dlCsv').addEventListener('click', () => download(`fitment-scores-${slug()}.csv`, buildCSV(), 'text/csv'));
+$('#dlJson').addEventListener('click', () => download(`fitment-case-${slug()}.json`, JSON.stringify(S, null, 2), 'application/json'));
+$('#printPdf').addEventListener('click', () => { const f = $('#preview'); f.srcdoc = buildReportHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch { dlHtml(); } f.onload = null; }; });
+$('#loadJson').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { const data = JSON.parse(await file.text()); const base = blankCase();
+  const merge = (a, b) => { for (const k of Object.keys(b)) { if (a[k] && typeof a[k] === 'object' && typeof b[k] === 'object') merge(a[k], b[k]); else if (k in a) a[k] = b[k]; } return a; };
+  S = merge(base, data); buildInputs(); render(); } catch { alert('This file is not a valid case JSON.'); } e.target.value = ''; });
+// theme
+const root = document.documentElement;
+try { const t = localStorage.getItem('cpa-theme'); if (t) root.dataset.theme = t; } catch {}
+$('#themeBtn').addEventListener('click', () => { const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('cpa-theme', root.dataset.theme); } catch {} });
+// tooltip
+const tip = $('#tip');
+document.addEventListener('mousemove', e => { const t = e.target.closest?.('[data-tip]'); if (!t) { tip.hidden = true; return; } tip.textContent = t.getAttribute('data-tip'); tip.hidden = false; const x = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8), y = e.clientY + 16 + tip.offsetHeight > innerHeight ? e.clientY - tip.offsetHeight - 10 : e.clientY + 16; tip.style.left = x + 'px'; tip.style.top = y + 'px'; });
+
+buildInputs(); render();
+})();
+</script>
+</body>
+</html>
