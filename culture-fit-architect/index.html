@@ -243,6 +243,12 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
         <div class="tbl-wrap" id="heatmap"></div>
       </div>
     </div>
+    <div class="card chart" id="groysCard">
+      <h2>Groysberg culture styles</h2>
+      <p class="sub">Eight styles from Groysberg et al. (HBR 2018). The candidate's bar is their implied style preference from HPI/MVPI. The right-hand number is the gap from current to target. Style match is computed on profile shape: lived <b id="gLived"></b>, target <b id="gAsp"></b>.</p>
+      <div class="legend"><span><i style="background:var(--series-3)"></i>Org current</span><span><i style="background:var(--series-4)"></i>Org target</span><span><i style="background:var(--series-1)"></i>Candidate (implied)</span></div>
+      <div id="groysChart" style="max-width:760px"></div>
+    </div>
     <div class="card">
       <h2>Visual comparative matrix</h2>
       <p class="sub">Text distribution of organization macro-culture, team subculture and candidate on the four CVF axes and the operating norms. Δ is the context minus the candidate. This exact block appears in the Markdown report.</p>
@@ -322,6 +328,20 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
         <div class="sliders" id="orgOps"></div>
       </div>
     </div>
+    <div class="g2">
+      <div class="card">
+        <div class="minihead"><h3>Groysberg 8-style culture profile</h3><span class="muted" style="font-size:.78rem">Groysberg et al., HBR 2018</span></div>
+        <p class="muted" style="font-size:.8rem;margin-bottom:8px">The current profile drives the lived-culture style match. The target profile drives the aspiration match. Each profile's shape is compared to the candidate's implied style preferences (from HPI/MVPI), so different scoring scales stay comparable.</p>
+        <div class="g2" style="gap:12px"><div><b style="font-size:.8rem">Current</b><div class="sliders" id="groysCur"></div></div><div><b style="font-size:.8rem">Target / aspiration</b><div class="sliders" id="groysAsp"></div></div></div>
+      </div>
+      <div class="card">
+        <div class="minihead"><h3>Internal engagement pulse</h3></div>
+        <div class="engage" id="internalFields"></div>
+        <textarea data-path="org.internal.notes" data-debounce aria-label="Internal pulse notes" placeholder="Item-level favourability, lowest/highest items, comment themes…" style="margin-top:8px;min-height:80px"></textarea>
+        <div class="minihead"><h3>Analyst data caveats</h3></div>
+        <textarea data-path="org.dataNotes" data-debounce aria-label="Analyst data caveats" placeholder="Derivation notes, small-n warnings, scale inconsistencies…" style="min-height:80px"></textarea>
+      </div>
+    </div>
   </section>
 
   <!-- GATE 2 -->
@@ -330,6 +350,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
       <h2>Gate 2 · Team subculture model</h2>
       <p class="sub">Model the hiring team's micro-culture from interviews with the hiring manager, peers, and cross-functional partners. Record what you received.</p>
       <div class="ledger" id="teamLedger"></div>
+      <div class="row" id="libRow" style="margin-top:10px" hidden><label class="row" style="gap:8px;font-size:.85rem"><b>Load team subculture from case library</b><select id="libSelect"></select></label><span class="muted" style="font-size:.78rem">Sets team CVF, norms and evidence notes from a business-unit diagnostic in the loaded case file.</span></div>
     </div>
     <div class="g2">
       <div class="card">
@@ -505,6 +526,16 @@ const LEVER = {
 const ARCH = { stab: 'Culture Stabilizer', add: 'Accretive Culture Add', dis: 'Disruptive Misfit' };
 const PLATFORMS = [['glassdoor','Glassdoor'],['ambitionbox','AmbitionBox'],['indeed','Indeed'],['kununu','Kununu']];
 const INSTR = { hogan: 'Hogan HPI', big5: 'Big Five / NEO-PI-R', opq32: 'SHL OPQ32 (rolled up to Big Five domains)', kf4d: 'Korn Ferry KF4D (rolled up to Big Five domains)' };
+const GROYS = [
+  ['caring', 'Caring', 'Warm, relational, collaborative', 'Flexibility · Interdependence'],
+  ['purpose', 'Purpose', 'Idealistic, altruistic, cause-driven', 'Flexibility · Interdependence'],
+  ['learning', 'Learning', 'Exploratory, inventive, open', 'Flexibility · Independence'],
+  ['enjoyment', 'Enjoyment', 'Playful, spontaneous, fun', 'Flexibility · Independence'],
+  ['results', 'Results', 'Achievement- and goal-driven', 'Stability · Independence'],
+  ['authority', 'Authority', 'Bold, decisive, dominant', 'Stability · Independence'],
+  ['safety', 'Safety', 'Careful, planned, risk-conscious', 'Stability · Interdependence'],
+  ['order', 'Order', 'Rule-abiding, structured, cooperative', 'Stability · Interdependence'],
+];
 const revN = o => PLATFORMS.reduce((s, [k]) => s + (+o.platforms[k] || 0), 0);
 const confLvl = v => v >= 75 ? 'High' : v >= 60 ? 'Moderate' : 'Low';
 const HDS = [
@@ -555,14 +586,16 @@ const OPS_LEX = {
 const blankCase = () => ({
   meta: { candidate: '', role: '', level: 'Manager', org: '', team: '', manager: '', assessor: '', date: new Date().toISOString().slice(0,10), req: '' },
   org: {
-    ledger: { survey: false, denison: false, barrett: false, reviews: false, leadership: false, news: false }, barrett: { entropy: 20, values: '' },
+    ledger: { survey: false, denison: false, barrett: false, groysberg: false, internal: false, reviews: false, leadership: false, news: false }, barrett: { entropy: 20, values: '' },
+    groys: { cur: Object.fromEntries(GROYS.map(g => [g[0], 50])), asp: Object.fromEntries(GROYS.map(g => [g[0], 50])) },
+    internal: { name: '', n: 0, notes: '' }, dataNotes: '',
     cvfNow: { clan: 25, adhoc: 25, market: 25, hier: 25 }, cvfEsp: { clan: 25, adhoc: 25, market: 25, hier: 25 },
     denison: { inv: 50, cons: 50, adapt: 50, mission: 50 },
     rating: 3.5, platforms: { glassdoor: 0, ambitionbox: 0, indeed: 0, kununu: 0 }, psych: 3, cred: 3, recommend: 60, reviewText: '', leaderText: '',
     signals: { layoffs: false, churn: false, restructure: false, regulatory: false, growth: false, mna: false }, newsNotes: '',
     ops: { pace: 50, risk: 50, conflict: 50, autonomy: 50 },
   },
-  team: { ledger: { manager: false, peers: 0, reports: 0, xfn: 0 }, mgrStyle: 'consultative', cvf: { clan: 25, adhoc: 25, market: 25, hier: 25 }, ops: { pace: 50, risk: 50, conflict: 50, autonomy: 50 }, transcript: '' },
+  team: { ledger: { manager: false, peers: 0, reports: 0, xfn: 0, bu: false }, mgrStyle: 'consultative', cvf: { clan: 25, adhoc: 25, market: 25, hier: 25 }, ops: { pace: 50, risk: 50, conflict: 50, autonomy: 50 }, transcript: '' },
   ind: {
     instrument: 'hogan', ledger: { hpi: false, hds: false, mvpi: false }, norm: '',
     hpi: { adj: 50, amb: 50, soc: 50, ips: 50, pru: 50, inq: 50, lrn: 50 }, big5: { O: 50, C: 50, E: 50, A: 50, N: 50 },
@@ -570,6 +603,7 @@ const blankCase = () => ({
     mvpi: Object.fromEntries(MVPI.map(m => [m[0], 50])), notes: '',
   },
   provisional: false,
+  teamLibrary: [],
 });
 const PRESETS = {
   A: () => { const c = blankCase(); Object.assign(c.meta, { candidate: 'Priya Raman', role: 'Head of Digital Product', level: 'Senior leader', org: 'Meridian Trust Bank', team: 'Digital Ventures Squad', manager: 'Elena Fischer, Chief Digital Officer', assessor: 'C-Psych Advisory · Talent Diagnostics', req: 'MTB-DV-0417' });
@@ -716,8 +750,9 @@ function derailers(S, env, health) {
 }
 function confidence(S, sent, teamVar, sayDo) {
   const o = S.org.ledger, t = S.team.ledger, i = S.ind.ledger, flags = [], qs = [];
-  let org = (o.survey ? 25 : 0) + (o.denison ? 10 : 0) + (o.barrett ? 10 : 0) + (o.reviews ? (revN(S.org) >= 50 ? 25 : 12) : 0) + (o.leadership ? 15 : 0) + (o.news ? 15 : 0);
-  let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(S.team.transcript).trim().length > 150 ? 20 : 0);
+  let org = Math.min(100, (o.survey ? 20 : 0) + (o.denison ? 10 : 0) + (o.barrett || o.groysberg ? 10 : 0) + (o.internal ? (S.org.internal.n >= 300 ? 10 : 5) : 0) + (o.reviews ? (revN(S.org) >= 50 ? 20 : 10) : 0) + (o.leadership ? 15 : 0) + (o.news ? 15 : 0));
+  let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(S.team.transcript).trim().length > 150 ? 20 : 0) + (t.bu ? 15 : 0);
+  team = Math.min(100, team);
   let ind = (i.hpi ? 35 : 0) + (i.hds ? 25 : 0) + (i.mvpi ? 25 : 0) + (String(S.ind.norm).trim() ? 15 : 0);
   const Q = (vec, q, why) => qs.push({ vec, q, why });
   // missing-evidence questions
@@ -726,7 +761,9 @@ function confidence(S, sent, teamVar, sayDo) {
   else if (revN(S.org) < 50) Q('Organization', `Only ${revN(S.org)} reviews are available. Can we add internal engagement-survey data (eNPS, safety items) to strengthen the sentiment read?`, 'A small review sample has high variance and may over-represent leavers.');
   if (!o.leadership) Q('Organization', 'Can you share the most recent CEO letter, strategy narrative, or town-hall transcript?', 'Without leadership discourse we cannot separate espoused (intended) values from lived values.');
   if (!o.news) Q('Organization', 'Have there been layoffs, leadership departures, reorganizations, or regulatory findings in the last 12 months?', 'Public signals change derailer activation (e.g., Skeptical under churn) and the career-velocity outlook.');
-  if (!o.barrett) Q('Organization', 'Is a Barrett Cultural Values Assessment available (cultural entropy %, top-10 lived vs. desired values)?', 'Cultural entropy quantifies culture debt, the energy lost to bureaucracy, blame and control.');
+  if (!o.internal) Q('Organization', 'Can you share internal engagement-survey results (e.g., Viva Glint, Gallup, Qualtrics) with item-level favourability and n?', 'Internal pulse data is the largest-n, least self-selected view of lived culture.');
+  if (t.bu && !t.manager) flags.push(['Team', 'The team subculture comes from a business-unit diagnostic (secondary data), not from interviews with this hiring team. Unit-level averages can hide manager-dependent microcultures.']);
+  if (!o.barrett && !o.groysberg) Q('Organization', 'Is a Barrett Cultural Values Assessment or a Groysberg 8-style culture profile available (current vs. target)?', 'Cultural entropy quantifies culture debt, the energy lost to bureaucracy, blame and control.');
   if (!o.denison) Q('Organization', 'Is Denison Organizational Culture Survey data available (Involvement, Consistency, Adaptability, Mission)?', 'Denison data would cross-validate the CVF profile and the operating-norm estimates.');
   if (!t.manager) Q('Team', 'Please schedule a 45-minute structured interview with the hiring manager covering decision rights, pace, conflict norms, and their management style.', 'The team micro-culture cannot be modeled without hiring-manager evidence.');
   if (t.peers < 2) Q('Team', `Can we interview ${2 - t.peers} more team peer(s) to triangulate day-to-day norms?`, 'A single viewpoint cannot separate team norms from individual preference.');
@@ -752,6 +789,16 @@ function confidence(S, sent, teamVar, sayDo) {
   if (highD.length) Q('Individual', `Ask the assessment provider for debrief evidence on the high-risk scale(s): ${highD.map(h => h.n).join(', ')}. Has the candidate shown this in references or interviews?`, 'High HDS scores are hypotheses. They need behavioral corroboration before they drive a decision.');
   return { org: clamp(org), team: clamp(team), ind: clamp(ind), flags, qs };
 }
+function candGroys(S) {
+  const h = hpiEq(S.ind), v = S.ind.mvpi;
+  return { caring: 0.5*v.aff + 0.3*v.alt + 0.2*h.ips, purpose: 0.7*v.alt + 0.3*v.aes, learning: 0.4*h.inq + 0.3*v.sci + 0.3*h.lrn, enjoyment: 0.6*v.hed + 0.4*h.soc,
+    results: 0.4*h.amb + 0.3*v.com + 0.3*v.rec, authority: 0.5*v.pow + 0.3*h.amb + 0.2*(100 - h.ips), safety: 0.5*v.sec + 0.5*h.pru, order: 0.5*v.tra + 0.5*h.pru };
+}
+function groysCong(a, b) {
+  // shape congruence: compare deviations from each profile's own mean, so different scoring scales stay comparable
+  const ma = GROYS.reduce((s, [k]) => s + a[k], 0) / 8, mb = GROYS.reduce((s, [k]) => s + b[k], 0) / 8;
+  return clamp(100 - GROYS.reduce((s, [k]) => s + Math.abs((a[k] - ma) - (b[k] - mb)), 0) / 8 * 2.5);
+}
 function compute(S) {
   const sent = sentiment(S.org.reviewText);
   const x = indDims(S.ind);
@@ -767,8 +814,9 @@ function compute(S) {
   const need = (h.amb + v.pow + v.rec) / 3;
   const velFit = clamp(100 - Math.max(0, need - velocity) * 1.5);
   const teamScore = 0.7 * aTeam.score + 0.15 * mgrFit + 0.15 * vcTeam;
-  const orgScore = 0.5 * aOrg.score + 0.35 * vcOrg + 0.15 * velFit;
-  const aspScore = 0.6 * aEsp.score + 0.4 * vcEsp;
+  const useG = S.org.ledger.groysberg, cg = candGroys(S), gLived = groysCong(cg, S.org.groys.cur), gAsp = groysCong(cg, S.org.groys.asp);
+  const orgScore = useG ? 0.45 * aOrg.score + 0.3 * vcOrg + 0.1 * velFit + 0.15 * gLived : 0.5 * aOrg.score + 0.35 * vcOrg + 0.15 * velFit;
+  const aspScore = useG ? 0.5 * aEsp.score + 0.3 * vcEsp + 0.2 * gAsp : 0.6 * aEsp.score + 0.4 * vcEsp;
   const der = derailers(S, env, health);
   const derLoad = (der[0].act + der[1].act + der[2].act) / 3;
   const sayDo = QUADS.reduce((s, [k]) => s + Math.abs(normCvf(S.org.cvfEsp)[k] - normCvf(S.org.cvfNow)[k]), 0) / 2;
@@ -789,7 +837,12 @@ function compute(S) {
     if (add >= 8 && add >= dis) kind = 'healthy'; else if (dis >= 8) kind = 'disruptive';
     return { d, add, dis, kind, now, asp, xi };
   });
-  const addSum = addRows.reduce((s, r) => s + r.add, 0), disSum = addRows.reduce((s, r) => s + r.dis, 0);
+  // Groysberg: a candidate whose style shape leans toward the styles leadership wants to grow is additive
+  const gAdd = [];
+  if (useG) { const mc = GROYS.reduce((a, [k]) => a + cg[k], 0) / 8, mo = GROYS.reduce((a, [k]) => a + S.org.groys.cur[k], 0) / 8;
+    for (const [k, l] of GROYS) { const gap = S.org.groys.asp[k] - S.org.groys.cur[k], dc = (cg[k] - mc) - (S.org.groys.cur[k] - mo);
+      if ((gap >= 8 && dc > 0) || (gap <= -2 && dc < 0)) { const v = Math.min(Math.abs(dc), Math.abs(gap)) * 0.5; if (v >= 1) gAdd.push({ k, l, v, gap, dc }); } } }
+  const addSum = addRows.reduce((s, r) => s + r.add, 0) + gAdd.reduce((s, g) => s + g.v, 0), disSum = addRows.reduce((s, r) => s + r.dis, 0);
   let valueAdd = ARCH.stab;
   if ((disSum >= 90 && disSum > addSum) || (disSum >= 60 && addSum < 40) || fBand === 'Critical') valueAdd = ARCH.dis;
   else if (addSum >= 40 && addSum >= disSum * 0.8) valueAdd = ARCH.add;
@@ -811,7 +864,7 @@ function compute(S) {
   const strengths = [...ranked].sort((a, b) => (Math.abs(a.gT) + Math.abs(a.gO) * .6) - (Math.abs(b.gT) + Math.abs(b.gO) * .6));
   return { S, sent, x, team, org, esp, env, health, aTeam, aOrg, aEsp, vcTeam, vcOrg, vcEsp, mgrFit, velocity, need, velFit,
     teamScore, orgScore, aspScore, der, derLoad, sayDo, overall, fparts, friction, fBand, addRows, addSum, disSum, valueAdd,
-    rec, recWhy, recSt, conf, halted, provisional, gaps, strengths, teamVar };
+    rec, recWhy, recSt, conf, halted, provisional, gaps, strengths, teamVar, useG, cg, gLived, gAsp, gAdd };
 }
 
 /* ============================== narrative ============================== */
@@ -880,12 +933,16 @@ function reality(R) {
   const S = R.S, o = S.org, now = normCvf(o.cvfNow), esp = normCvf(o.cvfEsp);
   const claims = QUADS.filter(([k]) => esp[k] - now[k] >= 8).map(([k, l]) => `Leadership messaging emphasizes ${l} (+${r0(esp[k] - now[k])} pts above lived culture)`);
   const negThemes = Object.entries(R.sent.themes).filter(t => t[1] > 0).sort((a, b) => b[1] - a[1]).slice(0, 3).map(t => t[0]);
-  const debt = clamp(0.4 * Math.min(100, R.sayDo * 2.5) + 0.35 * (100 - R.health) + 0.25 * (o.ledger.barrett ? o.barrett.entropy * 2 : 100 - R.health));
+  const gGaps = R.useG ? GROYS.map(([k, l]) => ({ l, cur: o.groys.cur[k], asp: o.groys.asp[k], gap: o.groys.asp[k] - o.groys.cur[k] })).filter(g => g.gap >= 15).sort((a, b) => b.gap - a.gap) : [];
+  for (const g of gGaps) claims.push(`Groysberg: the leadership aspiration exceeds lived culture on ${g.l} (${r0(g.cur)} → ${r0(g.asp)}, +${r0(g.gap)})`);
+  let debt = clamp(0.4 * Math.min(100, R.sayDo * 2.5) + 0.35 * (100 - R.health) + 0.25 * (o.ledger.barrett ? o.barrett.entropy * 2 : 100 - R.health));
+  if (gGaps.length) debt = clamp(debt * 0.7 + 0.3 * Math.min(100, gGaps[0].gap * 2));
   const psych = o.psych >= 4 ? 'High' : o.psych >= 3.2 ? 'Moderate' : 'Low';
   const pace = R.org.pace >= 65 ? 'Fast' : R.org.pace >= 40 ? 'Measured' : 'Slow / approval-bound';
   const entropy = o.ledger.barrett ? (o.barrett.entropy <= 10 ? 'healthy' : o.barrett.entropy <= 20 ? 'minor issues' : o.barrett.entropy <= 30 ? 'significant issues' : o.barrett.entropy <= 40 ? 'serious issues' : 'critical issues') : null;
   let verdict;
   if (R.sayDo > 20 && (R.sent.pol < 0 || R.health < 55)) verdict = 'Aspirational branding. The external employee experience does not yet corroborate the declared values, so treat executive messaging as intent rather than reality.';
+  else if (gGaps.length) verdict = `Partially lived. The declared direction is credible and broadly shared at the top, but the lived culture falls materially short on ${gGaps.slice(0, 2).map(g => `${g.l} (${r0(g.cur)} → ${r0(g.asp)})`).join(' and ')}. The gap is one of execution and transmission, not of stated intent.`;
   else if (R.sayDo > 12) verdict = 'Partially lived. The declared values are directionally visible, but not yet consistently rewarded.';
   else verdict = 'Authentic. The declared values are broadly corroborated by employee experience.';
   return { claims, negThemes, debt, psych, pace, entropy, verdict };
@@ -913,6 +970,7 @@ function dayToDay(R) {
 }
 function frictionClass(R) {
   const prod = R.addRows.filter(r => r.kind === 'healthy').map(r => `${r.d.name}: moves the enterprise toward its stated aspiration (${r0(r.now)} → ${r0(r.xi)}, target ${r0(r.asp)}). This is cognitive diversity that can drive change.`);
+  for (const g of (R.gAdd || []).filter(g => g.v >= 4)) prod.push(`Groysberg ${g.l}: the candidate's style profile leans ${g.gap > 0 ? 'toward' : 'away from'} ${g.l}, which leadership wants to ${g.gap > 0 ? 'grow' : 'reduce'} (current ${r0(R.S.org.groys.cur[g.k])} → target ${r0(R.S.org.groys.asp[g.k])}). This is accretive culture add.`);
   const dest = R.addRows.filter(r => r.kind === 'disruptive').map(r => `${r.d.name}: diverges from both lived and espoused culture (ind ${r0(r.xi)} vs org ${r0(r.now)}). Risk of interpersonal drag and misalignment.`);
   for (const h of R.der.filter(h => h.act >= 75)) dest.push(`${h.n} derailer (activation ${r0(h.act)}): ${h.looks.toLowerCase()} Triggered by: ${h.trig.toLowerCase()}.`);
   return { prod, dest };
@@ -922,10 +980,13 @@ function sourcesCatalog(R) {
   const add = (tier, src, detail, ok, rigor) => rows.push({ tier, src, detail, ok, rigor });
   add('Organization', 'OCAI / Competing Values Framework', 'Current & preferred profile', o.survey, 'High: validated instrument');
   add('Organization', 'Denison Organizational Culture Survey', 'Four traits', o.denison, 'High: validated instrument');
+  add('Organization', 'Groysberg 8-style culture profile', o.groysberg ? 'Current & target styles' : '—', o.groysberg, 'Moderate–High: depends on derivation');
+  add('Organization', S.org.internal.name || 'Internal engagement pulse', o.internal ? `n = ${S.org.internal.n}` : '—', o.internal, S.org.internal.n >= 1000 ? 'High: large internal sample' : 'Moderate: internal sample');
   add('Organization', 'Barrett Cultural Values Assessment', o.barrett ? `Entropy ${S.org.barrett.entropy}%` : '—', o.barrett, 'High: validated instrument');
   for (const [k, l] of PLATFORMS) { const n = +S.org.platforms[k] || 0; add('Organization', `${l} reviews`, `n = ${n}`, o.reviews && n > 0 ? true : n === 0 && o.reviews && revN(S.org) > 0 ? null : false, n >= 100 ? 'Moderate: self-selected sample' : n >= 30 ? 'Low–Moderate: small sample' : 'Low: anecdotal'); }
   add('Organization', 'Leadership discourse', 'CEO letters, town halls, declared values', o.leadership, 'Moderate: espoused, not lived');
   add('Organization', 'News & public signals', SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'None flagged', o.news, 'Moderate: contextual');
+  add('Team', 'Business-unit culture diagnostic', S.team.ledger.bu ? 'Secondary BU-level data' : '—', S.team.ledger.bu, 'Moderate: unit average, not hiring team');
   add('Team', 'Hiring-manager interview', t.manager ? 'n = 1' : '—', t.manager, 'Moderate: single senior view');
   add('Team', 'Peer interviews', `n = ${t.peers}`, t.peers > 0, t.peers >= 2 ? 'Moderate: triangulated' : 'Low: single view');
   add('Team', 'Direct-report interviews', `n = ${t.reports}`, t.reports > 0, 'Moderate: downward perspective');
@@ -1017,6 +1078,18 @@ function derailSVG(R, P, live) {
   });
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Derailer risk bars with contextual activation markers">${g}</svg>`;
 }
+function groysSVG(R, P, live) {
+  const S = R.S, W = 520, rowH = 34, padT = 8, padL = 84, padR = 34, H = padT + GROYS.length * rowH, cw = W - padL - padR, X = v => padL + clamp(v) / 100 * cw;
+  const ser = [['Org current', P.s3, S.org.groys.cur], ['Org target', P.s4, S.org.groys.asp], ['Candidate (implied)', P.s1, R.cg]];
+  let g = '';
+  for (const v of [0, 25, 50, 75, 100]) g += `<line x1="${X(v)}" x2="${X(v)}" y1="${padT}" y2="${H}" style="stroke:${P.grid};stroke-width:1"/>`;
+  GROYS.forEach(([k, l], i) => { const y = padT + i * rowH;
+    g += `<text x="${padL - 8}" y="${y + rowH / 2 + 4}" text-anchor="end" style="fill:${P.ink};font:500 12px Inter,system-ui,sans-serif">${l}</text>`;
+    ser.forEach(([n, col, vals], j) => { const by = y + 4 + j * 9, v = vals[k];
+      g += `<rect x="${padL}" y="${by}" width="${Math.max(2, X(v) - padL)}" height="7" rx="2" style="fill:${col}"${live ? ` data-tip="${esc(n)} · ${l}: ${r0(v)}"` : ''}/>`; });
+    g += `<text x="${W - padR + 6}" y="${y + rowH / 2 + 4}" style="fill:${P.muted};font:10px 'IBM Plex Mono',monospace">${r0(S.org.groys.asp[k] - S.org.groys.cur[k]) >= 0 ? '+' : ''}${r0(S.org.groys.asp[k] - S.org.groys.cur[k])}</text>`; });
+  return `<svg viewBox="0 0 ${W} ${H + 6}" role="img" aria-label="Groysberg culture styles: organization current, target and candidate implied preference">${g}</svg>`;
+}
 function heatTable(R, live) {
   const cell = (gap) => { const a = Math.min(1, Math.abs(gap) / 50) * 0.55; const bg = live ? `color-mix(in srgb, var(--heat) ${r0(a * 100)}%, transparent)` : `rgba(42,120,214,${a.toFixed(2)})`; const fg = a > 0.38 ? (live ? 'var(--card)' : '#fff') : 'inherit';
     return `<td class="num heat" style="background:${bg};color:${fg}"${live ? ` data-tip="Gap ${gap > 0 ? '+' : ''}${r0(gap)} pts"` : ''}>${gap > 0 ? '+' : ''}${r0(gap)}</td>`; };
@@ -1039,14 +1112,17 @@ function buildInputs() {
   $('#engage').innerHTML = field('meta.candidate', 'Candidate') + field('meta.role', 'Role') +
     `<div class="field"><label for="e_meta_level">Level</label><select id="e_meta_level" data-path="meta.level">${['Individual contributor', 'Manager', 'Senior leader', 'Executive'].map(l => `<option ${S.meta.level === l ? 'selected' : ''}>${l}</option>`).join('')}</select></div>` +
     field('meta.org', 'Organization') + field('meta.team', 'Team / unit') + field('meta.manager', 'Hiring manager') + field('meta.assessor', 'Prepared by') + field('meta.date', 'Assessment date', 'date') + field('meta.req', 'Requisition ID');
-  $('#orgLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('org.ledger.survey', 'CVF/OCAI survey') + chk('org.ledger.denison', 'Denison survey') + chk('org.ledger.barrett', 'Barrett CVA') + chk('org.ledger.reviews', 'Employee reviews') + chk('org.ledger.leadership', 'Leadership discourse') + chk('org.ledger.news', 'News / public signals');
+  $('#orgLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('org.ledger.survey', 'CVF/OCAI survey') + chk('org.ledger.denison', 'Denison survey') + chk('org.ledger.barrett', 'Barrett CVA') + chk('org.ledger.groysberg', 'Groysberg profile') + chk('org.ledger.internal', 'Internal pulse') + chk('org.ledger.reviews', 'Employee reviews') + chk('org.ledger.leadership', 'Leadership discourse') + chk('org.ledger.news', 'News / public signals');
   $('#cvfNow').innerHTML = cvfBlock('org.cvfNow', 'sumNow');
   $('#cvfEsp').innerHTML = cvfBlock('org.cvfEsp', 'sumEsp');
   $('#denison').innerHTML = DEN.map(([k, l]) => sliderRow(`org.denison.${k}`, l)).join('') + sliderRow('org.barrett.entropy', 'Barrett cultural entropy %', '0–10 healthy · 21–30 significant · >40 critical', 0, 60);
   $('#sentFields').innerHTML = PLATFORMS.map(([k, l]) => field(`org.platforms.${k}`, `${l} (n)`, 'number', 'min="0" step="1"')).join('') + field('org.rating', 'Avg. rating (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.psych', 'Psych. safety (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.cred', 'Mgmt credibility (1–5)', 'number', 'min="1" max="5" step="0.1"') + field('org.recommend', 'Recommend to friend %', 'number', 'min="0" max="100" step="1"');
   $('#signals').innerHTML = SIGNALS.map(([k, l]) => chk(`org.signals.${k}`, l)).join('');
+  $('#groysCur').innerHTML = GROYS.map(([k, l, d]) => sliderRow(`org.groys.cur.${k}`, l, d)).join('');
+  $('#groysAsp').innerHTML = GROYS.map(([k, l]) => sliderRow(`org.groys.asp.${k}`, l)).join('');
+  $('#internalFields').innerHTML = field('org.internal.name', 'Survey name') + field('org.internal.n', 'Respondents (n)', 'number', 'min="0" step="1"');
   $('#orgOps').innerHTML = OPS.map(([k, l, h]) => sliderRow(`org.ops.${k}`, l, h)).join('');
-  $('#teamLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('team.ledger.manager', 'Hiring-manager interview') + `<label>Peer interviews <input type="number" min="0" max="10" data-path="team.ledger.peers" value="${S.team.ledger.peers}"></label><label>Direct reports <input type="number" min="0" max="10" data-path="team.ledger.reports" value="${S.team.ledger.reports}"></label><label>Cross-functional <input type="number" min="0" max="10" data-path="team.ledger.xfn" value="${S.team.ledger.xfn}"></label>` +
+  $('#teamLedger').innerHTML = '<b style="font-size:.8rem">Evidence received:</b>' + chk('team.ledger.manager', 'Hiring-manager interview') + chk('team.ledger.bu', 'BU culture diagnostic') + `<label>Peer interviews <input type="number" min="0" max="10" data-path="team.ledger.peers" value="${S.team.ledger.peers}"></label><label>Direct reports <input type="number" min="0" max="10" data-path="team.ledger.reports" value="${S.team.ledger.reports}"></label><label>Cross-functional <input type="number" min="0" max="10" data-path="team.ledger.xfn" value="${S.team.ledger.xfn}"></label>` +
     `<label>Manager style <select data-path="team.mgrStyle">${Object.entries(MGR).map(([k, [l]]) => `<option value="${k}" ${S.team.mgrStyle === k ? 'selected' : ''}>${l}</option>`).join('')}</select></label>`;
   $('#cvfTeam').innerHTML = cvfBlock('team.cvf', 'sumTeam');
   $('#teamOps').innerHTML = OPS.map(([k, l, h]) => sliderRow(`team.ops.${k}`, l, h)).join('');
@@ -1057,6 +1133,9 @@ function buildInputs() {
   $('#big5').innerHTML = BIG5.map(([k, l, h]) => sliderRow(`ind.big5.${k}`, l, h)).join('');
   $('#hds').innerHTML = HDS.map(h => sliderRow(`ind.hds.${h.k}`, h.n, h.cl)).join('');
   $('#mvpi').innerHTML = MVPI.map(([k, l]) => sliderRow(`ind.mvpi.${k}`, l)).join('');
+  const lib = S.teamLibrary || [];
+  $('#libRow').hidden = !lib.length;
+  $('#libSelect').innerHTML = '<option value="">Choose a unit…</option>' + lib.map((u, i) => `<option value="${i}" ${S.meta.team === u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('');
   for (const ta of $$('textarea[data-path]')) ta.value = getP(S, ta.dataset.path) || '';
   $('[data-path="provisional"]').checked = !!S.provisional;
   syncInstrument();
@@ -1076,7 +1155,7 @@ function render() {
     : `<div class="eyebrow">Recommendation</div><div><div class="verdict">${esc(R.rec)}${pv}</div><div class="why">${esc(R.recWhy)}</div></div>${statusChip(`${confLvl(Math.min(R.conf.org, R.conf.team, R.conf.ind))} confidence · ${r0(Math.min(R.conf.org, R.conf.team, R.conf.ind))}%`, Math.min(R.conf.org, R.conf.team, R.conf.ind) >= 75 ? ['good', '●'] : ['warn', '▲'])}`;
   $('#decision').style.borderLeftColor = hide ? 'var(--critical)' : `var(--${R.recSt === 'good' ? 'good' : R.recSt === 'warn' ? 'warn' : R.recSt === 'serious' ? 'serious' : 'critical'})`;
   const tile = (lbl, v, note, st) => `<div class="kpi"><span class="lbl">${lbl}</span><span class="val mono">${hide ? '—' : r0(v)}<small>${hide ? '' : '%'}</small></span><div class="meter"><i style="width:${hide ? 0 : clamp(v)}%"></i></div><span class="note">${hide ? 'Withheld (Gate 5)' : note}</span>${hide ? '' : statusChip(band(v), st)}</div>`;
-  $('#kpis').innerHTML = tile('Overall match index', R.overall, 'Team 50% · Org 40% · Derailer resilience 10%', scoreStatus(R.overall)) + tile('Team synergy score', R.teamScore, `Dimensions, manager fit ${r0(R.mgrFit)}, values ${r0(R.vcTeam)}`, scoreStatus(R.teamScore)) + tile('Org alignment score', R.orgScore, `Dimensions, values ${r0(R.vcOrg)}, velocity ${r0(R.velFit)}`, scoreStatus(R.orgScore)) +
+  $('#kpis').innerHTML = tile('Overall match index', R.overall, 'Team 50% · Org 40% · Derailer resilience 10%', scoreStatus(R.overall)) + tile('Team synergy score', R.teamScore, `Dimensions, manager fit ${r0(R.mgrFit)}, values ${r0(R.vcTeam)}`, scoreStatus(R.teamScore)) + tile('Org alignment score', R.orgScore, `Dimensions, values ${r0(R.vcOrg)}, velocity ${r0(R.velFit)}${R.useG ? `, styles ${r0(R.gLived)}` : ''}`, scoreStatus(R.orgScore)) +
     `<div class="kpi"><span class="lbl">Friction risk level</span><span class="val">${hide ? '—' : R.fBand}</span><div class="meter"><i style="width:${hide ? 0 : clamp(R.friction)}%;background:var(--${STATUS[R.fBand][0]})"></i></div><span class="note">${hide ? 'Withheld (Gate 5)' : `Index ${r0(R.friction)} / 100`}</span>${hide ? '' : statusChip(R.fBand, STATUS[R.fBand])}</div>` +
     `<div class="kpi"><span class="lbl">Culture archetype</span><span class="val" style="font-size:1.35rem">${hide ? '—' : R.valueAdd}</span><span class="note">${hide ? 'Withheld (Gate 5)' : `Healthy friction ${r0(R.addSum)} · disruptive ${r0(R.disSum)}`}</span></div>`;
   $('#radarLegend').innerHTML = `<span><i style="background:var(--series-1)"></i>Individual</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Organization (lived)</span>`;
@@ -1084,6 +1163,8 @@ function render() {
   $('#heatmap').innerHTML = heatTable(R, true);
   $('#cvfLegend').innerHTML = `<span><i style="background:var(--series-1)"></i>Individual (implied)</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Org lived</span><span><i style="background:var(--series-4)"></i>Org espoused</span>`;
   $('#cvfChart').innerHTML = cvfSVG(R, PAL_LIVE, true);
+  $('#groysCard').hidden = !R.useG;
+  if (R.useG) { $('#groysChart').innerHTML = groysSVG(R, PAL_LIVE, true); $('#gLived').textContent = `${r0(R.gLived)}%`; $('#gAsp').textContent = `${r0(R.gAsp)}%`; }
   $('#derailChart').innerHTML = derailSVG(R, PAL_LIVE, true);
   $('#addFit').innerHTML = `<ul class="clean addlist">${R.addRows.map(r => `<li><span><b>${r.d.short}</b> <span class="muted">· ind ${r0(r.xi)} vs org ${r0(r.now)} → aspires ${r0(r.asp)}</span></span>${r.kind === 'healthy' ? statusChip('Healthy', ['good', '●']) : r.kind === 'disruptive' ? statusChip('Disruptive', ['critical', '■']) : statusChip('Aligned', ['warn', '▲']).replace('st-warn', '')}</li>`).join('')}</ul>`;
   const fp = [...R.fparts].sort((a, b) => b[1] - a[1]);
@@ -1162,6 +1243,7 @@ ${hide ? '' : `<div class="verdict"><div style="font-size:8pt;letter-spacing:.12
 <table class="t"><thead><tr><th>Tier</th><th>Source / instrument</th><th>Coverage</th><th>Status</th><th>Rigor</th></tr></thead><tbody>${SRC.map(r => `<tr><td>${r.tier}</td><td>${esc(r.src)}</td><td>${esc(r.detail)}</td><td>${r.ok ? pill('Ingested', ['good']) : r.ok === null ? pill('Not supplied', ['warn']) : pill('Missing', ['critical'])}</td><td style="font-size:9pt">${esc(r.rigor)}</td></tr>`).join('')}</tbody></table>
 <h3>1.2 Confidence rating</h3>
 <table class="t"><tbody>${[['Organization (macro-culture)', R.conf.org], ['Team (subculture)', R.conf.team], ['Individual (psychometrics)', R.conf.ind]].map(([l, v]) => `<tr><td>${l}</td><td class="num">${r0(v)}%</td><td>${bar(v, v >= 60 ? '#0ca30c' : '#d03b3b')}</td><td>${lvl(v)}</td></tr>`).join('')}<tr><td><b>Overall evidence confidence</b></td><td class="num"><b>${r0(minC)}%</b></td><td></td><td>${lvl(minC)}</td></tr></tbody></table>
+${S.org.dataNotes ? `<div class="call"><div class="h">Analyst data caveats</div>${esc(S.org.dataNotes)}</div>` : ''}
 ${R.conf.flags.length ? `<h3>Data-quality &amp; contradiction flags</h3><ul>${R.conf.flags.map(([v, t]) => `<li><span class="tag">${v}</span>${esc(t)}</li>`).join('')}</ul>` : ''}
 <h3>1.3 Clarification check</h3>
 ${hide ? `<div class="halt"><b>Hold triggered.</b> Releasing scores now carries these analytical risks: ${[R.conf.org < 60 ? 'the enterprise baseline could reflect PR branding rather than lived culture' : '', R.conf.team < 60 ? 'the team subculture is not anchored, so team synergy cannot be separated from enterprise fit' : '', R.conf.ind < 60 ? 'psychometric scores are not anchored to a norm group or complete instrument set, so percentiles and derailer thresholds cannot be interpreted' : ''].filter(Boolean).join('; ')}. Please answer the questions below.</div>` : `<p>${pill('Passed', ['good'])} Every vector meets the 60% evidence threshold. The questions below are residual and do not block the decision, but answering them will tighten the estimates.</p>`}
@@ -1186,6 +1268,9 @@ ${[['Dimension alignment: team', R.aTeam.score], ['Dimension alignment: enterpri
 <table class="t"><tbody><tr><td>Culture debt index</td><td class="num">${r0(RC.debt)}</td><td>${bar(RC.debt, '#d03b3b')}</td></tr><tr><td>Say–do gap</td><td class="num">${r0(R.sayDo)} pts</td><td></td></tr><tr><td>Psychological safety</td><td class="num">${S.org.psych}/5</td><td>${pill(RC.psych, RC.psych === 'High' ? ['good'] : RC.psych === 'Moderate' ? ['warn'] : ['critical'])}</td></tr><tr><td>Operational pace</td><td class="num">${r0(R.org.pace)}</td><td>${esc(RC.pace)}</td></tr>${RC.entropy ? `<tr><td>Barrett cultural entropy</td><td class="num">${S.org.barrett.entropy}%</td><td>${esc(RC.entropy)}</td></tr>` : ''}<tr><td>Health index</td><td class="num">${r0(R.health)}</td><td>${bar(R.health, '#1baf7a')}</td></tr></tbody></table></div>
 <p><b>Verdict:</b> ${esc(RC.verdict)}</p>
 <ul>${RC.claims.map(c => `<li>${esc(c)}</li>`).join('')}${R.sent.has ? `<li>External sentiment (${revN(S.org)} reviews across ${PLATFORMS.filter(([k]) => S.org.platforms[k] > 0).map(p => p[1]).join(', ') || 'unspecified platforms'}; avg ${S.org.rating}/5): polarity ${R.sent.pol >= 0 ? '+' : ''}${R.sent.pol.toFixed(2)}; dominant themes ${th.filter(t => t[1]).slice(0, 4).map(([k, v]) => `${esc(k)} (${v})`).join(', ') || 'none detected'}.</li>` : ''}${S.org.barrett.values && S.org.ledger.barrett ? `<li>Barrett values: ${esc(S.org.barrett.values)}</li>` : ''}${S.org.newsNotes ? `<li>News: ${esc(S.org.newsNotes)}</li>` : ''}</ul>
+${R.useG ? `<h3>Groysberg culture styles: current vs. target vs. candidate</h3><div class="fig"><div class="leg"><span><i style="background:#1baf7a"></i>Org current</span><span><i style="background:#eda100"></i>Org target</span><span><i style="background:#2a78d6"></i>Candidate (implied)</span></div>${groysSVG(R, PAL_PRINT, false)}<div class="cap">Figure 5. Groysberg 8-style profile. Right-hand number = target − current. Style match (shape-based): lived ${r0(R.gLived)}% · target ${r0(R.gAsp)}%.</div></div>
+<table class="t"><thead><tr><th>Style</th><th>Quadrant</th><th class="num">Current</th><th class="num">Target</th><th class="num">Gap</th><th class="num">Candidate</th></tr></thead><tbody>${GROYS.map(([k, l, , q]) => `<tr><td>${l}</td><td style="font-size:9pt;color:#52607A">${q}</td><td class="num">${r0(S.org.groys.cur[k])}</td><td class="num">${r0(S.org.groys.asp[k])}</td><td class="num">${S.org.groys.asp[k] - S.org.groys.cur[k] >= 0 ? '+' : ''}${r0(S.org.groys.asp[k] - S.org.groys.cur[k])}</td><td class="num">${r0(R.cg[k])}</td></tr>`).join('')}</tbody></table>` : ''}
+${S.org.ledger.internal && S.org.internal.notes ? `<div class="call"><div class="h">${esc(S.org.internal.name || 'Internal pulse')} (n = ${S.org.internal.n})</div>${esc(S.org.internal.notes)}</div>` : ''}
 <p style="font-size:9pt;color:#52607A">Denison: ${DEN.map(([k, l]) => `${l} ${S.org.denison[k]}`).join(' · ')}. Public signals: ${SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'none'}.</p>
 <h3>3.2 Team-to-enterprise divergence</h3>
 <p>${esc(M.team || 'The hiring team')} runs a ${MGR[S.team.mgrStyle][0].toLowerCase()} management style. Mean variance from the enterprise is <b>${r0(R.teamVar)} pts</b>${R.teamVar > 18 ? ', so this is a distinct subculture' : ', so the team broadly mirrors the enterprise'}.</p>
@@ -1218,7 +1303,7 @@ ${S.ind.notes ? `<div class="call"><div class="h">Assessor notes</div>${esc(S.in
 <ol>${PB.map(p => `<li><span class="tag">${esc(p.tag)}</span><span style="color:#52607A;font-size:9pt">${esc(p.why)}</span><br>${esc(p.q)}</li>`).join('')}</ol>
 <h2><span class="secno">APPX B</span>Methodology &amp; limitations</h2>
 <p><b>Model.</b> Organization, team, and candidate are projected onto eight axes: four Competing Values quadrants (Clan, Adhocracy, Market, Hierarchy) and four operating norms (decision velocity, risk tolerance, conflict directness, autonomy). Candidate coordinates are weighted composites of HPI (or OPQ32, KF4D, or NEO mapped through Big Five domains to HPI-equivalents), MVPI, and selected HDS scales. Axis fit = 100 − 1.3 × |gap|, weighted by environmental intensity (0.5–1.5).</p>
-<p><b>Indices.</b> Team synergy = 70% axis alignment + 15% manager-style fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career-velocity fit. Overall = 50% team + 40% org + 10% derailer resilience. Derailer activation = HDS percentile × a context multiplier (0.6–1.4, plus a seniority uplift) based on organizational triggers. Organizational health blends ratings, psychological safety, management credibility, recommendation rate, review polarity, and Barrett entropy. Culture debt blends the say–do gap, the health deficit, and entropy.</p>
+<p><b>Indices.</b> Team synergy = 70% axis alignment + 15% manager-style fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career-velocity fit (with a Groysberg profile: 45% / 30% / 10% + 15% style-shape match). Overall = 50% team + 40% org + 10% derailer resilience. Derailer activation = HDS percentile × a context multiplier (0.6–1.4, plus a seniority uplift) based on organizational triggers. Organizational health blends ratings, psychological safety, management credibility, recommendation rate, review polarity, and Barrett entropy. Culture debt blends the say–do gap, the health deficit, and entropy.</p>
 <p><b>Evidence gating.</b> A diagnostic inquiry hold is triggered whenever any vector falls below 60% evidence confidence. Scores are released only once the gaps are clarified, or explicitly as provisional.</p>
 <p><b>Limitations &amp; ethical use.</b> These are decision-support indices, not validated predictive scores for this role. Fit must never override job-related competence evidence. "Culture fit" can encode affinity bias, so weigh accretive culture add deliberately and monitor selection outcomes for adverse impact. Psychometric data is sensitive personal data. Process it under GDPR/DPDP-compliant consent and retention, and give the candidate a qualified debrief on request. Review-sentiment analytics are lexicon-based and indicative only.</p>
 <div class="foot">Report ${id} · Generated ${new Date().toLocaleString()} · C-Psych Architect · Confidential</div>
@@ -1235,13 +1320,15 @@ function buildReportMD() {
   m += hide ? `> **■ Diagnostic inquiry hold.** Conclusive scoring is paused (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%; threshold 60%).\n\n` : `**Recommendation: ${R.rec}${R.provisional ? ' (PROVISIONAL)' : ''}.** ${R.recWhy}\n\n`;
   m += summary(R) + '\n\n' + F.map(([t, x]) => `- **${t}:** ${x}`).join('\n') + '\n\n';
   m += `## Phase 1: Data ingestion & diagnostic audit\n\n### Detected sources & frameworks\n\n| Tier | Source | Coverage | Status | Rigor |\n|---|---|---|---|---|\n${SRC.map(r => `| ${r.tier} | ${r.src} | ${r.detail} | ${r.ok ? '✓ Ingested' : r.ok === null ? '– Not supplied' : '✗ Missing'} | ${r.rigor} |`).join('\n')}\n\n`;
-  m += `### Confidence rating\n\n\`\`\`\n${[['Organization', R.conf.org], ['Team', R.conf.team], ['Individual', R.conf.ind]].map(([l, v]) => `${pad(l, 14)}${asciiBar(v, 20)} ${pad(r0(v) + '%', 5)} ${confLvl(v)}`).join('\n')}\n\`\`\`\nOverall: **${confLvl(minC)}** (${r0(minC)}%)\n\n${R.conf.flags.map(([v, t]) => `- ⚑ [${v}] ${t}`).join('\n')}\n\n`;
+  m += `### Confidence rating\n\n\`\`\`\n${[['Organization', R.conf.org], ['Team', R.conf.team], ['Individual', R.conf.ind]].map(([l, v]) => `${pad(l, 14)}${asciiBar(v, 20)} ${pad(r0(v) + '%', 5)} ${confLvl(v)}`).join('\n')}\n\`\`\`\nOverall: **${confLvl(minC)}** (${r0(minC)}%)\n\n${S.org.dataNotes ? `> **Analyst caveats:** ${S.org.dataNotes}\n\n` : ''}${R.conf.flags.map(([v, t]) => `- ⚑ [${v}] ${t}`).join('\n')}\n\n`;
   m += `### Clarification check\n\n${hide ? '**HOLD.** Final scores are paused until these questions are answered:' : '**Passed.** Residual, non-blocking questions:'}\n\n${R.conf.qs.map((q, i) => `${i + 1}. [${q.vec}] ${q.q}\n   _Risk if unanswered: ${q.why}_`).join('\n') || 'None.'}\n\n`;
   m += `## Phase 2: Executive culture & alignment dashboard\n\n| KPI | Value |\n|---|---|\n| Overall Match Index | ${sc(R.overall)} |\n| Team Synergy Score | ${sc(R.teamScore)} |\n| Org Alignment Score | ${sc(R.orgScore)} |\n| Friction Risk Level | ${hide ? '—' : `${R.fBand} (index ${r0(R.friction)})`} |\n| Culture Archetype | ${hide ? '—' : R.valueAdd} |\n| Alignment to espoused culture | ${sc(R.aspScore)} |\n\n`;
   m += `### Visual comparative matrix\n\n\`\`\`\n${asciiMatrix(R)}\n\`\`\`\n\n**Variance heatmap** (░ <10 · ▒ 10–19 · ▓ 20–34 · █ ≥35)\n\n| Axis | Δ Team | Δ Org | Fit T | Fit O |\n|---|---|---|---|---|\n`;
   for (const d of DIMS) { const t = R.aTeam.per[d.k], o = R.aOrg.per[d.k]; m += `| ${d.name} | ${heatGlyph(t.gap)} ${t.gap > 0 ? '+' : ''}${r0(t.gap)} | ${heatGlyph(o.gap)} ${o.gap > 0 ? '+' : ''}${r0(o.gap)} | ${r0(t.fit)} | ${r0(o.fit)} |\n`; }
   m += `\n## Phase 3: Triangulated qualitative diagnosis\n\n### Corporate reality check\n\n**Verdict:** ${RC.verdict}\n\n| Quadrant | Lived | Declared | Gap |\n|---|---|---|---|\n${QUADS.map(([k, l]) => { const a = normCvf(S.org.cvfNow)[k], b = normCvf(S.org.cvfEsp)[k]; return `| ${l} | ${r0(a)} | ${r0(b)} | ${r0(b - a)} |`; }).join('\n')}\n\n`;
   m += ul([`Culture debt index: **${r0(RC.debt)}** · say–do gap ${r0(R.sayDo)} pts · health ${r0(R.health)}`, `Psychological safety: **${RC.psych}** (${S.org.psych}/5) · operational pace: **${RC.pace}**`, ...(RC.entropy ? [`Barrett entropy ${S.org.barrett.entropy}% (${RC.entropy})`] : []), ...RC.claims, `Reviews: n=${revN(S.org)} (${PLATFORMS.map(([k, l]) => `${l} ${S.org.platforms[k]}`).join(', ')}); themes: ${Object.entries(R.sent.themes).filter(t => t[1]).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} (${v})`).join(', ') || 'n/a'}`]) + '\n\n';
+  if (R.useG) m += `### Groysberg culture styles\n\nStyle match (shape): lived ${r0(R.gLived)}% · target ${r0(R.gAsp)}%\n\n| Style | Current | Target | Gap | Candidate (implied) |\n|---|---|---|---|---|\n${GROYS.map(([k, l]) => `| ${l} | ${asciiBar(S.org.groys.cur[k])} ${r0(S.org.groys.cur[k])} | ${r0(S.org.groys.asp[k])} | ${r0(S.org.groys.asp[k] - S.org.groys.cur[k])} | ${asciiBar(R.cg[k])} ${r0(R.cg[k])} |`).join('\n')}\n\n`;
+  if (S.org.ledger.internal && S.org.internal.notes) m += `**${S.org.internal.name || 'Internal pulse'} (n=${S.org.internal.n}):** ${S.org.internal.notes}\n\n`;
   m += `### Team-to-enterprise divergence\n\nMean variance ${r0(R.teamVar)} pts · manager style ${MGR[S.team.mgrStyle][0]}\n\n${ul(DV) || 'No material divergence.'}\n\n`;
   m += `### Individual-to-culture fitment\n\n| MVPI motive | Candidate | Enterprise reward | Signal |\n|---|---|---|---|\n${[...RW].sort((a, b) => b.score - a.score).map(r => `| ${r.l} | ${asciiBar(r.score)} ${r.score} | ${asciiBar(r.reward)} ${r0(r.reward)} | ${r.flag} |`).join('\n')}\n\nValue congruency: team ${r0(R.vcTeam)}% · enterprise ${r0(R.vcOrg)}% · espoused ${r0(R.vcEsp)}%.\n\n`;
   const hp = hpiEq(S.ind);
@@ -1260,6 +1347,7 @@ function buildCSV() {
   add('overall_match', R.overall); add('team_synergy', R.teamScore); add('org_alignment', R.orgScore); add('espoused_alignment', R.aspScore);
   add('friction_index', R.friction); add('friction_band', R.fBand); add('culture_archetype', R.valueAdd); add('recommendation', R.rec);
   add('values_congruence_team', R.vcTeam); add('values_congruence_org', R.vcOrg); add('manager_fit', R.mgrFit); add('career_velocity_fit', R.velFit); add('org_health', R.health); add('say_do_gap', R.sayDo);
+  if (R.useG) { add('groysberg_match_lived', R.gLived); add('groysberg_match_target', R.gAsp); }
   add('confidence_org', R.conf.org); add('confidence_team', R.conf.team); add('confidence_individual', R.conf.ind);
   for (const d of DIMS) { add(`dim_${d.k}_individual`, R.x[d.k]); add(`dim_${d.k}_team`, R.team[d.k]); add(`dim_${d.k}_org`, R.org[d.k]); add(`dim_${d.k}_fit_team`, R.aTeam.per[d.k].fit); add(`dim_${d.k}_fit_org`, R.aOrg.per[d.k].fit); }
   for (const d of R.der) { add(`hds_${d.k}_score`, d.score); add(`hds_${d.k}_activation`, d.act); }
@@ -1289,6 +1377,9 @@ document.addEventListener('input', e => {
   if (el.hasAttribute('data-debounce')) { clearTimeout(timer); timer = setTimeout(render, 200); } else render();
 });
 document.addEventListener('change', e => { if (e.target.tagName === 'SELECT' && e.target.dataset.path) e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+$('#libSelect').addEventListener('change', e => { const u = (S.teamLibrary || [])[+e.target.value]; if (!u) return;
+  S.team.cvf = { ...u.cvf }; if (u.ops) S.team.ops = { ...u.ops }; S.team.transcript = u.evidence || ''; S.team.ledger.bu = true; S.meta.team = u.name; if (u.mgrStyle) S.team.mgrStyle = u.mgrStyle;
+  buildInputs(); render(); });
 $('#preset').addEventListener('change', e => { S = PRESETS[e.target.value](); buildInputs(); render(); });
 $('#inferEsp').addEventListener('click', () => { const r = inferCvf(S.org.leaderText); if (!r) return alert('Paste leadership discourse text first.'); S.org.cvfEsp = r.profile; S.org.ledger.leadership = true; syncFields('org'); render(); });
 $('#inferTeam').addEventListener('click', () => { const r = inferCvf(S.team.transcript); if (!r) return alert('Paste interview transcripts first.'); S.team.cvf = r.profile;
@@ -1304,7 +1395,7 @@ $('#dlCsv').addEventListener('click', () => download(`fitment-scores-${slug()}.c
 $('#dlJson').addEventListener('click', () => download(`fitment-case-${slug()}.json`, JSON.stringify(S, null, 2), 'application/json'));
 $('#printPdf').addEventListener('click', () => { const f = $('#preview'); f.srcdoc = buildReportHTML(); f.onload = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch { dlHtml(); } f.onload = null; }; });
 $('#loadJson').addEventListener('change', async e => { const file = e.target.files[0]; if (!file) return; try { const data = JSON.parse(await file.text()); const base = blankCase();
-  const merge = (a, b) => { for (const k of Object.keys(b)) { if (a[k] && typeof a[k] === 'object' && typeof b[k] === 'object') merge(a[k], b[k]); else if (k in a) a[k] = b[k]; } return a; };
+  const merge = (a, b) => { for (const k of Object.keys(b)) { if (Array.isArray(b[k])) a[k] = b[k]; else if (a[k] && typeof a[k] === 'object' && typeof b[k] === 'object') merge(a[k], b[k]); else if (k in a) a[k] = b[k]; } return a; };
   S = merge(base, data); buildInputs(); render(); } catch { alert('This file is not a valid case JSON.'); } e.target.value = ''; });
 // theme
 const root = document.documentElement;
