@@ -403,7 +403,7 @@ const VIEWS = {
     const A = analyse(); st.lastModel = summariseModel(A); save();
     return `<div class="card">${reportHTML(A, false)}<div class="nav noprint"><button class="btn" type="button" data-go="back">Back</button><span><button class="btn" type="button" id="dlReport">Download report</button> <button class="btn" type="button" onclick="window.print()">Print</button> <button class="btn primary" type="button" data-go="next">Continue: rate this report</button></span></div></div>`; },
   feedback: () => { const cand = isCandidate(), rs = RS.agree;
-    const q = [['FB_self', 'The description of me is accurate.'], ['FB_org', cand ? 'The picture of the organisation matches what I know about it.' : 'The description of my organisation’s culture is accurate.'], ['FB_team', cand ? 'The picture of the team matches what I learned about it.' : 'The description of my team’s culture is accurate.'], ['FB_fit', cand ? 'The areas where I would fit or clash seem right to me.' : 'The areas where I fit and clash match my real experience.'], ['FB_advice', 'The suggestions are practical and useful.']];
+    const q = [['FB_self', 'The report describes me correctly.'], ['FB_org', cand ? 'The report describes the organisation in the way I know it.' : 'The report describes my organisation’s culture correctly.'], ['FB_team', cand ? 'The report describes the team in the way I know it.' : 'The report describes my team’s culture correctly.'], ['FB_fit', cand ? 'The areas where I would fit, and not fit, seem right to me.' : 'The areas where I fit, and do not fit, match my real experience.'], ['FB_advice', 'The suggestions are practical and useful.']];
     if (scanNow()) q.push(['FB_public', cand ? 'The company research matches what I have heard about this organisation.' : 'The company research matches my experience inside the organisation.']);
     if (cand) q.push(['FB_decide', 'This report helps me decide whether to join.']);
     return `<div class="card"><p class="eyebrow">Your feedback</p><h1>How accurate was your report?</h1><p class="muted">This is the most important part of the study: it tells us whether the tool reflects reality.</p>
@@ -425,8 +425,8 @@ function itemHTML(it, val, ns = 'ans') {
 function itemsView(s) {
   const B = INSTRUMENT.blocks[s.block], cand = isCandidate();
   let intro = B.intro;
-  if (cand && s.block === 'org') intro = 'Describe the organisation as best you can from interviews, conversations, people you know there and what you have read. If you really cannot judge a statement, choose the middle option.';
-  if (cand && s.block === 'team') intro = 'Describe the team as best you can from your interviews and conversations. If you cannot judge a statement, choose the middle option.';
+  if (cand && s.block === 'org') intro = 'Describe the organisation as well as you can. Use what you learned from interviews, from people who work there and from what you have read. If you do not know, choose “Neutral”.';
+  if (cand && s.block === 'team') intro = 'Describe the team as well as you can, from your interviews and conversations. If you do not know, choose “Neutral”.';
   return `<div class="card"><p class="eyebrow">${esc(B.title)} · page ${s.page} of ${s.pages}</p><h1>${esc(B.title)}</h1>${s.page === 1 ? `<p class="muted">${esc(intro)}</p>` : ''}
     <ol class="items" style="counter-reset:q ${(s.page - 1) * B.per_page}">${s.items.map(it => itemHTML(it, st.ans[it.id])).join('')}</ol>${navBtns()}</div>`;
 }

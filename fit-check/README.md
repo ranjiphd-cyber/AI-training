@@ -7,7 +7,7 @@ It uses **the same fit engine** as the assessor tool in [`../culture-fit-archite
 ## What participants do (20–25 minutes)
 
 1. **Consent:** choose a mode. *Current employee* rates their own organisation and team, and their answers validate the tool. *Candidate* describes an organisation they are considering.
-2. **Questionnaire:** IPIP Big Five personality (public domain), work motives, working style and culture preferences, and behaviour under pressure, with two attention checks.
+2. **Questionnaire** (all in plain English for non-native speakers): IPIP Big Five personality (public domain, plain-English adaptation), work motives, working style and culture preferences, and behaviour under pressure, with two attention checks.
 3. **Optional existing results:** Hogan or other Big Five scores, typed in or read from their report. These give convergent-validity evidence and are used in the report when complete.
 4. **Organisation and team:**
    - Ratings of lived and espoused culture, operating norms, psychological safety and leadership credibility.

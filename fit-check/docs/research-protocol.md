@@ -1,6 +1,6 @@
 # Research protocol: validating the C-Psych culture-fit assessment
 
-**Instrument:** C-Psych Fit Check, version FC-1.1 (`src/instrument.json`). In FC-1.1 the culture items were reworded in original, behavioural language; any FC-1.0 pilot data on those items is analysed separately.
+**Instrument:** C-Psych Fit Check, version FC-1.2 (`src/instrument.json`). FC-1.1 reworded the culture items in original, behavioural language. FC-1.2 rewrote every item, answer label and instruction in plain English (short sentences, common words, no idioms; Flesch reading ease ≈ 72) so that non-native speakers can take part. Data from earlier versions is analysed separately.
 **Status:** draft for ethics review. Adapt the sections marked *[complete]* before submission.
 
 ## 1. Background and aims
@@ -37,7 +37,7 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 
 ## 4. Participants *[complete]*
 
-- **Inclusion:** aged 18+, currently employed (current mode) or actively considering an offer (candidate mode), able to read English.
+- **Inclusion:** aged 18+, currently employed (current mode) or actively considering an offer (candidate mode), able to read simple English. Record first language (or English fluency) if your committee allows, to test measurement invariance between native and non-native speakers.
 - **Recruitment:** professional networks, HR associations, alumni groups and partner organisations. Participation is voluntary and unpaid; the incentive is the personal report.
 - **Target sample:** n ≥ 300 current employees after exclusions. Detecting r = .20 with 80% power (two-tailed α = .05) needs n ≈ 194, and r = .15 needs n ≈ 346. Reliability estimates and provisional norms need n ≥ 200. Expect 10–15% exclusions for data quality, so recruit ~400.
 
@@ -45,7 +45,7 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 
 | Domain | Scales | Items | Source |
 |---|---|---|---|
-| Personality | Extraversion, Agreeableness, Conscientiousness, Emotional Stability, Intellect/Imagination | 50 | IPIP Big-Five Factor Markers (Goldberg, 1992), public domain |
+| Personality | Extraversion, Agreeableness, Conscientiousness, Emotional Stability, Intellect/Imagination | 50 | IPIP Big-Five Factor Markers (Goldberg, 1992), public domain; plain-English adaptation with the same content and keying. Because the wording differs, H1 and H3 are tested on this version before published IPIP norms are used |
 | Work motives | Recognition, Influence, Enjoyment, Contribution, Belonging, Tradition, Security, Financial reward, Quality & design, Analysis & learning | 30 | New, provisional (MVPI-type constructs) |
 | Working style | Decision pace, risk appetite, directness, autonomy need | 12 | New, provisional |
 | Culture preference | Clan, Adhocracy, Market, Hierarchy | 12 | New, provisional (Competing Values Framework constructs) |
