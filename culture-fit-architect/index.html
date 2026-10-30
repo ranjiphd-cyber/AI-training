@@ -198,6 +198,15 @@ details.item { border: 1px solid var(--line); border-radius: 8px; padding: 8px 1
 details.item > summary { cursor: pointer; font-size: .88rem; }
 .btn.sm { padding: 3px 9px; font-size: .78rem; }
 .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 8px; z-index: 60; max-width: min(560px, calc(100vw - 32px)); font-size: .86rem; box-shadow: var(--shadow); }
+.qitem { border: 1px solid var(--line); border-radius: var(--r); padding: 12px; background: var(--panel); display: grid; gap: 6px; min-width: 0; }
+.qitem .qtext { min-height: 46px; font-weight: 500; font-size: .9rem; }
+.rate { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rate label { position: relative; }
+.rate label input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.rate label span { display: inline-flex; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 8px; align-items: center; justify-content: center; font-family: var(--f-mono); cursor: pointer; background: var(--card); }
+.rate input:checked + span { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.rate input:focus-visible + span { outline: 2px solid var(--series-1); outline-offset: 2px; }
+.rlabel { font-size: .8rem; margin-left: 4px; }
 iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); border-radius: var(--r); background: #fff; }
 .foot { font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
 .addlist li { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
@@ -303,7 +312,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
     </div>
     <div class="card" id="cmpCard" hidden><h2>Candidate comparison</h2><p class="sub">Every candidate in the roster, scored against the same team and organization, best overall match first. Click a name to open that candidate.</p><div class="tbl-wrap" id="cmp"></div></div>
     <div class="g2">
-      <div class="card"><h2>Priority interview probes</h2><p class="sub">Use these to verify the highest-risk hypotheses before deciding.</p><div id="probes"></div></div>
+      <div class="card"><div class="minihead"><h2>Priority interview probes</h2><button class="btn sm" type="button" data-goto="ind" id="toGuide">Record feedback →</button></div><p class="sub">Use these to verify the highest-risk hypotheses before deciding. The full guide, with ratings, is in the Individual tab.</p><div id="probes"></div></div>
       <div class="card"><h2>90-day onboarding preview</h2><p class="sub">The full plan, with manager guidance, is in the downloadable report.</p><div id="onb"></div></div>
     </div>
   </section>
@@ -415,6 +424,18 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
         <div class="minihead"><h3>Assessor notes</h3></div>
         <textarea data-path="ind.notes" data-debounce aria-label="Assessor notes" placeholder="Debrief observations, OPQ32 / Korn Ferry highlights, reference-check themes…"></textarea>
       </div>
+    </div>
+    <div class="card" id="guideCard">
+      <div class="minihead"><h2>Interview guide &amp; feedback</h2><span class="muted" id="gProgress" style="font-size:.82rem"></span></div>
+      <p class="sub">Questions come from this candidate's analysis: the largest culture gaps, the derailers most likely to show up here, values and motivator mismatches, and culture-add potential. Rate each answer from 1 (significant concern) to 5 (strong positive evidence) and note what you heard. Confirmed ratings adjust the scores and appear in the report.</p>
+      <div class="engage" id="gMeta"></div>
+      <div class="row" style="margin:12px 0"><button class="btn primary" type="button" id="gGen">Generate / refresh questions</button><button class="btn" type="button" id="gAdd">+ Add question</button><button class="btn ai-only" type="button" id="gTailor" hidden>✦ Tailor questions with Claude</button></div>
+      <div id="gItems" class="stack" style="gap:10px"></div>
+      <details style="margin-top:14px"><summary><b>Interview notes / transcript</b> <span class="muted">(paste, load from a file, or pull from the Interviews list)</span></summary>
+        <textarea data-path="ind.guide.transcript" data-debounce aria-label="Interview notes or transcript" style="min-height:150px;margin-top:8px" placeholder="Paste your notes or the transcript for this candidate…"></textarea>
+        <div class="row" style="margin-top:8px"><label class="btn sm">Load notes from file<input type="file" id="gFile" hidden accept=".pdf,.docx,.txt,.md,.html,.htm"></label><button class="btn sm" type="button" id="gFromIv">Use candidate &amp; reference interviews</button><button class="btn sm ai-only" type="button" id="gScore" hidden>✦ Suggest ratings from notes with Claude</button><button class="btn sm" type="button" id="gConfirmAll">Confirm all suggestions</button></div>
+      </details>
+      <div class="field" style="margin-top:12px"><label for="gOverall">Overall interviewer impression</label><textarea id="gOverall" data-path="ind.guide.overall" data-debounce placeholder="Summary judgement, standout evidence, open questions…"></textarea></div>
     </div>
   </section>
 
@@ -645,6 +666,7 @@ const blankCase = () => ({
     hpi: { adj: 50, amb: 50, soc: 50, ips: 50, pru: 50, inq: 50, lrn: 50 }, big5: { O: 50, C: 50, E: 50, A: 50, N: 50 },
     hds: Object.fromEntries(HDS.map(h => [h.k, 50])),
     mvpi: Object.fromEntries(MVPI.map(m => [m[0], 50])), notes: '',
+    guide: { interviewer: '', date: '', overall: '', transcript: '', items: [] },
   },
   provisional: false,
   teamLibrary: [],
@@ -749,10 +771,10 @@ function indDims(ind) {
   };
 }
 const ctxDims = (cvf, ops) => ({ ...cvfDims(cvf), ...ops });
-function alignment(x, env) {
+function alignment(x, env, adj = {}) {
   let sw = 0, s = 0; const per = {};
   for (const d of DIMS) {
-    const gap = x[d.k] - env[d.k], w = 0.5 + Math.abs(env[d.k] - 50) / 50, fit = clamp(100 - Math.abs(gap) * 1.3);
+    const gap = x[d.k] - env[d.k], w = 0.5 + Math.abs(env[d.k] - 50) / 50, fit = clamp(100 - Math.abs(gap) * 1.3 * (adj[d.k] ?? 1));
     per[d.k] = { gap, w, fit }; sw += w; s += w * fit;
   }
   return { score: s / sw, per };
@@ -774,7 +796,7 @@ function orgHealth(o, sent) {
   const w = parts.reduce((s, p) => s + p[1], 0);
   return clamp(parts.reduce((s, p) => s + p[0] * p[1], 0) / w);
 }
-function derailers(S, env, health) {
+function derailers(S, env, health, adj = {}) {
   const sg = S.org.signals, stress = Math.min(100, 25*sg.layoffs + 25*sg.churn + 20*sg.restructure + 15*sg.regulatory);
   const lvl = S.meta.level === 'Executive' ? 0.1 : S.meta.level === 'Senior leader' ? 0.05 : 0;
   const ctx = {
@@ -790,7 +812,7 @@ function derailers(S, env, health) {
     diligent: (env.pace + env.autonomy) / 2,
     dutiful: (env.autonomy + env.conflict) / 2,
   };
-  return HDS.map(h => { const score = S.ind.hds[h.k], mult = 0.6 + ctx[h.k] / 100 * 0.8 + lvl; return { ...h, score, ctx: ctx[h.k], mult, act: Math.min(100, score * mult), band: hdsBand(score) }; })
+  return HDS.map(h => { const score = S.ind.hds[h.k], mult = (0.6 + ctx[h.k] / 100 * 0.8 + lvl) * (adj[h.k] ?? 1); return { ...h, score, ctx: ctx[h.k], mult, act: Math.min(100, score * mult), band: hdsBand(score) }; })
     .sort((a, b) => b.act - a.act);
 }
 function confidence(S, sent, teamVar, sayDo) {
@@ -798,7 +820,8 @@ function confidence(S, sent, teamVar, sayDo) {
   let org = Math.min(100, (o.survey ? 20 : 0) + (o.denison ? 10 : 0) + (o.barrett || o.groysberg ? 10 : 0) + (o.internal ? (S.org.internal.n >= 300 ? 10 : 5) : 0) + (o.reviews ? (revN(S.org) >= 50 ? 20 : 10) : 0) + (o.leadership ? 15 : 0) + (o.news ? 15 : 0));
   let team = (t.manager ? 35 : 0) + (t.peers >= 2 ? 20 : t.peers >= 1 ? 10 : 0) + (t.reports >= 1 ? 10 : 0) + (t.xfn >= 1 ? 15 : 0) + (String(teamText(S)).trim().length > 150 ? 20 : 0) + (t.bu ? 15 : 0);
   team = Math.min(100, team);
-  let ind = (i.hpi ? 35 : 0) + (i.hds ? 25 : 0) + (i.mvpi ? 25 : 0) + (String(S.ind.norm).trim() ? 15 : 0);
+  const gN = guideEffects(S).n;
+  let ind = (i.hpi ? 30 : 0) + (i.hds ? 20 : 0) + (i.mvpi ? 20 : 0) + (String(S.ind.norm).trim() ? 15 : 0) + (gN >= 3 ? 15 : gN ? 8 : 0);
   const Q = (vec, q, why) => qs.push({ vec, q, why });
   // missing-evidence questions
   if (!o.survey) Q('Organization', 'Can you provide OCAI/CVF survey results (current-state profile, n ≥ 30 respondents) for the enterprise or the relevant business unit?', 'The lived-culture baseline currently rests on assessor estimates rather than formal diagnostic data.');
@@ -817,6 +840,7 @@ function confidence(S, sent, teamVar, sayDo) {
   if (!i.hpi) Q('Individual', 'Please provide the candidate’s day-to-day personality scores (Hogan HPI, SHL OPQ32, or NEO-PI-R domains) as percentiles.', 'Operating style is the main driver of team fit.');
   if (!i.hds) Q('Individual', 'Can the candidate complete the Hogan Development Survey (HDS) or an equivalent derailer measure?', 'Without derailer data, friction risk under stress is estimated from defaults (50th percentile) and is unreliable.');
   if (!i.mvpi) Q('Individual', 'Can the candidate complete the MVPI (or a validated values inventory)?', 'Values congruence accounts for 35% of organizational fit.');
+  if (gN < 3) Q('Individual', 'Complete the structured interview guide (Individual tab) and rate at least three areas.', 'Psychometric gaps and derailers are hypotheses until behavioural interview evidence confirms or refutes them.');
   if (!String(S.ind.norm).trim()) Q('Individual', 'Which norm group were the percentiles scored against (e.g., global managerial, sales, healthcare professional)?', 'Percentiles have no meaning for benchmarking without a stated reference norm.');
   // contradictions
   if (Math.abs(sumQ(S.org.cvfNow) - 100) > 1) { flags.push(['Organization', `Current CVF profile sums to ${sumQ(S.org.cvfNow)}, not 100. It has been normalized automatically.`]); org -= 5; }
@@ -850,11 +874,12 @@ function compute(S) {
   const team = ctxDims(S.team.cvf, S.team.ops), org = ctxDims(S.org.cvfNow, S.org.ops), esp = { ...cvfDims(S.org.cvfEsp), ...S.org.ops };
   const env = Object.fromEntries(DIMS.map(d => [d.k, team[d.k] * 0.6 + org[d.k] * 0.4]));
   const health = orgHealth(S.org, sent);
-  const aTeam = alignment(x, team), aOrg = alignment(x, org), aEsp = alignment(x, esp);
-  const vcTeam = valuesCongruence(S.ind.mvpi, S.team.cvf), vcOrg = valuesCongruence(S.ind.mvpi, S.org.cvfNow), vcEsp = valuesCongruence(S.ind.mvpi, S.org.cvfEsp);
+  const G = guideEffects(S); // confirmed interview ratings verify or refute the psychometric hypotheses
+  const aTeam = alignment(x, team, G.dim), aOrg = alignment(x, org, G.dim), aEsp = alignment(x, esp, G.dim);
+  const vcTeam = clamp(valuesCongruence(S.ind.mvpi, S.team.cvf) + G.vals), vcOrg = clamp(valuesCongruence(S.ind.mvpi, S.org.cvfNow) + G.vals), vcEsp = clamp(valuesCongruence(S.ind.mvpi, S.org.cvfEsp) + G.vals);
   const h = hpiEq(S.ind), v = S.ind.mvpi, sg = S.org.signals;
   const mgrT = MGR[S.team.mgrStyle][1];
-  const mgrFit = clamp(100 - Math.abs(x.autonomy - mgrT) * 1.2 + (S.team.mgrStyle === 'coaching' ? (h.lrn - 50) * 0.2 : 0));
+  const mgrFit = clamp(100 - Math.abs(x.autonomy - mgrT) * 1.2 + (S.team.mgrStyle === 'coaching' ? (h.lrn - 50) * 0.2 : 0) + G.mgr);
   const velocity = clamp(40 + 0.25 * org.results + 0.15 * org.innov + (sg.growth ? 20 : 0) - (sg.layoffs ? 20 : 0) - (sg.restructure ? 10 : 0) + (sg.mna ? 5 : 0));
   const need = (h.amb + v.pow + v.rec) / 3;
   const velFit = clamp(100 - Math.max(0, need - velocity) * 1.5);
@@ -862,7 +887,7 @@ function compute(S) {
   const useG = S.org.ledger.groysberg, cg = candGroys(S), gLived = groysCong(cg, S.org.groys.cur), gAsp = groysCong(cg, S.org.groys.asp);
   const orgScore = useG ? 0.45 * aOrg.score + 0.3 * vcOrg + 0.1 * velFit + 0.15 * gLived : 0.5 * aOrg.score + 0.35 * vcOrg + 0.15 * velFit;
   const aspScore = useG ? 0.5 * aEsp.score + 0.3 * vcEsp + 0.2 * gAsp : 0.6 * aEsp.score + 0.4 * vcEsp;
-  const der = derailers(S, env, health);
+  const der = derailers(S, env, health, G.der);
   const derLoad = (der[0].act + der[1].act + der[2].act) / 3;
   const sayDo = QUADS.reduce((s, [k]) => s + Math.abs(normCvf(S.org.cvfEsp)[k] - normCvf(S.org.cvfNow)[k]), 0) / 2;
   const overall = 0.5 * teamScore + 0.4 * orgScore + 0.1 * (100 - derLoad);
@@ -887,7 +912,7 @@ function compute(S) {
   if (useG) { const mc = GROYS.reduce((a, [k]) => a + cg[k], 0) / 8, mo = GROYS.reduce((a, [k]) => a + S.org.groys.cur[k], 0) / 8;
     for (const [k, l] of GROYS) { const gap = S.org.groys.asp[k] - S.org.groys.cur[k], dc = (cg[k] - mc) - (S.org.groys.cur[k] - mo);
       if ((gap >= 8 && dc > 0) || (gap <= -2 && dc < 0)) { const v = Math.min(Math.abs(dc), Math.abs(gap)) * 0.5; if (v >= 1) gAdd.push({ k, l, v, gap, dc }); } } }
-  const addSum = addRows.reduce((s, r) => s + r.add, 0) + gAdd.reduce((s, g) => s + g.v, 0), disSum = addRows.reduce((s, r) => s + r.dis, 0);
+  const addSum = Math.max(0, addRows.reduce((s, r) => s + r.add, 0) + gAdd.reduce((s, g) => s + g.v, 0) + G.add), disSum = addRows.reduce((s, r) => s + r.dis, 0);
   let valueAdd = ARCH.stab;
   if ((disSum >= 90 && disSum > addSum) || (disSum >= 60 && addSum < 40) || fBand === 'Critical') valueAdd = ARCH.dis;
   else if (addSum >= 40 && addSum >= disSum * 0.8) valueAdd = ARCH.add;
@@ -909,7 +934,7 @@ function compute(S) {
   const strengths = [...ranked].sort((a, b) => (Math.abs(a.gT) + Math.abs(a.gO) * .6) - (Math.abs(b.gT) + Math.abs(b.gO) * .6));
   return { S, sent, x, team, org, esp, env, health, aTeam, aOrg, aEsp, vcTeam, vcOrg, vcEsp, mgrFit, velocity, need, velFit,
     teamScore, orgScore, aspScore, der, derLoad, sayDo, overall, fparts, friction, fBand, addRows, addSum, disSum, valueAdd,
-    rec, recWhy, recSt, conf, halted, provisional, gaps, strengths, teamVar, useG, cg, gLived, gAsp, gAdd };
+    rec, recWhy, recSt, conf, halted, provisional, gaps, strengths, teamVar, useG, cg, gLived, gAsp, gAdd, G };
 }
 
 /* ============================== narrative ============================== */
@@ -1051,6 +1076,27 @@ function asciiMatrix(R) {
   block(axes); s += `OPERATING NORMS\n`; block(ops);
   return s.replace(/·+\n$/, '');
 }
+function decision(R) {
+  const pros = [], cons = [], conds = [], gapOf = g => { const useT = Math.abs(g.gT) * 1.1 >= Math.abs(g.gO); return { gap: useT ? g.gT : g.gO, ctx: useT ? 'team' : 'enterprise' }; };
+  pros.push(`Closest fit on ${R.strengths.slice(0, 2).map(g => g.d.name).join(' and ')}.`);
+  if (R.teamScore >= 70) pros.push(`Strong team synergy (${r0(R.teamScore)}%).`);
+  if (R.orgScore >= 70) pros.push(`Strong alignment with the wider organization (${r0(R.orgScore)}%).`);
+  if (R.vcOrg >= 65) pros.push(`Personal values match what the organization rewards (${r0(R.vcOrg)}%).`);
+  if (R.valueAdd === ARCH.add) { const a = [...R.addRows.filter(r => r.kind === 'healthy').map(r => r.d.short), ...(R.gAdd || []).filter(g => g.gap > 0).map(g => g.l)]; pros.push(`Culture add: moves the organization toward its stated aspiration${a.length ? ` (${[...new Set(a)].join(', ')})` : ''}.`); }
+  if (R.der[0].act < 60) pros.push('No derailer is likely to be strongly triggered in this context.');
+  const ivPos = R.G.rows.filter(i => +i.rating >= 4).map(i => i.area); if (ivPos.length) pros.push(`Interview evidence positive on: ${ivPos.join(', ')}.`);
+  for (const g of R.gaps.filter(g => g.sev > 12).slice(0, 2)) { const { gap, ctx } = gapOf(g); if (Math.abs(gap) >= 15) { cons.push(`${g.d.name}: ${gap > 0 ? 'higher' : 'lower'} than the ${ctx} norm by ${r0(Math.abs(gap))} pts.${(R.G.dim[g.d.k] ?? 1) < 1 ? ' Interview evidence suggests they adapt, which tempers this risk.' : (R.G.dim[g.d.k] ?? 1) > 1 ? ' Interview evidence confirms this gap.' : ''}`); conds.push(gap > 0 ? g.d.actHi : g.d.actLo); } }
+  for (const h of R.der.filter(h => h.act >= 70).slice(0, 2)) { cons.push(`${h.n} derailer (HDS ${h.score}) is likely to show under ${h.trig.toLowerCase()}.${(R.G.der[h.k] ?? 1) > 1 ? ' Confirmed in interview.' : (R.G.der[h.k] ?? 1) < 1 ? ' Interview suggests it is self-managed.' : ''}`); conds.push(`${h.n}: ${h.mit}`); }
+  if (R.vcOrg < 55) cons.push(`Values only partly match what the organization rewards (${r0(R.vcOrg)}%).`);
+  if (R.velFit < 60) cons.push(`Ambition likely to outpace the organization's career-progression pace (fit ${r0(R.velFit)}%).`);
+  const ivCon = R.G.rows.filter(i => +i.rating <= 2).map(i => i.area); if (ivCon.length) cons.push(`Interview confirmed concerns on: ${ivCon.join(', ')}.`);
+  if (['High', 'Critical'].includes(R.fBand)) cons.push(`${R.fBand} friction risk overall (index ${r0(R.friction)}).`);
+  if (R.G.n < 3) conds.push('Complete the structured interview guide and rate at least three areas before making the offer.');
+  if (Math.min(R.conf.org, R.conf.team, R.conf.ind) < 75) conds.push('Close the evidence gaps listed below before the final decision.');
+  if (!pros.length) pros.push('No clear strengths identified from the evidence so far.');
+  if (!cons.length) cons.push('No material risks identified.');
+  return { pros, cons, conds: conds.slice(0, 6) };
+}
 function summary(R) {
   const M = R.S.meta, who = M.candidate || 'The candidate';
   if (R.halted) return `${who} is being assessed for the ${M.role || 'target'} role in ${M.team || 'the hiring team'} at ${M.org || 'the organization'}. The evidence base is not yet strong enough to support conclusive scoring (Organization ${r0(R.conf.org)}%, Team ${r0(R.conf.team)}%, Individual ${r0(R.conf.ind)}% confidence; threshold 60%), so match indices, friction level and culture archetype are withheld. The profile observations below are exploratory hypotheses to test while the clarification questions in Phase 1 are answered.`;
@@ -1065,6 +1111,8 @@ function findings(R) {
   for (const g of R.gaps.slice(0, 2)) { const t = gapText(g.d, Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? g.gT : g.gO, Math.abs(g.gT) * 1.1 >= Math.abs(g.gO) ? 'the team' : 'the enterprise'); if (t) f.push(['Gap', t]); }
   const d0 = R.der[0]; if (d0 && d0.act >= 60) f.push(['Derailer', `${d0.n} (HDS ${d0.score}, ${d0.band.toLowerCase()} risk) is the most likely derailer here, with contextual activation of ${r0(d0.act)}. Under pressure it may look like: ${d0.looks.toLowerCase()}`]);
   if (!R.halted) f.push(['Values', `Values congruence is ${r0(R.vcTeam)}% with the team and ${r0(R.vcOrg)}% with the enterprise (${r0(R.vcEsp)}% with its espoused values). Career-velocity fit is ${r0(R.velFit)}% (ambition need ${r0(R.need)} vs. organizational velocity ${r0(R.velocity)}).`]);
+  if (R.G.n) { const con = R.G.rows.filter(i => +i.rating <= 2).map(i => i.area), pos = R.G.rows.filter(i => +i.rating >= 4).map(i => i.area);
+    f.push(['Interview', `${R.G.n} area(s) rated in the structured interview (evidence index ${R.G.idx.toFixed(1)}/5).${pos.length ? ` Positive evidence: ${pos.join(', ')}.` : ''}${con.length ? ` Concerns confirmed: ${con.join(', ')}.` : ''}`]); }
   if (R.sayDo > 15) f.push(['Context', `The organization has a ${r0(R.sayDo)}-point say–do gap between espoused and lived culture. Leadership asks for change that the operating system does not yet reward.`]);
   if (R.teamVar > 18) f.push(['Context', `The team subculture differs from the enterprise by ${r0(R.teamVar)} pts on average. The hire will need to bridge two cultures.`]);
   return f;
@@ -1072,7 +1120,7 @@ function findings(R) {
 
 /* ============================== charts (shared by dashboard & report) ============================== */
 const PAL_LIVE = { s1: 'var(--series-1)', s2: 'var(--series-2)', s3: 'var(--series-3)', s4: 'var(--series-4)', grid: 'var(--grid)', ink: 'var(--ink)', muted: 'var(--muted)', surface: 'var(--card)', good: 'var(--good)', warn: 'var(--warn)', critical: 'var(--critical)' };
-const PAL_PRINT = { s1: '#2a78d6', s2: '#eb6834', s3: '#1baf7a', s4: '#eda100', grid: '#E3E6EC', ink: '#0F1B2D', muted: '#52607A', surface: '#FFFFFF', good: '#0ca30c', warn: '#fab219', critical: '#d03b3b' };
+const PAL_PRINT = { s1: '#111111', s2: '#6B6B6B', s3: '#A3A3A3', s4: '#D0D0D0', d2: '6 4', d3: '2 3', fillOp: 0.03, grid: '#E6E6E6', ink: '#111111', muted: '#555555', surface: '#FFFFFF', good: '#C4C4C4', warn: '#808080', critical: '#262626' };
 function radarSVG(R, P, live) {
   const W = 520, H = 420, cx = W / 2, cy = 205, rad = 150, n = DIMS.length;
   const ang = i => -Math.PI / 2 + i * 2 * Math.PI / n, pt = (i, v) => [cx + Math.cos(ang(i)) * rad * v / 100, cy + Math.sin(ang(i)) * rad * v / 100];
@@ -1081,10 +1129,10 @@ function radarSVG(R, P, live) {
   DIMS.forEach((d, i) => { const [x2, y2] = pt(i, 100), [lx, ly] = pt(i, 118); const anchor = Math.abs(lx - cx) < 8 ? 'middle' : lx > cx ? 'start' : 'end';
     g += `<line x1="${cx}" y1="${cy}" x2="${x2}" y2="${y2}" style="stroke:${P.grid};stroke-width:1"/><text x="${lx}" y="${ly + 4}" text-anchor="${anchor}" style="fill:${P.muted};font:500 12px Inter,system-ui,sans-serif">${d.short}</text>`; });
   for (const lv of [50, 100]) g += `<text x="${cx + 4}" y="${cy - rad * lv / 100 + 12}" style="fill:${P.muted};font:10px 'IBM Plex Mono',monospace">${lv}</text>`;
-  const series = [['Organization (lived)', P.s3, R.org], ['Team', P.s2, R.team], ['Individual', P.s1, R.x]];
-  for (const [name, col, vals] of series) {
+  const series = [['Organization (lived)', P.s3, R.org, P.d3], ['Team', P.s2, R.team, P.d2], ['Individual', P.s1, R.x, null]];
+  for (const [name, col, vals, dash] of series) {
     const pts = DIMS.map((d, i) => pt(i, vals[d.k]));
-    g += `<polygon points="${pts.map(p => p.join(',')).join(' ')}" style="fill:${col};fill-opacity:.10;stroke:${col};stroke-width:2;stroke-linejoin:round"/>`;
+    g += `<polygon points="${pts.map(p => p.join(',')).join(' ')}" style="fill:${col};fill-opacity:${P.fillOp ?? 0.1};stroke:${col};stroke-width:2;stroke-linejoin:round${dash ? `;stroke-dasharray:${dash}` : ''}"/>`;
     pts.forEach((p, i) => { const tip = live ? ` data-tip="${esc(name)} · ${esc(DIMS[i].name)}: ${r0(vals[DIMS[i].k])}"` : ''; g += `<circle cx="${p[0]}" cy="${p[1]}" r="4.5" style="fill:${col};stroke:${P.surface};stroke-width:2"${tip}/>`; if (live) g += `<circle cx="${p[0]}" cy="${p[1]}" r="11" style="fill:transparent"${tip}/>`; });
   }
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Radar chart comparing individual, team and organization on eight culture dimensions">${g}</svg>`;
@@ -1137,7 +1185,7 @@ function groysSVG(R, P, live) {
   return `<svg viewBox="0 0 ${W} ${H + 6}" role="img" aria-label="Groysberg culture styles: organization current, target and candidate implied preference">${g}</svg>`;
 }
 function heatTable(R, live) {
-  const cell = (gap) => { const a = Math.min(1, Math.abs(gap) / 50) * 0.55; const bg = live ? `color-mix(in srgb, var(--heat) ${r0(a * 100)}%, transparent)` : `rgba(42,120,214,${a.toFixed(2)})`; const fg = a > 0.38 ? (live ? 'var(--card)' : '#fff') : 'inherit';
+  const cell = (gap) => { const a = Math.min(1, Math.abs(gap) / 50) * 0.55; const bg = live ? `color-mix(in srgb, var(--heat) ${r0(a * 100)}%, transparent)` : `rgba(0,0,0,${(a * 0.6).toFixed(2)})`; const fg = a > 0.38 ? (live ? 'var(--card)' : '#fff') : 'inherit';
     return `<td class="num heat" style="background:${bg};color:${fg}"${live ? ` data-tip="Gap ${gap > 0 ? '+' : ''}${r0(gap)} pts"` : ''}>${gap > 0 ? '+' : ''}${r0(gap)}</td>`; };
   let h = `<table class="t"><thead><tr><th>Dimension</th><th class="num">Ind.</th><th class="num">Team</th><th class="num">Org</th><th class="num">Δ Team</th><th class="num">Δ Org</th><th class="num">Fit T</th><th class="num">Fit O</th><th class="num">Wt</th></tr></thead><tbody>`;
   for (const d of DIMS) { const pt = R.aTeam.per[d.k], po = R.aOrg.per[d.k];
@@ -1180,6 +1228,8 @@ function buildInputs() {
   $('#hds').innerHTML = HDS.map(h => sliderRow(`ind.hds.${h.k}`, h.n, h.cl)).join('');
   $('#mvpi').innerHTML = MVPI.map(([k, l]) => sliderRow(`ind.mvpi.${k}`, l)).join('');
   renderLibrary(); renderRoster(); renderEvidence(); renderQueue();
+  $('#gMeta').innerHTML = field('ind.guide.interviewer', 'Interviewer(s)') + field('ind.guide.date', 'Interview date', 'date');
+  if (R) renderGuide();
   for (const ta of $$('textarea[data-path]')) ta.value = getP(S, ta.dataset.path) || '';
   $('[data-path="provisional"]').checked = !!S.provisional;
   syncInstrument();
@@ -1239,37 +1289,36 @@ function render() {
 
 /* ============================== report builders ============================== */
 function reportId() { const s = `${S.meta.candidate}|${S.meta.org}|${S.meta.date}`; let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return `CPA-${(S.meta.date || '').replace(/-/g, '')}-${(h % 9000 + 1000)}`; }
-const REPORT_CSS = `@page{size:A4;margin:16mm 15mm 18mm}*{box-sizing:border-box}body{margin:0;font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#0F1B2D;font-size:10.5pt;line-height:1.5;background:#fff}
-.page{max-width:820px;margin:0 auto;padding:28px 34px}h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#0F1B2D;margin:0}h2{font-size:17pt;margin:28px 0 4px;padding-top:10px;border-top:2px solid #1F3A5F}h3{font-size:12pt;margin:16px 0 6px}
-.cover{background:#0F1B2D;color:#fff;padding:46px 40px 36px;border-radius:4px;margin-bottom:22px}.cover .k{font-size:8.5pt;letter-spacing:.2em;text-transform:uppercase;color:#D2B07A}.cover h1{color:#fff;font-size:26pt;margin:10px 0 6px}.cover .s{color:#C8D2E0;font-size:12pt}
-.cover table{margin-top:26px;width:100%;border-collapse:collapse;font-size:9.5pt}.cover td{padding:5px 0;border-bottom:1px solid rgba(255,255,255,.15);color:#E7ECF3}.cover td:first-child{color:#9FB0C8;width:34%}.conf{margin-top:18px;font-size:8pt;color:#9FB0C8;letter-spacing:.06em}
-.secno{font-family:'IBM Plex Mono',monospace;color:#9C7A3C;font-size:10pt;margin-right:8px}.lead{color:#3D4A60;margin:6px 0 10px}
-table.t{width:100%;border-collapse:collapse;font-size:9.5pt;margin:8px 0}table.t th{text-align:left;font-size:7.8pt;letter-spacing:.06em;text-transform:uppercase;color:#52607A;border-bottom:1.5px solid #0F1B2D;padding:5px 6px}table.t td{padding:5px 6px;border-bottom:1px solid #E3E6EC;vertical-align:top}table.t td.num,table.t th.num{text-align:right;font-family:'IBM Plex Mono',monospace}
-.score{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}.score>div{border:1px solid #DDE2EA;border-top:3px solid #1F3A5F;padding:10px;border-radius:3px}.score .l{font-size:7.5pt;text-transform:uppercase;letter-spacing:.08em;color:#52607A}.score .v{font-family:'Source Serif 4',Georgia,serif;font-size:19pt;line-height:1.15}
-.verdict{background:#F3F6FA;border-left:5px solid #1F3A5F;padding:12px 16px;margin:10px 0}.verdict b{font-family:'Source Serif 4',Georgia,serif;font-size:14pt}
-.call{background:#FBF7EF;border:1px solid #E9DCC2;padding:10px 14px;border-radius:3px;margin:10px 0;font-size:9.8pt}.call .h{font-size:7.8pt;text-transform:uppercase;letter-spacing:.1em;color:#9C7A3C;font-weight:700}
-.pill{display:inline-flex;align-items:center;gap:5px;border:1px solid #DDE2EA;border-radius:99px;padding:1px 8px;font-size:8.5pt;font-weight:600;white-space:nowrap}.pill i{width:8px;height:8px;border-radius:50%;display:inline-block}
-.hb{display:inline-block;width:110px;height:7px;background:#E3E6EC;border-radius:4px;vertical-align:middle;margin-right:6px;overflow:hidden}.hb i{display:block;height:100%;border-radius:4px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fig{border:1px solid #E3E6EC;border-radius:3px;padding:10px;margin:8px 0;break-inside:avoid}.fig .cap{font-size:8.5pt;color:#52607A;margin-top:4px}.leg{font-size:8.5pt;color:#52607A;display:flex;gap:12px;flex-wrap:wrap}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
-ul{margin:4px 0 8px;padding-left:18px}li{margin:3px 0}.kf li{margin:6px 0}.tag{font-size:7.5pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid #C9D1DD;border-radius:3px;padding:0 5px;margin-right:6px;color:#1F3A5F}
-.phase{border:1px solid #DDE2EA;border-radius:3px;padding:10px 12px;break-inside:avoid}.phase h3{margin-top:0}.halt{border:1.5px solid #d03b3b;background:#FBEDED;padding:12px 14px;border-radius:3px}.prov{border:1.5px solid #fab219;background:#FEF6E2;padding:8px 12px;border-radius:3px;font-size:9.5pt}
-.foot{margin-top:30px;border-top:1px solid #DDE2EA;padding-top:8px;font-size:8pt;color:#52607A}.pb{break-before:page}svg{width:100%;height:auto}
-h2,h3{break-after:avoid}.phase h3{break-after:auto}@media print{.page{padding:0}.cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
-@media (max-width:640px){.score{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.page{padding:16px}}
-pre.ascii{font-family:'IBM Plex Mono',monospace;font-size:8.2pt;line-height:1.35;background:#F6F8FB;border:1px solid #E3E6EC;padding:10px 12px;border-radius:3px;overflow-x:auto;white-space:pre}`;
+const REPORT_CSS = `@page{size:A4;margin:16mm 15mm 18mm}*{box-sizing:border-box}body{margin:0;font-family:Inter,'Segoe UI',system-ui,sans-serif;color:#111;font-size:10.5pt;line-height:1.5;background:#fff}
+.page{max-width:820px;margin:0 auto;padding:28px 34px}h1,h2,h3{font-family:'Source Serif 4',Georgia,serif;font-weight:600;color:#111;margin:0}h2{font-size:16pt;margin:28px 0 6px;padding-top:10px;border-top:1.5px solid #111}h3{font-size:11.5pt;margin:16px 0 6px}
+.cover{border-top:3px solid #111;border-bottom:1px solid #111;padding:22px 0 16px;margin-bottom:18px}.cover .k{font-size:8pt;letter-spacing:.18em;text-transform:uppercase;color:#555}.cover h1{font-size:24pt;margin:8px 0 4px}.cover .s{color:#333;font-size:11.5pt}
+.cover table{margin-top:16px;width:100%;border-collapse:collapse;font-size:9.3pt}.cover td{padding:4px 0;border-bottom:1px solid #e5e5e5}.cover td:first-child{color:#555;width:32%}.conf{margin-top:12px;font-size:7.8pt;color:#555;letter-spacing:.06em}
+.secno{font-family:'IBM Plex Mono',monospace;color:#555;font-size:9.5pt;margin-right:8px}.lead{color:#222;margin:8px 0 10px}
+table.t{width:100%;border-collapse:collapse;font-size:9.5pt;margin:8px 0}table.t th{text-align:left;font-size:7.8pt;letter-spacing:.06em;text-transform:uppercase;color:#555;border-bottom:1.5px solid #111;padding:5px 6px}table.t td{padding:5px 6px;border-bottom:1px solid #e5e5e5;vertical-align:top}table.t td.num,table.t th.num{text-align:right;font-family:'IBM Plex Mono',monospace}
+table.dec td:first-child{font-weight:600;width:24%}table.dec td:nth-child(2){font-family:'IBM Plex Mono',monospace;white-space:nowrap;width:22%}table.dec td:last-child{color:#444;font-size:9pt}
+.verdict{border:1.5px solid #111;padding:12px 16px;margin:10px 0}.verdict b{font-family:'Source Serif 4',Georgia,serif;font-size:14pt}.verdict .lab{font-size:7.8pt;letter-spacing:.12em;text-transform:uppercase;color:#555}
+.call{border-left:3px solid #999;padding:6px 12px;margin:10px 0;font-size:9.6pt;background:#fafafa}.call .h{font-size:7.6pt;text-transform:uppercase;letter-spacing:.1em;color:#555;font-weight:700}
+.pill{display:inline-block;border:1px solid #bbb;border-radius:3px;padding:0 6px;font-size:8.5pt;font-weight:600;white-space:nowrap;color:#222}
+.hb{display:inline-block;width:110px;height:6px;background:#e8e8e8;vertical-align:middle;margin-right:6px;overflow:hidden}.hb i{display:block;height:100%;background:#555}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.fig{border:1px solid #e5e5e5;padding:10px;margin:8px 0;break-inside:avoid}.fig .cap{font-size:8.5pt;color:#555;margin-top:4px}.leg{font-size:8.5pt;color:#444;display:flex;gap:14px;flex-wrap:wrap;align-items:center}.leg i{display:inline-block;width:10px;height:10px;margin-right:4px;vertical-align:-1px;border:1px solid #999}.leg svg{width:24px;height:8px;margin-right:4px;vertical-align:middle}
+ul,ol{margin:4px 0 8px;padding-left:18px}li{margin:3px 0}.tag{font-size:7.3pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid #bbb;border-radius:2px;padding:0 5px;margin-right:6px;color:#333}
+.phase{border:1px solid #ddd;padding:10px 12px;break-inside:avoid}.phase h3{margin-top:0}.halt,.prov{border:1.5px solid #111;padding:10px 14px;margin:8px 0;font-size:9.6pt}.prov{border-style:dashed}
+.foot{margin-top:30px;border-top:1px solid #ddd;padding-top:8px;font-size:8pt;color:#555}.pb{break-before:page}svg{width:100%;height:auto}
+h2,h3{break-after:avoid}.phase h3{break-after:auto}
+@media (max-width:640px){.g2{grid-template-columns:1fr}.page{padding:16px}}
+pre.ascii{font-family:'IBM Plex Mono',monospace;font-size:8.2pt;line-height:1.35;border:1px solid #e5e5e5;padding:10px 12px;overflow-x:auto;white-space:pre}`;
 function buildReportHTML() {
   const M = S.meta, P = plan(R), F = findings(R), PB = probes(R), id = reportId(), hide = R.halted;
   const RC = reality(R), DV = divergence(R), RW = rewardMap(R), DD = dayToDay(R), FC = frictionClass(R), SRC = sourcesCatalog(R);
   const sc = v => hide ? '—' : `${r0(v)}%`;
-  const stc = ([cls]) => ({ good: '#0ca30c', warn: '#fab219', serious: '#ec835a', critical: '#d03b3b' }[cls]);
-  const pill = (t, st) => `<span class="pill"><i style="background:${stc(st)}"></i>${esc(t)}</span>`;
-  const bar = (v, col = '#1F3A5F') => `<span class="hb"><i style="width:${clamp(v)}%;background:${col}"></i></span>`;
+  const pill = t => `<span class="pill">${esc(t)}</span>`;
+  const bar = v => `<span class="hb"><i style="width:${clamp(v)}%"></i></span>`;
   const list = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
   const lvl = v => pill(confLvl(v), v >= 75 ? ['good'] : v >= 60 ? ['warn'] : ['critical']);
-  const minC = Math.min(R.conf.org, R.conf.team, R.conf.ind);
-  const derRows = R.der.map(d => `<tr><td><b>${d.n}</b><br><span style="color:#52607A;font-size:8.5pt">${d.cl}</span></td><td class="num">${d.score}</td><td>${pill(d.band, hdsStatus(d.score))}</td><td class="num">${r0(d.act)}</td><td>${esc(d.trig)}</td><td>${esc(d.looks)}</td></tr>`).join('');
+  const minC = Math.min(R.conf.org, R.conf.team, R.conf.ind), DC = decision(R);
+  const derRows = R.der.map(d => `<tr><td><b>${d.n}</b><br><span style="color:#555555;font-size:8.5pt">${d.cl}</span></td><td class="num">${d.score}</td><td>${pill(d.band, hdsStatus(d.score))}</td><td class="num">${r0(d.act)}</td><td>${esc(d.trig)}</td><td>${esc(d.looks)}</td></tr>`).join('');
   const dimRows = DIMS.map(d => { const gt = R.aTeam.per[d.k].gap, go = R.aOrg.per[d.k].gap, t = gapText(d, Math.abs(gt) >= Math.abs(go) ? gt : go, Math.abs(gt) >= Math.abs(go) ? 'team' : 'enterprise');
-    return `<tr><td><b>${d.name}</b></td><td class="num">${r0(R.x[d.k])}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num">${gt > 0 ? '+' : ''}${r0(gt)}</td><td class="num">${go > 0 ? '+' : ''}${r0(go)}</td><td style="font-size:9pt">${t ? esc((x => x.charAt(0).toUpperCase() + x.slice(1))(t.split(': ').slice(1).join(': '))) : '<span style="color:#52607A">Within tolerance (&lt;15 pts).</span>'}</td></tr>`; }).join('');
+    return `<tr><td><b>${d.name}</b></td><td class="num">${r0(R.x[d.k])}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num">${gt > 0 ? '+' : ''}${r0(gt)}</td><td class="num">${go > 0 ? '+' : ''}${r0(go)}</td><td style="font-size:9pt">${t ? esc((x => x.charAt(0).toUpperCase() + x.slice(1))(t.split(': ').slice(1).join(': '))) : '<span style="color:#555555">Within tolerance (&lt;15 pts).</span>'}</td></tr>`; }).join('');
   const hpi = hpiEq(S.ind), th = Object.entries(R.sent.themes).sort((a, b) => b[1] - a[1]);
   const exploratory = hide ? `<div class="prov">Exploratory only: final scoring is paused pending the Phase 1 clarification check.</div>` : '';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Culture & Psychometric Fitment Audit: ${esc(M.candidate)}</title>
@@ -1278,12 +1327,23 @@ function buildReportHTML() {
 <table><tr><td>Report ID</td><td>${id}</td></tr><tr><td>Role level</td><td>${esc(M.level)}</td></tr><tr><td>Hiring manager</td><td>${esc(M.manager)}</td></tr><tr><td>Requisition</td><td>${esc(M.req)}</td></tr><tr><td>Assessment date</td><td>${esc(M.date)}</td></tr><tr><td>Prepared by</td><td>${esc(M.assessor)}</td></tr><tr><td>Evidence confidence</td><td>${confLvl(minC)} (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%)</td></tr><tr><td>Norm group</td><td>${esc(S.ind.norm || 'Not specified')}</td></tr></table>
 <div class="conf">CONFIDENTIAL · PREPARED FOR THE HIRING COMMITTEE · NOT FOR DISTRIBUTION TO THE CANDIDATE WITHOUT A QUALIFIED DEBRIEF</div></div>
 
-<h2><span class="secno">00</span>Decision brief</h2>
-${hide ? `<div class="halt"><b>Diagnostic inquiry hold.</b> Conclusive scoring is paused because at least one vector is below the 60% evidence threshold (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%). See Phase 1 for the analytical risks and the clarifying questions.</div>` : ''}
-${R.provisional ? `<div class="prov"><b>Provisional.</b> At least one vector is below the evidence threshold. Scores are directional only.</div>` : ''}
-${hide ? '' : `<div class="verdict"><div style="font-size:8pt;letter-spacing:.12em;text-transform:uppercase;color:#52607A">Recommendation</div><b>${esc(R.rec)}</b><div style="margin-top:4px">${esc(R.recWhy)}</div></div>`}
+<h2>Decision brief</h2>
+${hide ? `<div class="halt"><b>Decision deferred: evidence threshold not met.</b> Evidence confidence: Organization ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}% (threshold 60%). Scores are withheld until the questions below are answered.</div>` : ''}
+${R.provisional ? `<div class="prov"><b>Provisional.</b> At least one area is below the evidence threshold. Treat the scores as directional.</div>` : ''}
+${hide ? '' : `<div class="verdict"><div class="lab">Recommendation</div><b>${esc(R.rec)}</b><div style="margin-top:4px">${esc(R.recWhy)}</div></div>`}
+<table class="t dec"><tbody>
+<tr><td>Overall match</td><td>${sc(R.overall)}${hide ? '' : ` · ${band(R.overall)}`}</td><td>Weighted fit: team 50%, organization 40%, derailer resilience 10%.</td></tr>
+<tr><td>Team synergy</td><td>${sc(R.teamScore)}</td><td>Day-to-day fit with the hiring team's norms, manager style and values.</td></tr>
+<tr><td>Organization alignment</td><td>${sc(R.orgScore)}</td><td>Fit with the enterprise culture, values, and career-progression pace${R.useG ? ', plus Groysberg style match' : ''}.</td></tr>
+<tr><td>Friction risk</td><td>${hide ? '—' : `${R.fBand} (${r0(R.friction)})`}</td><td>Likelihood of costly friction in the first year. Low &lt;28 · Moderate · High · Critical ≥58.</td></tr>
+<tr><td>Culture archetype</td><td>${hide ? '—' : esc(R.valueAdd)}</td><td>${{ [ARCH.stab]: 'Reinforces the current culture.', [ARCH.add]: 'Differences point toward the culture leadership is building.', [ARCH.dis]: 'Differences work against both current and target culture.' }[R.valueAdd]}</td></tr>
+<tr><td>Interview evidence</td><td>${R.G.n ? `${R.G.idx.toFixed(1)} / 5` : 'Not rated'}</td><td>${R.G.n ? `${R.G.n} area(s) rated in the structured interview.` : 'The psychometric hypotheses have not yet been tested in interview.'}</td></tr>
+<tr><td>Evidence confidence</td><td>${confLvl(minC)} (${r0(minC)}%)</td><td>Organization ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%.</td></tr>
+</tbody></table>
 <p class="lead">${esc(summary(R))}</p>
-<h3>Key findings</h3><ul class="kf">${F.map(([t, x]) => `<li><span class="tag">${t}</span>${esc(x)}</li>`).join('')}</ul>
+<div class="g2"><div><h3>Supports the hire</h3>${list(DC.pros)}</div><div><h3>Risks to manage</h3>${list(DC.cons)}</div></div>
+<h3>Conditions if proceeding</h3>${list(DC.conds)}
+<h3>Resolve before the final decision</h3>${R.conf.qs.length ? `<ol>${R.conf.qs.slice(0, 4).map(q => `<li>${esc(q.q)}</li>`).join('')}</ol>${R.conf.qs.length > 4 ? `<p style="font-size:9pt;color:#555">${R.conf.qs.length - 4} further question(s) are listed in Phase 1.</p>` : ''}` : '<p>Nothing outstanding.</p>'}
 
 <h2><span class="secno">PHASE 1</span>Data ingestion &amp; diagnostic audit</h2>
 <h3>1.1 Detected sources &amp; frameworks</h3>
@@ -1294,50 +1354,51 @@ ${S.org.dataNotes ? `<div class="call"><div class="h">Analyst data caveats</div>
 ${R.conf.flags.length ? `<h3>Data-quality &amp; contradiction flags</h3><ul>${R.conf.flags.map(([v, t]) => `<li><span class="tag">${v}</span>${esc(t)}</li>`).join('')}</ul>` : ''}
 <h3>1.3 Clarification check</h3>
 ${hide ? `<div class="halt"><b>Hold triggered.</b> Releasing scores now carries these analytical risks: ${[R.conf.org < 60 ? 'the enterprise baseline could reflect PR branding rather than lived culture' : '', R.conf.team < 60 ? 'the team subculture is not anchored, so team synergy cannot be separated from enterprise fit' : '', R.conf.ind < 60 ? 'psychometric scores are not anchored to a norm group or complete instrument set, so percentiles and derailer thresholds cannot be interpreted' : ''].filter(Boolean).join('; ')}. Please answer the questions below.</div>` : `<p>${pill('Passed', ['good'])} Every vector meets the 60% evidence threshold. The questions below are residual and do not block the decision, but answering them will tighten the estimates.</p>`}
-${R.conf.qs.length ? `<ol>${R.conf.qs.map(q => `<li><span class="tag">${q.vec}</span>${esc(q.q)}<br><span style="color:#52607A;font-size:9pt">Risk if unanswered: ${esc(q.why)}</span></li>`).join('')}</ol>` : '<p>No outstanding questions.</p>'}
+${R.conf.qs.length ? `<ol>${R.conf.qs.map(q => `<li><span class="tag">${q.vec}</span>${esc(q.q)}<br><span style="color:#555555;font-size:9pt">Risk if unanswered: ${esc(q.why)}</span></li>`).join('')}</ol>` : '<p>No outstanding questions.</p>'}
 
 <h2 class="pb"><span class="secno">PHASE 2</span>Executive culture &amp; alignment dashboard</h2>
 ${exploratory}
-<div class="score"><div><div class="l">Overall match index</div><div class="v">${sc(R.overall)}</div></div><div><div class="l">Team synergy score</div><div class="v">${sc(R.teamScore)}</div></div><div><div class="l">Org alignment score</div><div class="v">${sc(R.orgScore)}</div></div><div><div class="l">Friction risk level</div><div class="v" style="font-size:15pt">${hide ? '—' : R.fBand}</div></div><div><div class="l">Culture archetype</div><div class="v" style="font-size:12.5pt">${hide ? '—' : R.valueAdd}</div></div></div>
 <table class="t"><thead><tr><th>Component</th><th class="num">Score</th><th>Distribution</th><th>Band</th></tr></thead><tbody>
 ${[['Dimension alignment: team', R.aTeam.score], ['Dimension alignment: enterprise (lived)', R.aOrg.score], ['Dimension alignment: enterprise (espoused)', R.aEsp.score], ['Value congruency: team', R.vcTeam], ['Value congruency: enterprise', R.vcOrg], ['Manager-style fit', R.mgrFit], ['Career-velocity fit', R.velFit], ['Derailer resilience (100 − top-3 activation)', 100 - R.derLoad], ['Organizational health index', R.health]].map(([l, v]) => `<tr><td>${l}</td><td class="num">${hide ? '—' : r0(v)}</td><td>${hide ? '' : bar(v)}</td><td>${hide ? '' : pill(band(v), scoreStatus(v))}</td></tr>`).join('')}
 </tbody></table>
-<h3>Visual comparative matrix: Org macro-culture vs. team subculture vs. candidate</h3>
-<pre class="ascii">${esc(asciiMatrix(R))}</pre>
-<div class="g2"><div class="fig"><div class="leg"><span><i style="background:#2a78d6"></i>Candidate</span><span><i style="background:#eb6834"></i>Team</span><span><i style="background:#1baf7a"></i>Org (lived)</span></div>${radarSVG(R, PAL_PRINT, false)}<div class="cap">Figure 1. Eight-axis culture radar (0–100).</div></div>
-<div class="fig"><div class="leg"><span><i style="background:#2a78d6"></i>Candidate</span><span><i style="background:#eb6834"></i>Team</span><span><i style="background:#1baf7a"></i>Org lived</span><span><i style="background:#eda100"></i>Org espoused</span></div>${cvfSVG(R, PAL_PRINT, false)}<div class="cap">Figure 2. Competing Values profiles (% of culture energy).</div></div></div>
+<div class="g2"><div class="fig"><div class="leg"><span><svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="#111111" stroke-width="2"/></svg>Candidate</span><span><svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="#6B6B6B" stroke-width="2" stroke-dasharray="6 4"/></svg>Team</span><span><svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="#A3A3A3" stroke-width="2" stroke-dasharray="2 3"/></svg>Org (lived)</span></div>${radarSVG(R, PAL_PRINT, false)}<div class="cap">Figure 1. Eight-axis culture radar (0–100).</div></div>
+<div class="fig"><div class="leg"><span><i style="background:#111111"></i>Candidate</span><span><i style="background:#6B6B6B"></i>Team</span><span><i style="background:#A3A3A3"></i>Org lived</span><span><i style="background:#D0D0D0"></i>Org espoused</span></div>${cvfSVG(R, PAL_PRINT, false)}<div class="cap">Figure 2. Competing Values profiles (% of culture energy).</div></div></div>
 <div class="fig">${heatTable(R, false)}<div class="cap">Figure 3. Comparative variance heatmap. Shading is proportional to gap size. Wt is how strongly the environment expresses the axis (0.5 neutral to 1.5 extreme).</div></div>
 <div class="call"><div class="h">How to read this</div>Indices run from 0 to 100 and are not probabilities of success. Bands: ≥80 strong · 65–79 solid · 50–64 partial · &lt;50 weak. Friction index ${hide ? '—' : r0(R.friction)}: &lt;28 Low · 28–41 Moderate · 42–57 High · ≥58 Critical.</div>
 
 <h2 class="pb"><span class="secno">PHASE 3</span>Triangulated qualitative diagnosis</h2>
 <h3>3.1 Corporate reality check: declared vs. lived</h3>
 <div class="g2"><table class="t"><thead><tr><th>CVF quadrant</th><th class="num">Lived</th><th class="num">Declared</th><th class="num">Gap</th></tr></thead><tbody>${QUADS.map(([k, l]) => { const a = normCvf(S.org.cvfNow)[k], b = normCvf(S.org.cvfEsp)[k]; return `<tr><td>${l}</td><td class="num">${r0(a)}</td><td class="num">${r0(b)}</td><td class="num">${b - a > 0 ? '+' : ''}${r0(b - a)}</td></tr>`; }).join('')}</tbody></table>
-<table class="t"><tbody><tr><td>Culture debt index</td><td class="num">${r0(RC.debt)}</td><td>${bar(RC.debt, '#d03b3b')}</td></tr><tr><td>Say–do gap</td><td class="num">${r0(R.sayDo)} pts</td><td></td></tr><tr><td>Psychological safety</td><td class="num">${S.org.psych}/5</td><td>${pill(RC.psych, RC.psych === 'High' ? ['good'] : RC.psych === 'Moderate' ? ['warn'] : ['critical'])}</td></tr><tr><td>Operational pace</td><td class="num">${r0(R.org.pace)}</td><td>${esc(RC.pace)}</td></tr>${RC.entropy ? `<tr><td>Barrett cultural entropy</td><td class="num">${S.org.barrett.entropy}%</td><td>${esc(RC.entropy)}</td></tr>` : ''}<tr><td>Health index</td><td class="num">${r0(R.health)}</td><td>${bar(R.health, '#1baf7a')}</td></tr></tbody></table></div>
+<table class="t"><tbody><tr><td>Culture debt index</td><td class="num">${r0(RC.debt)}</td><td>${bar(RC.debt, '#d03b3b')}</td></tr><tr><td>Say–do gap</td><td class="num">${r0(R.sayDo)} pts</td><td></td></tr><tr><td>Psychological safety</td><td class="num">${S.org.psych}/5</td><td>${pill(RC.psych, RC.psych === 'High' ? ['good'] : RC.psych === 'Moderate' ? ['warn'] : ['critical'])}</td></tr><tr><td>Operational pace</td><td class="num">${r0(R.org.pace)}</td><td>${esc(RC.pace)}</td></tr>${RC.entropy ? `<tr><td>Barrett cultural entropy</td><td class="num">${S.org.barrett.entropy}%</td><td>${esc(RC.entropy)}</td></tr>` : ''}<tr><td>Health index</td><td class="num">${r0(R.health)}</td><td>${bar(R.health, '#A3A3A3')}</td></tr></tbody></table></div>
 <p><b>Verdict:</b> ${esc(RC.verdict)}</p>
 <ul>${RC.claims.map(c => `<li>${esc(c)}</li>`).join('')}${R.sent.has ? `<li>External sentiment (${revN(S.org)} reviews across ${PLATFORMS.filter(([k]) => S.org.platforms[k] > 0).map(p => p[1]).join(', ') || 'unspecified platforms'}; avg ${S.org.rating}/5): polarity ${R.sent.pol >= 0 ? '+' : ''}${R.sent.pol.toFixed(2)}; dominant themes ${th.filter(t => t[1]).slice(0, 4).map(([k, v]) => `${esc(k)} (${v})`).join(', ') || 'none detected'}.</li>` : ''}${S.org.barrett.values && S.org.ledger.barrett ? `<li>Barrett values: ${esc(S.org.barrett.values)}</li>` : ''}${S.org.newsNotes ? `<li>News: ${esc(S.org.newsNotes)}</li>` : ''}</ul>
-${R.useG ? `<h3>Groysberg culture styles: current vs. target vs. candidate</h3><div class="fig"><div class="leg"><span><i style="background:#1baf7a"></i>Org current</span><span><i style="background:#eda100"></i>Org target</span><span><i style="background:#2a78d6"></i>Candidate (implied)</span></div>${groysSVG(R, PAL_PRINT, false)}<div class="cap">Figure 5. Groysberg 8-style profile. Right-hand number = target − current. Style match (shape-based): lived ${r0(R.gLived)}% · target ${r0(R.gAsp)}%.</div></div>
-<table class="t"><thead><tr><th>Style</th><th>Quadrant</th><th class="num">Current</th><th class="num">Target</th><th class="num">Gap</th><th class="num">Candidate</th></tr></thead><tbody>${GROYS.map(([k, l, , q]) => `<tr><td>${l}</td><td style="font-size:9pt;color:#52607A">${q}</td><td class="num">${r0(S.org.groys.cur[k])}</td><td class="num">${r0(S.org.groys.asp[k])}</td><td class="num">${S.org.groys.asp[k] - S.org.groys.cur[k] >= 0 ? '+' : ''}${r0(S.org.groys.asp[k] - S.org.groys.cur[k])}</td><td class="num">${r0(R.cg[k])}</td></tr>`).join('')}</tbody></table>` : ''}
+${R.useG ? `<h3>Groysberg culture styles: current vs. target vs. candidate</h3><div class="fig"><div class="leg"><span><i style="background:#A3A3A3"></i>Org current</span><span><i style="background:#D0D0D0"></i>Org target</span><span><i style="background:#111111"></i>Candidate (implied)</span></div>${groysSVG(R, PAL_PRINT, false)}<div class="cap">Figure 5. Groysberg 8-style profile. Right-hand number = target − current. Style match (shape-based): lived ${r0(R.gLived)}% · target ${r0(R.gAsp)}%.</div></div>
+<table class="t"><thead><tr><th>Style</th><th>Quadrant</th><th class="num">Current</th><th class="num">Target</th><th class="num">Gap</th><th class="num">Candidate</th></tr></thead><tbody>${GROYS.map(([k, l, , q]) => `<tr><td>${l}</td><td style="font-size:9pt;color:#555555">${q}</td><td class="num">${r0(S.org.groys.cur[k])}</td><td class="num">${r0(S.org.groys.asp[k])}</td><td class="num">${S.org.groys.asp[k] - S.org.groys.cur[k] >= 0 ? '+' : ''}${r0(S.org.groys.asp[k] - S.org.groys.cur[k])}</td><td class="num">${r0(R.cg[k])}</td></tr>`).join('')}</tbody></table>` : ''}
 ${S.org.ledger.internal && S.org.internal.notes ? `<div class="call"><div class="h">${esc(S.org.internal.name || 'Internal pulse')} (n = ${S.org.internal.n})</div>${esc(S.org.internal.notes)}</div>` : ''}
-<p style="font-size:9pt;color:#52607A">Denison: ${DEN.map(([k, l]) => `${l} ${S.org.denison[k]}`).join(' · ')}. Public signals: ${SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'none'}.</p>
+<p style="font-size:9pt;color:#555555">Denison: ${DEN.map(([k, l]) => `${l} ${S.org.denison[k]}`).join(' · ')}. Public signals: ${SIGNALS.filter(([k]) => S.org.signals[k]).map(s => s[1]).join(', ') || 'none'}.</p>
 <h3>3.2 Team-to-enterprise divergence</h3>
 <p>${esc(M.team || 'The hiring team')} runs a ${MGR[S.team.mgrStyle][0].toLowerCase()} management style. Mean variance from the enterprise is <b>${r0(R.teamVar)} pts</b>${R.teamVar > 18 ? ', so this is a distinct subculture' : ', so the team broadly mirrors the enterprise'}.</p>
 ${DV.length ? list(DV) : '<p>No material divergence (all axes within 10 pts).</p>'}
 <table class="t"><thead><tr><th>Axis</th><th class="num">Team</th><th class="num">Enterprise</th><th class="num">Variance</th></tr></thead><tbody>${DIMS.map(d => { const v = R.team[d.k] - R.org[d.k]; return `<tr><td>${d.name}</td><td class="num">${r0(R.team[d.k])}</td><td class="num">${r0(R.org[d.k])}</td><td class="num">${v > 0 ? '+' : ''}${r0(v)}</td></tr>`; }).join('')}</tbody></table>
 <h3>3.3 Individual-to-culture fitment: motives vs. reward &amp; promotion mechanics</h3>
 <table class="t"><thead><tr><th>MVPI motive</th><th class="num">Candidate</th><th class="num">Enterprise reward</th><th>Signal</th></tr></thead><tbody>${[...RW].sort((a, b) => b.score - a.score).map(r => `<tr><td>${r.l}</td><td class="num">${r.score}</td><td class="num">${r0(r.reward)}</td><td>${r.flag.startsWith('Unmet') ? pill(r.flag, ['critical']) : r.flag.startsWith('Reward') ? pill(r.flag, ['warn']) : r.flag.startsWith('Reinforced') ? pill(r.flag, ['good']) : '—'}</td></tr>`).join('')}</tbody></table>
-<p style="font-size:9pt;color:#52607A">Enterprise reward intensity is inferred from the lived CVF profile: Clan rewards loyalty and relationships, Adhocracy rewards novelty, Market rewards results and status, Hierarchy rewards reliability and compliance. Value congruency: team ${r0(R.vcTeam)}% · enterprise ${r0(R.vcOrg)}% · espoused ${r0(R.vcEsp)}%. Career-velocity fit ${r0(R.velFit)}%.</p>
+<p style="font-size:9pt;color:#555555">Enterprise reward intensity is inferred from the lived CVF profile: Clan rewards loyalty and relationships, Adhocracy rewards novelty, Market rewards results and status, Hierarchy rewards reliability and compliance. Value congruency: team ${r0(R.vcTeam)}% · enterprise ${r0(R.vcOrg)}% · espoused ${r0(R.vcEsp)}%. Career-velocity fit ${r0(R.velFit)}%.</p>
 <table class="t"><thead><tr><th>Axis</th><th class="num">Cand.</th><th class="num">Team</th><th class="num">Org</th><th class="num">Δ T</th><th class="num">Δ O</th><th>Diagnostic implication</th></tr></thead><tbody>${dimRows}</tbody></table>
 ${S.ind.notes ? `<div class="call"><div class="h">Assessor notes</div>${esc(S.ind.notes)}</div>` : ''}
 
 <h2 class="pb"><span class="secno">PHASE 4</span>Stress dynamics &amp; derailment analysis</h2>
 <h3>4.1 Day-to-day behavioral dynamics</h3>
-<div class="g2"><div><table class="t"><thead><tr><th>${S.ind.instrument === 'hogan' ? 'HPI scale' : 'HPI-equivalent'}</th><th class="num">%ile</th><th></th></tr></thead><tbody>${HPI.map(([k, l]) => `<tr><td>${l}</td><td class="num">${r0(hpi[k])}</td><td>${bar(hpi[k], '#2a78d6')}</td></tr>`).join('')}</tbody></table></div><div>${list(DD)}</div></div>
+<div class="g2"><div><table class="t"><thead><tr><th>${S.ind.instrument === 'hogan' ? 'HPI scale' : 'HPI-equivalent'}</th><th class="num">%ile</th><th></th></tr></thead><tbody>${HPI.map(([k, l]) => `<tr><td>${l}</td><td class="num">${r0(hpi[k])}</td><td>${bar(hpi[k], '#111111')}</td></tr>`).join('')}</tbody></table></div><div>${list(DD)}</div></div>
 <h3>4.2 High-pressure vulnerabilities</h3>
 <div class="fig">${derailSVG(R, PAL_PRINT, false)}<div class="cap">Figure 4. HDS percentiles (bars; 70 = moderate, 90 = high-risk threshold) and contextual activation (◆) in this environment.</div></div>
 <table class="t"><thead><tr><th>Scale</th><th class="num">HDS</th><th>Band</th><th class="num">Activation</th><th>Organizational trigger</th><th>Under pressure</th></tr></thead><tbody>${derRows}</tbody></table>
+${(S.ind.guide?.items || []).length ? `<h3>4.4 Structured interview verification</h3>
+<p>${S.ind.guide.interviewer ? `Interviewer: ${esc(S.ind.guide.interviewer)}. ` : ''}${S.ind.guide.date ? `Date: ${esc(S.ind.guide.date)}. ` : ''}${R.G.n ? `${R.G.n} of ${S.ind.guide.items.length} area(s) rated; interview evidence index <b>${R.G.idx.toFixed(1)} / 5</b>.` : 'No ratings recorded yet. The hypotheses below remain unverified.'}</p>
+<table class="t"><thead><tr><th>Area &amp; question</th><th class="num">Rating</th><th>Evidence</th><th>Effect on model</th></tr></thead><tbody>${S.ind.guide.items.map(it => { const row = R.G.rows.find(x => x.id === it.id); return `<tr><td><b>${esc(it.area)}</b><br><span style="font-size:9pt">${esc(it.q)}</span></td><td class="num">${it.rating && !it.suggested ? `${it.rating}/5` : it.suggested ? `${it.rating}/5 (unconfirmed)` : '—'}</td><td style="font-size:9pt">${esc(it.notes || '')}${!it.rating ? `<span style="color:#555555">Not rated</span>` : ''}</td><td style="font-size:9pt">${row ? esc(row.effect) : '—'}</td></tr>`; }).join('')}</tbody></table>
+${S.ind.guide.overall ? `<div class="call"><div class="h">Interviewer impression</div>${esc(S.ind.guide.overall)}</div>` : ''}` : ''}
 <h3>4.3 Friction classification</h3>
-<div class="g2"><div class="phase"><h3 style="color:#0a7a0a">Productive friction</h3>${FC.prod.length ? list(FC.prod) : '<p>None identified. The candidate largely mirrors the current culture.</p>'}</div><div class="phase"><h3 style="color:#b22d2d">Destructive friction</h3>${FC.dest.length ? list(FC.dest) : '<p>None identified above threshold.</p>'}</div></div>
-<table class="t" style="margin-top:12px"><tbody>${[...R.fparts].sort((a, b) => b[1] - a[1]).map(([n, v]) => `<tr><td>${n}</td><td class="num">${hide ? '—' : v.toFixed(1)}</td><td>${hide ? '' : bar(v / 30 * 100, '#eb6834')}</td></tr>`).join('')}<tr><td><b>Friction index → level</b></td><td class="num"><b>${hide ? '—' : r0(R.friction)}</b></td><td>${hide ? '' : pill(R.fBand, STATUS[R.fBand])}</td></tr></tbody></table>
+<div class="g2"><div class="phase"><h3>Productive friction</h3>${FC.prod.length ? list(FC.prod) : '<p>None identified. The candidate largely mirrors the current culture.</p>'}</div><div class="phase"><h3>Destructive friction</h3>${FC.dest.length ? list(FC.dest) : '<p>None identified above threshold.</p>'}</div></div>
+<table class="t" style="margin-top:12px"><tbody>${[...R.fparts].sort((a, b) => b[1] - a[1]).map(([n, v]) => `<tr><td>${n}</td><td class="num">${hide ? '—' : v.toFixed(1)}</td><td>${hide ? '' : bar(v / 30 * 100, '#6B6B6B')}</td></tr>`).join('')}<tr><td><b>Friction index → level</b></td><td class="num"><b>${hide ? '—' : r0(R.friction)}</b></td><td>${hide ? '' : pill(R.fBand, STATUS[R.fBand])}</td></tr></tbody></table>
 
 <h2 class="pb"><span class="secno">PHASE 5</span>Tailored 30-60-90 day development blueprint</h2>
 <div class="phase"><h3>Days 1–30 · Acculturation &amp; psychological safety</h3>${list(P.p30)}<b style="font-size:9.5pt">Enterprise landmines to avoid</b>${list(P.landmines)}</div>
@@ -1347,11 +1408,11 @@ ${S.ind.notes ? `<div class="call"><div class="h">Assessor notes</div>${esc(S.in
 <div class="phase" style="margin-top:12px"><h3>Milestone success indicators</h3>${list(P.kpis)}</div>
 
 <h2><span class="secno">APPX A</span>Verification interview probes</h2>
-<ol>${PB.map(p => `<li><span class="tag">${esc(p.tag)}</span><span style="color:#52607A;font-size:9pt">${esc(p.why)}</span><br>${esc(p.q)}</li>`).join('')}</ol>
+<ol>${PB.map(p => `<li><span class="tag">${esc(p.tag)}</span><span style="color:#555555;font-size:9pt">${esc(p.why)}</span><br>${esc(p.q)}</li>`).join('')}</ol>
 ${(S.docs || []).length || (S.interviews || []).length ? `<h2 class="pb"><span class="secno">APPX B</span>Evidence register</h2>
-${(S.docs || []).length ? `<h3>Documents</h3><table class="t"><thead><tr><th>Document</th><th>Type</th><th>Read by</th><th>Summary &amp; key quotes</th></tr></thead><tbody>${S.docs.map(d => `<tr><td><b>${esc(d.name)}</b><br><span style="color:#52607A;font-size:8.5pt">${esc(d.added || '')} · ${esc(TARGETS[d.target] || '')}</span></td><td style="font-size:9pt">${esc(KINDS[d.kind] || d.kind)}</td><td style="font-size:9pt">${d.method === 'ai' ? 'Claude + assessor review' : d.method === 'parser' ? 'Parser + assessor review' : 'Assessor'}</td><td style="font-size:9pt">${esc(d.summary)}${d.quotes ? `<ul>${String(d.quotes).split('\n').filter(Boolean).map(q => `<li><i>"${esc(q)}"</i></li>`).join('')}</ul>` : ''}${d.applied?.length ? `<div style="color:#52607A">Applied: ${esc(d.applied.join(' · '))}</div>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
+${(S.docs || []).length ? `<h3>Documents</h3><table class="t"><thead><tr><th>Document</th><th>Type</th><th>Read by</th><th>Summary &amp; key quotes</th></tr></thead><tbody>${S.docs.map(d => `<tr><td><b>${esc(d.name)}</b><br><span style="color:#555555;font-size:8.5pt">${esc(d.added || '')} · ${esc(TARGETS[d.target] || '')}</span></td><td style="font-size:9pt">${esc(KINDS[d.kind] || d.kind)}</td><td style="font-size:9pt">${d.method === 'ai' ? 'Claude + assessor review' : d.method === 'parser' ? 'Parser + assessor review' : 'Assessor'}</td><td style="font-size:9pt">${esc(d.summary)}${d.quotes ? `<ul>${String(d.quotes).split('\n').filter(Boolean).map(q => `<li><i>"${esc(q)}"</i></li>`).join('')}</ul>` : ''}${d.applied?.length ? `<div style="color:#555555">Applied: ${esc(d.applied.join(' · '))}</div>` : ''}</td></tr>`).join('')}</tbody></table>` : ''}
 ${(S.interviews || []).length ? `<h3>Interviews</h3><table class="t"><thead><tr><th>Interviewee</th><th>Relation</th><th>Date</th><th>Notes (excerpt)</th></tr></thead><tbody>${S.interviews.map(v => `<tr><td>${esc(v.name || '—')}</td><td>${esc(REL[v.relation] || v.relation)}</td><td>${esc(v.date || '')}</td><td style="font-size:9pt">${esc(String(v.notes || '').slice(0, 600))}${String(v.notes || '').length > 600 ? '…' : ''}</td></tr>`).join('')}</tbody></table>` : ''}` : ''}
-${(S.candidates || []).length >= 2 ? `<h2><span class="secno">APPX C</span>Candidate comparison</h2><p class="lead">Every candidate in the roster, scored against the same team and organization.</p><table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th></tr></thead><tbody>${compareRows().map(({ c, r }) => `<tr><td><b>${esc(c.candidate)}</b><br><span style="color:#52607A;font-size:8.5pt">${esc(c.role || '')}</span></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${pill(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td style="font-size:9pt">${esc(r.rec)}${r.halted ? ' (evidence hold)' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td></tr>`).join('')}</tbody></table>` : ''}
+${(S.candidates || []).length >= 2 ? `<h2><span class="secno">APPX C</span>Candidate comparison</h2><p class="lead">Every candidate in the roster, scored against the same team and organization.</p><table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th></tr></thead><tbody>${compareRows().map(({ c, r }) => `<tr><td><b>${esc(c.candidate)}</b><br><span style="color:#555555;font-size:8.5pt">${esc(c.role || '')}</span></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${pill(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td style="font-size:9pt">${esc(r.rec)}${r.halted ? ' (evidence hold)' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td></tr>`).join('')}</tbody></table>` : ''}
 <h2><span class="secno">APPX ${(S.candidates || []).length >= 2 ? 'D' : (S.docs || []).length || (S.interviews || []).length ? 'C' : 'B'}</span>Methodology &amp; limitations</h2>
 <p><b>Model.</b> Organization, team, and candidate are projected onto eight axes: four Competing Values quadrants (Clan, Adhocracy, Market, Hierarchy) and four operating norms (decision velocity, risk tolerance, conflict directness, autonomy). Candidate coordinates are weighted composites of HPI (or OPQ32, KF4D, or NEO mapped through Big Five domains to HPI-equivalents), MVPI, and selected HDS scales. Axis fit = 100 − 1.3 × |gap|, weighted by environmental intensity (0.5–1.5).</p>
 <p><b>Indices.</b> Team synergy = 70% axis alignment + 15% manager-style fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career-velocity fit (with a Groysberg profile: 45% / 30% / 10% + 15% style-shape match). Overall = 50% team + 40% org + 10% derailer resilience. Derailer activation = HDS percentile × a context multiplier (0.6–1.4, plus a seniority uplift) based on organizational triggers. Organizational health blends ratings, psychological safety, management credibility, recommendation rate, review polarity, and Barrett entropy. Culture debt blends the say–do gap, the health deficit, and entropy.</p>
@@ -1369,7 +1430,8 @@ function buildReportMD() {
   let m = `# Culture & Psychometric Fitment Audit\n\n**${M.candidate || 'Candidate'}**: ${M.role}, ${M.team} · ${M.org}  \nReport ID: ${reportId()} · Level: ${M.level} · Hiring manager: ${M.manager} · Date: ${M.date} · Prepared by: ${M.assessor}\n\n> CONFIDENTIAL: prepared for the hiring committee.\n\n`;
   m += `## Decision brief\n\n`;
   m += hide ? `> **■ Diagnostic inquiry hold.** Conclusive scoring is paused (Org ${r0(R.conf.org)}% · Team ${r0(R.conf.team)}% · Individual ${r0(R.conf.ind)}%; threshold 60%).\n\n` : `**Recommendation: ${R.rec}${R.provisional ? ' (PROVISIONAL)' : ''}.** ${R.recWhy}\n\n`;
-  m += summary(R) + '\n\n' + F.map(([t, x]) => `- **${t}:** ${x}`).join('\n') + '\n\n';
+  const DC = decision(R);
+  m += summary(R) + '\n\n**Supports the hire**\n' + ul(DC.pros) + '\n\n**Risks to manage**\n' + ul(DC.cons) + '\n\n**Conditions if proceeding**\n' + ul(DC.conds) + '\n\n**Key findings**\n' + F.map(([t, x]) => `- **${t}:** ${x}`).join('\n') + '\n\n';
   m += `## Phase 1: Data ingestion & diagnostic audit\n\n### Detected sources & frameworks\n\n| Tier | Source | Coverage | Status | Rigor |\n|---|---|---|---|---|\n${SRC.map(r => `| ${r.tier} | ${r.src} | ${r.detail} | ${r.ok ? '✓ Ingested' : r.ok === null ? '– Not supplied' : '✗ Missing'} | ${r.rigor} |`).join('\n')}\n\n`;
   m += `### Confidence rating\n\n\`\`\`\n${[['Organization', R.conf.org], ['Team', R.conf.team], ['Individual', R.conf.ind]].map(([l, v]) => `${pad(l, 14)}${asciiBar(v, 20)} ${pad(r0(v) + '%', 5)} ${confLvl(v)}`).join('\n')}\n\`\`\`\nOverall: **${confLvl(minC)}** (${r0(minC)}%)\n\n${S.org.dataNotes ? `> **Analyst caveats:** ${S.org.dataNotes}\n\n` : ''}${R.conf.flags.map(([v, t]) => `- ⚑ [${v}] ${t}`).join('\n')}\n\n`;
   m += `### Clarification check\n\n${hide ? '**HOLD.** Final scores are paused until these questions are answered:' : '**Passed.** Residual, non-blocking questions:'}\n\n${R.conf.qs.map((q, i) => `${i + 1}. [${q.vec}] ${q.q}\n   _Risk if unanswered: ${q.why}_`).join('\n') || 'None.'}\n\n`;
@@ -1386,6 +1448,7 @@ function buildReportMD() {
   m += `## Phase 4: Stress dynamics & derailment\n\n### Day-to-day behavioral dynamics\n\n\`\`\`\n${HPI.map(([k, l]) => `${pad(l, 26)}${asciiBar(hp[k], 20)} ${r0(hp[k])}`).join('\n')}\n\`\`\`\n\n${ul(DD)}\n\n`;
   m += `### High-pressure vulnerabilities\n\n\`\`\`\n${R.der.map(d => `${pad(d.n, 13)}${asciiBar(d.score, 20)} ${pad(d.score, 4)}${pad(d.band, 9)} activation ${r0(d.act)}`).join('\n')}\n\`\`\`\n\n| Derailer | HDS | Activation | Organizational trigger |\n|---|---|---|---|\n${R.der.filter(d => d.act >= 55).map(d => `| ${d.n} | ${d.score} | ${r0(d.act)} | ${d.trig} |`).join('\n')}\n\n`;
   m += `### Friction classification\n\n**Productive friction**\n${ul(FC.prod) || '- None identified.'}\n\n**Destructive friction**\n${ul(FC.dest) || '- None above threshold.'}\n\n`;
+  if ((S.ind.guide?.items || []).length) m += `### Structured interview verification\n\n${R.G.n ? `Evidence index **${R.G.idx.toFixed(1)}/5** across ${R.G.n} rated area(s).` : 'No ratings recorded yet.'}\n\n| Area | Question | Rating | Evidence | Effect |\n|---|---|---|---|---|\n${S.ind.guide.items.map(it => { const row = R.G.rows.find(x => x.id === it.id); return `| ${it.area} | ${String(it.q).replace(/\n|\|/g, ' ')} | ${it.rating ? it.rating + '/5' + (it.suggested ? ' (unconfirmed)' : '') : '—'} | ${String(it.notes || '').replace(/\n|\|/g, ' ')} | ${row ? row.effect : '—'} |`; }).join('\n')}\n\n${S.ind.guide.overall ? `_Interviewer impression:_ ${S.ind.guide.overall}\n\n` : ''}`;
   m += `## Phase 5: 30-60-90 day development blueprint\n\n**Days 1–30: Acculturation & psychological safety**\n${ul(P.p30)}\n\n_Enterprise landmines:_\n${ul(P.landmines)}\n\n**Days 31–60: Behavioral calibration**\n${ul(P.p60)}\n\n**Days 61–90: Impact & value realization**\n${ul(P.p90)}\n\n**Manager: do** ${P.doList.join('; ')}.  \n**Manager: avoid** ${P.avoid.join('; ')}.\n\n**Milestones**\n${ul(P.kpis)}\n\n`;
   m += `## Appendix A: Verification probes\n\n${PB.map((p, i) => `${i + 1}. **[${p.tag}]** ${p.q} _(${p.why})_`).join('\n')}\n\n${(S.docs || []).length ? `## Appendix: Evidence register\n\n| Document | Type | Read by | Summary |\n|---|---|---|---|\n${S.docs.map(d => `| ${d.name} | ${KINDS[d.kind] || d.kind} | ${d.method} | ${String(d.summary).replace(/\n|\|/g, ' ')} |`).join('\n')}\n\n` : ''}${(S.interviews || []).length ? `**Interviews:** ${S.interviews.map(v => `${v.name || '—'} (${REL[v.relation] || v.relation}${v.date ? ', ' + v.date : ''})`).join('; ')}\n\n` : ''}${(S.candidates || []).length >= 2 ? `## Appendix: Candidate comparison\n\n| Candidate | Overall | Team | Org | Friction | Archetype | Recommendation |\n|---|---|---|---|---|---|---|\n${compareRows().map(({ c, r }) => `| ${c.candidate} | ${r0(r.overall)}% | ${r0(r.teamScore)}% | ${r0(r.orgScore)}% | ${r.fBand} | ${r.valueAdd} | ${r.rec} |`).join('\n')}\n\n` : ''}## Appendix: Methodology & limitations\n\nTeam synergy = 70% axis alignment + 15% manager fit + 15% value congruency. Org alignment = 50% axis alignment + 35% value congruency + 15% career velocity. Overall = 50% team + 40% org + 10% derailer resilience. These are decision-support indices, not validated predictive probabilities. Use them alongside competence evidence, monitor for adverse impact, and process psychometric data under applicable privacy law.\n`;
   return m;
@@ -1421,7 +1484,7 @@ function refreshPreview() { $('#preview').srcdoc = buildReportHTML(); }
 
 /* ============================== events ============================== */
 let currentTab = 'dash', timer = null;
-function setTab(t) { currentTab = t; for (const b of $$('.tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t)); for (const p of $$('[data-panel]')) p.hidden = p.dataset.panel !== t; if (t === 'report') refreshPreview(); window.scrollTo({ top: $('.tabs').offsetTop - 10, behavior: 'smooth' }); }
+function setTab(t) { currentTab = t; for (const b of $$('.tab')) b.setAttribute('aria-selected', String(b.dataset.tab === t)); for (const p of $$('[data-panel]')) p.hidden = p.dataset.panel !== t; if (t === 'report') refreshPreview(); if (t === 'ind' && !S.ind.guide.items.length && R) refreshGuide(true); window.scrollTo({ top: $('.tabs').offsetTop - 10, behavior: 'smooth' }); }
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
   if (e.target.closest('button')) markDirty();
@@ -1429,15 +1492,17 @@ document.addEventListener('click', e => {
   if (e.target.id === 'goProv') { S.provisional = true; $('[data-path="provisional"]').checked = true; render(); }
   const n = e.target.closest('[data-normalize]'); if (n) { const base = n.dataset.normalize, c = getP(S, base), s = sumQ(c) || 1; const vals = QUADS.map(([k]) => Math.round(c[k] / s * 100)); vals[vals.indexOf(Math.max(...vals))] += 100 - vals.reduce((a, b) => a + b, 0); QUADS.forEach(([k], i) => c[k] = vals[i]); syncFields(base); render(); }
 });
-function syncFields(prefix) { for (const el of $$('[data-path]')) { if (!el.dataset.path.startsWith(prefix)) continue; const v = getP(S, el.dataset.path); if (el.type === 'checkbox') el.checked = !!v; else el.value = v; } }
+function syncFields(prefix) { for (const el of $$('[data-path]')) { if (!el.dataset.path.startsWith(prefix)) continue; const v = getP(S, el.dataset.path); if (el.type === 'checkbox') el.checked = !!v; else if (el.type !== 'radio') el.value = v; } }
 document.addEventListener('input', e => {
   const el = e.target; if (!el.dataset || !el.dataset.path) return;
   const p = el.dataset.path; let v;
-  if (el.type === 'checkbox') v = el.checked; else if (el.type === 'range' || el.type === 'number') { v = el.value === '' ? 0 : +el.value; if (el.max !== '' && el.type === 'range') v = clamp(v, +el.min, +el.max); } else v = el.value;
+  if (el.type === 'checkbox') v = el.checked; else if (el.type === 'radio') v = +el.value; else if (el.type === 'range' || el.type === 'number') { v = el.value === '' ? 0 : +el.value; if (el.max !== '' && el.type === 'range') v = clamp(v, +el.min, +el.max); } else v = el.value;
   setP(S, p, v);
-  for (const o of $$(`[data-path="${p}"]`)) if (o !== el && o.type !== 'checkbox') o.value = v;
+  for (const o of $$(`[data-path="${p}"]`)) if (o !== el && o.type !== 'checkbox' && o.type !== 'radio') o.value = v;
   if (p === 'ind.instrument') syncInstrument();
   markDirty();
+  if (/^ind\.guide\.items\.\d+\.rating$/.test(p)) { getP(S, p.replace(/\.rating$/, '')).suggested = false; renderGuide(); }
+  else if (p.startsWith('ind.guide.')) renderGuideProgress();
   if (el.dataset.list) { const det = el.closest('details.item'), i = +det.dataset.i, L = el.dataset.list; det.querySelector('summary').innerHTML = L === 'docs' ? docSummary(S.docs[i]) : ivSummary(S.interviews[i]); if (L === 'interviews') renderIvCounts(); }
   if (el.hasAttribute('data-debounce')) { clearTimeout(timer); timer = setTimeout(render, 200); } else render();
 });
@@ -1749,7 +1814,7 @@ function compareRows() {
 function renderCompare() {
   const show = S.candidates.length >= 2; $('#cmpCard').hidden = !show; if (!show) return;
   const rows = compareRows();
-  $('#cmp').innerHTML = `<table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th></tr></thead><tbody>${rows.map(({ c, r }) => `<tr${c.id === S.activeCand ? ' style="font-weight:600"' : ''}><td><button class="linkbtn" type="button" data-cand="${c.id}">${esc(c.candidate || 'Unnamed')}</button><div class="muted" style="font-size:.72rem">${esc(c.role || '')}</div></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${statusChip(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td>${esc(r.rec)}${r.halted ? ' <span class="muted">(evidence hold)</span>' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td></tr>`).join('')}</tbody></table>`;
+  $('#cmp').innerHTML = `<table class="t"><thead><tr><th>Candidate</th><th class="num">Overall</th><th class="num">Team</th><th class="num">Org</th><th>Friction</th><th>Archetype</th><th>Recommendation</th><th>Top derailer</th><th class="num">Interview</th></tr></thead><tbody>${rows.map(({ c, r }) => `<tr${c.id === S.activeCand ? ' style="font-weight:600"' : ''}><td><button class="linkbtn" type="button" data-cand="${c.id}">${esc(c.candidate || 'Unnamed')}</button><div class="muted" style="font-size:.72rem">${esc(c.role || '')}</div></td><td class="num">${r0(r.overall)}%</td><td class="num">${r0(r.teamScore)}%</td><td class="num">${r0(r.orgScore)}%</td><td>${statusChip(r.fBand, STATUS[r.fBand])}</td><td>${esc(r.valueAdd)}</td><td>${esc(r.rec)}${r.halted ? ' <span class="muted">(evidence hold)</span>' : ''}</td><td>${esc(r.der[0].n)} ${r0(r.der[0].act)}</td><td class="num">${r.G.idx !== null ? r.G.idx.toFixed(1) + '/5' : '—'}</td></tr>`).join('')}</tbody></table>`;
 }
 
 /* ---------- team library (add / edit / delete) ---------- */
@@ -1797,9 +1862,136 @@ async function initWorkspace() {
     else setSave(dirty ? 'Saving…' : '○ Edits save to your account automatically'); if (dirty) scheduleSave(); }
   catch (e) { acct = null; setSave('▲ Account storage unavailable; edits save in this browser', 'st-warn'); }
 }
-function syncAI() { const on = !!sampleFn; $('#aiOn').disabled = !on; if (!on) $('#aiOn').checked = false; else if (!syncAI.done) { $('#aiOn').checked = true; syncAI.done = true; } $('#aiNote').textContent = on ? 'Claude reads each document and proposes values. This uses your Claude usage, and you approve every value before it is applied.' : 'Claude reading is available when this app is opened on claude.ai. Here, the built-in parser reads standard score layouts (Hogan, Big Five, OPQ32 stens, CVF, Denison, Groysberg, Barrett) and keeps everything else as evidence text.'; }
+function syncAI() { const on = !!sampleFn; $$('.ai-only').forEach(b => { b.hidden = !on; }); $('#aiOn').disabled = !on; if (!on) $('#aiOn').checked = false; else if (!syncAI.done) { $('#aiOn').checked = true; syncAI.done = true; } $('#aiNote').textContent = on ? 'Claude reads each document and proposes values. This uses your Claude usage, and you approve every value before it is applied.' : 'Claude reading is available when this app is opened on claude.ai. Here, the built-in parser reads standard score layouts (Hogan, Big Five, OPQ32 stens, CVF, Denison, Groysberg, Barrett) and keeps everything else as evidence text.'; }
+
+/* ---------- structured interview guide & feedback (per candidate) ---------- */
+const RATING = { 1: 'Significant concern', 2: 'Some concern', 3: 'Mixed / unclear', 4: 'Positive evidence', 5: 'Strong positive evidence' };
+const LISTEN = {
+  collab: { hi: ['Stays effective and connected when collaboration is thinner than they prefer; builds relationships deliberately.', 'Frustration or withdrawal when people work independently; needs consensus before acting.'],
+            lo: ['Deliberately involves stakeholders and adjusts pace to bring people along.', 'Treats consultation as wasted time; examples of bypassing peers.'] },
+  innov: { hi: ['Sequences ideas, secures sponsorship, accepts governance gates; patient with adoption.', 'Many initiatives started, few landed; blames the organization for being slow.'],
+           lo: ['Concrete example of trying an untested approach and learning from it.', 'Waits for proof; frames experimentation as risky by default.'] },
+  results: { hi: ['Balances targets with team health; credits others; shows collaborative wins.', 'Wins at others’ expense; describes colleagues as obstacles.'],
+             lo: ['Owns measurable outcomes and shows how they created urgency.', 'Vague on numbers; outcomes attributed to circumstances.'] },
+  struct: { hi: ['Creates enough structure quickly and tolerates ambiguity meanwhile.', 'Stalls without clear process; escalates ambiguity instead of resolving it.'],
+            lo: ['Engages control owners early; challenges process through proper channels.', 'Bypassing approvals described as normal; dismisses governance as bureaucracy.'] },
+  pace: { hi: ['Distinguishes reversible from irreversible decisions; consults where it matters.', 'Decides alone and fast regardless of stakes; surprised by pushback.'],
+          lo: ['Decided fast with incomplete data and owned the result.', 'Waits for certainty; pushes decisions upward.'] },
+  risk: { hi: ['Sizes the downside explicitly and pre-agrees limits with risk partners.', 'Treats risk controls as obstacles; downplays past failures.'],
+          lo: ['Describes a calculated bet and how they managed it.', 'Avoids exposure; frames risk aversion as prudence in every example.'] },
+  conflict: { hi: ['Adjusts how candour is delivered to the audience; repairs relationships after hard conversations.', 'Feedback that damaged relationships, recounted without reflection.'],
+              lo: ['Specific example of disagreeing openly with a senior person.', 'Avoids disagreement; raises concerns only privately or after the fact.'] },
+  autonomy: { hi: ['Made close oversight work by agreeing a reporting rhythm.', 'Disengages or leaves when supervised closely.'],
+              lo: ['Set their own priorities successfully when direction was absent.', 'Waits for instructions; escalates ambiguity.'] },
+};
+const gItem = o => ({ id: uid(), rating: null, notes: '', custom: false, suggested: false, ...o });
+function guideQuestions(R) {
+  const out = [], S = R.S;
+  out.push(gItem({ key: 'core:why', area: 'Motivation & expectations', q: `Why ${S.meta.org || 'this organization'} and ${S.meta.team || 'this team'}, and why now? What do you expect to find here, including the difficult parts?`, why: 'Realistic expectations predict early retention.', pos: 'An accurate, researched picture of the culture, including its difficulties.', neg: 'An idealised picture, or motives mainly about escaping the current role.' }));
+  for (const g of R.gaps.filter(g => g.sev > 12).slice(0, 4)) {
+    const useT = Math.abs(g.gT) * 1.1 >= Math.abs(g.gO), gap = useT ? g.gT : g.gO; if (Math.abs(gap) < 12) continue;
+    const dir = gap > 0 ? 'hi' : 'lo', L = LISTEN[g.d.k][dir];
+    out.push(gItem({ key: `dim:${g.d.k}`, area: g.d.name, q: dir === 'hi' ? g.d.probeHi : g.d.probeLo, why: `Psychometric profile sits ${r0(Math.abs(gap))} pts ${gap > 0 ? 'above' : 'below'} the ${useT ? 'team' : 'enterprise'} norm. ${dir === 'hi' ? g.d.hi : g.d.lo}`, pos: L[0], neg: L[1] }));
+  }
+  for (const h of R.der.filter(h => h.act >= 60).slice(0, 3))
+    out.push(gItem({ key: `der:${h.k}`, area: `${h.n} (derailer)`, q: h.probe, why: `HDS ${h.score} (${h.band.toLowerCase()} risk); activation ${r0(h.act)} here because of ${h.trig.toLowerCase()}.`, pos: 'Recognises the pattern in themselves and describes a concrete self-management strategy that worked.', neg: h.looks }));
+  if (R.vcOrg < 60) out.push(gItem({ key: 'val:org', area: 'Values congruence', q: 'What kind of organization brings out the worst in you? Tell us about a time an employer’s values conflicted with yours, and what you did.', why: `Values congruence with the enterprise is ${r0(R.vcOrg)}%.`, pos: 'Names what they need from an employer and handled a mismatch constructively.', neg: 'Expects the organization to change to fit them; disengagement when values clash.' }));
+  const unmet = rewardMap(R).filter(r => r.flag.startsWith('Unmet')).sort((a, b) => b.score - a.score)[0];
+  if (unmet) out.push(gItem({ key: `mot:${unmet.k}`, area: `Motivator: ${unmet.l}`, q: `This role offers limited formal reward for ${unmet.l.toLowerCase()}. Tell us about a period when that was missing at work. How did you keep yourself motivated, and what did you ask for?`, why: `MVPI ${unmet.l} ${unmet.score} vs. enterprise reward intensity ${r0(unmet.reward)}.`, pos: 'Finds the motive through their own initiative; negotiates constructively for it.', neg: 'Motivation dropped sharply; left or disengaged when the motive was unmet.' }));
+  for (const g of (R.gAdd || []).filter(g => g.gap > 0).slice(0, 1)) out.push(gItem({ key: `add:${g.k}`, area: `Culture add: ${g.l}`, q: `Leadership here wants more ${g.l} in the culture. Tell us about a time you helped a team become more ${g.l.toLowerCase()}-oriented. What did you do, and what changed?`, why: `Groysberg ${g.l}: current ${r0(S.org.groys.cur[g.k])} → target ${r0(S.org.groys.asp[g.k])}; the candidate leans toward it.`, pos: 'Specific actions that shifted team behaviour, with evidence that others adopted them.', neg: 'Personal preference only; no evidence of influencing others.' }));
+  if (R.mgrFit < 65) out.push(gItem({ key: 'mgr', area: 'Manager fit', q: `Your manager here is likely to lead in a ${MGR[S.team.mgrStyle][0].toLowerCase()} way. Describe working for a manager with that style. What did you need from them, and what did you adjust?`, why: `Manager-style fit is ${r0(R.mgrFit)}%.`, pos: 'Realistic about the style; adjusted their own approach.', neg: 'Conflict or disengagement with managers of that style.' }));
+  out.push(gItem({ key: 'core:90', area: 'Culture contribution', q: 'What would you change in your first 90 days, and what would you deliberately leave alone?', why: 'Tests whether the candidate balances change with respect for what already works.', pos: 'Listens first; balances change with what works; names what they would protect.', neg: 'Arrives with a fixed plan regardless of context.' }));
+  return out;
+}
+function refreshGuide(silent) {
+  const G = S.ind.guide, have = new Set(G.items.map(i => i.key)), add = guideQuestions(R).filter(q => !have.has(q.key));
+  G.items.push(...add); markDirty(); renderGuide(); render();
+  if (!silent) toast(add.length ? `Added ${add.length} question(s) from the latest analysis. Existing answers were kept.` : 'The guide already covers the current risk areas.');
+}
+// how confirmed ratings feed back into the model
+function guideEffects(S) {
+  const items = (S.ind.guide?.items || []).filter(i => i.rating && !i.suggested), e = { dim: {}, der: {}, vals: 0, add: 0, mgr: 0, n: items.length, idx: null, rows: [] };
+  const fDim = { 1: 1.25, 2: 1.12, 3: 1, 4: 0.8, 5: 0.65 }, fDer = { 1: 1.2, 2: 1.1, 3: 1, 4: 0.85, 5: 0.7 };
+  for (const i of items) { const r = +i.rating, [t, k] = String(i.key || '').split(':'); let eff = 'Counts toward the interview evidence index';
+    if (t === 'dim') { e.dim[k] = fDim[r]; eff = r === 3 ? 'No adjustment' : `${r >= 4 ? 'Gap penalty reduced' : 'Gap penalty increased'} (×${fDim[r]})`; }
+    else if (t === 'der') { e.der[k] = fDer[r]; eff = r === 3 ? 'No adjustment' : `Derailer activation ×${fDer[r]}`; }
+    else if (t === 'val' || t === 'mot') { e.vals += (r - 3) * (t === 'val' ? 5 : 3); eff = r === 3 ? 'No adjustment' : `Values congruence ${r > 3 ? '+' : ''}${(r - 3) * (t === 'val' ? 5 : 3)}`; }
+    else if (t === 'add') { e.add += (r - 3) * 6; eff = r === 3 ? 'No adjustment' : `Culture-add evidence ${r > 3 ? '+' : ''}${(r - 3) * 6}`; }
+    else if (t === 'mgr') { e.mgr += (r - 3) * 8; eff = r === 3 ? 'No adjustment' : `Manager fit ${r > 3 ? '+' : ''}${(r - 3) * 8}`; }
+    e.rows.push({ ...i, effect: eff }); }
+  if (items.length) e.idx = items.reduce((s, i) => s + +i.rating, 0) / items.length;
+  return e;
+}
+const sugBadge = i => `<span class="chip st-warn"><span class="ic" aria-hidden="true">✦</span>Claude suggestion, not yet counted</span><button class="linkbtn" type="button" data-gconfirm="${i}" style="font-size:.8rem">confirm</button>`;
+function renderGuide() {
+  const G = S.ind.guide;
+  $('#gItems').innerHTML = G.items.length ? G.items.map((it, i) => `<div class="qitem" data-gi="${i}">
+    <div class="row" style="justify-content:space-between"><div class="row" style="gap:6px"><span class="tag">${esc(it.area || 'Custom')}</span>${it.custom ? '<span class="muted" style="font-size:.74rem">custom</span>' : ''}${it.suggested ? sugBadge(i) : ''}</div><button class="btn sm" type="button" data-gdel="${i}">Delete</button></div>
+    ${it.why ? `<p class="muted" style="font-size:.8rem;margin-top:4px">Why ask: ${esc(it.why)}</p>` : ''}
+    <textarea class="qtext" data-path="ind.guide.items.${i}.q" data-debounce aria-label="Question">${esc(it.q)}</textarea>
+    <details><summary class="muted" style="font-size:.8rem">What to listen for</summary><div class="g2" style="gap:8px;margin-top:6px"><div class="field"><label>+ Positive indicators</label><textarea data-path="ind.guide.items.${i}.pos" data-debounce>${esc(it.pos || '')}</textarea></div><div class="field"><label>− Red flags</label><textarea data-path="ind.guide.items.${i}.neg" data-debounce>${esc(it.neg || '')}</textarea></div></div></details>
+    <div class="rate" role="radiogroup" aria-label="Rating">${[1, 2, 3, 4, 5].map(n => `<label title="${RATING[n]}"><input type="radio" name="g_${it.id}" value="${n}" data-path="ind.guide.items.${i}.rating" ${+it.rating === n ? 'checked' : ''}><span>${n}</span></label>`).join('')}<span class="muted rlabel">${it.rating ? RATING[it.rating] : 'Not rated'}</span>${it.rating ? `<button class="linkbtn" type="button" data-gclear="${i}" style="font-size:.78rem">clear</button>` : ''}</div>
+    <textarea data-path="ind.guide.items.${i}.notes" data-debounce placeholder="Evidence heard (situation, action, result)…" aria-label="Evidence notes" style="min-height:60px">${esc(it.notes || '')}</textarea>
+  </div>`).join('') : '<p class="muted">No questions yet. Generate a guide from the current analysis, or add your own.</p>';
+  renderGuideProgress();
+}
+function renderGuideProgress() {
+  const G = S.ind.guide, e = guideEffects(S), sug = G.items.filter(i => i.suggested && i.rating).length;
+  $('#gProgress').innerHTML = `${e.n} of ${G.items.length} question(s) rated${e.idx !== null ? ` · interview evidence index <b>${e.idx.toFixed(1)} / 5</b>` : ''}${sug ? ` · ${sug} Claude suggestion(s) awaiting confirmation` : ''}`;
+}
+function guideContext(R) {
+  const S = R.S;
+  return [`Role: ${S.meta.role || 'n/a'} (${S.meta.level}) joining ${S.meta.team || 'the team'} at ${S.meta.org || 'the organization'}.`,
+    `Model read: ${R.rec}. Overall ${r0(R.overall)}%, team ${r0(R.teamScore)}%, org ${r0(R.orgScore)}%, friction ${R.fBand}, archetype ${R.valueAdd}.`,
+    `Largest gaps: ${R.gaps.slice(0, 4).map(g => `${g.d.name} (vs team ${g.gT > 0 ? '+' : ''}${r0(g.gT)}, vs org ${g.gO > 0 ? '+' : ''}${r0(g.gO)})`).join('; ')}.`,
+    `Top derailers in this context: ${R.der.slice(0, 3).map(h => `${h.n} HDS ${h.score}, activation ${r0(h.act)}, trigger: ${h.trig}`).join('; ')}.`,
+    `Values congruence: team ${r0(R.vcTeam)}%, enterprise ${r0(R.vcOrg)}%. Culture reality: ${reality(R).verdict}`,
+    R.useG ? `Groysberg growth styles leadership wants: ${GROYS.filter(([k]) => S.org.groys.asp[k] - S.org.groys.cur[k] >= 10).map(g => g[1]).join(', ') || 'none'}.` : ''].filter(Boolean).join('\n');
+}
+async function aiTailor(btn) {
+  if (!sampleFn) return toast('Tailoring with Claude is available when the app is opened on claude.ai.');
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Claude is thinking…';
+  try {
+    const G = S.ind.guide, prompt = `You are helping an assessor run a structured behavioural interview.\n${guideContext(R)}\nQuestions already in the guide:\n${G.items.map(i => `- [${i.area}] ${i.q}`).join('\n')}\nWrite up to 5 additional past-behaviour (STAR) questions that test the highest-risk hypotheses not already covered. Keep each question to 1-2 sentences, specific to this role and context. Reply with ONLY a JSON array of objects: {"area": short label, "q": question, "why": hypothesis tested, "pos": what a strong answer shows, "neg": red flags}.`;
+    const arr = await sampleFn.json(prompt);
+    const add = (Array.isArray(arr) ? arr : []).filter(o => o && o.q).slice(0, 5).map(o => gItem({ key: `ai:${uid()}`, area: String(o.area || 'Tailored'), q: String(o.q), why: String(o.why || ''), pos: String(o.pos || ''), neg: String(o.neg || ''), custom: true }));
+    G.items.push(...add); markDirty(); renderGuide(); render(); toast(add.length ? `Claude added ${add.length} tailored question(s). Edit or delete any of them.` : 'Claude did not suggest additional questions.');
+  } catch (e) { toast(`Claude could not tailor questions (${e?.code || 'error'}).`, 6000); if (['not_granted', 'sampling_disabled'].includes(e?.code)) { sampleFn = null; syncAI(); } }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
+async function aiScore(btn) {
+  const G = S.ind.guide, notes = String(G.transcript || '').trim();
+  if (!sampleFn) return toast('Scoring from notes with Claude is available when the app is opened on claude.ai. You can still rate each question by hand.');
+  if (notes.length < 40) return toast('Add interview notes or a transcript first.');
+  if (!G.items.length) return toast('Generate the question guide first.');
+  btn.disabled = true; const label = btn.textContent; btn.textContent = 'Claude is reading the notes…';
+  try {
+    const prompt = `You are helping an assessor score a structured interview. Rate only the questions that the notes actually address, from 1 to 5: 1 significant concern, 2 some concern, 3 mixed or unclear, 4 positive evidence, 5 strong positive evidence. Use the positive indicators and red flags given for each question. Base every rating only on what the notes say; never infer beyond them. Give the evidence as a short quote or paraphrase.\nReply with ONLY a JSON array: [{"id": question id, "rating": 1-5, "evidence": "..."}].\nQuestions:\n${G.items.map(i => `id ${i.id} | ${i.area} | ${i.q} | positive: ${i.pos || '-'} | red flags: ${i.neg || '-'}`).join('\n')}\nInterview notes / transcript:\n"""\n${notes.slice(0, 120000)}\n"""`;
+    const arr = await sampleFn.json(prompt); let n = 0;
+    for (const o of Array.isArray(arr) ? arr : []) { const it = G.items.find(i => i.id === String(o?.id)); const r = Math.round(+o?.rating); if (!it || !(r >= 1 && r <= 5)) continue;
+      const ev = o.evidence ? `Claude: ${String(o.evidence)}` : '';
+      if (it.rating && !it.suggested) { if (ev) it.notes = (it.notes ? it.notes + '\n' : '') + ev + ` (suggested ${r}/5; your rating kept)`; continue; } // never override a confirmed rating
+      it.rating = r; it.suggested = true; if (ev) it.notes = (it.notes ? it.notes + '\n' : '') + ev; n++; }
+    markDirty(); renderGuide(); render(); toast(n ? `Claude suggested ratings for ${n} question(s). Suggestions don't count until you confirm or change them.` : 'Claude found no answers to the guide questions in these notes.', 7000);
+  } catch (e) { toast(`Claude could not score the notes (${e?.code || 'error'}).`, 6000); if (['not_granted', 'sampling_disabled'].includes(e?.code)) { sampleFn = null; syncAI(); } }
+  finally { btn.disabled = false; btn.textContent = label; }
+}
 
 /* ---------- evidence & workspace events ---------- */
+$('#gGen').addEventListener('click', () => refreshGuide());
+$('#gAdd').addEventListener('click', () => { S.ind.guide.items.push(gItem({ key: `custom:${uid()}`, area: 'Custom', q: '', custom: true })); markDirty(); renderGuide(); render(); const t = $$('#gItems .qtext'); t[t.length - 1]?.focus(); });
+$('#gTailor').addEventListener('click', e => aiTailor(e.currentTarget));
+$('#gScore').addEventListener('click', e => aiScore(e.currentTarget));
+$('#gConfirmAll').addEventListener('click', () => { let n = 0; for (const it of S.ind.guide.items) if (it.suggested) { it.suggested = false; n++; } markDirty(); renderGuide(); render(); toast(n ? `Confirmed ${n} suggested rating(s).` : 'There are no unconfirmed suggestions.'); });
+$('#gFromIv').addEventListener('click', () => { const iv = S.interviews.filter(v => ['candidate', 'reference'].includes(v.relation) && v.notes); if (!iv.length) return toast('No candidate or reference interviews in the Interviews list yet.');
+  const G = S.ind.guide; G.transcript = [G.transcript, ...iv.map(v => `[${REL[v.relation]}: ${v.name || ''}${v.date ? ', ' + v.date : ''}]\n${v.notes}`)].filter(Boolean).join('\n\n'); $('[data-path="ind.guide.transcript"]').value = G.transcript; markDirty(); render(); toast(`Added notes from ${iv.length} interview(s).`); });
+$('#gFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const t = await fileText(f); const G = S.ind.guide; G.transcript = [G.transcript, `[${f.name}]\n${t}`].filter(Boolean).join('\n\n'); $('[data-path="ind.guide.transcript"]').value = G.transcript; markDirty(); render(); toast(`Loaded notes from ${f.name}.`); } catch (err) { toast(`${f.name}: ${err.message || 'could not be read'}`, 7000); } });
+$('#gItems').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const G = S.ind.guide;
+  if (b.dataset.gdel !== undefined) { if (!armed(b)) return; G.items.splice(+b.dataset.gdel, 1); }
+  else if (b.dataset.gclear !== undefined) { const it = G.items[+b.dataset.gclear]; it.rating = null; it.suggested = false; }
+  else if (b.dataset.gconfirm !== undefined) G.items[+b.dataset.gconfirm].suggested = false;
+  else return; markDirty(); renderGuide(); render(); });
+
 async function handleFiles(files) {
   for (const f of files) {
     setUplStatus(`Reading ${f.name}…`);

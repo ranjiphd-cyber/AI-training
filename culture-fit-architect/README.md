@@ -11,7 +11,7 @@ Open `index.html` in any browser. No install or build is needed. Every input rec
 | **Dashboard** | Recommendation, KPI tiles, comparative radar, alignment heatmap, ASCII comparative matrix, CVF profile bars, derailer chart, culture add vs. fit, friction drivers, values, interview probes, 90-day preview |
 | **G1 · Organization** | CVF/OCAI (lived and espoused), Denison, Barrett entropy, Groysberg 8-style profile (current vs. target), internal engagement pulse (e.g., Glint), analyst data caveats, review sentiment (Glassdoor / AmbitionBox / Indeed / Kununu counts plus pasted text), leadership discourse, news signals, enterprise operating norms |
 | **G2 · Team subculture** | Load a unit from the case file's team library (business-unit diagnostics), team CVF, local norms (pace, risk, conflict, autonomy), manager style, interview transcripts, variance from the enterprise |
-| **G3 · Individual** | Hogan HPI / HDS / MVPI percentiles. Big Five, SHL OPQ32 or Korn Ferry KF4D can also be entered as Big Five domains and are mapped to HPI-equivalents. |
+| **G3 · Individual** | Candidate roster; Hogan HPI / HDS / MVPI percentiles (Big Five, SHL OPQ32 or Korn Ferry KF4D can be entered as Big Five domains and are mapped to HPI-equivalents); **interview guide & feedback**, with questions generated from the candidate's analysis, 1–5 ratings, evidence notes, interview notes/transcript, and an overall impression. |
 | **⤒ Evidence & uploads** | Upload PDF / Word / PowerPoint / Excel / text files or paste text: psychometric reports (Hogan, Big Five/NEO, OPQ32, Korn Ferry), culture assessments (OCAI/CVF, Denison, Groysberg, Barrett, engagement pulses), reviews, leadership statements, interview transcripts. Each upload becomes a review card of proposed values that you can edit or untick before applying. Includes an evidence register and interview records, each with add / edit / delete. |
 | **G5 · Data audit & clarification** | Sources catalog, evidence confidence (High / Moderate / Low), contradiction flags, targeted clarifying questions |
 | **Report & export** | Live report preview, plus downloads: report `.html` (prints to PDF), report `.md`, scores `.csv`, and case `.json` save/load |
@@ -31,6 +31,16 @@ The text-analysis helpers infer CVF profiles from leadership text and interview 
 - The **candidate roster** (Individual tab) holds several candidates. Each keeps its own scores, and the dashboard and report compare them against the same team and organization.
 - The **team library** can save, load and delete units.
 - **Autosave:** to the viewer's own private storage on claude.ai, or to browser storage when opened locally. Choose a case in **Load case** to start over.
+
+## Interview guide & feedback
+
+- **Generate / refresh questions** builds a structured behavioural guide from the live analysis: motivation, the largest culture gaps, derailers likely to show up in this context, values and motivator mismatches, culture-add potential, manager fit, and culture contribution. Each question shows why it is asked and what to listen for (positive indicators and red flags). Questions can be edited, added or deleted. Refreshing keeps existing answers.
+- Rate each answer from 1 (significant concern) to 5 (strong positive evidence). Confirmed ratings adjust the model: gap penalties (×0.65–1.25), derailer activation (×0.7–1.2), values congruence, manager fit and culture-add evidence. They also produce an interview evidence index that appears in the decision brief, the candidate comparison and report section 4.4.
+- On claude.ai, Claude can tailor extra questions to the context, or suggest ratings from pasted or uploaded interview notes. Suggestions are flagged and don't count until the assessor confirms them. They never overwrite a rating the assessor has already given.
+
+## Report design
+
+The HTML/PDF report is deliberately monochrome and decision-first. A decision brief opens it: the recommendation, a seven-line scorecard, what supports the hire, risks to manage, conditions if proceeding, and what to resolve before deciding. The supporting analysis follows (phases 1–5, then appendices).
 
 ## Case files & team library
 
