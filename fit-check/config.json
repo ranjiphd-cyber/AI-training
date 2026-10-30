@@ -1,10 +1,10 @@
 {
   "studyName": "Culture Fit Validation Study",
-  "researcher": "",
-  "contactEmail": "",
+  "researcher": "Dr Ranjith T P",
+  "contactEmail": "ranjiphd@gmail.com",
   "ethicsRef": "",
   "dataLocation": "a private Google Sheet controlled by the research team",
   "retention": "up to 5 years, then deleted",
-  "backendUrl": "",
-  "scanEnabled": false
+  "backendUrl": "https://script.google.com/macros/s/AKfycby_PKwHghlChwWL8_teYbMYeUSeRQBw6nOZ_PbnSaZAIhaNztvDcrzzdTNbtYnUP4P9SA/exec",
+  "scanEnabled": true
 }

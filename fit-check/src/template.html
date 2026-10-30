@@ -503,7 +503,7 @@ function startResearch(force) {
     }
     return cleanScan(await sampleFn.json(researchPrompt()), 'claude-knowledge', key);
   })().then(r => { if (researchKey() === key) { st.scan = r; save(); toast(`Company research on ${r.company} is ready (${r.sources.length} source${r.sources.length === 1 ? '' : 's'}).`); } },
-    e => { st.scanError = String(e?.code || e?.message || 'error'); save(); toast(`The company research could not be completed (${st.scanError}). Your report will use your own ratings.`, 7000); })
+    e => { st.scanError = String(e?.code || e?.message || 'error'); save(); const why = { scan_disabled: 'it is not switched on for this study yet', daily_limit: 'today’s research limit has been reached', company_required: 'no organisation name was given' }[st.scanError] || 'the research service could not be reached'; toast(`Company research is unavailable (${why}). Your report will use your own ratings.`, 7000); })
     .finally(() => { scanJob = null; const b = $('#scanBox'); if (b) b.innerHTML = scanBox(); if (steps()[st.step]?.id === 'report' && !researchUI.skipWait) render(); });
   const b = $('#scanBox'); if (b) b.innerHTML = scanBox();
   return scanJob;
