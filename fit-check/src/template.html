@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>C-Psych Fit Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Participant app for the C-Psych validation study. Layout: sticky header with progress,
+   one step per screen (consent → about you → questionnaire blocks → organisation → team →
+   outcomes → report → feedback → submit). Neutral base, one accent (deep blue = "you"),
+   status colours only for judgements. Built by fit-check/build.py; edit src/, not index.html. */
+:root {
+  --bg: #F5F6F8; --card: #FFFFFF; --panel: #F8F9FB; --ink: #1B2230; --muted: #5A6170; --line: #DADDE3; --grid: #E6E8EC;
+  --accent: #1D5B8F; --accent-ink: #FFFFFF; --accent-soft: #E6EEF6;
+  --good: #2D7A4F; --good-soft: #EEF6F1; --warn: #9A5F0C; --warn-soft: #FCF4E6; --bad: #B3261E; --bad-soft: #FBECEA;
+  --shadow: 0 1px 2px rgba(27,34,48,.05), 0 8px 24px rgba(27,34,48,.06);
+  --series-1: #1D5B8F; --series-2: #7A808C; --series-3: #B4B9C2; --series-4: #7A808C; --heat: #1D5B8F; --critical: #B3261E;
+  --f-display: "Source Serif 4", Georgia, serif; --f-body: "Inter", "Segoe UI", system-ui, sans-serif; --f-mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161C; --card: #1A1F27; --panel: #161B22; --ink: #EEF1F5; --muted: #A9B3C3; --line: #2C3440; --grid: #262D38;
+    --accent: #8FB3E0; --accent-ink: #0F1B2D; --accent-soft: #223247; --good: #7FC79A; --good-soft: #1B2E22; --warn: #E2B467; --warn-soft: #33290F; --bad: #EF8D84; --bad-soft: #3A1C1C;
+    --series-1: #8FB3E0; --series-2: #8A93A3; --series-3: #5B6474; --series-4: #8A93A3; --heat: #8FB3E0; --critical: #EF8D84; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161C; --card: #1A1F27; --panel: #161B22; --ink: #EEF1F5; --muted: #A9B3C3; --line: #2C3440; --grid: #262D38;
+  --accent: #8FB3E0; --accent-ink: #0F1B2D; --accent-soft: #223247; --good: #7FC79A; --good-soft: #1B2E22; --warn: #E2B467; --warn-soft: #33290F; --bad: #EF8D84; --bad-soft: #3A1C1C;
+  --series-1: #8FB3E0; --series-2: #8A93A3; --series-3: #5B6474; --series-4: #8A93A3; --heat: #8FB3E0; --critical: #EF8D84; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15.5px/1.6 var(--f-body); }
+.wrap { max-width: 860px; margin: 0 auto; padding-inline: 16px; }
+h1, h2, h3 { font-family: var(--f-display); font-weight: 600; line-height: 1.25; margin: 0 0 8px; text-wrap: balance; }
+h1 { font-size: clamp(1.45rem, 3.4vw, 1.9rem); } h2 { font-size: 1.2rem; margin-top: 20px; } h3 { font-size: 1.02rem; margin-top: 14px; }
+p { margin: 0 0 10px; }
+a { color: var(--accent); }
+.eyebrow { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.muted { color: var(--muted); } .small { font-size: .85rem; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.top .row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-block: 10px; }
+.brand { font-family: var(--f-display); font-size: 1.1rem; display: block; }
+.progress { height: 4px; background: var(--grid); }
+.progress i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+.pid { font-family: var(--f-mono); font-size: .78rem; color: var(--muted); }
+main { padding-block: 22px 60px; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; box-shadow: var(--shadow); margin-bottom: 16px; }
+.btn { border: 1px solid var(--line); background: var(--card); border-radius: 9px; padding: 10px 18px; font-weight: 600; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .opt:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.nav { display: flex; justify-content: space-between; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.field { display: grid; gap: 4px; margin-bottom: 12px; }
+.field > label, .field > .lab { font-weight: 600; font-size: .9rem; }
+.field small { color: var(--muted); }
+input[type=text], input[type=email], input[type=number], select, textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%; }
+textarea { min-height: 90px; resize: vertical; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+@media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; margin-bottom: 8px; cursor: pointer; background: var(--panel); }
+.check input { margin-top: 4px; }
+.choice { display: grid; gap: 8px; }
+.choice label { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--panel); }
+.choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+/* Likert items */
+ol.items { list-style: none; margin: 0; padding: 0; counter-reset: q; }
+li.item { padding: 14px 0; border-bottom: 1px solid var(--grid); counter-increment: q; }
+li.item:last-child { border-bottom: 0; }
+li.item.missing .q { color: var(--bad); }
+.q { font-weight: 500; margin-bottom: 8px; }
+.q::before { content: counter(q) ". "; color: var(--muted); font-family: var(--f-mono); font-size: .85em; }
+.scale { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.opt { position: relative; display: block; cursor: pointer; }
+.opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.opt span { display: grid; place-items: center; text-align: center; min-height: 52px; padding: 6px 4px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); font-size: .74rem; line-height: 1.25; color: var(--muted); overflow-wrap: anywhere; hyphens: auto; }
+.opt input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+@media (max-width: 520px) { .opt span { min-height: 46px; font-size: .66rem; } }
+.notice { border: 1px solid var(--line); border-left: 4px solid var(--accent); background: var(--panel); border-radius: 8px; padding: 12px 14px; margin: 10px 0; font-size: .92rem; }
+.notice.warn { border-left-color: var(--warn); } .notice.bad { border-left-color: var(--bad); background: var(--bad-soft); }
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--card); padding: 10px 16px; border-radius: 8px; z-index: 60; max-width: min(560px, calc(100vw - 32px)); font-size: .88rem; }
+.foot { font-size: .78rem; color: var(--muted); padding-bottom: 30px; }
+table.mini { width: 100%; border-collapse: collapse; font-size: .9rem; }
+table.mini td, table.mini th { padding: 6px 8px; border-bottom: 1px solid var(--grid); text-align: left; }
+table.mini input { max-width: 90px; }
+/* report */
+.rep h2 { border-top: 1.5px solid var(--ink); padding-top: 12px; margin-top: 26px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+.tile { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: var(--panel); }
+.tile .l { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.tile .v { font-family: var(--f-display); font-size: 1.6rem; line-height: 1.15; }
+.tile .s { font-size: .8rem; color: var(--muted); }
+.dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; background: #C3C7CE; vertical-align: 1px; }
+.t-good { background: var(--good); } .t-warn { background: #C9831B; } .t-bad { background: var(--bad); }
+.headline { border: 1px solid var(--line); border-left: 6px solid var(--muted); border-radius: 8px; padding: 14px 16px; background: var(--panel); }
+.headline.good { border-left-color: var(--good); } .headline.warn { border-left-color: #C9831B; } .headline.bad { border-left-color: var(--bad); }
+.headline > b { font-family: var(--f-display); font-size: 1.25rem; display: block; }
+.alert { border: 1.5px solid var(--bad); background: var(--bad-soft); border-radius: 10px; padding: 14px 16px; margin: 14px 0; }
+.alert h3 { margin-top: 0; color: var(--bad); }
+.mm { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; background: var(--panel); break-inside: avoid; }
+.mm .sev { font-size: .72rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 4px; border: 1px solid; margin-right: 6px; }
+.sev.mild { color: var(--muted); border-color: var(--line); } .sev.significant { color: var(--warn); border-color: #E5C48F; background: var(--warn-soft); } .sev.major { color: var(--bad); border-color: #E3A9A4; background: var(--bad-soft); }
+.mm dl { display: grid; grid-template-columns: 130px 1fr; gap: 4px 12px; margin: 8px 0 0; font-size: .92rem; }
+.mm dt { color: var(--muted); font-weight: 600; } .mm dd { margin: 0; }
+@media (max-width: 560px) { .mm dl { grid-template-columns: 1fr; } }
+.bars { display: grid; gap: 8px; }
+.bar { display: grid; grid-template-columns: 170px 1fr 44px; gap: 10px; align-items: center; font-size: .9rem; }
+.bar .tr { height: 9px; background: var(--grid); border-radius: 5px; overflow: hidden; } .bar .tr i { display: block; height: 100%; background: var(--accent); border-radius: 5px; }
+@media (max-width: 520px) { .bar { grid-template-columns: 1fr 44px; } .bar .tr { grid-column: 1 / -1; grid-row: 2; } }
+.cmp { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; align-items: center; font-size: .86rem; }
+.cmp .rows { display: grid; gap: 3px; } .cmp .rows i { display: block; height: 7px; border-radius: 3px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .8rem; color: var(--muted); margin: 6px 0; align-items: center; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -2px; }
+.legend svg { width: 24px; height: 8px; margin-right: 4px; vertical-align: middle; }
+.chart > svg { width: 100%; height: auto; display: block; max-width: 520px; margin: 0 auto; }
+.ok-list li::marker { color: var(--good); } .src li { font-size: .85rem; }
+@media print { .top, .nav, .noprint, .foot { display: none !important; } body { background: #fff; } .card { box-shadow: none; border: 0; padding: 0; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap row"><div><span class="eyebrow" id="studyName">Research study</span><b class="brand">C-Psych Fit Check</b></div><span class="pid" id="pidChip"></span></div>
+  <div class="progress" role="progressbar" aria-label="Progress" aria-valuemin="0" aria-valuemax="100"><i id="prog"></i></div>
+</header>
+<main class="wrap" id="main"></main>
+<footer class="wrap foot" id="foot"></footer>
+<div class="toast" id="toast" role="status" hidden></div>
+<script>
+const CONFIG = /*@@CONFIG*/{}/*@@END*/;
+const INSTRUMENT = /*@@INSTRUMENT*/{}/*@@END*/;
+(() => {
+'use strict';
+/*@@INJECT:model*/
+/*@@INJECT:parsers*/
+/*@@INJECT:guide*/
+
+/* ============================== participant app ============================== */
+const uid = () => Math.random().toString(36).slice(2, 10);
+const toast = (m, ms = 4500) => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => { t.hidden = true; }, ms); };
+const ITEMS = INSTRUMENT.items, BY_ID = Object.fromEntries(ITEMS.map(i => [i.id, i])), RS = INSTRUMENT.response_scales;
+const KEY = 'fitcheck:' + INSTRUMENT.version;
+const LEVELS = { ic: 'Individual contributor', lead: 'Team lead / manager', senior: 'Senior manager', exec: 'Director / executive' };
+const LEVEL_MAP = { ic: 'Individual contributor', lead: 'Manager', senior: 'Senior leader', exec: 'Executive' };
+const MGR_DESC = { directive: 'Directive: sets clear direction and checks closely', consultative: 'Consultative: asks for input, then decides', coaching: 'Coaching: develops people, asks more than tells', delegating: 'Delegating: sets goals, then gives freedom' };
+const SELECTS = {
+  age: ['18–24', '25–34', '35–44', '45–54', '55–64', '65+', 'Prefer not to say'],
+  gender: ['Woman', 'Man', 'Non-binary', 'Another identity', 'Prefer not to say'],
+  experience: ['Less than 2 years', '2–5 years', '6–10 years', '11–20 years', 'More than 20 years'],
+  tenure: ['Less than 6 months', '6–12 months', '1–3 years', '3–5 years', 'More than 5 years'],
+  func: ['Engineering / R&D', 'IT / Digital', 'Operations / Manufacturing', 'Sales / Business development', 'Marketing', 'Finance', 'HR / People', 'Supply chain / Procurement', 'Customer service', 'Legal / Compliance', 'General management', 'Other'],
+  industry: ['Automotive / Mobility', 'Banking / Financial services', 'Consulting / Professional services', 'Education', 'Energy / Utilities', 'FMCG / Retail', 'Government / Public sector', 'Healthcare / Pharma', 'IT / Software', 'Manufacturing / Industrial', 'Media / Telecom', 'Non-profit', 'Other'],
+  size: ['1–49', '50–249', '250–999', '1,000–9,999', '10,000+'],
+};
+const EVENTS = [['layoffs', 'Layoffs'], ['churn', 'Senior leadership changes'], ['restructure', 'Restructuring / reorganisation'], ['regulatory', 'Regulatory or legal issues'], ['growth', 'Strong growth / expansion'], ['mna', 'Merger or acquisition']];
+const UP_MAP = { vol: 'excitable', cyn: 'skeptical', cau: 'cautious', bol: 'bold', lim: 'mischievous', per: 'diligent', dep: 'dutiful' };
+const SELF = { // what a mismatch means for you, what you can do, what to ask (candidate) — by dimension and direction (hi = you are higher than the context)
+  collab: { hi: ['You prefer more connection and consensus than this environment typically offers. It may feel transactional or lonely.', 'Build relationships deliberately: regular 1:1s with key colleagues, and a peer group beyond your immediate team.', 'How do people here collaborate across teams, and how are decisions agreed?'],
+            lo: ['You work more independently than this environment expects. Others may see you as going it alone.', 'Signal involvement: share plans early, ask for input on decisions that affect others, and close the loop.', 'How much consultation is expected before making a decision in this role?'] },
+  innov: { hi: ['You push for change and new ideas faster than this environment absorbs. You may feel held back.', 'Pick one or two ideas with a clear business case and a sponsor, and work through governance rather than around it.', 'How did the last new idea from a team member get approved and implemented?'],
+           lo: ['You prefer proven approaches, while this environment rewards experimentation. You may feel pressure to change faster.', 'Volunteer for a small, low-risk experiment to build comfort with trying new approaches.', 'How are failed experiments treated here?'] },
+  results: { hi: ['You are more target- and competition-driven than this environment. You may be seen as pushing too hard.', 'Frame goals as shared success and recognise others’ contributions publicly.', 'How is performance measured and rewarded here?'],
+             lo: ['This environment is more target-driven than you prefer. You may feel pressured by metrics.', 'Agree clear, realistic goals early and track progress visibly.', 'What do the first-year targets for this role look like?'] },
+  struct: { hi: ['You value structure and clear process more than this environment provides. Ambiguity may be stressful.', 'Create your own structure: written priorities, a decision log and agreed check-ins.', 'How defined are processes and decision rights in this role?'],
+            lo: ['This environment is more rule- and process-bound than you prefer. Approvals and controls may frustrate you.', 'Learn the governance early, build allies in control functions and propose improvements through proper channels.', 'Which approvals would I need for typical decisions in this role?'] },
+  pace: { hi: ['You decide and move faster than the local pace. You may be seen as impulsive.', 'Separate reversible from irreversible decisions, and consult on the irreversible ones even when it feels slow.', 'How long do typical decisions take, and who is involved?'],
+          lo: ['This environment moves faster than you prefer. You may feel rushed.', 'Agree decision deadlines and "good enough" standards, and prepare options in advance.', 'How quickly are decisions expected in this role?'] },
+  risk: { hi: ['You are more comfortable with risk than this environment. Expect friction with risk-averse colleagues or control functions.', 'Make risks explicit, size the downside and pre-agree limits with stakeholders.', 'What is the appetite for risk in this team and organisation?'],
+          lo: ['This environment takes more risk than you are comfortable with.', 'Start with calculated, low-stakes bets and agree safe-to-fail boundaries.', 'How are risky bets decided and supported here?'] },
+  conflict: { hi: ['You are more direct than local norms. Your candour may land as abrasive.', 'Keep the candour but adjust delivery: in private first, specific, and with care for the relationship.', 'How do people here handle disagreement with senior leaders?'],
+              lo: ['This environment expects more open challenge than you are used to. Your views may go unheard.', 'Prepare your view in advance and practise disagreeing respectfully in meetings.', 'How is dissent expected to be raised here?'] },
+  autonomy: { hi: ['You need more freedom than this environment gives. Close supervision may demotivate you.', 'Agree outcomes, decision rights and a reporting rhythm up front so trust can grow.', 'How much latitude would I have, and how is progress monitored?'],
+              lo: ['This environment expects more self-direction than you prefer. You may feel under-supported.', 'Ask for clear priorities and regular check-ins early, then build independence step by step.', 'How much guidance do new joiners get in their first months?'] },
+};
+const B5 = { P_E: ['Extraversion', 'outgoing and energised by people', 'reserved; prefers fewer, deeper interactions'], P_A: ['Agreeableness', 'warm and cooperative', 'direct, task-first and willing to challenge'], P_C: ['Conscientiousness', 'organised, dependable and detail-focused', 'flexible and spontaneous; less structured'], P_ES: ['Emotional stability', 'calm and resilient under pressure', 'more sensitive to stress and setbacks'], P_O: ['Intellect / imagination', 'curious, imaginative and drawn to ideas', 'practical; prefers the concrete and proven'] };
+
+/* ---------- state ---------- */
+const newPid = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 8; i++) s += a[Math.floor(Math.random() * a.length)]; return `FC-${s.slice(0, 4)}-${s.slice(4)}`; };
+const fresh = () => ({ pid: newPid(), started: Date.now(), step: 0, mode: '', consent: {}, demo: {}, ans: {}, times: {}, ext: { type: 'none', hpi: {}, hds: {}, mvpi: {}, big5: {}, name: '' }, org: { name: '', industry: '', size: '', country: '', events: {}, ocai: { now: {}, pref: {} }, denison: {} }, team: { name: '', size: '', mgrStyle: '' }, scan: null, fb: {}, contact: { email: '' }, submitted: false });
+let st = (() => { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.pid ? s : fresh(); } catch { return fresh(); } })();
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch {} };
+
+/* ---------- steps ---------- */
+function steps() {
+  const s = [{ id: 'welcome', sec: 'Welcome' }, { id: 'about', sec: 'About you' }];
+  const block = b => { const list = ITEMS.filter(i => i.block === b), per = INSTRUMENT.blocks[b].per_page, n = Math.ceil(list.length / per);
+    for (let k = 0; k < n; k++) s.push({ id: `items:${b}:${k}`, block: b, items: list.slice(k * per, (k + 1) * per), page: k + 1, pages: n, sec: INSTRUMENT.blocks[b].title }); };
+  ['personality', 'motives', 'style', 'pressure'].forEach(block);
+  s.push({ id: 'existing', sec: 'Other assessments' }, { id: 'orgInfo', sec: 'Your organisation' });
+  block('org'); s.push({ id: 'teamInfo', sec: 'Your team' }); block('team');
+  if (st.mode === 'current') block('criteria');
+  s.push({ id: 'report', sec: 'Your report' }, { id: 'feedback', sec: 'Your feedback' }, { id: 'done', sec: 'Thank you' });
+  return s;
+}
+const isCandidate = () => st.mode === 'candidate';
+const orgWord = () => isCandidate() ? 'the organisation you are considering' : 'your organisation';
+
+/* ---------- scoring ---------- */
+function scores() {
+  const by = {};
+  for (const it of ITEMS) { if (it.scale === 'CHECK') continue; const v = st.ans[it.id]; if (!v) continue; (by[it.scale] ||= []).push(it.key === -1 ? 6 - v : v); }
+  const out = {};
+  for (const [sc, vals] of Object.entries(by)) { const m = vals.reduce((a, b) => a + b, 0) / vals.length; out[sc] = { mean: m, score: (m - 1) / 4 * 100, n: vals.length }; }
+  return out;
+}
+function quality() {
+  const ac = Object.entries(INSTRUMENT.checks).filter(([k, v]) => st.ans[k] === v).length, blocks = [];
+  for (const b of ['personality', 'motives', 'style', 'pressure', 'org']) { const v = ITEMS.filter(i => i.block === b && i.scale !== 'CHECK').map(i => st.ans[i.id]).filter(Boolean); if (v.length >= 10 && new Set(v).size === 1) blocks.push(b); }
+  return { ac_pass: ac, ac_total: Object.keys(INSTRUMENT.checks).length, straightline: blocks, duration: Math.round((Date.now() - st.started) / 1000) };
+}
+const pickNum = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== '' && v !== null && Number.isFinite(+v)).map(([k, v]) => [k, +v]));
+function buildS() {
+  const S = blankCase(), sc = scores(), g = k => sc[k]?.score ?? 50, mean = k => sc[k]?.mean ?? 3;
+  S.meta.candidate = 'You'; S.meta.role = st.demo.func || ''; S.meta.level = LEVEL_MAP[st.demo.level] || 'Manager';
+  S.meta.org = st.org.name || (isCandidate() ? 'The organisation' : 'Your organisation'); S.meta.team = st.team.name || 'your team';
+  // individual: own questionnaire by default; a complete Hogan entry replaces the matching part (normed percentiles)
+  const hpi = pickNum(st.ext.hpi), hds = pickNum(st.ext.hds), mv = pickNum(st.ext.mvpi), b5 = pickNum(st.ext.big5);
+  if (st.ext.type === 'hogan' && Object.keys(hpi).length === 7) { S.ind.instrument = 'hogan'; S.ind.hpi = hpi; }
+  else if (st.ext.type === 'big5' && Object.keys(b5).length === 5) { S.ind.instrument = 'big5'; S.ind.big5 = b5; }
+  else { S.ind.instrument = 'big5'; S.ind.big5 = { O: g('P_O'), C: g('P_C'), E: g('P_E'), A: g('P_A'), N: 100 - g('P_ES') }; }
+  S.ind.mvpi = st.ext.type === 'hogan' && Object.keys(mv).length === 10 ? mv : Object.fromEntries(MVPI.map(([k]) => [k, g(`MV_${k}`)]));
+  S.ind.hds = st.ext.type === 'hogan' && Object.keys(hds).length === 11 ? hds : { reserved: 0, leisurely: 0, colorful: 0, imaginative: 0, ...Object.fromEntries(Object.entries(UP_MAP).map(([k, h]) => [h, g(`UP_${k}`)])) };
+  S.ind.ledger = { hpi: true, hds: true, mvpi: true }; S.ind.norm = st.ext.type === 'hogan' ? 'Hogan norms (participant-entered)' : 'Provisional scale scores (not yet normed)';
+  // organisation: an uploaded/entered OCAI profile outranks a single rater; in candidate mode a public scan is blended with the candidate's impressions
+  const ocN = pickNum(st.org.ocai.now), ocP = pickNum(st.org.ocai.pref), sc4 = p => Object.fromEntries(QUADS.map(([k]) => [k, mean(`${p}_${k}`)]));
+  S.org.cvfNow = Object.keys(ocN).length === 4 ? ocN : sc4('OR');
+  if (isCandidate() && st.scan?.cvf) { const a = normCvf(S.org.cvfNow); S.org.cvfNow = Object.fromEntries(QUADS.map(([k]) => [k, (a[k] + (+st.scan.cvf[k] || 25)) / 2])); }
+  S.org.cvfEsp = Object.keys(ocP).length === 4 ? ocP : sc4('OE');
+  S.org.ops = Object.fromEntries(OPS.map(([k]) => [k, isCandidate() && st.scan?.norms?.[k] != null ? (g(`ON_${k}`) + +st.scan.norms[k]) / 2 : g(`ON_${k}`)]));
+  S.org.psych = mean('OX_psych'); S.org.cred = mean('OX_cred'); S.org.recommend = g('OX_rec'); S.org.rating = 1 + (g('OX_psych') + g('OX_rec')) / 200 * 4;
+  S.org.signals = { ...S.org.signals, ...Object.fromEntries(EVENTS.map(([k]) => [k, !!st.org.events[k] || !!st.scan?.signals?.[k]])) };
+  const den = pickNum(st.org.denison); if (Object.keys(den).length === 4) { S.org.denison = den; S.org.ledger.denison = true; }
+  Object.assign(S.org.ledger, { survey: Object.keys(ocN).length === 4, reviews: true, leadership: true, news: true });
+  // team
+  S.team.cvf = sc4('TC'); S.team.ops = Object.fromEntries(OPS.map(([k]) => [k, g(`TN_${k}`)])); S.team.mgrStyle = st.team.mgrStyle || 'consultative';
+  S.team.ledger = { manager: true, peers: 2, reports: 1, xfn: 1, bu: false }; S.team.transcript = 'participant rating '.repeat(12);
+  return S;
+}
+
+/* ---------- report ---------- */
+const sevOf = m => m >= 35 ? 'major' : m >= 25 ? 'significant' : m >= 15 ? 'mild' : null;
+function analyse() {
+  const S = buildS(), R = compute(S), sc = scores();
+  const mism = [], fits = [];
+  for (const d of DIMS) {
+    const gT = R.aTeam.per[d.k].gap, gO = R.aOrg.per[d.k].gap, useT = Math.abs(gT) >= Math.abs(gO), gap = useT ? gT : gO, sev = sevOf(Math.abs(gap));
+    if (sev) mism.push({ type: 'dim', d, gap, ctx: useT ? 'team' : 'organisation', sev, txt: SELF[d.k][gap > 0 ? 'hi' : 'lo'], w: (useT ? R.aTeam : R.aOrg).per[d.k].w });
+    else if (Math.abs(gT) < 12 && Math.abs(gO) < 12) fits.push(d);
+  }
+  if (R.vcOrg < 55) mism.push({ type: 'values', sev: R.vcOrg < 40 ? 'major' : 'significant', vc: R.vcOrg });
+  const assessed = new Set(Object.values(UP_MAP).concat(st.ext.type === 'hogan' && Object.keys(pickNum(st.ext.hds)).length === 11 ? HDS.map(h => h.k) : []));
+  const pressure = R.der.filter(h => assessed.has(h.k) && h.score >= 60).slice(0, 3);
+  for (const h of pressure) if (h.act >= 80) mism.push({ type: 'pressure', sev: 'major', h });
+  if (R.fBand === 'Critical') mism.push({ type: 'friction', sev: 'major' });
+  const order = { major: 0, significant: 1, mild: 2 };
+  mism.sort((a, b) => order[a.sev] - order[b.sev] || (b.w || 0) - (a.w || 0));
+  const majors = mism.filter(m => m.sev === 'major');
+  const verdict = majors.length || R.overall < 50 ? ['bad', isCandidate() ? 'Significant mismatch: think carefully before deciding' : 'Significant mismatch with your current environment']
+    : R.overall >= 75 ? ['good', 'Strong match'] : R.overall >= 62 ? ['good', 'Good match, with some areas to manage'] : ['warn', 'Partial match: go in with your eyes open'];
+  return { S, R, sc, mism, majors, fits, pressure, verdict };
+}
+const tone = v => v >= 75 ? 'good' : v >= 60 ? '' : v >= 50 ? 'warn' : 'bad';
+function reportHTML(A, standalone) {
+  const { S, R, sc, mism, majors, fits, pressure, verdict } = A, cand = isCandidate();
+  const arch = { [ARCH.stab]: 'You would mostly reinforce the current culture.', [ARCH.add]: 'Your differences point toward the culture leadership says it wants, so you could help move it there.', [ARCH.dis]: 'Your differences work against both the current and the stated culture, so they may create friction rather than change.' }[R.valueAdd];
+  const fr = { Low: 'Low', Moderate: 'Moderate', High: 'High', Critical: 'Critical' }[R.fBand];
+  const li = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
+  const mmCard = m => {
+    if (m.type === 'dim') return `<div class="mm"><span class="sev ${m.sev}">${m.sev}</span><b>${esc(m.d.name)}</b> <span class="muted small">· you are ${r0(Math.abs(m.gap))} points ${m.gap > 0 ? 'higher' : 'lower'} than the ${m.ctx}</span>
+      <dl><dt>What it means</dt><dd>${esc(m.txt[0])}</dd><dt>What you can do</dt><dd>${esc(m.txt[1])}</dd><dt>${cand ? 'Ask before deciding' : 'Discuss with your manager'}</dt><dd>${esc(cand ? m.txt[2] : m.txt[2].replace(/^How/, 'How'))}</dd></dl></div>`;
+    if (m.type === 'values') { const un = rewardMap(R).filter(r => r.flag.startsWith('Unmet')).map(r => r.l);
+      return `<div class="mm"><span class="sev ${m.sev}">${m.sev}</span><b>Values and rewards</b> <span class="muted small">· values match ${r0(m.vc)}%</span><dl><dt>What it means</dt><dd>What motivates you most is not what ${orgWord()} rewards most visibly${un.length ? ` (especially ${esc(un.join(', ').toLowerCase())})` : ''}. Over time this is a common reason for disengagement.</dd><dt>What you can do</dt><dd>Find ways to meet these needs through projects, networks or roles, and be explicit about them in career conversations.</dd><dt>${cand ? 'Ask before deciding' : 'Discuss with your manager'}</dt><dd>What gets people promoted and recognised here? Can you give recent examples?</dd></dl></div>`; }
+    if (m.type === 'pressure') return `<div class="mm"><span class="sev ${m.sev}">${m.sev}</span><b>${esc(SCALE_LABEL(m.h))}</b> <span class="muted small">· likely to be triggered here</span><dl><dt>What it means</dt><dd>Under pressure you may tend toward: ${esc(m.h.looks.toLowerCase())} This environment is likely to trigger it through ${esc(m.h.trig.toLowerCase())}.</dd><dt>What you can do</dt><dd>${esc(m.h.self)}</dd></dl></div>`;
+    return `<div class="mm"><span class="sev major">major</span><b>Overall friction</b><dl><dt>What it means</dt><dd>Several differences add up to a high risk of sustained friction.</dd><dt>What you can do</dt><dd>${cand ? 'Treat the questions in this report as must-ask items before accepting an offer.' : 'Consider a frank conversation with your manager or HR about the areas above.'}</dd></dl></div>`;
+  };
+  const big5 = Object.entries(B5).map(([k, [l, hi, lo]]) => { const v = sc[k]?.score ?? 50; return `<div class="bar"><span>${l}<br><span class="muted small">${v >= 65 ? hi : v <= 35 ? lo : 'balanced'}</span></span><span class="tr"><i style="width:${v}%"></i></span><span class="mono small">${r0(v)}</span></div>`; }).join('');
+  const motives = MVPI.map(([k]) => [k, INSTRUMENT.scales[`MV_${k}`].label, sc[`MV_${k}`]?.score ?? 50]).sort((a, b) => b[2] - a[2]);
+  const rw = rewardMap(R), rwOf = k => rw.find(r => r.k === k);
+  const prefShares = (() => { const v = Object.fromEntries(QUADS.map(([k]) => [k, sc[`CP_${k}`]?.mean ?? 3])); return normCvf(v); })();
+  const cvfRows = QUADS.map(([k, l]) => { const you = prefShares[k], t = normCvf(S.team.cvf)[k], o = normCvf(S.org.cvfNow)[k];
+    return `<span>${l}</span><span class="rows"><i style="width:${you * 2}%;background:var(--series-1)" title="You prefer ${r0(you)}%"></i><i style="width:${t * 2}%;background:var(--series-2)" title="Team ${r0(t)}%"></i><i style="width:${o * 2}%;background:var(--series-3)" title="Organisation ${r0(o)}%"></i></span>`; }).join('');
+  const steps90 = [...mism.filter(m => m.type === 'dim').slice(0, 3).map(m => m.txt[1]), ...pressure.slice(0, 2).map(h => `${SCALE_LABEL(h)}: ${h.self}`)];
+  if (!steps90.length) steps90.push('Keep doing what works: your profile fits this environment well. Use your strengths deliberately and check in with your manager after 90 days.');
+  const scan = st.scan;
+  const legendLine = (c, d, t) => `<span><svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="${c}" stroke-width="2"${d ? ` stroke-dasharray="${d}"` : ''}/></svg>${t}</span>`;
+  const P = standalone ? PAL_PRINT : { ...PAL_LIVE, s1: 'var(--series-1)', s2: 'var(--series-2)', s3: 'var(--series-3)', d2: '6 4', d3: '2 3', fillOp: 0, candOp: 0.12 };
+  return `<div class="rep">
+  <p class="eyebrow">Your culture fit report · ${esc(S.meta.org)} · ${new Date().toLocaleDateString()}</p>
+  <h1>${cand ? 'Would this culture suit you?' : 'How well do you fit your organisation’s culture?'}</h1>
+  <div class="headline ${verdict[0]}"><span class="eyebrow">Summary</span><b>${esc(verdict[1])}</b>
+    <p style="margin:6px 0 0">Your overall fit is <b>${r0(R.overall)}%</b>: ${band(R.teamScore)} with ${esc(S.meta.team)} (${r0(R.teamScore)}%) and ${band(R.orgScore)} with ${esc(S.meta.org)} (${r0(R.orgScore)}%). ${esc(arch)}</p></div>
+  <div class="tiles">
+    <div class="tile"><div class="l">Overall fit</div><div class="v"><span class="dot t-${tone(R.overall)}"></span>${r0(R.overall)}%</div><div class="s">${band(R.overall)}</div></div>
+    <div class="tile"><div class="l">Team fit</div><div class="v"><span class="dot t-${tone(R.teamScore)}"></span>${r0(R.teamScore)}%</div><div class="s">${band(R.teamScore)}</div></div>
+    <div class="tile"><div class="l">Organisation fit</div><div class="v"><span class="dot t-${tone(R.orgScore)}"></span>${r0(R.orgScore)}%</div><div class="s">${band(R.orgScore)}</div></div>
+    <div class="tile"><div class="l">Friction risk</div><div class="v"><span class="dot t-${R.fBand === 'Low' ? 'good' : R.fBand === 'Moderate' ? 'warn' : 'bad'}"></span>${fr}</div><div class="s">first-year friction</div></div>
+  </div>
+  ${majors.length ? `<div class="alert"><h3>Major mismatch${majors.length > 1 ? 'es' : ''} to take seriously</h3><p style="margin:0">${majors.map(m => m.type === 'dim' ? esc(m.d.name) : m.type === 'values' ? 'Values and rewards' : m.type === 'pressure' ? esc(SCALE_LABEL(m.h)) : 'Overall friction').join(' · ')}. These differences are large enough that they often lead to frustration, stress or early exit unless they are actively managed. ${cand ? 'Raise them openly before you accept an offer.' : 'Consider discussing them with your manager, a mentor or HR.'}</p></div>` : ''}
+  <h2>Where you fit</h2>
+  ${fits.length ? `<ul class="ok-list">${fits.map(d => `<li><b>${esc(d.name)}</b>: your preferences are close to both your team and the organisation.</li>`).join('')}</ul>` : '<p class="muted">No dimension is a close match with both the team and the organisation. See the areas below.</p>'}
+  <h2>Where you may clash</h2>
+  ${mism.length ? mism.map(mmCard).join('') : '<p>No material mismatches were found. Differences on every dimension are within normal range.</p>'}
+  <h2>You compared with ${cand ? 'the team and organisation' : 'your team and organisation'}</h2>
+  <div class="chart"><div class="legend">${legendLine(standalone ? PAL_PRINT.s1 : 'var(--series-1)', '', 'You')}${legendLine(standalone ? PAL_PRINT.s2 : 'var(--series-2)', '6 4', 'Team')}${legendLine(standalone ? PAL_PRINT.s3 : 'var(--series-3)', '2 3', 'Organisation')}</div>${radarSVG(R, P, false)}</div>
+  <p class="muted small">Your position comes from your personality, motives and under-pressure answers. Team and organisation positions come from your ratings${S.org.ledger.survey ? ' and the culture survey you entered' : ''}${cand && scan ? ' and the public-sources summary' : ''}.</p>
+  <h3>Culture you say you prefer vs. what you experience</h3>
+  <div class="legend"><span><i style="background:var(--series-1)"></i>You prefer</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Organisation</span></div>
+  <div class="cmp">${cvfRows}</div>
+  <p class="muted small">Clan = collaborative, people-first. Adhocracy = innovative, entrepreneurial. Market = results-driven, competitive. Hierarchy = structured, controlled.</p>
+  <h2>Your profile</h2>
+  <h3>How you see yourself</h3><div class="bars">${big5}</div>
+  <h3>What motivates you, and whether ${orgWord()} rewards it</h3>
+  <table class="mini"><thead><tr><th>Motive</th><th>Strength</th><th>Rewarded here</th></tr></thead><tbody>${motives.slice(0, 4).map(([k, l, v]) => { const r = rwOf(k); return `<tr><td>${esc(l)}</td><td>${r0(v)}</td><td>${r.reward >= 60 ? '<span class="dot t-good"></span>Strongly' : r.reward >= 40 ? '<span class="dot"></span>Partly' : '<span class="dot t-bad"></span>Weakly'}</td></tr>`; }).join('')}</tbody></table>
+  <h3>Under pressure</h3>
+  ${pressure.length ? li(pressure.map(h => `<b>${esc(SCALE_LABEL(h))}</b> (${r0(h.score)}): ${esc(h.looks)} <span class="muted">Likely trigger here: ${esc(h.trig.toLowerCase())}. Tip: ${esc(h.self)}</span>`)) : '<p>None of your under-pressure tendencies is elevated.</p>'}
+  ${scan ? `<h2>What public sources suggest</h2><p>${esc(scan.summary || '')}</p>${(scan.concerns || []).length || (scan.strengths || []).length ? `<div class="grid2"><div><h3>Often praised</h3>${li((scan.strengths || []).map(esc))}</div><div><h3>Often criticised</h3>${li((scan.concerns || []).map(esc))}</div></div>` : ''}
+    <p class="muted small">Evidence strength: ${esc(scan.strength || 'unknown')}. ${scan.provider === 'claude-knowledge' ? 'Based on Claude’s general knowledge, without a live web search.' : 'Based on a live web search of public sources.'} Public reviews are self-selected and can be outdated.</p>
+    ${(scan.sources || []).length ? `<ul class="src">${scan.sources.slice(0, 8).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title || s.url)}</a></li>`).join('')}</ul>` : ''}` : ''}
+  <h2>${cand ? 'If you join: your first 90 days' : 'Getting more aligned: your next 90 days'}</h2>
+  ${li(steps90.map(esc))}
+  ${cand ? `<h2>Questions to ask before you decide</h2>${li([...new Set(mism.filter(m => m.type === 'dim').map(m => m.txt[2]))].slice(0, 5).concat(['What would success look like for this role after 12 months?', 'Why did the previous person in this role leave or move on?']).map(esc))}` : ''}
+  <h2>About this report</h2>
+  <p class="small muted">This is a research version of a decision-support tool. The personality items are the public-domain IPIP Big-Five markers. The other scales are new and still being validated, so scores are scale scores (0–100), not normed percentiles. The report describes tendencies and fit with the environment as you rated it, not your ability or worth, and it should never be the only basis for a career or hiring decision. Participant code: <span class="mono">${esc(st.pid)}</span>.</p>
+</div>`;
+}
+const SCALE_LABEL = h => (INSTRUMENT.scales[`UP_${Object.keys(UP_MAP).find(k => UP_MAP[k] === h.k)}`] || {}).label || h.n;
+
+/* ---------- views ---------- */
+const sel = (name, path, opts, ph = 'Select…') => `<select id="${name}" data-bind="${path}"><option value="">${ph}</option>${opts.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<option value="${esc(v)}" ${getP(st, path) === v ? 'selected' : ''}>${esc(l)}</option>`; }).join('')}</select>`;
+const txt = (name, path, ph = '', type = 'text') => `<input type="${type}" id="${name}" data-bind="${path}" value="${esc(getP(st, path) ?? '')}" placeholder="${esc(ph)}">`;
+const fld = (label, ctrl, hint = '') => `<div class="field"><label>${label}</label>${ctrl}${hint ? `<small>${hint}</small>` : ''}</div>`;
+const navBtns = (next = 'Continue', back = true) => `<div class="nav">${back ? '<button class="btn" type="button" data-go="back">Back</button>' : '<span></span>'}<button class="btn primary" type="button" data-go="next">${next}</button></div>`;
+const VIEWS = {
+  welcome: () => `<div class="card"><p class="eyebrow">${esc(CONFIG.studyName || 'Research study')}</p><h1>Do you fit your organisation's culture, or the one you are considering?</h1>
+    <p>This study tests a tool that compares a person's working style, motives and behaviour under pressure with the culture of their organisation and team. You will get a personal report straight away, and you can tell us whether it matches your experience.</p>
+    <p class="muted">Takes about <b>20–25 minutes</b>. Your progress is saved on this device, so you can stop and come back.</p>
+    ${st.step > 0 || Object.keys(st.ans).length ? `<div class="notice">Welcome back. You have answered ${Object.keys(st.ans).length} questions. <button class="btn" type="button" data-resume>Continue where you left off</button> <button class="btn" type="button" data-restart>Start again</button></div>` : ''}
+    <h2>Which describes you?</h2>
+    <div class="choice" role="radiogroup">
+      <label><input type="radio" name="mode" value="current" data-bind="mode" ${st.mode === 'current' ? 'checked' : ''}><span><b>I work in the organisation I will describe</b><br><span class="muted small">You rate your current organisation and team. Your feedback helps validate the tool.</span></span></label>
+      <label><input type="radio" name="mode" value="candidate" data-bind="mode" ${st.mode === 'candidate' ? 'checked' : ''}><span><b>I am considering joining an organisation</b><br><span class="muted small">You describe what you know about it. A public-sources summary can help where available.</span></span></label>
+    </div>
+    <h2>Information and consent</h2>
+    <details class="notice"><summary><b>Read the participant information</b></summary>
+      <p><b>Purpose.</b> To test the reliability and validity of a culture-fit assessment for research and to improve the tool.</p>
+      <p><b>What you do.</b> Answer questionnaires about yourself, your organisation and your team, read your report, and rate how accurate it is.</p>
+      <p><b>Your data.</b> We do not ask for your name. Your answers are stored with a random participant code (<span class="mono">${esc(st.pid)}</span>). The organisation name is optional and used only for grouped analysis; we never report results that identify an organisation or a person. Data is stored securely by the research team${CONFIG.dataLocation ? ` (${esc(CONFIG.dataLocation)})` : ''} and kept for ${esc(CONFIG.retention || 'up to 5 years')}.</p>
+      <p><b>Voluntary.</b> You can stop at any time. You can withdraw your data later using your participant code.</p>
+      <p><b>Not a hiring decision.</b> The report is for your reflection. It is not used to make decisions about you.</p>
+      <p><b>Contact.</b> ${esc(CONFIG.researcher || 'The research team')}${CONFIG.contactEmail ? `, <a href="mailto:${esc(CONFIG.contactEmail)}">${esc(CONFIG.contactEmail)}</a>` : ''}.${CONFIG.ethicsRef ? ` Ethics approval: ${esc(CONFIG.ethicsRef)}.` : ''}</p>
+    </details>
+    <label class="check"><input type="checkbox" data-bind="consent.age" ${st.consent.age ? 'checked' : ''}><span>I am 18 or older.</span></label>
+    <label class="check"><input type="checkbox" data-bind="consent.info" ${st.consent.info ? 'checked' : ''}><span>I have read the participant information and understand that taking part is voluntary.</span></label>
+    <label class="check"><input type="checkbox" data-bind="consent.research" ${st.consent.research ? 'checked' : ''}><span>I agree that my anonymous answers may be used for research and to improve the tool.</span></label>
+    <details style="margin-top:8px"><summary class="small muted">Taking part again? Enter your previous participant code</summary><div class="field" style="margin-top:8px">${txt('prevPid', 'prevPid', 'FC-XXXX-XXXX')}<small>This lets us measure how stable the scores are over time (test–retest reliability).</small></div></details>
+    ${navBtns('Start', false)}</div>`,
+  about: () => `<div class="card"><p class="eyebrow">About you</p><h1>A little about you</h1><p class="muted">These details let us check that the tool works fairly for different groups. Answer what you are comfortable with.</p>
+    <div class="grid2">${fld('Age', sel('age', 'demo.age', SELECTS.age))}${fld('Gender', sel('gender', 'demo.gender', SELECTS.gender))}
+    ${fld('Country where you work', txt('country', 'demo.country', 'e.g., India'))}${fld('Total work experience', sel('exp', 'demo.exp', SELECTS.experience))}
+    ${fld('Your level', sel('level', 'demo.level', Object.entries(LEVELS)))}${fld('Your function', sel('func', 'demo.func', SELECTS.func))}
+    ${st.mode === 'current' ? fld('Time in this organisation', sel('torg', 'demo.tenureOrg', SELECTS.tenure)) + fld('Time in your current team', sel('tteam', 'demo.tenureTeam', SELECTS.tenure)) : ''}</div>
+    ${navBtns()}</div>`,
+  existing: () => `<div class="card"><p class="eyebrow">Other assessments (optional)</p><h1>Have you completed another personality assessment?</h1>
+    <p>If you have a recent report from Hogan or a Big Five instrument (e.g., NEO-PI-R, BFI-2), entering the scores lets us compare them with this questionnaire. That is one of the most valuable checks of the tool's validity. Your report will then use the established scores.</p>
+    <div class="choice">${[['none', 'No, or I prefer not to'], ['hogan', 'Hogan (HPI / HDS / MVPI)'], ['big5', 'Another Big Five instrument']].map(([v, l]) => `<label><input type="radio" name="ext" value="${v}" data-bind="ext.type" ${st.ext.type === v ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
+    ${st.ext.type !== 'none' ? `<div style="margin-top:14px"><label class="btn">Read scores from my report (PDF, Word, text)<input type="file" id="extFile" hidden accept=".pdf,.docx,.txt,.md,.html,.htm"></label> <span class="muted small">The file is read on your device and not uploaded. Check the numbers below.</span></div>
+    ${st.ext.type === 'hogan' ? `<div class="grid2" style="margin-top:12px">${[['hpi', HPI.map(([k, l]) => [k, l])], ['hds', HDS.map(h => [h.k, h.n])], ['mvpi', MVPI]].map(([g, list]) => `<div><h3>${g.toUpperCase()} percentiles</h3><table class="mini">${list.map(([k, l]) => `<tr><td>${esc(l)}</td><td><input type="number" min="0" max="100" data-bind="ext.${g}.${k}" value="${esc(st.ext[g][k] ?? '')}" aria-label="${esc(l)}"></td></tr>`).join('')}</table></div>`).join('')}</div>`
+      : `${fld('Instrument name', txt('extName', 'ext.name', 'e.g., NEO-PI-R'))}<table class="mini">${BIG5.map(([k, l]) => `<tr><td>${esc(l)} (percentile)</td><td><input type="number" min="0" max="100" data-bind="ext.big5.${k}" value="${esc(st.ext.big5[k] ?? '')}" aria-label="${esc(l)}"></td></tr>`).join('')}</table>`}` : ''}
+    ${navBtns()}</div>`,
+  orgInfo: () => `<div class="card"><p class="eyebrow">${isCandidate() ? 'The organisation you are considering' : 'Your organisation'}</p><h1>${isCandidate() ? 'Tell us about the organisation' : 'Tell us about your organisation'}</h1>
+    <div class="grid2">${fld('Organisation name', txt('orgName', 'org.name', 'e.g., Acme Ltd'), isCandidate() ? 'Needed for the public-sources summary.' : 'Optional. Used only for grouped analysis, never reported individually.')}
+    ${fld('Industry', sel('ind', 'org.industry', SELECTS.industry))}${fld('Number of employees', sel('size', 'org.size', SELECTS.size))}${fld('Country / location', txt('oc', 'org.country', 'e.g., Bangalore, India'))}</div>
+    <div class="field"><span class="lab">Has any of this happened in the last 12 months?</span>${EVENTS.map(([k, l]) => `<label class="check"><input type="checkbox" data-bind="org.events.${k}" ${st.org.events[k] ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
+    <details class="notice"><summary><b>Optional: results from a culture survey</b> (OCAI, Denison)</summary>
+      <p class="small muted" style="margin-top:8px">If your organisation has run an OCAI or Denison survey, enter the organisation-level results, or read them from the report. One person's ratings are less reliable than a survey of many employees.</p>
+      <label class="btn">Read from report<input type="file" id="cultFile" hidden accept=".pdf,.docx,.xlsx,.pptx,.txt,.md,.csv"></label>
+      <table class="mini" style="margin-top:8px"><thead><tr><th>OCAI quadrant</th><th>Now</th><th>Preferred</th></tr></thead>${QUADS.map(([k, l]) => `<tr><td>${l}</td><td><input type="number" min="0" max="100" data-bind="org.ocai.now.${k}" value="${esc(st.org.ocai.now[k] ?? '')}" aria-label="${l} now"></td><td><input type="number" min="0" max="100" data-bind="org.ocai.pref.${k}" value="${esc(st.org.ocai.pref[k] ?? '')}" aria-label="${l} preferred"></td></tr>`).join('')}</table>
+      <table class="mini"><thead><tr><th>Denison trait</th><th>Score</th></tr></thead>${DEN.map(([k, l]) => `<tr><td>${l}</td><td><input type="number" min="0" max="100" data-bind="org.denison.${k}" value="${esc(st.org.denison[k] ?? '')}" aria-label="${l}"></td></tr>`).join('')}</table></details>
+    <div class="notice" id="scanBox">${scanBox()}</div>
+    ${navBtns()}</div>`,
+  teamInfo: () => `<div class="card"><p class="eyebrow">${isCandidate() ? 'The team you would join' : 'Your team'}</p><h1>${isCandidate() ? 'Tell us about the team' : 'Tell us about your team'}</h1>
+    ${isCandidate() ? '<p class="muted">Use what you learned from interviews, conversations or people you know there.</p>' : ''}
+    <div class="grid2">${fld('Team or function name', txt('tn', 'team.name', 'e.g., Digital product team'), 'Optional.')}${fld('Team size', sel('ts', 'team.size', ['2–5', '6–10', '11–20', '21–50', 'More than 50']))}</div>
+    <div class="field"><span class="lab">How does ${isCandidate() ? 'the hiring manager' : 'your manager'} usually lead?</span><div class="choice">${Object.entries(MGR_DESC).map(([k, l]) => `<label><input type="radio" name="mgr" value="${k}" data-bind="team.mgrStyle" ${st.team.mgrStyle === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>
+    ${navBtns()}</div>`,
+  report: () => { const A = analyse(); st.lastModel = summariseModel(A); save();
+    return `<div class="card">${reportHTML(A, false)}<div class="nav noprint"><button class="btn" type="button" data-go="back">Back</button><span><button class="btn" type="button" id="dlReport">Download report</button> <button class="btn" type="button" onclick="window.print()">Print</button> <button class="btn primary" type="button" data-go="next">Continue: rate this report</button></span></div></div>`; },
+  feedback: () => { const cand = isCandidate(), rs = RS.agree;
+    const q = [['FB_self', 'The description of me is accurate.'], ['FB_org', cand ? 'The picture of the organisation matches what I know about it.' : 'The description of my organisation’s culture is accurate.'], ['FB_team', cand ? 'The picture of the team matches what I learned about it.' : 'The description of my team’s culture is accurate.'], ['FB_fit', cand ? 'The areas where I would fit or clash seem right to me.' : 'The areas where I fit and clash match my real experience.'], ['FB_advice', 'The suggestions are practical and useful.']];
+    if (st.scan) q.push(['FB_public', cand ? 'The public-sources summary matches what I have heard.' : 'The public-sources summary matches my experience inside the organisation.']);
+    if (cand) q.push(['FB_decide', 'This report helps me decide whether to join.']);
+    return `<div class="card"><p class="eyebrow">Your feedback</p><h1>How accurate was your report?</h1><p class="muted">This is the most important part of the study: it tells us whether the tool reflects reality.</p>
+    <ol class="items">${q.map(([id, t]) => itemHTML({ id, text: t, rs: 'agree' }, st.fb[id], 'fb')).join('')}</ol>
+    ${fld('What did the report get wrong, or what surprised you?', `<textarea data-bind="fb.FB_comment" placeholder="Optional">${esc(st.fb.FB_comment || '')}</textarea>`)}
+    ${fld('Anything we should add to make it more useful?', `<textarea data-bind="fb.FB_suggest" placeholder="Optional">${esc(st.fb.FB_suggest || '')}</textarea>`)}
+    <h2>Follow-up (optional)</h2><p class="small muted">${cand ? 'Would you tell us in 6 months whether you joined and how it is going? This is how we check whether the tool predicts real outcomes.' : 'Would you answer 5 short questions in 6–12 months? This is how we check whether the tool predicts real outcomes.'} Your email is stored separately from your answers.</p>
+    ${fld('Email for follow-up', txt('em', 'contact.email', 'you@example.com', 'email'))}
+    ${navBtns(st.submitted ? 'Continue' : 'Submit my answers')}</div>`; },
+  done: () => `<div class="card"><p class="eyebrow">Thank you</p><h1>Your answers have ${st.submitted === 'local' ? 'been saved to a file' : 'been submitted'}</h1>
+    <p>Thank you for contributing to this research.</p><p>Your participant code is <b class="mono">${esc(st.pid)}</b>. Keep it if you might want to withdraw your data or take part in a follow-up.</p>
+    <div class="nav"><button class="btn" type="button" id="dlReport">Download my report</button><button class="btn" type="button" id="dlData">Download my answers (JSON)</button>${CONFIG.backendUrl ? '<button class="btn" type="button" id="withdraw">Withdraw my data</button>' : ''}<button class="btn" type="button" data-restart>Start a new assessment</button></div>
+    <p class="small muted" style="margin-top:12px">${CONFIG.contactEmail ? `Questions or withdrawal by email: <a href="mailto:${esc(CONFIG.contactEmail)}?subject=${encodeURIComponent('Fit Check ' + st.pid)}">${esc(CONFIG.contactEmail)}</a>.` : ''}</p></div>`,
+};
+function itemHTML(it, val, ns = 'ans') {
+  const labels = RS[it.rs];
+  return `<li class="item" data-item="${it.id}"><p class="q" id="q_${it.id}">${esc(it.text)}</p><div class="scale" role="radiogroup" aria-labelledby="q_${it.id}">${labels.map((l, i) => `<label class="opt"><input type="radio" name="${ns}_${it.id}" value="${i + 1}" data-ans="${ns}" data-id="${it.id}" ${+val === i + 1 ? 'checked' : ''}><span>${esc(l)}</span></label>`).join('')}</div></li>`;
+}
+function itemsView(s) {
+  const B = INSTRUMENT.blocks[s.block], cand = isCandidate();
+  let intro = B.intro;
+  if (cand && s.block === 'org') intro = 'Describe the organisation as best you can from interviews, conversations, people you know there and what you have read. If you really cannot judge a statement, choose the middle option.';
+  if (cand && s.block === 'team') intro = 'Describe the team as best you can from your interviews and conversations. If you cannot judge a statement, choose the middle option.';
+  return `<div class="card"><p class="eyebrow">${esc(B.title)} · page ${s.page} of ${s.pages}</p><h1>${esc(B.title)}</h1>${s.page === 1 ? `<p class="muted">${esc(intro)}</p>` : ''}
+    <ol class="items" style="counter-reset:q ${(s.page - 1) * B.per_page}">${s.items.map(it => itemHTML(it, st.ans[it.id])).join('')}</ol>${navBtns()}</div>`;
+}
+function scanBox() {
+  const can = (CONFIG.backendUrl && CONFIG.scanEnabled) || sampleFn;
+  if (st.scan) return `<b>Public-sources summary ready.</b> <span class="muted small">${esc((st.scan.summary || '').slice(0, 160))}…</span> <button class="btn" type="button" id="scanBtn">Refresh</button>`;
+  if (!can) return `<span class="muted small">A public-sources culture summary is not available in this version.</span>`;
+  return `<b>Optional: summarise public information about this organisation's culture</b><p class="small muted" style="margin:6px 0">${CONFIG.backendUrl && CONFIG.scanEnabled ? 'Searches public sources (employee review sites, news, leadership statements) and summarises them.' : 'Uses Claude’s general knowledge (no live web search).'} It appears in your report next to your own view${isCandidate() ? ' and is blended with it' : ''}. Takes up to a minute.</p><button class="btn" type="button" id="scanBtn">Create summary</button>`;
+}
+
+/* ---------- public culture scan ---------- */
+let sampleFn = null;
+const SCAN_SCHEMA = '{"summary": "4-6 sentence summary of the lived culture", "strengths": ["up to 5 things employees often praise"], "concerns": ["up to 5 things employees often criticise"], "espoused_values": ["values leadership publicly states"], "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n} (shares summing to 100), "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "signals": {"layoffs": bool, "churn": bool, "restructure": bool, "regulatory": bool, "growth": bool, "mna": bool}, "strength": "low" | "moderate" | "high", "caveats": ["..."], "sources": [{"title": "...", "url": "..."}]}';
+function cleanScan(r, provider) {
+  if (!r || typeof r !== 'object') throw new Error('bad scan');
+  const cv = r.cvf && QUADS.every(([k]) => Number.isFinite(+r.cvf[k])) ? normCvf(Object.fromEntries(QUADS.map(([k]) => [k, Math.max(1, +r.cvf[k])]))) : null;
+  const nm = r.norms ? Object.fromEntries(OPS.map(([k]) => [k, Number.isFinite(+r.norms[k]) ? clamp(+r.norms[k]) : null])) : {};
+  const arr = a => Array.isArray(a) ? a.map(String).slice(0, 6) : [];
+  return { provider, summary: String(r.summary || '').slice(0, 1500), strengths: arr(r.strengths), concerns: arr(r.concerns), espoused: arr(r.espoused_values), cvf: cv, norms: nm,
+    signals: Object.fromEntries(EVENTS.map(([k]) => [k, !!r.signals?.[k]])), strength: ['low', 'moderate', 'high'].includes(r.strength) ? r.strength : 'low', caveats: arr(r.caveats),
+    sources: Array.isArray(r.sources) ? r.sources.filter(s => s && /^https?:\/\//.test(s.url)).slice(0, 10).map(s => ({ title: String(s.title || '').slice(0, 160), url: String(s.url) })) : [] };
+}
+async function runScan(btn) {
+  if (!st.org.name.trim()) return toast('Enter the organisation name first.');
+  btn.disabled = true; btn.textContent = 'Working… (up to a minute)';
+  try {
+    if (CONFIG.backendUrl && CONFIG.scanEnabled) {
+      const res = await fetch(CONFIG.backendUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'scan', company: st.org.name, country: st.org.country, industry: st.org.industry }) });
+      const j = await res.json(); if (!j.ok) throw new Error(j.error || 'scan failed'); st.scan = cleanScan(j.scan, 'web-search');
+    } else {
+      const r = await sampleFn.json(`Summarise the publicly known workplace culture of the organisation "${st.org.name}"${st.org.country ? ` in ${st.org.country}` : ''}${st.org.industry ? ` (${st.org.industry})` : ''}, from what you know about employee reviews, news and leadership statements. If you do not know this organisation, say so in "summary", set "strength" to "low" and leave numbers at neutral values (cvf 25 each, norms 50). Reply with ONLY this JSON: ${SCAN_SCHEMA}`);
+      st.scan = cleanScan(r, 'claude-knowledge');
+    }
+    save(); $('#scanBox').innerHTML = scanBox(); toast('Summary ready. It will appear in your report.');
+  } catch (e) { toast(`The summary could not be created (${e?.code || e?.message || 'error'}). You can continue without it.`, 7000); btn.disabled = false; btn.textContent = 'Try again'; }
+}
+
+/* ---------- submission ---------- */
+function summariseModel(A) {
+  const { R, mism, majors } = A, m = { m_overall: R.overall, m_team: R.teamScore, m_org: R.orgScore, m_friction: R.friction, m_friction_band: R.fBand, m_archetype: R.valueAdd, m_vc_team: R.vcTeam, m_vc_org: R.vcOrg, m_mgrfit: R.mgrFit, m_velfit: R.velFit, m_health: R.health, m_saydo: R.sayDo,
+    m_mismatches: mism.length, m_majors: majors.length, m_major_list: majors.map(x => x.type === 'dim' ? x.d.k : x.type === 'pressure' ? x.h.k : x.type).join('|'), m_verdict: A.verdict[1], m_individual_source: A.S.ind.instrument };
+  for (const d of DIMS) Object.assign(m, { [`m_ind_${d.k}`]: R.x[d.k], [`m_team_${d.k}`]: R.team[d.k], [`m_org_${d.k}`]: R.org[d.k], [`m_gapT_${d.k}`]: R.aTeam.per[d.k].gap, [`m_gapO_${d.k}`]: R.aOrg.per[d.k].gap });
+  for (const h of R.der) m[`m_act_${h.k}`] = h.act;
+  for (const [k, v] of Object.entries(m)) if (typeof v === 'number') m[k] = Math.round(v * 10) / 10;
+  return m;
+}
+function record() {
+  const sc = scores(), q = quality(), r = { pid: st.pid, instrument_version: INSTRUMENT.version, mode: st.mode, submitted_at: new Date().toISOString(), started_at: new Date(st.started).toISOString(), duration_sec: q.duration,
+    retest_of: /^FC-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test((st.prevPid || '').trim().toUpperCase()) ? st.prevPid.trim().toUpperCase() : '', consent_research: !!st.consent.research, consent_followup: !!st.contact.email, ac_pass: q.ac_pass, ac_total: q.ac_total, straightline_blocks: q.straightline.join('|'), device: /Mobi/i.test(navigator.userAgent) ? 'mobile' : 'desktop' };
+  for (const [k, v] of Object.entries(st.demo)) r[`demo_${k}`] = v;
+  for (const it of ITEMS) r[it.id] = st.ans[it.id] ?? '';
+  for (const [k, v] of Object.entries(sc)) r[`sc_${k}`] = Math.round(v.score * 10) / 10;
+  r.ext_type = st.ext.type; r.ext_name = st.ext.name || '';
+  for (const g of ['hpi', 'hds', 'mvpi', 'big5']) for (const [k, v] of Object.entries(pickNum(st.ext[g]))) r[`ext_${g}_${k}`] = v;
+  Object.assign(r, { org_name: st.org.name.trim(), org_industry: st.org.industry, org_size: st.org.size, org_country: st.org.country, team_name: st.team.name, team_size: st.team.size, team_mgr_style: st.team.mgrStyle });
+  for (const [k] of EVENTS) r[`org_event_${k}`] = !!st.org.events[k];
+  for (const [k, v] of Object.entries(pickNum(st.org.ocai.now))) r[`ocai_now_${k}`] = v;
+  for (const [k, v] of Object.entries(pickNum(st.org.ocai.pref))) r[`ocai_pref_${k}`] = v;
+  for (const [k, v] of Object.entries(pickNum(st.org.denison))) r[`denison_${k}`] = v;
+  if (st.scan) { Object.assign(r, { scan_provider: st.scan.provider, scan_strength: st.scan.strength, scan_summary: st.scan.summary.slice(0, 1000), scan_sources: st.scan.sources.map(s => s.url).join(' ') });
+    if (st.scan.cvf) for (const [k, v] of Object.entries(st.scan.cvf)) r[`scan_cvf_${k}`] = Math.round(v * 10) / 10;
+    for (const [k, v] of Object.entries(st.scan.norms || {})) if (v != null) r[`scan_norm_${k}`] = v; }
+  Object.assign(r, st.lastModel || summariseModel(analyse()));
+  for (const [k, v] of Object.entries(st.fb)) r[k] = v;
+  return r;
+}
+async function submit() {
+  const rec = record();
+  if (!CONFIG.backendUrl) { st.submitted = 'local'; save(); download(`fitcheck-${st.pid}.json`, JSON.stringify(rec, null, 1), 'application/json'); return true; }
+  try {
+    const res = await fetch(CONFIG.backendUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'submit', record: rec, contact: st.contact.email ? { pid: st.pid, email: st.contact.email } : null }) });
+    const j = await res.json(); if (!j.ok) throw new Error(j.error || 'not stored');
+    st.submitted = 'server'; save(); return true;
+  } catch (e) {
+    toast(`We could not reach the study server (${e.message}). Your answers were saved to a file instead; please email it to ${CONFIG.contactEmail || 'the research team'}.`, 9000);
+    st.submitted = 'local'; save(); download(`fitcheck-${st.pid}.json`, JSON.stringify(rec, null, 1), 'application/json'); return true;
+  }
+}
+let dlNs = null;
+function download(name, text, type) {
+  const fallback = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); };
+  if (!dlNs) return fallback();
+  dlNs.save({ filename: name, data: text }).catch(e => { if (!['declined', 'rate_limited'].includes(e?.code)) fallback(); });
+}
+function standaloneReport() {
+  const css = [...document.styleSheets].map(s => { try { return [...s.cssRules].map(r => r.cssText).join('\n'); } catch { return ''; } }).join('\n');
+  return `<!doctype html><html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Culture fit report ${esc(st.pid)}</title><style>${css}</style></head><body><main class="wrap"><div class="card">${reportHTML(analyse(), true)}</div></main></body></html>`;
+}
+
+/* ---------- navigation & validation ---------- */
+function validate(s) {
+  if (s.id === 'welcome') { if (!st.mode) return 'Choose which describes you.'; if (!st.consent.age || !st.consent.info || !st.consent.research) return 'Please confirm all three statements to take part.'; }
+  if (s.id === 'about' && !st.demo.level) return 'Please select your level.';
+  if (s.items) { const miss = s.items.filter(it => !st.ans[it.id]); if (miss.length) { for (const it of miss) $(`[data-item="${it.id}"]`)?.classList.add('missing'); $(`[data-item="${miss[0].id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return `Please answer all statements (${miss.length} left).`; } }
+  if (s.id === 'teamInfo' && !st.team.mgrStyle) return 'Choose how the manager usually leads.';
+  if (s.id === 'feedback') { const need = ['FB_self', 'FB_org', 'FB_team', 'FB_fit', 'FB_advice'].filter(k => !st.fb[k]); if (need.length) return 'Please rate each statement about your report.'; }
+  return '';
+}
+async function go(dir) {
+  const S = steps(), cur = S[st.step];
+  if (dir > 0) { const err = validate(cur); if (err) return toast(err);
+    st.times[cur.id] = (st.times[cur.id] || 0) + Math.round((Date.now() - (go.t || Date.now())) / 1000);
+    if (cur.id === 'feedback' && !st.submitted) { const b = $('[data-go="next"]'); b.disabled = true; b.textContent = 'Submitting…'; await submit(); } }
+  st.step = Math.max(0, Math.min(S.length - 1, st.step + dir)); save(); render(); window.scrollTo({ top: 0 });
+}
+function render() {
+  const S = steps(); if (st.step >= S.length) st.step = S.length - 1;
+  const s = S[st.step]; go.t = Date.now();
+  $('#main').innerHTML = s.items ? itemsView(s) : VIEWS[s.id]();
+  $('#prog').style.width = `${Math.round(st.step / (S.length - 1) * 100)}%`; $('.progress').setAttribute('aria-valuenow', Math.round(st.step / (S.length - 1) * 100));
+  $('#pidChip').textContent = st.step > 0 ? `${s.sec} · ${st.pid}` : '';
+  document.title = `${s.sec} · C-Psych Fit Check`;
+}
+document.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.ans) { const ns = el.dataset.ans === 'fb' ? st.fb : st.ans; ns[el.dataset.id] = +el.value; el.closest('.item')?.classList.remove('missing'); save(); return; }
+  if (el.dataset.bind) { const v = el.type === 'checkbox' ? el.checked : el.value; setP(st, el.dataset.bind, v); save();
+    if (['ext.type', 'mode'].includes(el.dataset.bind)) render(); }
+});
+document.addEventListener('input', e => { const el = e.target; if (el.dataset.bind && ['text', 'email', 'number', 'textarea'].includes(el.type || el.tagName.toLowerCase())) { setP(st, el.dataset.bind, el.value); save(); } });
+document.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.go) return go(b.dataset.go === 'next' ? 1 : -1);
+  if (b.hasAttribute('data-resume')) { if (!st.mode) return toast('Choose which describes you first.'); return render(); }
+  if (b.hasAttribute('data-restart')) { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Click again to clear all answers'; return; } st = fresh(); save(); render(); return; }
+  if (b.id === 'scanBtn') return runScan(b);
+  if (b.id === 'dlReport') return download(`culture-fit-report-${st.pid}.html`, standaloneReport(), 'text/html');
+  if (b.id === 'dlData') return download(`fitcheck-${st.pid}.json`, JSON.stringify(record(), null, 1), 'application/json');
+  if (b.id === 'withdraw') { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Click again to withdraw your data'; return; }
+    try { const r = await fetch(CONFIG.backendUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'withdraw', pid: st.pid }) }); const j = await r.json(); toast(j.ok ? 'Your withdrawal has been recorded. Your data will be excluded and deleted.' : 'Withdrawal failed; please email the research team.'); } catch { toast('Withdrawal failed; please email the research team.'); } }
+});
+document.addEventListener('change', async e => {
+  const el = e.target; if (!['extFile', 'cultFile'].includes(el.id)) return; const f = el.files[0]; el.value = ''; if (!f) return;
+  try { const text = await fileText(f), ex = parseDoc(text, f.name), v = ex.values; let n = 0;
+    for (const [path, val] of Object.entries(v)) {
+      const [, grp, key] = path.split('.');
+      if (el.id === 'extFile' && path.startsWith('ind.')) { const g = grp === 'big5' ? 'big5' : grp; if (st.ext[g]) { st.ext[g][key] = Math.round(val); n++; } }
+      if (el.id === 'cultFile' && path.startsWith('org.')) { if (grp === 'cvfNow') { st.org.ocai.now[key] = val; n++; } if (grp === 'cvfEsp') { st.org.ocai.pref[key] = val; n++; } if (grp === 'denison') { st.org.denison[key] = val; n++; } }
+    }
+    save(); render(); toast(n ? `Read ${n} score(s) from ${f.name}. Please check them.` : `No scores were recognised in ${f.name}. Please type them in.`, 6000);
+  } catch (err) { toast(`${f.name}: ${err.message || 'could not be read'}`, 7000); }
+});
+
+/* ---------- start ---------- */
+$('#studyName').textContent = CONFIG.studyName || 'Research study';
+$('#foot').innerHTML = `${esc(CONFIG.studyName || 'C-Psych Fit Check')} · ${esc(INSTRUMENT.version)}${CONFIG.researcher ? ` · ${esc(CONFIG.researcher)}` : ''}. Personality items: IPIP (ipip.ori.org, public domain). Your answers are saved on this device until you submit.`;
+if (window.claude?.use) { claude.use('sample').then(f => { sampleFn = f; if (steps()[st.step]?.id === 'orgInfo') render(); }, () => {}); claude.use('downloads').then(d => { dlNs = d; }, () => {}); }
+render();
+})();
+</script>
+</body>
+</html>

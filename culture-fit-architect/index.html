@@ -513,6 +513,7 @@ iframe.preview { width: 100%; height: 900px; border: 1px solid var(--line); bord
 <script>
 (() => {
 'use strict';
+/* @@SHARED:model:start (reused by fit-check/build.py) */
 /* ============================== constants ============================== */
 const DIMS = [
   { k: 'collab', name: 'Collaboration & Belonging', short: 'Collaboration', q: 'Clan',
@@ -1193,6 +1194,7 @@ function heatTable(R, live) {
   return h + `</tbody></table>`;
 }
 
+/* @@SHARED:model:end */
 /* ============================== UI build ============================== */
 let S = PRESETS.A(), R = null;
 function sliderRow(path, label, hint = '', min = 0, max = 100, step = 1) {
@@ -1547,6 +1549,7 @@ function toast(msg, ms = 4200) { const t = $('#toast'); t.textContent = msg; t.h
 // two-step confirmation without window.confirm (blocked in some sandboxed views)
 function armed(btn) { if (btn.dataset.armed === '1') return true; const label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = 'Click again to confirm'; setTimeout(() => { btn.dataset.armed = ''; btn.textContent = label; }, 3000); return false; }
 
+/* @@SHARED:parsers:start */
 const REL = { hiring_manager: 'Hiring manager', peer: 'Peer', direct_report: 'Direct report', cross_functional: 'Cross-functional partner', candidate: 'Candidate', reference: 'Reference', leadership: 'Senior leader', other: 'Other' };
 const TEAM_REL = ['hiring_manager', 'peer', 'direct_report', 'cross_functional'];
 const KINDS = { hogan: 'Hogan (HPI / HDS / MVPI)', big5: 'Big Five / NEO-PI-R', opq32: 'SHL OPQ32', kf4d: 'Korn Ferry KF4D', other_psychometric: 'Other psychometric', culture_survey: 'Culture survey (CVF / OCAI / Denison)', groysberg: 'Groysberg culture profile', barrett: 'Barrett values assessment', employee_reviews: 'Employee reviews', internal_pulse: 'Internal engagement pulse', leadership: 'Leadership statements', news: 'News / public signals', interview: 'Interview transcript / notes', other: 'Other document' };
@@ -1688,6 +1691,7 @@ function parseDoc(text, name) {
   return { kind, target: kindTarget(kind), summary, quotes: keyQuotes(text), candidateName: cand, normGroup: norm, values, text: textOut, interview: kind === 'interview' ? { interviewee: ((text.match(/interviewee\s*[:\-]\s*([^\n|]{2,80})/i) || [])[1] || name.replace(/\.[^.]+$/, '')).split(/,|\(|\.\s|\s-\s/)[0].trim(), relation: relationOf(text, name), date: (text.match(/date\s*[:\-]\s*(\d{4}-\d{2}-\d{2})/i) || [])[1] || null } : null, notes };
 }
 
+/* @@SHARED:parsers:end */
 /* ---------- Claude reads the document (hosted claude.ai views) ---------- */
 let sampleFn = null;
 function aiPrompt(text, name) {
@@ -1923,6 +1927,7 @@ function refreshGuide(silent) {
   if (!silent) toast(add.length ? `Added ${add.length} question(s) from the latest analysis. Existing answers were kept.` : 'The guide already covers the current risk areas.');
 }
 // how confirmed ratings feed back into the model
+/* @@SHARED:guide:start */
 function guideEffects(S) {
   const items = (S.ind.guide?.items || []).filter(i => i.rating && !i.suggested), e = { dim: {}, der: {}, vals: 0, add: 0, mgr: 0, n: items.length, idx: null, rows: [] };
   const fDim = { 1: 1.25, 2: 1.12, 3: 1, 4: 0.8, 5: 0.65 }, fDer = { 1: 1.2, 2: 1.1, 3: 1, 4: 0.85, 5: 0.7 };
@@ -1936,6 +1941,7 @@ function guideEffects(S) {
   if (items.length) e.idx = items.reduce((s, i) => s + +i.rating, 0) / items.length;
   return e;
 }
+/* @@SHARED:guide:end */
 const sugBadge = i => `<span class="chip st-warn"><span class="ic" aria-hidden="true">✦</span>Claude suggestion, not yet counted</span><button class="linkbtn" type="button" data-gconfirm="${i}" style="font-size:.8rem">confirm</button>`;
 function renderGuide() {
   const G = S.ind.guide;

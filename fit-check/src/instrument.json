@@ -1,0 +1,1729 @@
+{
+ "name": "C-Psych Fit Check",
+ "version": "FC-1.0",
+ "response_scales": {
+  "accuracy": [
+   "Very inaccurate",
+   "Moderately inaccurate",
+   "Neither accurate nor inaccurate",
+   "Moderately accurate",
+   "Very accurate"
+  ],
+  "agree": [
+   "Strongly disagree",
+   "Disagree",
+   "Neither agree nor disagree",
+   "Agree",
+   "Strongly agree"
+  ]
+ },
+ "checks": {
+  "AC1": 4,
+  "AC2": 4
+ },
+ "scales": {
+  "P_E": {
+   "label": "Extraversion",
+   "source": "IPIP-50 Big-Five Factor Markers (Goldberg, 1992); public domain"
+  },
+  "P_A": {
+   "label": "Agreeableness",
+   "source": "IPIP-50"
+  },
+  "P_C": {
+   "label": "Conscientiousness",
+   "source": "IPIP-50"
+  },
+  "P_ES": {
+   "label": "Emotional Stability",
+   "source": "IPIP-50"
+  },
+  "P_O": {
+   "label": "Intellect / Imagination",
+   "source": "IPIP-50"
+  },
+  "MV_rec": {
+   "label": "Recognition",
+   "source": "C-Psych work motives (provisional)"
+  },
+  "MV_pow": {
+   "label": "Influence",
+   "source": "provisional"
+  },
+  "MV_hed": {
+   "label": "Enjoyment",
+   "source": "provisional"
+  },
+  "MV_alt": {
+   "label": "Contribution",
+   "source": "provisional"
+  },
+  "MV_aff": {
+   "label": "Belonging",
+   "source": "provisional"
+  },
+  "MV_tra": {
+   "label": "Tradition",
+   "source": "provisional"
+  },
+  "MV_sec": {
+   "label": "Security",
+   "source": "provisional"
+  },
+  "MV_com": {
+   "label": "Financial reward",
+   "source": "provisional"
+  },
+  "MV_aes": {
+   "label": "Quality & design",
+   "source": "provisional"
+  },
+  "MV_sci": {
+   "label": "Analysis & learning",
+   "source": "provisional"
+  },
+  "WS_pace": {
+   "label": "Preferred decision pace",
+   "source": "provisional"
+  },
+  "WS_risk": {
+   "label": "Risk appetite",
+   "source": "provisional"
+  },
+  "WS_conflict": {
+   "label": "Directness",
+   "source": "provisional"
+  },
+  "WS_autonomy": {
+   "label": "Autonomy need",
+   "source": "provisional"
+  },
+  "CP_clan": {
+   "label": "Prefers Clan (collaborate)",
+   "source": "provisional; Competing Values Framework constructs (Quinn & Rohrbaugh, 1983)"
+  },
+  "CP_adhoc": {
+   "label": "Prefers Adhocracy (create)",
+   "source": "provisional"
+  },
+  "CP_market": {
+   "label": "Prefers Market (compete)",
+   "source": "provisional"
+  },
+  "CP_hier": {
+   "label": "Prefers Hierarchy (control)",
+   "source": "provisional"
+  },
+  "UP_vol": {
+   "label": "Volatility under pressure",
+   "source": "provisional; Horney 'moving away' cluster"
+  },
+  "UP_cyn": {
+   "label": "Mistrust under pressure",
+   "source": "provisional; moving away"
+  },
+  "UP_cau": {
+   "label": "Over-caution under pressure",
+   "source": "provisional; moving away"
+  },
+  "UP_bol": {
+   "label": "Over-confidence under pressure",
+   "source": "provisional; moving against"
+  },
+  "UP_lim": {
+   "label": "Limit-testing under pressure",
+   "source": "provisional; moving against"
+  },
+  "UP_per": {
+   "label": "Perfectionism under pressure",
+   "source": "provisional; moving toward (task)"
+  },
+  "UP_dep": {
+   "label": "Over-dependence under pressure",
+   "source": "provisional; moving toward"
+  },
+  "OR_clan": {
+   "label": "Org lived: Clan",
+   "source": "provisional (insider rating)"
+  },
+  "OR_adhoc": {
+   "label": "Org lived: Adhocracy",
+   "source": "provisional"
+  },
+  "OR_market": {
+   "label": "Org lived: Market",
+   "source": "provisional"
+  },
+  "OR_hier": {
+   "label": "Org lived: Hierarchy",
+   "source": "provisional"
+  },
+  "OE_clan": {
+   "label": "Org espoused: Clan",
+   "source": "single item"
+  },
+  "OE_adhoc": {
+   "label": "Org espoused: Adhocracy",
+   "source": "single item"
+  },
+  "OE_market": {
+   "label": "Org espoused: Market",
+   "source": "single item"
+  },
+  "OE_hier": {
+   "label": "Org espoused: Hierarchy",
+   "source": "single item"
+  },
+  "ON_pace": {
+   "label": "Org norm: decision pace",
+   "source": "provisional"
+  },
+  "ON_risk": {
+   "label": "Org norm: risk tolerance",
+   "source": "provisional"
+  },
+  "ON_conflict": {
+   "label": "Org norm: open disagreement",
+   "source": "provisional"
+  },
+  "ON_autonomy": {
+   "label": "Org norm: autonomy",
+   "source": "provisional"
+  },
+  "OX_psych": {
+   "label": "Psychological safety",
+   "source": "provisional"
+  },
+  "OX_cred": {
+   "label": "Leadership credibility",
+   "source": "provisional"
+  },
+  "OX_rec": {
+   "label": "Would recommend organisation",
+   "source": "single item"
+  },
+  "TC_clan": {
+   "label": "Team: Clan",
+   "source": "provisional"
+  },
+  "TC_adhoc": {
+   "label": "Team: Adhocracy",
+   "source": "provisional"
+  },
+  "TC_market": {
+   "label": "Team: Market",
+   "source": "provisional"
+  },
+  "TC_hier": {
+   "label": "Team: Hierarchy",
+   "source": "provisional"
+  },
+  "TN_pace": {
+   "label": "Team norm: decision pace",
+   "source": "single item"
+  },
+  "TN_risk": {
+   "label": "Team norm: risk tolerance",
+   "source": "single item"
+  },
+  "TN_conflict": {
+   "label": "Team norm: open disagreement",
+   "source": "single item"
+  },
+  "TN_autonomy": {
+   "label": "Team norm: autonomy",
+   "source": "single item"
+  },
+  "CR_pofit": {
+   "label": "Perceived person–organisation fit (criterion)",
+   "source": "provisional"
+  },
+  "CR_teamfit": {
+   "label": "Perceived person–team fit (criterion)",
+   "source": "provisional"
+  },
+  "CR_sat": {
+   "label": "Job satisfaction (criterion)",
+   "source": "single item"
+  },
+  "CR_stay": {
+   "label": "Intention to stay (criterion)",
+   "source": "provisional"
+  },
+  "CR_strain": {
+   "label": "Work strain (criterion)",
+   "source": "single item"
+  }
+ },
+ "blocks": {
+  "personality": {
+   "title": "How you see yourself",
+   "intro": "Describe yourself as you generally are now, not as you wish to be in the future. Describe yourself as you honestly see yourself, in relation to other people you know of roughly your age. Your answers stay confidential.",
+   "per_page": 10
+  },
+  "motives": {
+   "title": "What motivates you at work",
+   "intro": "How much do you agree with each statement about what matters to you at work?",
+   "per_page": 11
+  },
+  "style": {
+   "title": "Your working style and preferred culture",
+   "intro": "How much do you agree with each statement about how you like to work?",
+   "per_page": 12
+  },
+  "pressure": {
+   "title": "You under pressure",
+   "intro": "Think about times when you were under heavy pressure, tired or stressed at work. How much do you agree with each statement?",
+   "per_page": 11
+  },
+  "org": {
+   "title": "Your organisation's culture",
+   "intro": "Describe the organisation as it actually is day to day, not as it is described officially (unless a statement asks about what leadership says).",
+   "per_page": 10
+  },
+  "team": {
+   "title": "Your team's culture",
+   "intro": "Describe the team you work in (or would join) as it actually works day to day.",
+   "per_page": 12
+  },
+  "criteria": {
+   "title": "Your experience at work",
+   "intro": "These questions help us test whether the fit model predicts real experience. There are no right answers.",
+   "per_page": 10
+  }
+ },
+ "items": [
+  {
+   "id": "P01",
+   "scale": "P_E",
+   "key": 1,
+   "text": "Am the life of the party.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P02",
+   "scale": "P_A",
+   "key": -1,
+   "text": "Feel little concern for others.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P03",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Am always prepared.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P04",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Get stressed out easily.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P05",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Have a rich vocabulary.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P06",
+   "scale": "P_E",
+   "key": -1,
+   "text": "Don't talk a lot.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P07",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Am interested in people.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P08",
+   "scale": "P_C",
+   "key": -1,
+   "text": "Leave my belongings around.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P09",
+   "scale": "P_ES",
+   "key": 1,
+   "text": "Am relaxed most of the time.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P10",
+   "scale": "P_O",
+   "key": -1,
+   "text": "Have difficulty understanding abstract ideas.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P11",
+   "scale": "P_E",
+   "key": 1,
+   "text": "Feel comfortable around people.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P12",
+   "scale": "P_A",
+   "key": -1,
+   "text": "Insult people.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P13",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Pay attention to details.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P14",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Worry about things.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P15",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Have a vivid imagination.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P16",
+   "scale": "P_E",
+   "key": -1,
+   "text": "Keep in the background.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P17",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Sympathize with others' feelings.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P18",
+   "scale": "P_C",
+   "key": -1,
+   "text": "Make a mess of things.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P19",
+   "scale": "P_ES",
+   "key": 1,
+   "text": "Seldom feel blue.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P20",
+   "scale": "P_O",
+   "key": -1,
+   "text": "Am not interested in abstract ideas.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P21",
+   "scale": "P_E",
+   "key": 1,
+   "text": "Start conversations.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P22",
+   "scale": "P_A",
+   "key": -1,
+   "text": "Am not interested in other people's problems.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P23",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Get chores done right away.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P24",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Am easily disturbed.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P25",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Have excellent ideas.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P26",
+   "scale": "P_E",
+   "key": -1,
+   "text": "Have little to say.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P27",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Have a soft heart.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P28",
+   "scale": "P_C",
+   "key": -1,
+   "text": "Often forget to put things back in their proper place.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P29",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Get upset easily.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P30",
+   "scale": "P_O",
+   "key": -1,
+   "text": "Do not have a good imagination.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P31",
+   "scale": "P_E",
+   "key": 1,
+   "text": "Talk to a lot of different people at parties.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P32",
+   "scale": "P_A",
+   "key": -1,
+   "text": "Am not really interested in others.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P33",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Like order.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P34",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Change my mood a lot.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P35",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Am quick to understand things.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P36",
+   "scale": "P_E",
+   "key": -1,
+   "text": "Don't like to draw attention to myself.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P37",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Take time out for others.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P38",
+   "scale": "P_C",
+   "key": -1,
+   "text": "Shirk my duties.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P39",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Have frequent mood swings.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P40",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Use difficult words.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P41",
+   "scale": "P_E",
+   "key": 1,
+   "text": "Don't mind being the center of attention.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P42",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Feel others' emotions.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P43",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Follow a schedule.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P44",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Get irritated easily.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P45",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Spend time reflecting on things.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P46",
+   "scale": "P_E",
+   "key": -1,
+   "text": "Am quiet around strangers.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P47",
+   "scale": "P_A",
+   "key": 1,
+   "text": "Make people feel at ease.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P48",
+   "scale": "P_C",
+   "key": 1,
+   "text": "Am exacting in my work.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P49",
+   "scale": "P_ES",
+   "key": -1,
+   "text": "Often feel blue.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "P50",
+   "scale": "P_O",
+   "key": 1,
+   "text": "Am full of ideas.",
+   "block": "personality",
+   "rs": "accuracy"
+  },
+  {
+   "id": "MV_rec_1",
+   "scale": "MV_rec",
+   "key": 1,
+   "text": "Being publicly acknowledged for my achievements matters a lot to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_pow_1",
+   "scale": "MV_pow",
+   "key": 1,
+   "text": "I want to be in a position where my decisions shape outcomes.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_hed_1",
+   "scale": "MV_hed",
+   "key": 1,
+   "text": "Having fun at work is important to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_alt_1",
+   "scale": "MV_alt",
+   "key": 1,
+   "text": "I want my work to make a positive difference to other people.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aff_1",
+   "scale": "MV_aff",
+   "key": 1,
+   "text": "Working closely with a friendly team is important to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_tra_1",
+   "scale": "MV_tra",
+   "key": 1,
+   "text": "I respect established ways of doing things and an organisation's heritage.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sec_1",
+   "scale": "MV_sec",
+   "key": 1,
+   "text": "Job stability and predictability are very important to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_com_1",
+   "scale": "MV_com",
+   "key": 1,
+   "text": "Earning well is one of the main things I look for in a job.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aes_1",
+   "scale": "MV_aes",
+   "key": 1,
+   "text": "I care a great deal about the look, feel and quality of what I produce.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sci_1",
+   "scale": "MV_sci",
+   "key": 1,
+   "text": "I like decisions to be based on data and evidence.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_rec_2",
+   "scale": "MV_rec",
+   "key": 1,
+   "text": "I want my contributions to be visible to senior people.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_pow_2",
+   "scale": "MV_pow",
+   "key": 1,
+   "text": "I enjoy taking charge and directing others' work.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_hed_2",
+   "scale": "MV_hed",
+   "key": 1,
+   "text": "I value a lively, social atmosphere with plenty of humour.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_alt_2",
+   "scale": "MV_alt",
+   "key": 1,
+   "text": "Helping colleagues grow gives me real satisfaction.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aff_2",
+   "scale": "MV_aff",
+   "key": 1,
+   "text": "I am energised by frequent contact with colleagues.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_tra_2",
+   "scale": "MV_tra",
+   "key": 1,
+   "text": "Clear standards of conduct and respect for seniority matter to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sec_2",
+   "scale": "MV_sec",
+   "key": 1,
+   "text": "I avoid career moves that carry a lot of uncertainty.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_com_2",
+   "scale": "MV_com",
+   "key": 1,
+   "text": "I pay close attention to the financial results of my work.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aes_2",
+   "scale": "MV_aes",
+   "key": 1,
+   "text": "Good design and craftsmanship motivate me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sci_2",
+   "scale": "MV_sci",
+   "key": 1,
+   "text": "Understanding how things work in depth motivates me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_rec_3",
+   "scale": "MV_rec",
+   "key": -1,
+   "text": "I am indifferent to whether others notice my work.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_pow_3",
+   "scale": "MV_pow",
+   "key": -1,
+   "text": "I prefer to leave decisions about direction to others.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_hed_3",
+   "scale": "MV_hed",
+   "key": -1,
+   "text": "Whether work is enjoyable matters little to me as long as it gets done.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_alt_3",
+   "scale": "MV_alt",
+   "key": -1,
+   "text": "The social impact of my work matters little to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aff_3",
+   "scale": "MV_aff",
+   "key": -1,
+   "text": "I prefer to work largely on my own.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_tra_3",
+   "scale": "MV_tra",
+   "key": -1,
+   "text": "I am comfortable discarding long-standing practices.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sec_3",
+   "scale": "MV_sec",
+   "key": -1,
+   "text": "I am happy to take career risks for the chance of bigger rewards.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_com_3",
+   "scale": "MV_com",
+   "key": -1,
+   "text": "Money is a minor consideration when I choose a job.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_aes_3",
+   "scale": "MV_aes",
+   "key": -1,
+   "text": "As long as something works, how it looks does not matter to me.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "MV_sci_3",
+   "scale": "MV_sci",
+   "key": -1,
+   "text": "I prefer acting on instinct over analysing information.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "AC1",
+   "scale": "CHECK",
+   "key": 0,
+   "text": "To show you are reading carefully, please select \"Agree\" for this statement.",
+   "block": "motives",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_pace_1",
+   "scale": "WS_pace",
+   "key": 1,
+   "text": "I like to make decisions quickly and adjust as I go.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_risk_1",
+   "scale": "WS_risk",
+   "key": 1,
+   "text": "I am comfortable acting when outcomes are uncertain.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_conflict_1",
+   "scale": "WS_conflict",
+   "key": 1,
+   "text": "I say openly when I disagree, even with senior people.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_autonomy_1",
+   "scale": "WS_autonomy",
+   "key": 1,
+   "text": "I do my best work when I decide how to do it.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_pace_2",
+   "scale": "WS_pace",
+   "key": 1,
+   "text": "Long review cycles frustrate me.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_risk_2",
+   "scale": "WS_risk",
+   "key": 1,
+   "text": "I would rather try a bold idea than stick with a safe one.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_conflict_2",
+   "scale": "WS_conflict",
+   "key": 1,
+   "text": "I believe robust debate leads to better decisions.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_autonomy_2",
+   "scale": "WS_autonomy",
+   "key": 1,
+   "text": "Close supervision demotivates me.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_pace_3",
+   "scale": "WS_pace",
+   "key": -1,
+   "text": "I prefer to take time to consider every option before deciding.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_risk_3",
+   "scale": "WS_risk",
+   "key": -1,
+   "text": "I avoid decisions that could go wrong.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_conflict_3",
+   "scale": "WS_conflict",
+   "key": -1,
+   "text": "I keep disagreements to myself to maintain harmony.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "WS_autonomy_3",
+   "scale": "WS_autonomy",
+   "key": -1,
+   "text": "I prefer clear instructions about how work should be done.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_clan_1",
+   "scale": "CP_clan",
+   "key": 1,
+   "text": "I do my best work in an organisation that feels like a close team where people look after each other.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_adhoc_1",
+   "scale": "CP_adhoc",
+   "key": 1,
+   "text": "I do my best work in an organisation that encourages experimentation, even if some ideas fail.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_market_1",
+   "scale": "CP_market",
+   "key": 1,
+   "text": "I do my best work in an organisation driven by clear targets and competitive results.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_hier_1",
+   "scale": "CP_hier",
+   "key": 1,
+   "text": "I do my best work in an organisation with clear procedures, roles and lines of authority.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_clan_2",
+   "scale": "CP_clan",
+   "key": 1,
+   "text": "I do my best work where people are developed through mentoring and teamwork.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_adhoc_2",
+   "scale": "CP_adhoc",
+   "key": 1,
+   "text": "I do my best work where the organisation moves quickly to seize new opportunities.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_market_2",
+   "scale": "CP_market",
+   "key": 1,
+   "text": "I do my best work where people are rewarded for achieving measurable goals.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_hier_2",
+   "scale": "CP_hier",
+   "key": 1,
+   "text": "I do my best work where stability, efficiency and predictability are valued.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_clan_3",
+   "scale": "CP_clan",
+   "key": 1,
+   "text": "I do my best work where decisions are made through participation and consensus.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_adhoc_3",
+   "scale": "CP_adhoc",
+   "key": 1,
+   "text": "I do my best work where people who take initiative and innovate are rewarded.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_market_3",
+   "scale": "CP_market",
+   "key": 1,
+   "text": "I do my best work where winning against competitors is a strong focus.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "CP_hier_3",
+   "scale": "CP_hier",
+   "key": 1,
+   "text": "I do my best work where rules and controls are followed consistently.",
+   "block": "style",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_vol_1",
+   "scale": "UP_vol",
+   "key": 1,
+   "text": "When under pressure, I can become irritable or emotional.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cyn_1",
+   "scale": "UP_cyn",
+   "key": 1,
+   "text": "When under pressure, I become suspicious of other people's motives.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cau_1",
+   "scale": "UP_cau",
+   "key": 1,
+   "text": "When under pressure, I avoid making decisions in case they turn out wrong.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_bol_1",
+   "scale": "UP_bol",
+   "key": 1,
+   "text": "When under pressure, I trust my own judgement over other people's advice.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_lim_1",
+   "scale": "UP_lim",
+   "key": 1,
+   "text": "When under pressure, I bend rules to get things done.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_per_1",
+   "scale": "UP_per",
+   "key": 1,
+   "text": "When under pressure, I find it hard to delegate because others may not meet my standards.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_dep_1",
+   "scale": "UP_dep",
+   "key": 1,
+   "text": "When under pressure, I look to my manager to make the difficult calls.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_vol_2",
+   "scale": "UP_vol",
+   "key": 1,
+   "text": "When under pressure, I lose patience with people or projects quickly.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cyn_2",
+   "scale": "UP_cyn",
+   "key": 1,
+   "text": "When under pressure, I question whether others are being straight with me.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cau_2",
+   "scale": "UP_cau",
+   "key": 1,
+   "text": "When under pressure, I wait for more information before committing, even when time is short.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_bol_2",
+   "scale": "UP_bol",
+   "key": 1,
+   "text": "When under pressure, I find it hard to admit I was wrong.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_lim_2",
+   "scale": "UP_lim",
+   "key": 1,
+   "text": "When under pressure, I take shortcuts others might consider risky.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_per_2",
+   "scale": "UP_per",
+   "key": 1,
+   "text": "When under pressure, I get caught up in details and check work repeatedly.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_dep_2",
+   "scale": "UP_dep",
+   "key": 1,
+   "text": "When under pressure, I go along with senior people even when I have doubts.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_vol_3",
+   "scale": "UP_vol",
+   "key": -1,
+   "text": "When under pressure, I stay calm and even-tempered.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cyn_3",
+   "scale": "UP_cyn",
+   "key": -1,
+   "text": "When under pressure, I assume others mean well.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_cau_3",
+   "scale": "UP_cau",
+   "key": -1,
+   "text": "When under pressure, I make tough calls quickly.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_bol_3",
+   "scale": "UP_bol",
+   "key": -1,
+   "text": "When under pressure, I actively seek out people who disagree with me.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_lim_3",
+   "scale": "UP_lim",
+   "key": -1,
+   "text": "When under pressure, I stick to agreed processes even when they slow me down.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_per_3",
+   "scale": "UP_per",
+   "key": -1,
+   "text": "When under pressure, I accept \"good enough\" when time is short.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "UP_dep_3",
+   "scale": "UP_dep",
+   "key": -1,
+   "text": "When under pressure, I make decisions independently without needing approval.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "AC2",
+   "scale": "CHECK",
+   "key": 0,
+   "text": "For quality purposes, please select \"Agree\" for this statement.",
+   "block": "pressure",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_clan_1",
+   "scale": "OR_clan",
+   "key": 1,
+   "text": "In my organisation, it feels like a close team where people look after each other.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_adhoc_1",
+   "scale": "OR_adhoc",
+   "key": 1,
+   "text": "In my organisation, experimentation is encouraged, even if some ideas fail.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_market_1",
+   "scale": "OR_market",
+   "key": 1,
+   "text": "In my organisation, the focus is on clear targets and competitive results.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_hier_1",
+   "scale": "OR_hier",
+   "key": 1,
+   "text": "In my organisation, there are clear procedures, roles and lines of authority.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_clan_2",
+   "scale": "OR_clan",
+   "key": 1,
+   "text": "In my organisation, people are developed through mentoring and teamwork.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_adhoc_2",
+   "scale": "OR_adhoc",
+   "key": 1,
+   "text": "In my organisation, we move quickly to seize new opportunities.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_market_2",
+   "scale": "OR_market",
+   "key": 1,
+   "text": "In my organisation, people are rewarded for achieving measurable goals.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_hier_2",
+   "scale": "OR_hier",
+   "key": 1,
+   "text": "In my organisation, stability, efficiency and predictability are valued.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_clan_3",
+   "scale": "OR_clan",
+   "key": 1,
+   "text": "In my organisation, decisions are made through participation and consensus.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_adhoc_3",
+   "scale": "OR_adhoc",
+   "key": 1,
+   "text": "In my organisation, people who take initiative and innovate are rewarded.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_market_3",
+   "scale": "OR_market",
+   "key": 1,
+   "text": "In my organisation, winning against competitors is a strong focus.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OR_hier_3",
+   "scale": "OR_hier",
+   "key": 1,
+   "text": "In my organisation, rules and controls are followed consistently.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OE_clan_1",
+   "scale": "OE_clan",
+   "key": 1,
+   "text": "Leadership says the organisation should be a close team that puts people first.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OE_adhoc_1",
+   "scale": "OE_adhoc",
+   "key": 1,
+   "text": "Leadership says the organisation should be innovative, agile and entrepreneurial.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OE_market_1",
+   "scale": "OE_market",
+   "key": 1,
+   "text": "Leadership says the organisation should be results-driven and competitive.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OE_hier_1",
+   "scale": "OE_hier",
+   "key": 1,
+   "text": "Leadership says the organisation should be disciplined, efficient and well controlled.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_pace_1",
+   "scale": "ON_pace",
+   "key": 1,
+   "text": "In my organisation, decisions are made quickly.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_risk_1",
+   "scale": "ON_risk",
+   "key": 1,
+   "text": "In my organisation, people are encouraged to take calculated risks.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_conflict_1",
+   "scale": "ON_conflict",
+   "key": 1,
+   "text": "In my organisation, people can disagree openly, even with senior leaders.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_autonomy_1",
+   "scale": "ON_autonomy",
+   "key": 1,
+   "text": "In my organisation, people have freedom to decide how to do their work.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_pace_2",
+   "scale": "ON_pace",
+   "key": -1,
+   "text": "In my organisation, decisions go through many layers of approval.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_risk_2",
+   "scale": "ON_risk",
+   "key": -1,
+   "text": "In my organisation, mistakes are punished.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_conflict_2",
+   "scale": "ON_conflict",
+   "key": -1,
+   "text": "In my organisation, people avoid raising concerns.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "ON_autonomy_2",
+   "scale": "ON_autonomy",
+   "key": -1,
+   "text": "In my organisation, work is closely supervised.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_psych_1",
+   "scale": "OX_psych",
+   "key": 1,
+   "text": "In my organisation, it is safe to admit mistakes and ask for help.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_cred_1",
+   "scale": "OX_cred",
+   "key": 1,
+   "text": "In my organisation, senior leaders do what they say they will do.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_rec_1",
+   "scale": "OX_rec",
+   "key": 1,
+   "text": "I would recommend my organisation as a great place to work.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_psych_2",
+   "scale": "OX_psych",
+   "key": 1,
+   "text": "In my organisation, people are not penalised for raising problems.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_cred_2",
+   "scale": "OX_cred",
+   "key": 1,
+   "text": "I trust the decisions of senior management.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "OX_psych_3",
+   "scale": "OX_psych",
+   "key": -1,
+   "text": "In my organisation, people are afraid to speak up.",
+   "block": "org",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_clan_1",
+   "scale": "TC_clan",
+   "key": 1,
+   "text": "In my team, it feels like a close group where people look after each other.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_adhoc_1",
+   "scale": "TC_adhoc",
+   "key": 1,
+   "text": "In my team, experimentation and new ideas are encouraged.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_market_1",
+   "scale": "TC_market",
+   "key": 1,
+   "text": "In my team, the focus is on clear targets and results.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_hier_1",
+   "scale": "TC_hier",
+   "key": 1,
+   "text": "In my team, there are clear procedures and defined roles.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_clan_2",
+   "scale": "TC_clan",
+   "key": 1,
+   "text": "In my team, decisions are made through participation and consensus.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_adhoc_2",
+   "scale": "TC_adhoc",
+   "key": 1,
+   "text": "In my team, we move quickly to try new approaches.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_market_2",
+   "scale": "TC_market",
+   "key": 1,
+   "text": "In my team, people are rewarded for achieving measurable goals.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TC_hier_2",
+   "scale": "TC_hier",
+   "key": 1,
+   "text": "In my team, rules and controls are followed consistently.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TN_pace_1",
+   "scale": "TN_pace",
+   "key": 1,
+   "text": "In my team, decisions are made quickly.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TN_risk_1",
+   "scale": "TN_risk",
+   "key": 1,
+   "text": "In my team, people are encouraged to take calculated risks.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TN_conflict_1",
+   "scale": "TN_conflict",
+   "key": 1,
+   "text": "In my team, people disagree openly and constructively.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "TN_autonomy_1",
+   "scale": "TN_autonomy",
+   "key": 1,
+   "text": "In my team, people have freedom to decide how to do their work.",
+   "block": "team",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_pofit_1",
+   "scale": "CR_pofit",
+   "key": 1,
+   "text": "My personal values match my organisation's values.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_teamfit_1",
+   "scale": "CR_teamfit",
+   "key": 1,
+   "text": "I fit in well with my team's way of working.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_sat_1",
+   "scale": "CR_sat",
+   "key": 1,
+   "text": "Overall, I am satisfied with my job.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_stay_1",
+   "scale": "CR_stay",
+   "key": 1,
+   "text": "I intend to be working for this organisation a year from now.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_strain_1",
+   "scale": "CR_strain",
+   "key": 1,
+   "text": "My work environment often causes stress that affects my wellbeing.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_pofit_2",
+   "scale": "CR_pofit",
+   "key": 1,
+   "text": "I fit in well with the way things are done in my organisation.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_teamfit_2",
+   "scale": "CR_teamfit",
+   "key": 1,
+   "text": "My team's way of working suits my style.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_stay_2",
+   "scale": "CR_stay",
+   "key": -1,
+   "text": "I often think about leaving this organisation.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_pofit_3",
+   "scale": "CR_pofit",
+   "key": 1,
+   "text": "My organisation's culture brings out the best in me.",
+   "block": "criteria",
+   "rs": "agree"
+  },
+  {
+   "id": "CR_stay_3",
+   "scale": "CR_stay",
+   "key": -1,
+   "text": "I am actively looking for a job elsewhere.",
+   "block": "criteria",
+   "rs": "agree"
+  }
+ ]
+}
