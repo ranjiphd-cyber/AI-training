@@ -24,7 +24,8 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 | H5 | Do fit indices predict experienced fit and outcomes? | Overall fit correlates r ≥ .20 with perceived P–O fit, satisfaction and intention to stay, and negatively with strain; friction index and number of major mismatches show the reverse |
 | H6 | Does the model add value beyond asking people directly? | Model-derived fit explains variance in perceived fit beyond stated-preference fit (ΔR² > 0) |
 | H7 | Do participants find the report accurate? | ≥ 70% agree (4–5) that each section describes them, their organisation and their fit accurately |
-| H8 | Does the public-sources summary agree with insiders? | Mean absolute difference between scan and insider culture profiles < 10 share points per quadrant |
+| H8 | Does the company research agree with insiders? | Mean absolute difference between the employee-lens profile and insider culture profiles < 10 share points per quadrant; leadership lens vs. insiders' espoused culture and function lens vs. team culture reported the same way; review-platform rating correlates r ≥ .30 with insiders' willingness to recommend; agreement improves with the lens's evidence strength |
+| H8b | Is a match based on public research alone valid? | For current employees, fit computed from the research only (`m_pub_org`) correlates r ≥ .15 with perceived fit and satisfaction. This is the condition for relying on research when candidates know little |
 | H9 | Do fit scores predict real outcomes later? | At 6–12 months, lower fit and more major mismatches predict voluntary exit and lower satisfaction (logistic / linear models) |
 | H10 | Is the tool fair across groups? | Group differences on fit indices |d| < .30; no differential prediction by gender or age band |
 
@@ -55,6 +56,8 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 | Data quality | Instructed-response attention checks | 2 | — |
 | Feedback | Report accuracy ratings and comments | 5–7 | — |
 | Optional | Participant-entered Hogan HPI/HDS/MVPI or other Big Five percentiles; organisation OCAI/Denison results | — | Used for H3 |
+| Company research | Four lenses: employee reviews, leadership statements, news, function level. Each lens gives a culture profile, norms, evidence strength and sources | — | Claude with web search; used for H8 and H8b and, for candidates, weighted into the match |
+| Familiarity | How well the candidate knows the organisation (4 levels) | 1 | Sets the research's weight in candidate reports |
 
 The full item text and scoring keys are in [`item-bank.md`](item-bank.md).
 
@@ -87,7 +90,7 @@ Exclude records that are withdrawn, fail an attention check, take less than 8 mi
 - **Storage and security:** a private Google Sheet accessible only to the research team, retained for the period stated in `config.json`, then deleted. Withdrawals are deleted monthly (`purgeWithdrawn`).
 - **Legal basis:** consent under India's Digital Personal Data Protection Act 2023; GDPR also applies if EU residents take part. Participants can request deletion at any time.
 - **Risk and support:** some participants may find a mismatch report uncomfortable. The report uses non-judgemental language and says it is not a hiring decision or a measure of worth. Add a signpost to support resources in the participant information if your committee requires it.
-- **Public sources:** the culture summary uses a web-search tool to read publicly available pages and summarise patterns. It does not scrape review sites or reproduce reviews, and its output is labelled as a hypothesis for participants to compare with their own experience.
+- **Public sources:** the company research uses a web-search tool to read publicly available pages (review platforms, news, company pages) and summarise patterns. It does not scrape review sites, reproduce individual reviews or name individuals. Its output is shown with its sources and evidence strength, as a picture for participants to compare with their own experience.
 - **Use of results:** during the study, reports are for participants' own reflection only and are never shared with employers.
 
 ## 10. Limitations

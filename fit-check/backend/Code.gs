@@ -5,10 +5,11 @@
  *   submit   {record, contact?}  -> appends one row to "responses" (one column per field);
  *                                   contact email (if given) goes to a separate "contacts" sheet.
  *   withdraw {pid}               -> logs the request in "withdrawals" and flags matching rows.
- *   scan     {company, country?, industry?}
- *                                -> public-sources culture summary via the Claude API with web search.
+ *   scan     {company, unit?, country?, industry?, func?}
+ *                                -> multi-source company research (employee reviews, leadership statements,
+ *                                   news, function level) via the Claude API with web search.
  *                                   Disabled unless the script property ANTHROPIC_API_KEY is set.
- *                                   Cached per organisation for CACHE_DAYS; daily call limit.
+ *                                   Cached per organisation/unit/function for CACHE_DAYS; daily call limit.
  * GET returns a health check.
  *
  * Setup: see fit-check/docs/setup-guide.md.
@@ -96,29 +97,38 @@ function withdraw_(b) {
   return { ok: true };
 }
 
-/* ---------- public-sources culture scan (Claude API + web search) ---------- */
-const SCAN_SHAPE = '{"summary": "4-6 sentence summary of the lived culture", "strengths": ["up to 5 things employees often praise"], "concerns": ["up to 5 things employees often criticise"], "espoused_values": ["values leadership publicly states"], "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "signals": {"layoffs": bool, "churn": bool, "restructure": bool, "regulatory": bool, "growth": bool, "mna": bool}, "strength": "low" | "moderate" | "high", "caveats": ["..."], "sources": [{"title": "...", "url": "..."}]}';
+/* ---------- company research (Claude API + web search) ----------
+   One research run per organisation / unit / function, read as four separate lenses:
+   employees (review platforms), leadership (stated values, careers pages), news (last 24 months) and the participant's function.
+   Keep RESEARCH_SHAPE and RESEARCH_RULES in step with src/template.html. */
+const RESEARCH_SHAPE = '{"identified": "the organisation you researched: name, headquarters, sector (or \\"ambiguous\\" if several match)", "summary": "4-6 sentences on the lived culture, drawing on all lenses", "lenses": {"employees": {"cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "psych_safety": 1-5, "leadership_trust": 1-5, "praised": ["up to 5 recurring themes"], "criticised": ["up to 5 recurring themes"], "strength": "low|moderate|high"}, "leadership": {"stated_values": ["values and priorities leadership states publicly"], "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "strength": "low|moderate|high"}, "news": {"events": [{"date": "YYYY-MM", "headline": "short factual description", "signal": "layoffs|churn|restructure|regulatory|growth|mna|other"}], "signals": {"layoffs": bool, "churn": bool, "restructure": bool, "regulatory": bool, "growth": bool, "mna": bool}, "strength": "low|moderate|high"}, "function": {"unit": "the function or unit assessed", "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "notes": "1-2 sentences on how this function or unit differs from the organisation as a whole", "strength": "low|moderate|high"}}, "sources": [{"type": "reviews|news|leadership|careers|function|other", "platform": "e.g. Glassdoor, AmbitionBox, Indeed, Kununu, Reuters, company website", "title": "page title", "url": "https://...", "period": "e.g. 2025-2026", "rating": n or null, "rating_max": 5, "review_count": n or null, "finding": "one sentence: what this source shows about the culture"}], "agreement": "1-3 sentences: where the sources agree and where they disagree", "say_do": "1-2 sentences: gap between what leadership says and what employees report", "strength": "low|moderate|high", "caveats": ["..."]}';
+const RESEARCH_RULES = 'Map culture onto the Competing Values Framework as shares summing to 100 (clan = collaborative/people-first, adhoc = innovative/entrepreneurial, market = results/competition, hier = control/process). Rate operating norms 0-100 (pace = decision speed, risk = appetite for risk, conflict = openness to disagreement, autonomy = latitude given to employees). Rate psychological safety and trust in leadership 1-5 from what employees report. Judge each lens only from its own sources and give it its own strength: high = several recent, consistent sources (e.g. hundreds of reviews); moderate = some sources or mixed signals; low = little or old evidence. Where a lens has no evidence, set its strength to "low" and its numbers to neutral (cvf 25 each, norms 50, ratings 3). Summarise recurring patterns; never quote or reproduce individual reviews. Prefer the last 24 months and say when evidence is older.';
+const SRC_TYPES_ = ['reviews', 'news', 'leadership', 'careers', 'function', 'other'];
 
 function scan_(b) {
   const key = PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY');
   if (!key) return { ok: false, error: 'scan_disabled' };
-  const company = String(b.company || '').trim().slice(0, 120), country = String(b.country || '').trim().slice(0, 80), industry = String(b.industry || '').trim().slice(0, 80);
+  const s = (v, n) => String(v || '').replace(/[\r\n"]+/g, ' ').trim().slice(0, n);
+  const company = s(b.company, 120), unit = s(b.unit, 120), country = s(b.country, 80), industry = s(b.industry, 80), fn = s(b.func, 60).replace(/^Other$/, '');
   if (!company) return { ok: false, error: 'company_required' };
-  const cacheKey = (company + '|' + country).toLowerCase();
+  const cacheKey = [company, unit, country, fn].join('|').toLowerCase();
   const cached = cacheGet_(cacheKey);
   if (cached) return { ok: true, scan: cached, cached: true };
   if (!quota_()) return { ok: false, error: 'daily_limit' };
 
-  const prompt = 'Research the workplace culture of the organisation "' + company + '"' + (country ? ' in ' + country : '') + (industry ? ' (' + industry + ')' : '') + ' using public sources: ' +
-    'employee review platforms (for example Glassdoor, AmbitionBox, Indeed, Kununu), reputable news from the last 24 months (layoffs, leadership changes, restructuring, regulatory issues, growth, mergers), ' +
-    'and leadership statements or published values. Summarise patterns rather than quoting individual reviews, and do not reproduce reviews at length. ' +
-    'Map the lived culture onto the Competing Values Framework as shares summing to 100 (clan = collaborative/people-first, adhoc = innovative/entrepreneurial, market = results/competition, hier = control/process), ' +
-    'and rate operating norms from 0 to 100 (pace = decision speed, risk = appetite for risk, conflict = openness to disagreement, autonomy = latitude given to employees). ' +
-    'Base every judgement on what the sources support. If evidence is thin, contradictory, or the organisation is ambiguous, say so in "caveats", set "strength" to "low" and keep numbers near neutral (cvf 25 each, norms 50). ' +
-    'List the pages you relied on in "sources". Reply with ONLY one JSON object of this shape: ' + SCAN_SHAPE;
+  const where = (unit ? ', especially its ' + unit : '') + (country ? ' in ' + country : '') + (industry ? ' (' + industry + ')' : '');
+  const prompt = 'Research the workplace culture of the organisation "' + company + '"' + where + '. First make sure you have the right organisation; if the name is ambiguous, use the location and industry, and say which one you chose in "identified". ' +
+    'Search four kinds of source and keep them separate: ' +
+    '(1) EMPLOYEES: employee review platforms such as Glassdoor, AmbitionBox, Indeed, Kununu or Comparably; note the overall rating, number of reviews and period where stated, and recurring themes; ' +
+    '(2) LEADERSHIP: the organisation\'s published values, leadership interviews and statements, annual or sustainability reports, careers and employer-brand pages; ' +
+    '(3) NEWS: reputable news from the last 24 months on layoffs, leadership changes, restructuring, regulatory or legal issues, growth, mergers and acquisitions; ' +
+    '(4) FUNCTION: what employees and other sources say about the ' + (fn || 'relevant') + ' function' + (unit ? ' or the ' + unit + ' unit' : '') + ' specifically, and how it differs from the organisation as a whole. ' +
+    'Use several searches so every lens has its own evidence. ' + RESEARCH_RULES + ' ' +
+    'Base every judgement on what the sources support; if evidence is thin, contradictory or the organisation is ambiguous, say so in "caveats". ' +
+    'List every page you relied on in "sources" with its type. Reply with ONLY one JSON object of this shape: ' + RESEARCH_SHAPE;
 
   let messages = [{ role: 'user', content: prompt }], resp = null;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     resp = callClaude_(key, messages);
     if (resp.stop_reason === 'pause_turn') { messages = [{ role: 'user', content: prompt }, { role: 'assistant', content: resp.content }]; continue; } // server tool loop paused: resend to continue
     break;
@@ -129,16 +139,21 @@ function scan_(b) {
   if (a < 0 || z <= a) return { ok: false, error: 'no_result' };
   let scan;
   try { scan = JSON.parse(text.slice(a, z + 1)); } catch (err) { return { ok: false, error: 'bad_result' }; }
-  // keep the sources the search actually returned, in case the model's own list is short
+  // keep pages the search actually returned, in case the model's own list is short
+  if (!Array.isArray(scan.sources)) scan.sources = [];
+  scan.sources = scan.sources.filter(x => x && typeof x === 'object').map(x => Object.assign(x, { type: SRC_TYPES_.indexOf(x.type) >= 0 ? x.type : 'other' }));
   const seen = {};
-  (scan.sources || []).forEach(s => { if (s && s.url) seen[s.url] = 1; });
+  scan.sources.forEach(x => { if (x.url) seen[x.url] = 1; });
   (resp.content || []).forEach(c => {
-    if (c.type === 'web_search_tool_result' && Array.isArray(c.content)) c.content.slice(0, 5).forEach(r => { if (r.url && !seen[r.url] && (scan.sources || (scan.sources = [])).length < 10) { scan.sources.push({ title: r.title || r.url, url: r.url }); seen[r.url] = 1; } });
+    if (c.type === 'web_search_tool_result' && Array.isArray(c.content)) c.content.slice(0, 4).forEach(r => {
+      if (r.url && !seen[r.url] && scan.sources.length < 18) { scan.sources.push({ type: 'other', title: r.title || r.url, url: r.url, platform: hostOf_(r.url) }); seen[r.url] = 1; }
+    });
   });
   scan.searched_at = new Date().toISOString();
   cachePut_(cacheKey, company, country, scan);
   return { ok: true, scan: scan };
 }
+function hostOf_(u) { const m = String(u).match(/^https?:\/\/(?:www\.)?([^\/]+)/); return m ? m[1] : ''; }
 
 function callClaude_(key, messages) {
   const res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -146,7 +161,7 @@ function callClaude_(key, messages) {
     headers: { 'x-api-key': key, 'anthropic-version': CFG.API_VERSION, 'anthropic-beta': 'server-side-fallback-2026-07-01' },
     payload: JSON.stringify({
       model: CFG.MODEL, max_tokens: 16000, fallbacks: 'default', output_config: { effort: 'medium' },
-      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 8 }],
+      tools: [{ type: 'web_search_20260209', name: 'web_search', max_uses: 14 }],
       messages: messages,
     }),
   });

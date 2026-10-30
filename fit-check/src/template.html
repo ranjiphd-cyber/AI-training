@@ -121,6 +121,9 @@ table.mini input { max-width: 90px; }
 .legend svg { width: 24px; height: 8px; margin-right: 4px; vertical-align: middle; }
 .chart > svg { width: 100%; height: auto; display: block; max-width: 520px; margin: 0 auto; }
 .ok-list li::marker { color: var(--good); } .src li { font-size: .85rem; }
+table.research td { vertical-align: top; } table.research td:first-child { width: 28%; } table.research .ev { white-space: nowrap; }
+@media (max-width: 560px) { table.research thead { display: none; } table.research tr { display: grid; grid-template-columns: 1fr auto; padding: 6px 0; border-bottom: 1px solid var(--grid); } table.research td { border: 0; padding: 2px 4px; width: auto !important; } table.research td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } } .src { margin-top: 2px; } .src li { margin-bottom: 4px; overflow-wrap: anywhere; }
+li > .sev { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 6px; border-radius: 4px; border: 1px solid; margin-right: 6px; }
 @media print { .top, .nav, .noprint, .foot { display: none !important; } body { background: #fff; } .card { box-shadow: none; border: 0; padding: 0; } }
 </style>
 </head>
@@ -182,7 +185,7 @@ const B5 = { P_E: ['Extraversion', 'outgoing and energised by people', 'reserved
 
 /* ---------- state ---------- */
 const newPid = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 8; i++) s += a[Math.floor(Math.random() * a.length)]; return `FC-${s.slice(0, 4)}-${s.slice(4)}`; };
-const fresh = () => ({ pid: newPid(), started: Date.now(), step: 0, mode: '', consent: {}, demo: {}, ans: {}, times: {}, ext: { type: 'none', hpi: {}, hds: {}, mvpi: {}, big5: {}, name: '' }, org: { name: '', industry: '', size: '', country: '', events: {}, ocai: { now: {}, pref: {} }, denison: {} }, team: { name: '', size: '', mgrStyle: '' }, scan: null, fb: {}, contact: { email: '' }, submitted: false });
+const fresh = () => ({ pid: newPid(), started: Date.now(), step: 0, mode: '', consent: {}, demo: {}, ans: {}, times: {}, ext: { type: 'none', hpi: {}, hds: {}, mvpi: {}, big5: {}, name: '' }, org: { name: '', unit: '', industry: '', size: '', country: '', know: '', events: {}, ocai: { now: {}, pref: {} }, denison: {} }, team: { name: '', size: '', mgrStyle: '' }, scan: null, fb: {}, contact: { email: '' }, submitted: false });
 let st = (() => { try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); return s && s.pid ? s : fresh(); } catch { return fresh(); } })();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch {} };
 
@@ -215,7 +218,8 @@ function quality() {
   return { ac_pass: ac, ac_total: Object.keys(INSTRUMENT.checks).length, straightline: blocks, duration: Math.round((Date.now() - st.started) / 1000) };
 }
 const pickNum = o => Object.fromEntries(Object.entries(o || {}).filter(([, v]) => v !== '' && v !== null && Number.isFinite(+v)).map(([k, v]) => [k, +v]));
-function buildS() {
+// view: 'blend' (used for the report: own ratings + company research weighted by evidence), 'own' (ratings only), 'public' (research only where available)
+function buildS(view = 'blend') {
   const S = blankCase(), sc = scores(), g = k => sc[k]?.score ?? 50, mean = k => sc[k]?.mean ?? 3;
   S.meta.candidate = 'You'; S.meta.role = st.demo.func || ''; S.meta.level = LEVEL_MAP[st.demo.level] || 'Manager';
   S.meta.org = st.org.name || (isCandidate() ? 'The organisation' : 'Your organisation'); S.meta.team = st.team.name || 'your team';
@@ -227,18 +231,19 @@ function buildS() {
   S.ind.mvpi = st.ext.type === 'hogan' && Object.keys(mv).length === 10 ? mv : Object.fromEntries(MVPI.map(([k]) => [k, g(`MV_${k}`)]));
   S.ind.hds = st.ext.type === 'hogan' && Object.keys(hds).length === 11 ? hds : { reserved: 0, leisurely: 0, colorful: 0, imaginative: 0, ...Object.fromEntries(Object.entries(UP_MAP).map(([k, h]) => [h, g(`UP_${k}`)])) };
   S.ind.ledger = { hpi: true, hds: true, mvpi: true }; S.ind.norm = st.ext.type === 'hogan' ? 'Hogan norms (participant-entered)' : 'Provisional scale scores (not yet normed)';
-  // organisation: an uploaded/entered OCAI profile outranks a single rater; in candidate mode a public scan is blended with the candidate's impressions
+  // organisation: an entered OCAI profile outranks a single rater; company research is mixed in by researchWeights() (evidence strength x how well the person knows the organisation)
   const ocN = pickNum(st.org.ocai.now), ocP = pickNum(st.org.ocai.pref), sc4 = p => Object.fromEntries(QUADS.map(([k]) => [k, mean(`${p}_${k}`)]));
-  S.org.cvfNow = Object.keys(ocN).length === 4 ? ocN : sc4('OR');
-  if (isCandidate() && st.scan?.cvf) { const a = normCvf(S.org.cvfNow); S.org.cvfNow = Object.fromEntries(QUADS.map(([k]) => [k, (a[k] + (+st.scan.cvf[k] || 25)) / 2])); }
-  S.org.cvfEsp = Object.keys(ocP).length === 4 ? ocP : sc4('OE');
-  S.org.ops = Object.fromEntries(OPS.map(([k]) => [k, isCandidate() && st.scan?.norms?.[k] != null ? (g(`ON_${k}`) + +st.scan.norms[k]) / 2 : g(`ON_${k}`)]));
-  S.org.psych = mean('OX_psych'); S.org.cred = mean('OX_cred'); S.org.recommend = g('OX_rec'); S.org.rating = 1 + (g('OX_psych') + g('OX_rec')) / 200 * 4;
-  S.org.signals = { ...S.org.signals, ...Object.fromEntries(EVENTS.map(([k]) => [k, !!st.org.events[k] || !!st.scan?.signals?.[k]])) };
+  const sv = scanNow(), W = view === 'own' || !sv ? { org: 0, esp: 0, team: 0 } : view === 'public' ? { org: 1, esp: 1, team: 1 } : researchWeights();
+  const survey = Object.keys(ocN).length === 4;
+  S.org.cvfNow = mixCvf(survey ? ocN : sc4('OR'), sv?.cvf, survey ? W.org / 2 : W.org);
+  S.org.cvfEsp = mixCvf(Object.keys(ocP).length === 4 ? ocP : sc4('OE'), sv?.espCvf, W.esp);
+  S.org.ops = mixOps(Object.fromEntries(OPS.map(([k]) => [k, g(`ON_${k}`)])), sv?.norms, W.org);
+  S.org.psych = mix1(mean('OX_psych'), sv?.psych, W.org); S.org.cred = mix1(mean('OX_cred'), sv?.trust, W.org); S.org.recommend = g('OX_rec'); S.org.rating = 1 + (g('OX_psych') + g('OX_rec')) / 200 * 4;
+  S.org.signals = { ...S.org.signals, ...Object.fromEntries(EVENTS.map(([k]) => [k, !!st.org.events[k] || (view !== 'own' && !!sv?.signals?.[k])])) };
   const den = pickNum(st.org.denison); if (Object.keys(den).length === 4) { S.org.denison = den; S.org.ledger.denison = true; }
-  Object.assign(S.org.ledger, { survey: Object.keys(ocN).length === 4, reviews: true, leadership: true, news: true });
+  Object.assign(S.org.ledger, { survey, reviews: true, leadership: true, news: true });
   // team
-  S.team.cvf = sc4('TC'); S.team.ops = Object.fromEntries(OPS.map(([k]) => [k, g(`TN_${k}`)])); S.team.mgrStyle = st.team.mgrStyle || 'consultative';
+  S.team.cvf = mixCvf(sc4('TC'), sv?.team?.cvf, W.team); S.team.ops = mixOps(Object.fromEntries(OPS.map(([k]) => [k, g(`TN_${k}`)])), sv?.team?.norms, W.team); S.team.mgrStyle = st.team.mgrStyle || 'consultative';
   S.team.ledger = { manager: true, peers: 2, reports: 1, xfn: 1, bu: false }; S.team.transcript = 'participant rating '.repeat(12);
   return S;
 }
@@ -261,13 +266,17 @@ function analyse() {
   const order = { major: 0, significant: 1, mild: 2 };
   mism.sort((a, b) => order[a.sev] - order[b.sev] || (b.w || 0) - (a.w || 0));
   const majors = mism.filter(m => m.sev === 'major');
+  // the same match on the person's own ratings only and on the public research only, so the report can show where they diverge
+  const sv = scanNow(), views = { used: R };
+  if (sv?.cvf) { views.own = compute(buildS('own')); views.pub = compute(buildS('public')); }
+  const hidden = views.pub ? DIMS.map(d => ({ d, gap: views.pub.aOrg.per[d.k].gap })).filter(x => sevOf(Math.abs(x.gap)) && !mism.some(m => m.type === 'dim' && m.d.k === x.d.k)).map(x => ({ ...x, sev: sevOf(Math.abs(x.gap)), txt: SELF[x.d.k][x.gap > 0 ? 'hi' : 'lo'] })) : [];
   const verdict = majors.length || R.overall < 50 ? ['bad', isCandidate() ? 'Significant mismatch: think carefully before deciding' : 'Significant mismatch with your current environment']
     : R.overall >= 75 ? ['good', 'Strong match'] : R.overall >= 62 ? ['good', 'Good match, with some areas to manage'] : ['warn', 'Partial match: go in with your eyes open'];
-  return { S, R, sc, mism, majors, fits, pressure, verdict };
+  return { S, R, sc, mism, majors, fits, pressure, verdict, views, hidden };
 }
 const tone = v => v >= 75 ? 'good' : v >= 60 ? '' : v >= 50 ? 'warn' : 'bad';
 function reportHTML(A, standalone) {
-  const { S, R, sc, mism, majors, fits, pressure, verdict } = A, cand = isCandidate();
+  const { S, R, sc, mism, majors, fits, pressure, verdict } = A, cand = isCandidate(), scan = scanNow();
   const arch = { [ARCH.stab]: 'You would mostly reinforce the current culture.', [ARCH.add]: 'Your differences point toward the culture leadership says it wants, so you could help move it there.', [ARCH.dis]: 'Your differences work against both the current and the stated culture, so they may create friction rather than change.' }[R.valueAdd];
   const fr = { Low: 'Low', Moderate: 'Moderate', High: 'High', Critical: 'Critical' }[R.fBand];
   const li = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`;
@@ -287,7 +296,6 @@ function reportHTML(A, standalone) {
     return `<span>${l}</span><span class="rows"><i style="width:${you * 2}%;background:var(--series-1)" title="You prefer ${r0(you)}%"></i><i style="width:${t * 2}%;background:var(--series-2)" title="Team ${r0(t)}%"></i><i style="width:${o * 2}%;background:var(--series-3)" title="Organisation ${r0(o)}%"></i></span>`; }).join('');
   const steps90 = [...mism.filter(m => m.type === 'dim').slice(0, 3).map(m => m.txt[1]), ...pressure.slice(0, 2).map(h => `${SCALE_LABEL(h)}: ${h.self}`)];
   if (!steps90.length) steps90.push('Keep doing what works: your profile fits this environment well. Use your strengths deliberately and check in with your manager after 90 days.');
-  const scan = st.scan;
   const legendLine = (c, d, t) => `<span><svg viewBox="0 0 24 8"><line x1="0" y1="4" x2="24" y2="4" stroke="${c}" stroke-width="2"${d ? ` stroke-dasharray="${d}"` : ''}/></svg>${t}</span>`;
   const P = standalone ? PAL_PRINT : { ...PAL_LIVE, s1: 'var(--series-1)', s2: 'var(--series-2)', s3: 'var(--series-3)', d2: '6 4', d3: '2 3', fillOp: 0, candOp: 0.12 };
   return `<div class="rep">
@@ -306,9 +314,10 @@ function reportHTML(A, standalone) {
   ${fits.length ? `<ul class="ok-list">${fits.map(d => `<li><b>${esc(d.name)}</b>: your preferences are close to both your team and the organisation.</li>`).join('')}</ul>` : '<p class="muted">No dimension is a close match with both the team and the organisation. See the areas below.</p>'}
   <h2>Where you may clash</h2>
   ${mism.length ? mism.map(mmCard).join('') : '<p>No material mismatches were found. Differences on every dimension are within normal range.</p>'}
+  ${scan ? researchHTML(A) : ''}
   <h2>You compared with ${cand ? 'the team and organisation' : 'your team and organisation'}</h2>
   <div class="chart"><div class="legend">${legendLine(standalone ? PAL_PRINT.s1 : 'var(--series-1)', '', 'You')}${legendLine(standalone ? PAL_PRINT.s2 : 'var(--series-2)', '6 4', 'Team')}${legendLine(standalone ? PAL_PRINT.s3 : 'var(--series-3)', '2 3', 'Organisation')}</div>${radarSVG(R, P, false)}</div>
-  <p class="muted small">Your position comes from your personality, motives and under-pressure answers. Team and organisation positions come from your ratings${S.org.ledger.survey ? ' and the culture survey you entered' : ''}${cand && scan ? ' and the public-sources summary' : ''}.</p>
+  <p class="muted small">Your position comes from your personality, motives and under-pressure answers. Team and organisation positions come from your ratings${S.org.ledger.survey ? ' and the culture survey you entered' : ''}${scan && cand ? ', combined with the company research' : ''}.</p>
   <h3>Culture you say you prefer vs. what you experience</h3>
   <div class="legend"><span><i style="background:var(--series-1)"></i>You prefer</span><span><i style="background:var(--series-2)"></i>Team</span><span><i style="background:var(--series-3)"></i>Organisation</span></div>
   <div class="cmp">${cvfRows}</div>
@@ -319,9 +328,6 @@ function reportHTML(A, standalone) {
   <table class="mini"><thead><tr><th>Motive</th><th>Strength</th><th>Rewarded here</th></tr></thead><tbody>${motives.slice(0, 4).map(([k, l, v]) => { const r = rwOf(k); return `<tr><td>${esc(l)}</td><td>${r0(v)}</td><td>${r.reward >= 60 ? '<span class="dot t-good"></span>Strongly' : r.reward >= 40 ? '<span class="dot"></span>Partly' : '<span class="dot t-bad"></span>Weakly'}</td></tr>`; }).join('')}</tbody></table>
   <h3>Under pressure</h3>
   ${pressure.length ? li(pressure.map(h => `<b>${esc(SCALE_LABEL(h))}</b> (${r0(h.score)}): ${esc(h.looks)} <span class="muted">Likely trigger here: ${esc(h.trig.toLowerCase())}. Tip: ${esc(h.self)}</span>`)) : '<p>None of your under-pressure tendencies is elevated.</p>'}
-  ${scan ? `<h2>What public sources suggest</h2><p>${esc(scan.summary || '')}</p>${(scan.concerns || []).length || (scan.strengths || []).length ? `<div class="grid2"><div><h3>Often praised</h3>${li((scan.strengths || []).map(esc))}</div><div><h3>Often criticised</h3>${li((scan.concerns || []).map(esc))}</div></div>` : ''}
-    <p class="muted small">Evidence strength: ${esc(scan.strength || 'unknown')}. ${scan.provider === 'claude-knowledge' ? 'Based on Claude’s general knowledge, without a live web search.' : 'Based on a live web search of public sources.'} Public reviews are self-selected and can be outdated.</p>
-    ${(scan.sources || []).length ? `<ul class="src">${scan.sources.slice(0, 8).map(s => `<li><a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.title || s.url)}</a></li>`).join('')}</ul>` : ''}` : ''}
   <h2>${cand ? 'If you join: your first 90 days' : 'Getting more aligned: your next 90 days'}</h2>
   ${li(steps90.map(esc))}
   ${cand ? `<h2>Questions to ask before you decide</h2>${li([...new Set(mism.filter(m => m.type === 'dim').map(m => m.txt[2]))].slice(0, 5).concat(['What would success look like for this role after 12 months?', 'Why did the previous person in this role leave or move on?']).map(esc))}` : ''}
@@ -374,8 +380,10 @@ const VIEWS = {
       : `${fld('Instrument name', txt('extName', 'ext.name', 'e.g., NEO-PI-R'))}<table class="mini">${BIG5.map(([k, l]) => `<tr><td>${esc(l)} (percentile)</td><td><input type="number" min="0" max="100" data-bind="ext.big5.${k}" value="${esc(st.ext.big5[k] ?? '')}" aria-label="${esc(l)}"></td></tr>`).join('')}</table>`}` : ''}
     ${navBtns()}</div>`,
   orgInfo: () => `<div class="card"><p class="eyebrow">${isCandidate() ? 'The organisation you are considering' : 'Your organisation'}</p><h1>${isCandidate() ? 'Tell us about the organisation' : 'Tell us about your organisation'}</h1>
-    <div class="grid2">${fld('Organisation name', txt('orgName', 'org.name', 'e.g., Acme Ltd'), isCandidate() ? 'Needed for the public-sources summary.' : 'Optional. Used only for grouped analysis, never reported individually.')}
+    <div class="grid2">${fld('Organisation name', txt('orgName', 'org.name', 'e.g., Acme Ltd'), isCandidate() ? 'Needed for the company research.' : 'Used for the company research and grouped analysis; never reported individually.')}
+    ${fld('Business unit, division or site', txt('orgUnit', 'org.unit', 'e.g., Retail banking, Pune'), 'Optional. Helps the research find your part of a large organisation.')}
     ${fld('Industry', sel('ind', 'org.industry', SELECTS.industry))}${fld('Number of employees', sel('size', 'org.size', SELECTS.size))}${fld('Country / location', txt('oc', 'org.country', 'e.g., Bangalore, India'))}</div>
+    ${isCandidate() ? `<div class="field"><span class="lab">How well do you know this organisation?</span><div class="choice">${KNOW.map(([v, l]) => `<label><input type="radio" name="know" value="${v}" data-bind="org.know" ${st.org.know === v ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div><small>The less you know, the more your report relies on the company research.</small></div>` : ''}
     <div class="field"><span class="lab">Has any of this happened in the last 12 months?</span>${EVENTS.map(([k, l]) => `<label class="check"><input type="checkbox" data-bind="org.events.${k}" ${st.org.events[k] ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
     <details class="notice"><summary><b>Optional: results from a culture survey</b> (OCAI, Denison)</summary>
       <p class="small muted" style="margin-top:8px">If your organisation has run an OCAI or Denison survey, enter the organisation-level results, or read them from the report. One person's ratings are less reliable than a survey of many employees.</p>
@@ -389,11 +397,12 @@ const VIEWS = {
     <div class="grid2">${fld('Team or function name', txt('tn', 'team.name', 'e.g., Digital product team'), 'Optional.')}${fld('Team size', sel('ts', 'team.size', ['2–5', '6–10', '11–20', '21–50', 'More than 50']))}</div>
     <div class="field"><span class="lab">How does ${isCandidate() ? 'the hiring manager' : 'your manager'} usually lead?</span><div class="choice">${Object.entries(MGR_DESC).map(([k, l]) => `<label><input type="radio" name="mgr" value="${k}" data-bind="team.mgrStyle" ${st.team.mgrStyle === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>
     ${navBtns()}</div>`,
-  report: () => { const A = analyse(); st.lastModel = summariseModel(A); save();
+  report: () => { if (scanJob && !researchUI.skipWait) return `<div class="card"><p class="eyebrow">Your report</p><h1>Finishing the company research…</h1><p class="muted">We are reading what employees, news and leadership say about ${esc(st.org.name)}. Your report appears here automatically; this usually takes under a minute.</p><div class="nav"><button class="btn" type="button" data-go="back">Back</button><button class="btn" type="button" id="skipWait">Show my report without it</button></div></div>`;
+    const A = analyse(); st.lastModel = summariseModel(A); save();
     return `<div class="card">${reportHTML(A, false)}<div class="nav noprint"><button class="btn" type="button" data-go="back">Back</button><span><button class="btn" type="button" id="dlReport">Download report</button> <button class="btn" type="button" onclick="window.print()">Print</button> <button class="btn primary" type="button" data-go="next">Continue: rate this report</button></span></div></div>`; },
   feedback: () => { const cand = isCandidate(), rs = RS.agree;
     const q = [['FB_self', 'The description of me is accurate.'], ['FB_org', cand ? 'The picture of the organisation matches what I know about it.' : 'The description of my organisation’s culture is accurate.'], ['FB_team', cand ? 'The picture of the team matches what I learned about it.' : 'The description of my team’s culture is accurate.'], ['FB_fit', cand ? 'The areas where I would fit or clash seem right to me.' : 'The areas where I fit and clash match my real experience.'], ['FB_advice', 'The suggestions are practical and useful.']];
-    if (st.scan) q.push(['FB_public', cand ? 'The public-sources summary matches what I have heard.' : 'The public-sources summary matches my experience inside the organisation.']);
+    if (scanNow()) q.push(['FB_public', cand ? 'The company research matches what I have heard about this organisation.' : 'The company research matches my experience inside the organisation.']);
     if (cand) q.push(['FB_decide', 'This report helps me decide whether to join.']);
     return `<div class="card"><p class="eyebrow">Your feedback</p><h1>How accurate was your report?</h1><p class="muted">This is the most important part of the study: it tells us whether the tool reflects reality.</p>
     <ol class="items">${q.map(([id, t]) => itemHTML({ id, text: t, rs: 'agree' }, st.fb[id], 'fb')).join('')}</ol>
@@ -419,38 +428,135 @@ function itemsView(s) {
   return `<div class="card"><p class="eyebrow">${esc(B.title)} · page ${s.page} of ${s.pages}</p><h1>${esc(B.title)}</h1>${s.page === 1 ? `<p class="muted">${esc(intro)}</p>` : ''}
     <ol class="items" style="counter-reset:q ${(s.page - 1) * B.per_page}">${s.items.map(it => itemHTML(it, st.ans[it.id])).join('')}</ol>${navBtns()}</div>`;
 }
-function scanBox() {
-  const can = (CONFIG.backendUrl && CONFIG.scanEnabled) || sampleFn;
-  if (st.scan) return `<b>Public-sources summary ready.</b> <span class="muted small">${esc((st.scan.summary || '').slice(0, 160))}…</span> <button class="btn" type="button" id="scanBtn">Refresh</button>`;
-  if (!can) return `<span class="muted small">A public-sources culture summary is not available in this version.</span>`;
-  return `<b>Optional: summarise public information about this organisation's culture</b><p class="small muted" style="margin:6px 0">${CONFIG.backendUrl && CONFIG.scanEnabled ? 'Searches public sources (employee review sites, news, leadership statements) and summarises them.' : 'Uses Claude’s general knowledge (no live web search).'} It appears in your report next to your own view${isCandidate() ? ' and is blended with it' : ''}. Takes up to a minute.</p><button class="btn" type="button" id="scanBtn">Create summary</button>`;
+/* ---------- company research: several kinds of public source, each read separately ----------
+   Lenses: employees (review platforms → lived culture), leadership (statements, values, careers pages → espoused culture),
+   news (events of the last 24 months → signals), function (the participant's function or unit → team subculture).
+   Each lens has its own evidence strength; the match mixes research into the person's own ratings by researchWeights(). */
+let sampleFn = null, scanJob = null;
+const researchUI = { skipWait: false };
+const SRC_TYPES = [['reviews', 'Employee review platforms'], ['news', 'News and events'], ['leadership', 'Leadership statements and stated values'], ['careers', 'Careers and employer-brand pages'], ['function', 'Function or unit level'], ['other', 'Other sources']];
+const LENSES = [['employees', 'What employees report', 'lived culture'], ['leadership', 'What leadership says', 'espoused culture'], ['news', 'What the news shows', 'recent events'], ['function', 'Your function or unit', 'team subculture']];
+const STRENGTH_W = { low: .3, moderate: .6, high: .85 };
+const KNOW = [['little', 'Very little: mostly the job advert and interviews'], ['some', 'Some: interviews plus conversations or reading'], ['good', 'Well: I know several people who work there'], ['insider', 'Very well: I have worked there or with them closely']];
+const KNOW_ADJ = { little: .15, some: 0, good: -.15, insider: -.3 };
+const RESEARCH_SCHEMA = '{"identified": "the organisation you researched: name, headquarters, sector (or \\"ambiguous\\" if several match)", "summary": "4-6 sentences on the lived culture, drawing on all lenses", "lenses": {"employees": {"cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "psych_safety": 1-5, "leadership_trust": 1-5, "praised": ["up to 5 recurring themes"], "criticised": ["up to 5 recurring themes"], "strength": "low|moderate|high"}, "leadership": {"stated_values": ["values and priorities leadership states publicly"], "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "strength": "low|moderate|high"}, "news": {"events": [{"date": "YYYY-MM", "headline": "short factual description", "signal": "layoffs|churn|restructure|regulatory|growth|mna|other"}], "signals": {"layoffs": bool, "churn": bool, "restructure": bool, "regulatory": bool, "growth": bool, "mna": bool}, "strength": "low|moderate|high"}, "function": {"unit": "the function or unit assessed", "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n}, "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "notes": "1-2 sentences on how this function or unit differs from the organisation as a whole", "strength": "low|moderate|high"}}, "sources": [{"type": "reviews|news|leadership|careers|function|other", "platform": "e.g. Glassdoor, AmbitionBox, Indeed, Kununu, Reuters, company website", "title": "page title", "url": "https://...", "period": "e.g. 2025-2026", "rating": n or null, "rating_max": 5, "review_count": n or null, "finding": "one sentence: what this source shows about the culture"}], "agreement": "1-3 sentences: where the sources agree and where they disagree", "say_do": "1-2 sentences: gap between what leadership says and what employees report", "strength": "low|moderate|high", "caveats": ["..."]}';
+const RESEARCH_RULES = 'Map culture onto the Competing Values Framework as shares summing to 100 (clan = collaborative/people-first, adhoc = innovative/entrepreneurial, market = results/competition, hier = control/process). Rate operating norms 0-100 (pace = decision speed, risk = appetite for risk, conflict = openness to disagreement, autonomy = latitude given to employees). Rate psychological safety and trust in leadership 1-5 from what employees report. Judge each lens only from its own sources and give it its own strength: high = several recent, consistent sources (e.g. hundreds of reviews); moderate = some sources or mixed signals; low = little or old evidence. Where a lens has no evidence, set its strength to "low" and its numbers to neutral (cvf 25 each, norms 50, ratings 3). Summarise recurring patterns; never quote or reproduce individual reviews. Prefer the last 24 months and say when evidence is older.';
+
+const mixCvf = (own, pub, w) => { if (!pub || !(w > 0)) return own; const a = normCvf(own); return Object.fromEntries(QUADS.map(([k]) => [k, a[k] * (1 - w) + pub[k] * w])); };
+const mixOps = (own, pub, w) => Object.fromEntries(OPS.map(([k]) => [k, pub?.[k] != null && w > 0 ? own[k] * (1 - w) + pub[k] * w : own[k]]));
+const mix1 = (own, pub, w) => pub != null && w > 0 ? own * (1 - w) + pub * w : own;
+const canResearch = () => !!((CONFIG.backendUrl && CONFIG.scanEnabled) || sampleFn);
+const researchKey = () => [st.org.name, st.org.unit, st.org.country, st.demo.func].map(x => String(x || '').trim().toLowerCase()).join('|');
+const scanNow = () => st.scan && st.scan.v === 2 && st.scan.key === researchKey() ? st.scan : null;
+// how much one lens can be trusted: its evidence strength, discounted when it rests on few sources
+const lensW = (sv, l) => STRENGTH_W[sv.lens[l].strength] * Math.min(1, .55 + .15 * sv.lens[l].n);
+function researchWeights() {
+  const sv = scanNow();
+  // current employees rate from experience, so their own view leads and the research stays a comparison (and a validity check)
+  if (!sv || !isCandidate()) return { org: 0, esp: 0, team: 0 };
+  const adj = KNOW_ADJ[st.org.know] ?? 0, w = x => Math.round(Math.max(0, Math.min(.8, x)) * 100) / 100;
+  return { org: sv.cvf ? w(lensW(sv, 'employees') * .8 + adj) : 0, esp: sv.espCvf ? w(lensW(sv, 'leadership') * .7 + adj) : 0, team: sv.team.cvf ? w(lensW(sv, 'function') * .5 + adj / 2) : 0 };
 }
 
-/* ---------- public culture scan ---------- */
-let sampleFn = null;
-const SCAN_SCHEMA = '{"summary": "4-6 sentence summary of the lived culture", "strengths": ["up to 5 things employees often praise"], "concerns": ["up to 5 things employees often criticise"], "espoused_values": ["values leadership publicly states"], "cvf": {"clan": n, "adhoc": n, "market": n, "hier": n} (shares summing to 100), "norms": {"pace": 0-100, "risk": 0-100, "conflict": 0-100, "autonomy": 0-100}, "signals": {"layoffs": bool, "churn": bool, "restructure": bool, "regulatory": bool, "growth": bool, "mna": bool}, "strength": "low" | "moderate" | "high", "caveats": ["..."], "sources": [{"title": "...", "url": "..."}]}';
-function cleanScan(r, provider) {
-  if (!r || typeof r !== 'object') throw new Error('bad scan');
-  const cv = r.cvf && QUADS.every(([k]) => Number.isFinite(+r.cvf[k])) ? normCvf(Object.fromEntries(QUADS.map(([k]) => [k, Math.max(1, +r.cvf[k])]))) : null;
-  const nm = r.norms ? Object.fromEntries(OPS.map(([k]) => [k, Number.isFinite(+r.norms[k]) ? clamp(+r.norms[k]) : null])) : {};
-  const arr = a => Array.isArray(a) ? a.map(String).slice(0, 6) : [];
-  return { provider, summary: String(r.summary || '').slice(0, 1500), strengths: arr(r.strengths), concerns: arr(r.concerns), espoused: arr(r.espoused_values), cvf: cv, norms: nm,
-    signals: Object.fromEntries(EVENTS.map(([k]) => [k, !!r.signals?.[k]])), strength: ['low', 'moderate', 'high'].includes(r.strength) ? r.strength : 'low', caveats: arr(r.caveats),
-    sources: Array.isArray(r.sources) ? r.sources.filter(s => s && /^https?:\/\//.test(s.url)).slice(0, 10).map(s => ({ title: String(s.title || '').slice(0, 160), url: String(s.url) })) : [] };
+const numOr = v => v === null || v === undefined || v === '' || !Number.isFinite(+v) ? null : +v;
+const cvfOf = c => c && QUADS.every(([k]) => numOr(c[k]) != null) && QUADS.some(([k]) => +c[k] > 0) ? normCvf(Object.fromEntries(QUADS.map(([k]) => [k, Math.max(1, +c[k])]))) : null;
+const normsOf = n => n ? Object.fromEntries(OPS.map(([k]) => [k, numOr(n[k]) == null ? null : clamp(+n[k])])) : {};
+const strOf = s => ['low', 'moderate', 'high'].includes(s) ? s : 'low';
+function cleanScan(r, provider, key) {
+  if (!r || typeof r !== 'object') throw new Error('bad research result');
+  const L = r.lenses || {}, E = L.employees || {}, Ld = L.leadership || {}, N = L.news || {}, F = L.function || {};
+  const arr = (a, n = 6) => Array.isArray(a) ? a.filter(x => x != null && x !== '').map(x => String(x).slice(0, 300)).slice(0, n) : [];
+  const r15 = v => { const x = numOr(v); return x != null && x >= 1 && x <= 5 ? x : null; };
+  const seen = new Set(), sources = (Array.isArray(r.sources) ? r.sources : []).filter(x => x && (x.title || x.platform)).map(x => {
+    const url = /^https?:\/\/[^\s"'<>]+$/.test(x.url || '') ? String(x.url) : '';
+    return { type: SRC_TYPES.some(([k]) => k === x.type) ? x.type : 'other', platform: String(x.platform || '').slice(0, 60), title: String(x.title || '').slice(0, 160), url,
+      period: String(x.period || '').slice(0, 40), rating: numOr(x.rating), ratingMax: numOr(x.rating_max) || 5, count: numOr(x.review_count) == null ? null : Math.round(+x.review_count), finding: String(x.finding || '').slice(0, 300) };
+  }).filter(x => { const k = x.url || x.platform + x.title; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 18);
+  const n = (...t) => sources.filter(x => t.includes(x.type)).length;
+  const events = (Array.isArray(N.events) ? N.events : []).filter(e => e && e.headline).slice(0, 6).map(e => ({ date: String(e.date || '').slice(0, 10), headline: String(e.headline).slice(0, 200), signal: String(e.signal || 'other') }));
+  const sig = N.signals || r.signals || {};
+  return { v: 2, key, provider, at: new Date().toISOString(), company: st.org.name.trim(), identified: String(r.identified || '').slice(0, 200), summary: String(r.summary || '').slice(0, 1500),
+    strengths: arr(E.praised || r.strengths), concerns: arr(E.criticised || r.concerns), espoused: arr(Ld.stated_values || r.espoused_values),
+    cvf: cvfOf(E.cvf) || cvfOf(r.cvf), norms: normsOf(E.norms || r.norms), psych: r15(E.psych_safety), trust: r15(E.leadership_trust),
+    espCvf: cvfOf(Ld.cvf), events, signals: Object.fromEntries(EVENTS.map(([k]) => [k, !!sig[k]])),
+    team: { unit: String(F.unit || '').slice(0, 120), cvf: cvfOf(F.cvf), norms: normsOf(F.norms), notes: String(F.notes || '').slice(0, 400) },
+    lens: { employees: { strength: strOf(E.strength || r.strength), n: n('reviews') }, leadership: { strength: strOf(Ld.strength), n: n('leadership', 'careers') }, news: { strength: strOf(N.strength), n: n('news') }, function: { strength: strOf(F.strength), n: n('function') } },
+    agreement: String(r.agreement || '').slice(0, 600), sayDo: String(r.say_do || '').slice(0, 400), strength: strOf(r.strength), caveats: arr(r.caveats), sources };
 }
-async function runScan(btn) {
-  if (!st.org.name.trim()) return toast('Enter the organisation name first.');
-  btn.disabled = true; btn.textContent = 'Working… (up to a minute)';
-  try {
+function researchPrompt() {
+  const o = st.org, fn = st.demo.func && st.demo.func !== 'Other' ? st.demo.func : '';
+  return `Describe the publicly known workplace culture of the organisation "${o.name.trim()}"${o.unit ? `, especially its ${o.unit}` : ''}${o.country ? ` in ${o.country}` : ''}${o.industry ? ` (${o.industry})` : ''}, from what you know of four kinds of source, kept separate: (1) employees: review platforms such as Glassdoor, AmbitionBox, Indeed or Kununu; (2) leadership: published values, leadership statements, annual reports, careers and employer-brand pages; (3) news: layoffs, leadership changes, restructuring, regulatory issues, growth, mergers in the last 24 months; (4) function: what is known about the ${fn || 'relevant'} function${o.unit ? ` or the ${o.unit} unit` : ''} specifically. ${RESEARCH_RULES} You have no live web access: list the kinds of source your knowledge rests on, give a URL only for a stable page you are sure exists (otherwise leave "url" empty), and do not invent ratings or review counts (use null). If you do not know this organisation, say so in "summary", set every strength to "low" and keep the numbers neutral. Reply with ONLY this JSON: ${RESEARCH_SCHEMA}`;
+}
+function startResearch(force) {
+  if (!canResearch() || !st.org.name.trim()) { if (force) toast('Enter the organisation name first.'); return null; }
+  if (scanJob) return scanJob;
+  if (!force && scanNow()) return null;
+  const key = researchKey();
+  researchUI.skipWait = false; st.scanError = '';
+  scanJob = (async () => {
     if (CONFIG.backendUrl && CONFIG.scanEnabled) {
-      const res = await fetch(CONFIG.backendUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'scan', company: st.org.name, country: st.org.country, industry: st.org.industry }) });
-      const j = await res.json(); if (!j.ok) throw new Error(j.error || 'scan failed'); st.scan = cleanScan(j.scan, 'web-search');
-    } else {
-      const r = await sampleFn.json(`Summarise the publicly known workplace culture of the organisation "${st.org.name}"${st.org.country ? ` in ${st.org.country}` : ''}${st.org.industry ? ` (${st.org.industry})` : ''}, from what you know about employee reviews, news and leadership statements. If you do not know this organisation, say so in "summary", set "strength" to "low" and leave numbers at neutral values (cvf 25 each, norms 50). Reply with ONLY this JSON: ${SCAN_SCHEMA}`);
-      st.scan = cleanScan(r, 'claude-knowledge');
+      const res = await fetch(CONFIG.backendUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'scan', company: st.org.name, unit: st.org.unit, country: st.org.country, industry: st.org.industry, func: st.demo.func }) });
+      const j = await res.json(); if (!j.ok) throw new Error(j.error || 'research failed');
+      return cleanScan(j.scan, 'web-search', key);
     }
-    save(); $('#scanBox').innerHTML = scanBox(); toast('Summary ready. It will appear in your report.');
-  } catch (e) { toast(`The summary could not be created (${e?.code || e?.message || 'error'}). You can continue without it.`, 7000); btn.disabled = false; btn.textContent = 'Try again'; }
+    return cleanScan(await sampleFn.json(researchPrompt()), 'claude-knowledge', key);
+  })().then(r => { if (researchKey() === key) { st.scan = r; save(); toast(`Company research on ${r.company} is ready (${r.sources.length} source${r.sources.length === 1 ? '' : 's'}).`); } },
+    e => { st.scanError = String(e?.code || e?.message || 'error'); save(); toast(`The company research could not be completed (${st.scanError}). Your report will use your own ratings.`, 7000); })
+    .finally(() => { scanJob = null; const b = $('#scanBox'); if (b) b.innerHTML = scanBox(); if (steps()[st.step]?.id === 'report' && !researchUI.skipWait) render(); });
+  const b = $('#scanBox'); if (b) b.innerHTML = scanBox();
+  return scanJob;
+}
+function scanBox() {
+  const sv = scanNow(), web = CONFIG.backendUrl && CONFIG.scanEnabled;
+  if (scanJob) return `<b>Researching ${esc(st.org.name)}…</b><p class="small muted" style="margin:6px 0 0">Reading employee reviews, news, leadership statements and what is known about your function. You can carry on; the results are added to your report.</p>`;
+  if (sv) return `<b>Company research ready</b> <span class="muted small">· ${sv.sources.length} source${sv.sources.length === 1 ? '' : 's'} · evidence ${esc(sv.strength)}</span><p class="small muted" style="margin:6px 0">${esc(sv.summary.slice(0, 220))}${sv.summary.length > 220 ? '…' : ''}</p><button class="btn" type="button" id="scanBtn">Run again</button>`;
+  if (!canResearch()) return `<span class="muted small">Company research is not available in this version, so your report will use your own ratings.</span>`;
+  return `<b>Company research</b><p class="small muted" style="margin:6px 0">When you continue, we ${web ? 'search public sources' : 'draw on Claude’s general knowledge (no live web search)'} about this organisation, read separately: employee review platforms (for example Glassdoor, AmbitionBox, Indeed), news from the last two years, leadership statements and stated values, and your function or unit. ${isCandidate() ? 'Your match combines this research with your own impressions, weighted by how strong the evidence is and how well you know the organisation.' : 'Your report compares it with your own experience; your answers tell us how accurate public sources are.'}</p>${st.scanError ? `<p class="small" style="color:var(--bad)">Last attempt failed (${esc(st.scanError)}).</p>` : ''}<button class="btn" type="button" id="scanBtn">Research now</button>`;
+}
+
+// report section: what each kind of source says, how it compares with the person's view, and how much it counted
+function researchHTML(A) {
+  const sv = scanNow(), cand = isCandidate(), W = researchWeights(), S = A.S, own = normCvf(buildS('own').org.cvfNow);
+  const li = a => `<ul>${a.map(x => `<li>${x}</li>`).join('')}</ul>`, pct = v => `${r0(v * 100)}%`;
+  const ev = l => `<span class="dot t-${{ high: 'good', moderate: 'warn', low: 'bad' }[sv.lens[l].strength]}"></span>${sv.lens[l].strength}${sv.lens[l].n ? ` · ${sv.lens[l].n} source${sv.lens[l].n === 1 ? '' : 's'}` : ''}`;
+  const top = c => c ? QUADS.map(([k, l]) => [l, c[k]]).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([l, v]) => `${l} ${r0(v)}%`).join(', ') : '—';
+  const lensRows = [
+    ['employees', `${sv.cvf ? `Lived culture leans ${esc(top(sv.cvf))}.` : ''} ${sv.strengths.length ? `Praised: ${esc(sv.strengths.slice(0, 3).join('; '))}.` : ''} ${sv.concerns.length ? `Criticised: ${esc(sv.concerns.slice(0, 3).join('; '))}.` : ''}${sv.psych ? ` Psychological safety ${sv.psych.toFixed(1)} / 5.` : ''}`],
+    ['leadership', `${sv.espoused.length ? `Stated values: ${esc(sv.espoused.slice(0, 5).join(', '))}.` : 'No clear statement of values found.'}${sv.espCvf ? ` Leans ${esc(top(sv.espCvf))}.` : ''}`],
+    ['news', sv.events.length ? sv.events.slice(0, 4).map(e => `${esc(e.date)} ${esc(e.headline)}`).join('<br>') : 'No material events found in the last two years.'],
+    ['function', sv.team.cvf || sv.team.notes ? `${sv.team.unit ? `<b>${esc(sv.team.unit)}</b>: ` : ''}${esc(sv.team.notes)}${sv.team.cvf ? ` Leans ${esc(top(sv.team.cvf))}.` : ''}` : 'Not enough function-level information.'],
+  ].map(([l, t]) => `<tr><td><b>${LENSES.find(x => x[0] === l)[1]}</b><br><span class="muted small">${LENSES.find(x => x[0] === l)[2]}</span></td><td>${t}</td><td class="small ev">${ev(l)}</td></tr>`).join('');
+  const diffs = sv.cvf ? QUADS.map(([k, l]) => ({ l, d: own[k] - sv.cvf[k] })).filter(x => Math.abs(x.d) >= 10) : [];
+  const used = normCvf(S.org.cvfNow);
+  const prof = QUADS.map(([k, l]) => `<tr><td>${l}</td><td class="mono">${sv.cvf ? r0(sv.cvf[k]) : '—'}</td><td class="mono">${sv.espCvf ? r0(sv.espCvf[k]) : '—'}</td><td class="mono">${r0(own[k])}</td>${cand ? `<td class="mono"><b>${r0(used[k])}</b></td>` : ''}</tr>`).join('');
+  const V = A.views, vRow = (l, k) => `<tr><td>${l}</td><td class="mono">${r0(V.own[k])}%</td><td class="mono">${r0(V.pub[k])}%</td>${cand ? `<td class="mono"><b>${r0(V.used[k])}%</b></td>` : ''}</tr>`;
+  const groups = SRC_TYPES.map(([t, l]) => [l, sv.sources.filter(x => x.type === t)]).filter(([, a]) => a.length);
+  const srcLi = x => `<li>${x.platform ? `<b>${esc(x.platform)}</b> · ` : ''}${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title || x.url)}</a>` : esc(x.title)}${x.period ? ` <span class="muted">(${esc(x.period)})</span>` : ''}${x.rating != null ? ` · rated ${esc(String(x.rating))}/${esc(String(x.ratingMax))}${x.count ? ` from ${x.count.toLocaleString()} reviews` : ''}` : ''}${x.finding ? `<br><span class="muted">${esc(x.finding)}</span>` : ''}</li>`;
+  return `<h2>What the company research says</h2>
+  <p>${esc(sv.summary)}</p>
+  <table class="mini research"><thead><tr><th>Source type</th><th>What it shows</th><th>Evidence</th></tr></thead><tbody>${lensRows}</tbody></table>
+  ${sv.agreement || sv.sayDo ? `<div class="grid2">${sv.agreement ? `<div><h3>Where sources agree and differ</h3><p>${esc(sv.agreement)}</p></div>` : ''}${sv.sayDo ? `<div><h3>Words versus experience</h3><p>${esc(sv.sayDo)}</p></div>` : ''}</div>` : ''}
+  ${sv.cvf ? `<h3>Culture profile from each view (% share)</h3><table class="mini"><thead><tr><th>Culture type</th><th>Employees report</th><th>Leadership says</th><th>Your view</th>${cand ? '<th>Used in your match</th>' : ''}</tr></thead><tbody>${prof}</tbody></table>` : ''}
+  ${V.own ? `<h3>Your fit on each picture of the organisation</h3><table class="mini"><thead><tr><th></th><th>Your view only</th><th>Public research only</th>${cand ? '<th>Combined (your report)</th>' : ''}</tr></thead><tbody>${vRow('Overall fit', 'overall')}${vRow('Organisation fit', 'orgScore')}${vRow('Team fit', 'teamScore')}</tbody></table>` : ''}
+  <p class="small muted">${cand ? `How the research counted: ${pct(W.org)} of the organisation picture, ${pct(W.esp)} of the stated culture and ${pct(W.team)} of the team picture. The weight rises with the strength of the evidence and falls the better you know the organisation.` : 'Your report uses your own experience. The research is shown for comparison, and your rating of it tells us how far public sources can be trusted.'}</p>
+  ${diffs.length ? `<div class="notice warn"><b>${cand ? 'Your impression and public sources differ' : 'Your experience and public sources differ'}</b><p style="margin:4px 0 0">${diffs.map(x => `${esc(x.l)}: you see ${r0(Math.abs(x.d))} points ${x.d > 0 ? 'more' : 'less'} than employees report publicly`).join('; ')}. ${cand ? 'Check these points in your next conversations: ask for recent examples rather than general descriptions.' : 'Your part of the organisation may differ from the overall picture, or public reviews may be out of date.'}</p></div>` : ''}
+  ${A.hidden.length ? `<h3>Risks the public picture adds</h3><p class="small muted">These clashes do not appear in your own view of the organisation, but do in what employees report publicly.</p>${li(A.hidden.map(x => `<span class="sev ${x.sev}">${x.sev}</span><b>${esc(x.d.name)}</b>: ${esc(x.txt[0])} <span class="muted">${cand ? 'Ask: ' + esc(x.txt[2]) : ''}</span>`))}` : ''}
+  ${groups.length ? `<h3>Sources</h3>${groups.map(([l, a]) => `<p class="small" style="margin:8px 0 2px"><b>${l}</b></p><ul class="src">${a.map(srcLi).join('')}</ul>`).join('')}` : ''}
+  <p class="muted small">Overall evidence: ${esc(sv.strength)}. ${sv.provider === 'claude-knowledge' ? 'Drawn from Claude’s general knowledge, without a live web search, so it may be out of date.' : `From a live web search on ${new Date(sv.at).toLocaleDateString()}.`} Review sites attract people with strong views, and one unit can differ from the whole organisation.${sv.caveats.length ? ' ' + esc(sv.caveats.join(' ')) : ''}</p>`;
+}
+
+function researchRecord() {
+  const sv = scanNow(), r = {};
+  if (!sv) return r;
+  Object.assign(r, { scan_v: sv.v, scan_provider: sv.provider, scan_strength: sv.strength, scan_identified: sv.identified, scan_summary: sv.summary.slice(0, 1000), scan_n_sources: sv.sources.length, scan_sources: sv.sources.map(x => x.url).filter(Boolean).join(' '), scan_psych: sv.psych ?? '', scan_trust: sv.trust ?? '' });
+  for (const [t] of SRC_TYPES) r[`scan_n_${t}`] = sv.sources.filter(x => x.type === t).length;
+  for (const [l] of LENSES) r[`scan_str_${l}`] = sv.lens[l].strength;
+  const ratings = sv.sources.filter(x => x.type === 'reviews' && x.rating != null);
+  if (ratings.length) r.scan_review_rating = Math.round(ratings.reduce((a, x) => a + x.rating / x.ratingMax * 5, 0) / ratings.length * 100) / 100;
+  for (const [pre, c] of [['scan_cvf', sv.cvf], ['scan_esp_cvf', sv.espCvf], ['scan_team_cvf', sv.team.cvf]]) if (c) for (const [k, v] of Object.entries(c)) r[`${pre}_${k}`] = Math.round(v * 10) / 10;
+  for (const [pre, o] of [['scan_norm', sv.norms], ['scan_team_norm', sv.team.norms]]) for (const [k, v] of Object.entries(o || {})) if (v != null) r[`${pre}_${k}`] = v;
+  for (const [k, v] of Object.entries(sv.signals)) r[`scan_sig_${k}`] = v ? 1 : 0;
+  return r;
 }
 
 /* ---------- submission ---------- */
@@ -459,6 +565,8 @@ function summariseModel(A) {
     m_mismatches: mism.length, m_majors: majors.length, m_major_list: majors.map(x => x.type === 'dim' ? x.d.k : x.type === 'pressure' ? x.h.k : x.type).join('|'), m_verdict: A.verdict[1], m_individual_source: A.S.ind.instrument };
   for (const d of DIMS) Object.assign(m, { [`m_ind_${d.k}`]: R.x[d.k], [`m_team_${d.k}`]: R.team[d.k], [`m_org_${d.k}`]: R.org[d.k], [`m_gapT_${d.k}`]: R.aTeam.per[d.k].gap, [`m_gapO_${d.k}`]: R.aOrg.per[d.k].gap });
   for (const h of R.der) m[`m_act_${h.k}`] = h.act;
+  const W = researchWeights(); Object.assign(m, { m_rw_org: W.org * 100, m_rw_esp: W.esp * 100, m_rw_team: W.team * 100, m_hidden: A.hidden.map(x => x.d.k).join('|') });
+  if (A.views.own) Object.assign(m, { m_own_overall: A.views.own.overall, m_own_team: A.views.own.teamScore, m_own_org: A.views.own.orgScore, m_pub_overall: A.views.pub.overall, m_pub_team: A.views.pub.teamScore, m_pub_org: A.views.pub.orgScore });
   for (const [k, v] of Object.entries(m)) if (typeof v === 'number') m[k] = Math.round(v * 10) / 10;
   return m;
 }
@@ -475,9 +583,8 @@ function record() {
   for (const [k, v] of Object.entries(pickNum(st.org.ocai.now))) r[`ocai_now_${k}`] = v;
   for (const [k, v] of Object.entries(pickNum(st.org.ocai.pref))) r[`ocai_pref_${k}`] = v;
   for (const [k, v] of Object.entries(pickNum(st.org.denison))) r[`denison_${k}`] = v;
-  if (st.scan) { Object.assign(r, { scan_provider: st.scan.provider, scan_strength: st.scan.strength, scan_summary: st.scan.summary.slice(0, 1000), scan_sources: st.scan.sources.map(s => s.url).join(' ') });
-    if (st.scan.cvf) for (const [k, v] of Object.entries(st.scan.cvf)) r[`scan_cvf_${k}`] = Math.round(v * 10) / 10;
-    for (const [k, v] of Object.entries(st.scan.norms || {})) if (v != null) r[`scan_norm_${k}`] = v; }
+  Object.assign(r, { org_unit: st.org.unit || '', org_know: st.org.know || '' });
+  Object.assign(r, researchRecord());
   Object.assign(r, st.lastModel || summariseModel(analyse()));
   for (const [k, v] of Object.entries(st.fb)) r[k] = v;
   return r;
@@ -510,6 +617,8 @@ function validate(s) {
   if (s.id === 'welcome') { if (!st.mode) return 'Choose which describes you.'; if (!st.consent.age || !st.consent.info || !st.consent.research) return 'Please confirm all three statements to take part.'; }
   if (s.id === 'about' && !st.demo.level) return 'Please select your level.';
   if (s.items) { const miss = s.items.filter(it => !st.ans[it.id]); if (miss.length) { for (const it of miss) $(`[data-item="${it.id}"]`)?.classList.add('missing'); $(`[data-item="${miss[0].id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); return `Please answer all statements (${miss.length} left).`; } }
+  if (s.id === 'orgInfo' && isCandidate() && !st.org.name.trim()) return 'Enter the organisation’s name so we can research it.';
+  if (s.id === 'orgInfo' && isCandidate() && !st.org.know) return 'Tell us how well you know this organisation.';
   if (s.id === 'teamInfo' && !st.team.mgrStyle) return 'Choose how the manager usually leads.';
   if (s.id === 'feedback') { const need = ['FB_self', 'FB_org', 'FB_team', 'FB_fit', 'FB_advice'].filter(k => !st.fb[k]); if (need.length) return 'Please rate each statement about your report.'; }
   return '';
@@ -518,6 +627,7 @@ async function go(dir) {
   const S = steps(), cur = S[st.step];
   if (dir > 0) { const err = validate(cur); if (err) return toast(err);
     st.times[cur.id] = (st.times[cur.id] || 0) + Math.round((Date.now() - (go.t || Date.now())) / 1000);
+    if (cur.id === 'orgInfo') startResearch(false);
     if (cur.id === 'feedback' && !st.submitted) { const b = $('[data-go="next"]'); b.disabled = true; b.textContent = 'Submitting…'; await submit(); } }
   st.step = Math.max(0, Math.min(S.length - 1, st.step + dir)); save(); render(); window.scrollTo({ top: 0 });
 }
@@ -541,7 +651,8 @@ document.addEventListener('click', async e => {
   if (b.dataset.go) return go(b.dataset.go === 'next' ? 1 : -1);
   if (b.hasAttribute('data-resume')) { if (!st.mode) return toast('Choose which describes you first.'); return render(); }
   if (b.hasAttribute('data-restart')) { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Click again to clear all answers'; return; } st = fresh(); save(); render(); return; }
-  if (b.id === 'scanBtn') return runScan(b);
+  if (b.id === 'scanBtn') return startResearch(true);
+  if (b.id === 'skipWait') { researchUI.skipWait = true; return render(); }
   if (b.id === 'dlReport') return download(`culture-fit-report-${st.pid}.html`, standaloneReport(), 'text/html');
   if (b.id === 'dlData') return download(`fitcheck-${st.pid}.json`, JSON.stringify(record(), null, 1), 'application/json');
   if (b.id === 'withdraw') { if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Click again to withdraw your data'; return; }
@@ -562,7 +673,7 @@ document.addEventListener('change', async e => {
 /* ---------- start ---------- */
 $('#studyName').textContent = CONFIG.studyName || 'Research study';
 $('#foot').innerHTML = `${esc(CONFIG.studyName || 'C-Psych Fit Check')} · ${esc(INSTRUMENT.version)}${CONFIG.researcher ? ` · ${esc(CONFIG.researcher)}` : ''}. Personality items: IPIP (ipip.ori.org, public domain). Your answers are saved on this device until you submit.`;
-if (window.claude?.use) { claude.use('sample').then(f => { sampleFn = f; if (steps()[st.step]?.id === 'orgInfo') render(); }, () => {}); claude.use('downloads').then(d => { dlNs = d; }, () => {}); }
+if (window.claude?.use) { claude.use('sample').then(f => { sampleFn = f; const id = steps()[st.step]?.id; if (id === 'orgInfo') render(); else if (st.step > 0 && st.org.name && !scanNow()) startResearch(false); }, () => {}); claude.use('downloads').then(d => { dlNs = d; }, () => {}); }
 render();
 })();
 </script>

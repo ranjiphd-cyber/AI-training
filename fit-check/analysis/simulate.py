@@ -80,6 +80,11 @@ def main():
             raw = np.array([np.exp(0.5 * org_lat[o][f"OR_{q}"] + rng.normal(0, .25)) for q in QUADS])
             for q, v in zip(QUADS, raw / raw.sum() * 100):
                 r[f"scan_cvf_{q}"] = round(float(v), 1)
+            for q, v in zip(QUADS, raw / raw.sum() * 100 + rng.normal(0, 6, 4)):
+                r[f"scan_esp_cvf_{q}"] = round(float(max(1, v)), 1)
+            r["scan_str_employees"] = rng.choice(["low", "moderate", "high"], p=[.3, .4, .3])
+            r["scan_review_rating"] = round(float(np.clip(3.4 + .3 * org_lat[o]["OX_rec"] + rng.normal(0, .3), 1, 5)), 2)
+            r["m_pub_org"] = round(float(np.clip(r["m_org"] + rng.normal(0, 10), 0, 100)), 1) if "m_org" in r else ""
         rows.append(r)
     df = pd.DataFrame(rows)
     # retest pairs: 40 participants retake with small change

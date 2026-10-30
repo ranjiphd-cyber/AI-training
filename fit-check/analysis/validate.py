@@ -308,6 +308,35 @@ def main():
             for q in QUADS:
                 r, n = pair_r(sc_.loc[both, f"scan_cvf_{q}"], lv.loc[both, f"OR_{q}"])
                 L.append(f"- {q}: r = {fmt(r)} (n={n})")
+        # the other research lenses against what insiders rate
+        def lens_mad(pre, items, label):
+            if not all(f"{pre}_{q}" in df for q in QUADS) or not all(f"{items}_{q}" in S for q in QUADS):
+                return
+            a_ = df[[f"{pre}_{q}" for q in QUADS]].apply(pd.to_numeric, errors="coerce")
+            b_ = S[[f"{items}_{q}" for q in QUADS]].clip(lower=1)
+            b_ = b_.div(b_.sum(axis=1), axis=0) * 100
+            ok = a_.notna().all(axis=1) & cur
+            if ok.sum() >= 3:
+                L.append(f"- {label} (n={int(ok.sum())}): mean absolute difference {fmt((a_[ok].values - b_[ok].values).__abs__().mean(), 1)} share points")
+        L += ["", "Other research lenses vs. insiders:"]
+        lens_mad("scan_esp_cvf", "OE", "Leadership statements vs. insiders' espoused culture")
+        lens_mad("scan_team_cvf", "TC", "Function-level research vs. insiders' team culture")
+        if "scan_review_rating" in df and "OX_rec" in S:
+            r, n = pair_r(pd.to_numeric(df.loc[cur, "scan_review_rating"], errors="coerce"), S.loc[cur, "OX_rec"])
+            L.append(f"- Review-platform rating vs. insiders' willingness to recommend: r = {fmt(r)} (n={n})")
+        if "scan_str_employees" in df:
+            L += ["", "Agreement by evidence strength of the employee lens (current employees):", "", "| Strength | n | MAD (share points) |", "|---|---|---|"]
+            for lev in ["high", "moderate", "low"]:
+                ok = both & (df["scan_str_employees"] == lev)
+                if ok.sum() >= 3:
+                    L.append(f"| {lev} | {int(ok.sum())} | {fmt((sc_[ok].values - lv[ok].values).__abs__().mean(), 1)} |")
+            L.append("Strength ratings are useful if agreement improves from low to high.")
+    if "m_pub_org" in df:
+        crit_ = {c: S[c] for c in ["CR_pofit", "CR_sat", "CR_stay", "CR_strain"] if c in S}
+        L += ["", "Does fit based on public research alone predict insiders' outcomes? (validity of the research for candidates who know little)", "", "| Predictor | " + " | ".join(LABEL.get(c, c) for c in crit_) + " |", "|---" * (len(crit_) + 1) + "|"]
+        for m in ["m_pub_org", "m_pub_overall", "m_own_org"]:
+            if m in df:
+                L.append(f"| `{m}` | " + " | ".join(f"{fmt(pair_r(pd.to_numeric(df.loc[cur, m], errors='coerce'), v[cur])[0])} (n={pair_r(pd.to_numeric(df.loc[cur, m], errors='coerce'), v[cur])[1]})" for v in crit_.values()) + " |")
     L.append("")
 
     # 9. fairness screening & provisional norms --------------------------------
