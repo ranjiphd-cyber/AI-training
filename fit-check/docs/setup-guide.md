@@ -83,4 +83,4 @@ Any static host works instead, for example Netlify (drag and drop the `fit-check
 
 ## Changing the questionnaire
 
-Edit `src/instrument.json`, increase `version` (for example `FC-1.1`), rebuild, and redeploy. Every record stores `instrument_version`, so the analysis can separate versions. New item IDs become new sheet columns automatically.
+Edit `src/instrument.json`, increase `version` (for example `FC-1.2`), rebuild, and redeploy. Every record stores `instrument_version`, so the analysis can separate versions. New item IDs become new sheet columns automatically.

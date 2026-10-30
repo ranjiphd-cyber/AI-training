@@ -1,6 +1,6 @@
 {
  "name": "C-Psych Fit Check",
- "version": "FC-1.0",
+ "version": "FC-1.1",
  "response_scales": {
   "accuracy": [
    "Very inaccurate",
@@ -1041,7 +1041,7 @@
    "id": "CP_clan_1",
    "scale": "CP_clan",
    "key": 1,
-   "text": "I do my best work in an organisation that feels like a close team where people look after each other.",
+   "text": "I do my best work where colleagues know each other well and step in to help without being asked.",
    "block": "style",
    "rs": "agree"
   },
@@ -1049,7 +1049,7 @@
    "id": "CP_adhoc_1",
    "scale": "CP_adhoc",
    "key": 1,
-   "text": "I do my best work in an organisation that encourages experimentation, even if some ideas fail.",
+   "text": "I do my best work where I can try untested ideas, and one that does not work out is treated as useful learning.",
    "block": "style",
    "rs": "agree"
   },
@@ -1057,7 +1057,7 @@
    "id": "CP_market_1",
    "scale": "CP_market",
    "key": 1,
-   "text": "I do my best work in an organisation driven by clear targets and competitive results.",
+   "text": "I do my best work where I know which numbers I am accountable for and how I compare with others.",
    "block": "style",
    "rs": "agree"
   },
@@ -1065,7 +1065,7 @@
    "id": "CP_hier_1",
    "scale": "CP_hier",
    "key": 1,
-   "text": "I do my best work in an organisation with clear procedures, roles and lines of authority.",
+   "text": "I do my best work where it is clear who decides what, and how work should be done.",
    "block": "style",
    "rs": "agree"
   },
@@ -1073,7 +1073,7 @@
    "id": "CP_clan_2",
    "scale": "CP_clan",
    "key": 1,
-   "text": "I do my best work where people are developed through mentoring and teamwork.",
+   "text": "I do my best work where managers spend real time coaching people and helping them grow.",
    "block": "style",
    "rs": "agree"
   },
@@ -1081,7 +1081,7 @@
    "id": "CP_adhoc_2",
    "scale": "CP_adhoc",
    "key": 1,
-   "text": "I do my best work where the organisation moves quickly to seize new opportunities.",
+   "text": "I do my best work where plans change fast when something promising comes along.",
    "block": "style",
    "rs": "agree"
   },
@@ -1089,7 +1089,7 @@
    "id": "CP_market_2",
    "scale": "CP_market",
    "key": 1,
-   "text": "I do my best work where people are rewarded for achieving measurable goals.",
+   "text": "I do my best work where pay and promotion depend mainly on measurable performance.",
    "block": "style",
    "rs": "agree"
   },
@@ -1097,7 +1097,7 @@
    "id": "CP_hier_2",
    "scale": "CP_hier",
    "key": 1,
-   "text": "I do my best work where stability, efficiency and predictability are valued.",
+   "text": "I do my best work where work runs to a predictable rhythm without many surprises.",
    "block": "style",
    "rs": "agree"
   },
@@ -1105,7 +1105,7 @@
    "id": "CP_clan_3",
    "scale": "CP_clan",
    "key": 1,
-   "text": "I do my best work where decisions are made through participation and consensus.",
+   "text": "I do my best work where people are asked for their views before decisions that affect them.",
    "block": "style",
    "rs": "agree"
   },
@@ -1113,7 +1113,7 @@
    "id": "CP_adhoc_3",
    "scale": "CP_adhoc",
    "key": 1,
-   "text": "I do my best work where people who take initiative and innovate are rewarded.",
+   "text": "I do my best work where people who propose bold new ideas get the time and backing to pursue them.",
    "block": "style",
    "rs": "agree"
   },
@@ -1121,7 +1121,7 @@
    "id": "CP_market_3",
    "scale": "CP_market",
    "key": 1,
-   "text": "I do my best work where winning against competitors is a strong focus.",
+   "text": "I do my best work where beating rival companies is a constant topic of conversation.",
    "block": "style",
    "rs": "agree"
   },
@@ -1129,7 +1129,7 @@
    "id": "CP_hier_3",
    "scale": "CP_hier",
    "key": 1,
-   "text": "I do my best work where rules and controls are followed consistently.",
+   "text": "I do my best work where policies are applied the same way to everyone, every time.",
    "block": "style",
    "rs": "agree"
   },
@@ -1313,7 +1313,7 @@
    "id": "OR_clan_1",
    "scale": "OR_clan",
    "key": 1,
-   "text": "In my organisation, it feels like a close team where people look after each other.",
+   "text": "In my organisation, colleagues know each other well and step in to help without being asked.",
    "block": "org",
    "rs": "agree"
   },
@@ -1321,7 +1321,7 @@
    "id": "OR_adhoc_1",
    "scale": "OR_adhoc",
    "key": 1,
-   "text": "In my organisation, experimentation is encouraged, even if some ideas fail.",
+   "text": "In my organisation, people can try untested ideas, and one that does not work out is treated as useful learning.",
    "block": "org",
    "rs": "agree"
   },
@@ -1329,7 +1329,7 @@
    "id": "OR_market_1",
    "scale": "OR_market",
    "key": 1,
-   "text": "In my organisation, the focus is on clear targets and competitive results.",
+   "text": "In my organisation, everyone knows which numbers they are accountable for and how they compare with others.",
    "block": "org",
    "rs": "agree"
   },
@@ -1337,7 +1337,7 @@
    "id": "OR_hier_1",
    "scale": "OR_hier",
    "key": 1,
-   "text": "In my organisation, there are clear procedures, roles and lines of authority.",
+   "text": "In my organisation, it is clear who decides what, and how work should be done.",
    "block": "org",
    "rs": "agree"
   },
@@ -1345,7 +1345,7 @@
    "id": "OR_clan_2",
    "scale": "OR_clan",
    "key": 1,
-   "text": "In my organisation, people are developed through mentoring and teamwork.",
+   "text": "In my organisation, managers spend real time coaching people and helping them grow.",
    "block": "org",
    "rs": "agree"
   },
@@ -1353,7 +1353,7 @@
    "id": "OR_adhoc_2",
    "scale": "OR_adhoc",
    "key": 1,
-   "text": "In my organisation, we move quickly to seize new opportunities.",
+   "text": "In my organisation, plans change fast when something promising comes along.",
    "block": "org",
    "rs": "agree"
   },
@@ -1361,7 +1361,7 @@
    "id": "OR_market_2",
    "scale": "OR_market",
    "key": 1,
-   "text": "In my organisation, people are rewarded for achieving measurable goals.",
+   "text": "In my organisation, pay and promotion depend mainly on measurable performance.",
    "block": "org",
    "rs": "agree"
   },
@@ -1369,7 +1369,7 @@
    "id": "OR_hier_2",
    "scale": "OR_hier",
    "key": 1,
-   "text": "In my organisation, stability, efficiency and predictability are valued.",
+   "text": "In my organisation, work runs to a predictable rhythm without many surprises.",
    "block": "org",
    "rs": "agree"
   },
@@ -1377,7 +1377,7 @@
    "id": "OR_clan_3",
    "scale": "OR_clan",
    "key": 1,
-   "text": "In my organisation, decisions are made through participation and consensus.",
+   "text": "In my organisation, people are asked for their views before decisions that affect them.",
    "block": "org",
    "rs": "agree"
   },
@@ -1385,7 +1385,7 @@
    "id": "OR_adhoc_3",
    "scale": "OR_adhoc",
    "key": 1,
-   "text": "In my organisation, people who take initiative and innovate are rewarded.",
+   "text": "In my organisation, people who propose bold new ideas get the time and backing to pursue them.",
    "block": "org",
    "rs": "agree"
   },
@@ -1393,7 +1393,7 @@
    "id": "OR_market_3",
    "scale": "OR_market",
    "key": 1,
-   "text": "In my organisation, winning against competitors is a strong focus.",
+   "text": "In my organisation, beating rival companies is a constant topic of conversation.",
    "block": "org",
    "rs": "agree"
   },
@@ -1401,7 +1401,7 @@
    "id": "OR_hier_3",
    "scale": "OR_hier",
    "key": 1,
-   "text": "In my organisation, rules and controls are followed consistently.",
+   "text": "In my organisation, policies are applied the same way to everyone, every time.",
    "block": "org",
    "rs": "agree"
   },
@@ -1409,7 +1409,7 @@
    "id": "OE_clan_1",
    "scale": "OE_clan",
    "key": 1,
-   "text": "Leadership says the organisation should be a close team that puts people first.",
+   "text": "Senior leaders' messages (speeches, stated values, town halls) stress looking after people and working as one team.",
    "block": "org",
    "rs": "agree"
   },
@@ -1417,7 +1417,7 @@
    "id": "OE_adhoc_1",
    "scale": "OE_adhoc",
    "key": 1,
-   "text": "Leadership says the organisation should be innovative, agile and entrepreneurial.",
+   "text": "Senior leaders' messages stress new ideas, speed and taking smart risks.",
    "block": "org",
    "rs": "agree"
   },
@@ -1425,7 +1425,7 @@
    "id": "OE_market_1",
    "scale": "OE_market",
    "key": 1,
-   "text": "Leadership says the organisation should be results-driven and competitive.",
+   "text": "Senior leaders' messages stress hitting targets and beating the competition.",
    "block": "org",
    "rs": "agree"
   },
@@ -1433,7 +1433,7 @@
    "id": "OE_hier_1",
    "scale": "OE_hier",
    "key": 1,
-   "text": "Leadership says the organisation should be disciplined, efficient and well controlled.",
+   "text": "Senior leaders' messages stress discipline, cost control and getting processes right.",
    "block": "org",
    "rs": "agree"
   },
@@ -1553,7 +1553,7 @@
    "id": "TC_clan_1",
    "scale": "TC_clan",
    "key": 1,
-   "text": "In my team, it feels like a close group where people look after each other.",
+   "text": "In my team, colleagues know each other well and step in to help without being asked.",
    "block": "team",
    "rs": "agree"
   },
@@ -1561,7 +1561,7 @@
    "id": "TC_adhoc_1",
    "scale": "TC_adhoc",
    "key": 1,
-   "text": "In my team, experimentation and new ideas are encouraged.",
+   "text": "In my team, people can try untested ideas, and one that does not work out is treated as useful learning.",
    "block": "team",
    "rs": "agree"
   },
@@ -1569,7 +1569,7 @@
    "id": "TC_market_1",
    "scale": "TC_market",
    "key": 1,
-   "text": "In my team, the focus is on clear targets and results.",
+   "text": "In my team, everyone knows which numbers they are accountable for and how they compare with others.",
    "block": "team",
    "rs": "agree"
   },
@@ -1577,7 +1577,7 @@
    "id": "TC_hier_1",
    "scale": "TC_hier",
    "key": 1,
-   "text": "In my team, there are clear procedures and defined roles.",
+   "text": "In my team, it is clear who decides what, and how work should be done.",
    "block": "team",
    "rs": "agree"
   },
@@ -1585,7 +1585,7 @@
    "id": "TC_clan_2",
    "scale": "TC_clan",
    "key": 1,
-   "text": "In my team, decisions are made through participation and consensus.",
+   "text": "In my team, people are asked for their views before decisions that affect them.",
    "block": "team",
    "rs": "agree"
   },
@@ -1593,7 +1593,7 @@
    "id": "TC_adhoc_2",
    "scale": "TC_adhoc",
    "key": 1,
-   "text": "In my team, we move quickly to try new approaches.",
+   "text": "In my team, we change plans fast when a better approach appears.",
    "block": "team",
    "rs": "agree"
   },
@@ -1601,7 +1601,7 @@
    "id": "TC_market_2",
    "scale": "TC_market",
    "key": 1,
-   "text": "In my team, people are rewarded for achieving measurable goals.",
+   "text": "In my team, recognition depends mainly on measurable performance.",
    "block": "team",
    "rs": "agree"
   },
@@ -1609,7 +1609,7 @@
    "id": "TC_hier_2",
    "scale": "TC_hier",
    "key": 1,
-   "text": "In my team, rules and controls are followed consistently.",
+   "text": "In my team, policies are applied the same way to everyone, every time.",
    "block": "team",
    "rs": "agree"
   },
@@ -1725,5 +1725,8 @@
    "block": "criteria",
    "rs": "agree"
   }
+ ],
+ "changelog": [
+  "FC-1.1: culture items (CP, OR, TC, OE) reworded as concrete, original behavioural statements to keep clear of the wording of proprietary culture instruments. Do not pool these items with FC-1.0 pilot data."
  ]
 }

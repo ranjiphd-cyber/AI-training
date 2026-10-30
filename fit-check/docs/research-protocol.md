@@ -1,6 +1,6 @@
 # Research protocol: validating the C-Psych culture-fit assessment
 
-**Instrument:** C-Psych Fit Check, version FC-1.0 (`src/instrument.json`)
+**Instrument:** C-Psych Fit Check, version FC-1.1 (`src/instrument.json`). In FC-1.1 the culture items were reworded in original, behavioural language; any FC-1.0 pilot data on those items is analysed separately.
 **Status:** draft for ethics review. Adapt the sections marked *[complete]* before submission.
 
 ## 1. Background and aims
@@ -78,7 +78,7 @@ Exclude records that are withdrawn, fail an attention check, take less than 8 mi
 `analysis/validate.py` produces sections 1–9 of the validation report (reliability, retest, convergent validity, ICC, criterion and incremental validity, report accuracy, scan agreement, group differences, provisional norms). After Phase 1:
 
 - **Structure:** confirmatory factor analysis of the IPIP domains and the new scales (for example with lavaan in R), and measurement invariance across gender and age bands.
-- **Item revision:** drop or rewrite items with item–total r < .30 or poor loadings, then release FC-1.1.
+- **Item revision:** drop or rewrite items with item–total r < .30 or poor loadings, then release FC-1.2.
 - **Calibration:** re-estimate the model weights (team / organisation / derailer contributions) against the criteria using cross-validation. Publish the old and new weights and their validities.
 - **Norms:** convert scale scores to percentiles from `norms.csv`, by population (country, level) where n ≥ 300.
 

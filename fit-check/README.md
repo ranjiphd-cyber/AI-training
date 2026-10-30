@@ -86,6 +86,14 @@ python3 fit-check/build.py
 
 Then open `fit-check/index.html` in a browser. Without a backend URL, submissions are saved as a downloaded JSON file, which is handy for piloting. Follow [`docs/setup-guide.md`](docs/setup-guide.md) to connect Google Sheets and publish the app.
 
+## Intellectual property and trademarks
+
+- **Personality items:** the IPIP Big-Five markers (Goldberg, 1992), which are in the public domain.
+- **All other items and descriptions** are original to this project. They build on published frameworks (the Competing Values Framework, the Big Five, Horney's interpersonal orientations, Groysberg's culture styles), but use their own wording. They do not reproduce the items, scale descriptions or report text of any commercial instrument.
+- **Third-party names:** Hogan, HPI, HDS, MVPI, OCAI, Denison, Barrett CVA, Cultural Entropy, OPQ32, KF4D, NEO-PI-R, Glassdoor, AmbitionBox, Indeed and Kununu are trademarks of their respective owners. They are named only so that users can enter scores they already hold, or so the tool can cite sources.
+- **No affiliation:** this project is independent and is not affiliated with or endorsed by any of these owners.
+- **Licences:** administering any of those questionnaires to clients requires a licence from its publisher.
+
 ## Important caveats
 
 - **Provisional scales:** only the IPIP personality items are an established measure. All other scales are new and provisional until the study data confirms them, so reports show 0–100 scale scores, not normed percentiles.

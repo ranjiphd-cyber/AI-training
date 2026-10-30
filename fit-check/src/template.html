@@ -121,6 +121,8 @@ table.mini input { max-width: 90px; }
 .legend svg { width: 24px; height: 8px; margin-right: 4px; vertical-align: middle; }
 .chart > svg { width: 100%; height: auto; display: block; max-width: 520px; margin: 0 auto; }
 .ok-list li::marker { color: var(--good); } .src li { font-size: .85rem; }
+.tscroll { overflow-x: auto; max-width: 100%; } table.mini.num th { vertical-align: bottom; }
+@media (max-width: 560px) { table.mini.num th, table.mini.num td { padding: 6px 4px; font-size: .82rem; } }
 table.research td { vertical-align: top; } table.research td:first-child { width: 28%; } table.research .ev { white-space: nowrap; }
 @media (max-width: 560px) { table.research thead { display: none; } table.research tr { display: grid; grid-template-columns: 1fr auto; padding: 6px 0; border-bottom: 1px solid var(--grid); } table.research td { border: 0; padding: 2px 4px; width: auto !important; } table.research td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; } } .src { margin-top: 2px; } .src li { margin-bottom: 4px; overflow-wrap: anywhere; }
 li > .sev { font-size: .7rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 0 6px; border-radius: 4px; border: 1px solid; margin-right: 6px; }
@@ -332,7 +334,7 @@ function reportHTML(A, standalone) {
   ${li(steps90.map(esc))}
   ${cand ? `<h2>Questions to ask before you decide</h2>${li([...new Set(mism.filter(m => m.type === 'dim').map(m => m.txt[2]))].slice(0, 5).concat(['What would success look like for this role after 12 months?', 'Why did the previous person in this role leave or move on?']).map(esc))}` : ''}
   <h2>About this report</h2>
-  <p class="small muted">This is a research version of a decision-support tool. The personality items are the public-domain IPIP Big-Five markers. The other scales are new and still being validated, so scores are scale scores (0–100), not normed percentiles. The report describes tendencies and fit with the environment as you rated it, not your ability or worth, and it should never be the only basis for a career or hiring decision. Participant code: <span class="mono">${esc(st.pid)}</span>.</p>
+  <p class="small muted">This is a research version of a decision-support tool. The personality items are the public-domain IPIP Big-Five markers. The other scales are original to this study, independent of any commercial instrument, and still being validated, so scores are scale scores (0–100), not normed percentiles. The report describes tendencies and fit with the environment as you rated it, not your ability or worth, and it should never be the only basis for a career or hiring decision. Participant code: <span class="mono">${esc(st.pid)}</span>.</p>
 </div>`;
 }
 const SCALE_LABEL = h => (INSTRUMENT.scales[`UP_${Object.keys(UP_MAP).find(k => UP_MAP[k] === h.k)}`] || {}).label || h.n;
@@ -536,8 +538,8 @@ function researchHTML(A) {
   <p>${esc(sv.summary)}</p>
   <table class="mini research"><thead><tr><th>Source type</th><th>What it shows</th><th>Evidence</th></tr></thead><tbody>${lensRows}</tbody></table>
   ${sv.agreement || sv.sayDo ? `<div class="grid2">${sv.agreement ? `<div><h3>Where sources agree and differ</h3><p>${esc(sv.agreement)}</p></div>` : ''}${sv.sayDo ? `<div><h3>Words versus experience</h3><p>${esc(sv.sayDo)}</p></div>` : ''}</div>` : ''}
-  ${sv.cvf ? `<h3>Culture profile from each view (% share)</h3><table class="mini"><thead><tr><th>Culture type</th><th>Employees report</th><th>Leadership says</th><th>Your view</th>${cand ? '<th>Used in your match</th>' : ''}</tr></thead><tbody>${prof}</tbody></table>` : ''}
-  ${V.own ? `<h3>Your fit on each picture of the organisation</h3><table class="mini"><thead><tr><th></th><th>Your view only</th><th>Public research only</th>${cand ? '<th>Combined (your report)</th>' : ''}</tr></thead><tbody>${vRow('Overall fit', 'overall')}${vRow('Organisation fit', 'orgScore')}${vRow('Team fit', 'teamScore')}</tbody></table>` : ''}
+  ${sv.cvf ? `<h3>Culture profile from each view (% share)</h3><div class="tscroll"><table class="mini num"><thead><tr><th>Culture type</th><th>Employees report</th><th>Leadership says</th><th>Your view</th>${cand ? '<th>Used in your match</th>' : ''}</tr></thead><tbody>${prof}</tbody></table></div>` : ''}
+  ${V.own ? `<h3>Your fit on each picture of the organisation</h3><div class="tscroll"><table class="mini num"><thead><tr><th></th><th>Your view only</th><th>Public research only</th>${cand ? '<th>Combined (your report)</th>' : ''}</tr></thead><tbody>${vRow('Overall fit', 'overall')}${vRow('Organisation fit', 'orgScore')}${vRow('Team fit', 'teamScore')}</tbody></table></div>` : ''}
   <p class="small muted">${cand ? `How the research counted: ${pct(W.org)} of the organisation picture, ${pct(W.esp)} of the stated culture and ${pct(W.team)} of the team picture. The weight rises with the strength of the evidence and falls the better you know the organisation.` : 'Your report uses your own experience. The research is shown for comparison, and your rating of it tells us how far public sources can be trusted.'}</p>
   ${diffs.length ? `<div class="notice warn"><b>${cand ? 'Your impression and public sources differ' : 'Your experience and public sources differ'}</b><p style="margin:4px 0 0">${diffs.map(x => `${esc(x.l)}: you see ${r0(Math.abs(x.d))} points ${x.d > 0 ? 'more' : 'less'} than employees report publicly`).join('; ')}. ${cand ? 'Check these points in your next conversations: ask for recent examples rather than general descriptions.' : 'Your part of the organisation may differ from the overall picture, or public reviews may be out of date.'}</p></div>` : ''}
   ${A.hidden.length ? `<h3>Risks the public picture adds</h3><p class="small muted">These clashes do not appear in your own view of the organisation, but do in what employees report publicly.</p>${li(A.hidden.map(x => `<span class="sev ${x.sev}">${x.sev}</span><b>${esc(x.d.name)}</b>: ${esc(x.txt[0])} <span class="muted">${cand ? 'Ask: ' + esc(x.txt[2]) : ''}</span>`))}` : ''}
@@ -672,7 +674,7 @@ document.addEventListener('change', async e => {
 
 /* ---------- start ---------- */
 $('#studyName').textContent = CONFIG.studyName || 'Research study';
-$('#foot').innerHTML = `${esc(CONFIG.studyName || 'C-Psych Fit Check')} · ${esc(INSTRUMENT.version)}${CONFIG.researcher ? ` · ${esc(CONFIG.researcher)}` : ''}. Personality items: IPIP (ipip.ori.org, public domain). Your answers are saved on this device until you submit.`;
+$('#foot').innerHTML = `${esc(CONFIG.studyName || 'C-Psych Fit Check')} · ${esc(INSTRUMENT.version)}${CONFIG.researcher ? ` · ${esc(CONFIG.researcher)}` : ''}. Personality items: IPIP (ipip.ori.org, public domain); all other items are original to this study. Hogan, OCAI, Denison and other instrument and website names are trademarks of their owners; this study is independent of them. Your answers are saved on this device until you submit.`;
 if (window.claude?.use) { claude.use('sample').then(f => { sampleFn = f; const id = steps()[st.step]?.id; if (id === 'orgInfo') render(); else if (st.step > 0 && st.org.name && !scanNow()) startResearch(false); }, () => {}); claude.use('downloads').then(d => { dlNs = d; }, () => {}); }
 render();
 })();
