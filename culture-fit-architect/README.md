@@ -35,12 +35,17 @@ The text-analysis helpers infer CVF profiles from leadership text and interview 
 ## Interview guide & feedback
 
 - **Generate / refresh questions** builds a structured behavioural guide from the live analysis: motivation, the largest culture gaps, derailers likely to show up in this context, values and motivator mismatches, culture-add potential, manager fit, and culture contribution. Each question shows why it is asked and what to listen for (positive indicators and red flags). Questions can be edited, added or deleted. Refreshing keeps existing answers.
-- Rate each answer from 1 (significant concern) to 5 (strong positive evidence). Confirmed ratings adjust the model: gap penalties (×0.65–1.25), derailer activation (×0.7–1.2), values congruence, manager fit and culture-add evidence. They also produce an interview evidence index that appears in the decision brief, the candidate comparison and report section 4.4.
+- Rate each answer from 1 (significant concern) to 5 (strong positive evidence). Confirmed ratings adjust the model: gap penalties (×0.65–1.25), derailer activation (×0.7–1.2), values congruence, manager fit and culture-add evidence. They also produce an interview evidence index that appears in the decision brief, the candidate comparison and report section 4.3.
 - On claude.ai, Claude can tailor extra questions to the context, or suggest ratings from pasted or uploaded interview notes. Suggestions are flagged and don't count until the assessor confirms them. They never overwrite a rating the assessor has already given.
 
 ## Report design
 
-The HTML/PDF report is deliberately monochrome and decision-first. A decision brief opens it: the recommendation, a seven-line scorecard, what supports the hire, risks to manage, conditions if proceeding, and what to resolve before deciding. The supporting analysis follows (phases 1–5, then appendices).
+The HTML/PDF report is decision-first. A decision brief opens it: the recommendation, a seven-line scorecard, what supports the hire, risks to manage, conditions if proceeding, and what to resolve before deciding. The supporting analysis follows (phases 1–5, then appendices).
+
+Colour is used only where it carries meaning:
+- **Neutral base:** ink and greys for text, tables and rules, with one brand accent (deep blue) for structure.
+- **Charts:** the candidate is the only coloured series. Team and organization are grey (dashed and dotted lines), and espoused or target culture is drawn as an outline.
+- **Status colours** (green favourable, amber caution, red concern) mark judgements only: the recommendation, scorecard dots, strong/partial/weak bands (solid stays neutral), derailers at HDS 70 or above, gaps of 20 or more points in the heatmap, missing evidence, and interview ratings of 4 or more and 2 or less.
 
 ## Case files & team library
 
