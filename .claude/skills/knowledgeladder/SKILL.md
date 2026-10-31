@@ -1,6 +1,6 @@
 ---
 name: knowledgeladder
-description: Explains any AI concept as a five-rung "knowledge ladder" — five-year-old, teenager, university graduate, PhD researcher — then ends with a practical business use case (problem, solution, implementation, KPIs, value, risks, first pilot). Use when the user asks to learn, understand, or explain an AI, machine learning, GenAI, or agentic AI topic from first principles through advanced research, or invokes /knowledgeladder.
+description: Explains any AI concept as a "knowledge ladder" of four levels — five-year-old, teenager, university graduate, PhD researcher — then a fifth section with a practical business use case (problem, solution, implementation, KPIs, value, risks, first pilot). Use when the user asks to learn, understand, or explain an AI, machine learning, GenAI, or agentic AI topic from first principles through advanced research, or invokes /knowledgeladder.
 ---
 
 # Knowledge Ladder
