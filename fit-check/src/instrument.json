@@ -1,6 +1,6 @@
 {
  "name": "C-Psych Fit Check",
- "version": "FC-1.2",
+ "version": "FC-2.0",
  "response_scales": {
   "accuracy": [
    "Very untrue of me",
@@ -24,23 +24,23 @@
  "scales": {
   "P_E": {
    "label": "Extraversion",
-   "source": "IPIP-50 Big-Five Factor Markers (Goldberg, 1992); public domain; plain-English adaptation (FC-1.2)"
+   "source": "Mini-IPIP (Donnellan et al., 2006) from IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation (FC-2.0)"
   },
   "P_A": {
    "label": "Agreeableness",
-   "source": "IPIP-50; plain-English adaptation (FC-1.2)"
+   "source": "Mini-IPIP (Donnellan et al., 2006) from IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation (FC-2.0)"
   },
   "P_C": {
    "label": "Conscientiousness",
-   "source": "IPIP-50; plain-English adaptation (FC-1.2)"
+   "source": "Mini-IPIP (Donnellan et al., 2006) from IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation (FC-2.0)"
   },
   "P_ES": {
    "label": "Emotional Stability",
-   "source": "IPIP-50; plain-English adaptation (FC-1.2)"
+   "source": "Mini-IPIP (Donnellan et al., 2006) from IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation (FC-2.0)"
   },
   "P_O": {
    "label": "Intellect / Imagination",
-   "source": "IPIP-50; plain-English adaptation (FC-1.2)"
+   "source": "Mini-IPIP (Donnellan et al., 2006) from IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation (FC-2.0)"
   },
   "MV_rec": {
    "label": "Recognition",
@@ -258,38 +258,38 @@
  "blocks": {
   "personality": {
    "title": "How you see yourself",
-   "intro": "Describe yourself as you usually are now, not as you would like to be. Compare yourself with other people of about your age. Please be honest: your answers are private.",
+   "intro": "Describe yourself as you usually are, not as you would like to be. There are no right or wrong answers. Your answers are private.",
    "per_page": 10
   },
   "motives": {
    "title": "What motivates you at work",
    "intro": "How much do you agree with each sentence about what is important to you at work?",
-   "per_page": 11
+   "per_page": 7
   },
   "style": {
-   "title": "Your working style and preferred culture",
+   "title": "How you like to work",
    "intro": "How much do you agree with each sentence about how you like to work?",
-   "per_page": 12
+   "per_page": 8
   },
   "pressure": {
    "title": "You under pressure",
    "intro": "Think about times at work when you were under a lot of pressure, very tired or stressed. How much do you agree with each sentence?",
-   "per_page": 11
+   "per_page": 7
   },
   "org": {
    "title": "Your organisation's culture",
    "intro": "Describe your organisation as it really is in daily work, not how it is described officially.",
-   "per_page": 10
+   "per_page": 8
   },
   "team": {
    "title": "Your team's culture",
    "intro": "Describe your team (or the team you would join) as it really works every day.",
-   "per_page": 12
+   "per_page": 6
   },
   "criteria": {
    "title": "Your experience at work",
    "intro": "These questions help us check whether the tool matches real experience. There are no right or wrong answers.",
-   "per_page": 10
+   "per_page": 7
   }
  },
  "items": [
@@ -297,39 +297,7 @@
    "id": "P01",
    "scale": "P_E",
    "key": 1,
-   "text": "I bring energy and fun to social events.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P02",
-   "scale": "P_A",
-   "key": -1,
-   "text": "I care little about other people.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P03",
-   "scale": "P_C",
-   "key": 1,
-   "text": "I am always well prepared.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P04",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "I get stressed easily.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P05",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I know and use many different words.",
+   "text": "At social gatherings, I am usually the one who keeps the conversation lively.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -337,23 +305,7 @@
    "id": "P06",
    "scale": "P_E",
    "key": -1,
-   "text": "I do not talk much.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P07",
-   "scale": "P_A",
-   "key": 1,
-   "text": "I am interested in people.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P08",
-   "scale": "P_C",
-   "key": -1,
-   "text": "I leave my things lying around.",
+   "text": "I speak very little, even when I am with people I know.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -361,7 +313,7 @@
    "id": "P09",
    "scale": "P_ES",
    "key": 1,
-   "text": "I am relaxed most of the time.",
+   "text": "Most of the time, I feel relaxed.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -369,39 +321,7 @@
    "id": "P10",
    "scale": "P_O",
    "key": -1,
-   "text": "I find it hard to understand theories and complex ideas.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P11",
-   "scale": "P_E",
-   "key": 1,
-   "text": "I feel comfortable with people.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P12",
-   "scale": "P_A",
-   "key": -1,
-   "text": "I say hurtful things to people.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P13",
-   "scale": "P_C",
-   "key": 1,
-   "text": "I pay attention to details.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P14",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "I worry about things.",
+   "text": "I find it hard to understand ideas that are not practical or concrete.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -409,7 +329,7 @@
    "id": "P15",
    "scale": "P_O",
    "key": 1,
-   "text": "I have a strong imagination.",
+   "text": "I can easily picture new things in my mind.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -417,7 +337,7 @@
    "id": "P16",
    "scale": "P_E",
    "key": -1,
-   "text": "In a group, I prefer to stay unnoticed.",
+   "text": "In a group, I prefer to stay quiet and let others take the lead.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -425,7 +345,7 @@
    "id": "P17",
    "scale": "P_A",
    "key": 1,
-   "text": "I understand and care about how others feel.",
+   "text": "When someone is upset, I can understand how they feel.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -433,7 +353,7 @@
    "id": "P18",
    "scale": "P_C",
    "key": -1,
-   "text": "I often do things in a careless way.",
+   "text": "My work is often careless or untidy.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -441,7 +361,7 @@
    "id": "P19",
    "scale": "P_ES",
    "key": 1,
-   "text": "I rarely feel sad.",
+   "text": "I rarely feel low or sad.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -449,15 +369,7 @@
    "id": "P20",
    "scale": "P_O",
    "key": -1,
-   "text": "I am not interested in theories and ideas.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P21",
-   "scale": "P_E",
-   "key": 1,
-   "text": "I start conversations.",
+   "text": "I am not interested in discussing ideas and theories.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -465,7 +377,7 @@
    "id": "P22",
    "scale": "P_A",
    "key": -1,
-   "text": "I am not interested in other people’s problems.",
+   "text": "Other people’s problems do not interest me.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -473,39 +385,7 @@
    "id": "P23",
    "scale": "P_C",
    "key": 1,
-   "text": "I do my tasks immediately, without delay.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P24",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "I am easily troubled by things.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P25",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I have excellent ideas.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P26",
-   "scale": "P_E",
-   "key": -1,
-   "text": "I have little to say.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P27",
-   "scale": "P_A",
-   "key": 1,
-   "text": "I am kind and gentle with people.",
+   "text": "I finish my tasks at once, without delay.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -513,7 +393,7 @@
    "id": "P28",
    "scale": "P_C",
    "key": -1,
-   "text": "I often forget to put things back in their place.",
+   "text": "After using something, I often forget to put it back in its place.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -521,7 +401,7 @@
    "id": "P29",
    "scale": "P_ES",
    "key": -1,
-   "text": "I get upset easily.",
+   "text": "Small things can upset me easily.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -529,7 +409,7 @@
    "id": "P30",
    "scale": "P_O",
    "key": -1,
-   "text": "I do not have a good imagination.",
+   "text": "I find it hard to imagine things I have not seen.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -537,7 +417,7 @@
    "id": "P31",
    "scale": "P_E",
    "key": 1,
-   "text": "At social events, I talk to many different people.",
+   "text": "At social gatherings, I talk to many different people.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -545,7 +425,7 @@
    "id": "P32",
    "scale": "P_A",
    "key": -1,
-   "text": "I am not really interested in others.",
+   "text": "I am not very interested in the lives of other people.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -553,47 +433,7 @@
    "id": "P33",
    "scale": "P_C",
    "key": 1,
-   "text": "I like things to be tidy and organised.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P34",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "My mood changes a lot.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P35",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I understand things quickly.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P36",
-   "scale": "P_E",
-   "key": -1,
-   "text": "I do not like people to pay attention to me.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P37",
-   "scale": "P_A",
-   "key": 1,
-   "text": "I make time to help others.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P38",
-   "scale": "P_C",
-   "key": -1,
-   "text": "I avoid doing my duties.",
+   "text": "I like to keep my things and my work well organised.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -601,23 +441,7 @@
    "id": "P39",
    "scale": "P_ES",
    "key": -1,
-   "text": "My mood often goes up and down.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P40",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I use difficult words.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P41",
-   "scale": "P_E",
-   "key": 1,
-   "text": "I am comfortable being the centre of attention.",
+   "text": "My mood changes many times in a day.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -625,71 +449,7 @@
    "id": "P42",
    "scale": "P_A",
    "key": 1,
-   "text": "I feel other people’s emotions.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P43",
-   "scale": "P_C",
-   "key": 1,
-   "text": "I follow a plan or timetable.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P44",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "I get annoyed easily.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P45",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I spend time thinking deeply about things.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P46",
-   "scale": "P_E",
-   "key": -1,
-   "text": "I am quiet with people I do not know.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P47",
-   "scale": "P_A",
-   "key": 1,
-   "text": "I make people feel comfortable.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P48",
-   "scale": "P_C",
-   "key": 1,
-   "text": "I expect very high standards in my work.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P49",
-   "scale": "P_ES",
-   "key": -1,
-   "text": "I often feel sad.",
-   "block": "personality",
-   "rs": "accuracy"
-  },
-  {
-   "id": "P50",
-   "scale": "P_O",
-   "key": 1,
-   "text": "I am full of ideas.",
+   "text": "When people around me are happy or sad, I feel it too.",
    "block": "personality",
    "rs": "accuracy"
   },
@@ -697,7 +457,7 @@
    "id": "MV_rec_1",
    "scale": "MV_rec",
    "key": 1,
-   "text": "It matters a lot to me that people praise my achievements.",
+   "text": "I want people to praise my achievements.",
    "block": "motives",
    "rs": "agree"
   },
@@ -737,7 +497,7 @@
    "id": "MV_tra_1",
    "scale": "MV_tra",
    "key": 1,
-   "text": "I respect the traditions and usual ways of working in an organisation.",
+   "text": "I respect the traditions and established ways of my organisation.",
    "block": "motives",
    "rs": "agree"
   },
@@ -809,7 +569,7 @@
    "id": "MV_aff_2",
    "scale": "MV_aff",
    "key": 1,
-   "text": "Being with colleagues often gives me energy.",
+   "text": "I prefer a job where I work closely with colleagues for most of the day.",
    "block": "motives",
    "rs": "agree"
   },
@@ -850,86 +610,6 @@
    "scale": "MV_sci",
    "key": 1,
    "text": "I am motivated by understanding how things work in detail.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_rec_3",
-   "scale": "MV_rec",
-   "key": -1,
-   "text": "I do not care whether others notice my work.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_pow_3",
-   "scale": "MV_pow",
-   "key": -1,
-   "text": "I prefer other people to decide the direction of the work.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_hed_3",
-   "scale": "MV_hed",
-   "key": -1,
-   "text": "If the work gets done, I do not mind whether it is enjoyable.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_alt_3",
-   "scale": "MV_alt",
-   "key": -1,
-   "text": "It does not matter much to me whether my work helps society.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_aff_3",
-   "scale": "MV_aff",
-   "key": -1,
-   "text": "I prefer to work mostly alone.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_tra_3",
-   "scale": "MV_tra",
-   "key": -1,
-   "text": "I am happy to stop using old ways of working.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_sec_3",
-   "scale": "MV_sec",
-   "key": -1,
-   "text": "I am happy to take career risks for the chance of bigger rewards.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_com_3",
-   "scale": "MV_com",
-   "key": -1,
-   "text": "Money is not very important to me when I choose a job.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_aes_3",
-   "scale": "MV_aes",
-   "key": -1,
-   "text": "If something works, I do not care how it looks.",
-   "block": "motives",
-   "rs": "agree"
-  },
-  {
-   "id": "MV_sci_3",
-   "scale": "MV_sci",
-   "key": -1,
-   "text": "I prefer to follow my feelings rather than study the facts.",
    "block": "motives",
    "rs": "agree"
   },
@@ -993,7 +673,7 @@
    "id": "WS_conflict_2",
    "scale": "WS_conflict",
    "key": 1,
-   "text": "Strong, open discussion leads to better decisions.",
+   "text": "Open discussion, even with disagreement, leads to better decisions.",
    "block": "style",
    "rs": "agree"
   },
@@ -1002,38 +682,6 @@
    "scale": "WS_autonomy",
    "key": 1,
    "text": "When my manager checks my work very closely, I feel less motivated.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "WS_pace_3",
-   "scale": "WS_pace",
-   "key": -1,
-   "text": "Before I decide, I like to take time to think about every option.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "WS_risk_3",
-   "scale": "WS_risk",
-   "key": -1,
-   "text": "I avoid decisions that could go wrong.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "WS_conflict_3",
-   "scale": "WS_conflict",
-   "key": -1,
-   "text": "I keep disagreements to myself to keep the peace.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "WS_autonomy_3",
-   "scale": "WS_autonomy",
-   "key": -1,
-   "text": "I prefer clear instructions on how to do my work.",
    "block": "style",
    "rs": "agree"
   },
@@ -1070,14 +718,6 @@
    "rs": "agree"
   },
   {
-   "id": "CP_clan_2",
-   "scale": "CP_clan",
-   "key": 1,
-   "text": "I work best where managers spend real time coaching people and helping them develop.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
    "id": "CP_adhoc_2",
    "scale": "CP_adhoc",
    "key": 1,
@@ -1094,34 +734,10 @@
    "rs": "agree"
   },
   {
-   "id": "CP_hier_2",
-   "scale": "CP_hier",
-   "key": 1,
-   "text": "I work best where work follows a regular pattern with few surprises.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
    "id": "CP_clan_3",
    "scale": "CP_clan",
    "key": 1,
    "text": "I work best where people are asked for their opinion before decisions that affect them.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "CP_adhoc_3",
-   "scale": "CP_adhoc",
-   "key": 1,
-   "text": "I work best where people who suggest bold new ideas get time and support to try them.",
-   "block": "style",
-   "rs": "agree"
-  },
-  {
-   "id": "CP_market_3",
-   "scale": "CP_market",
-   "key": 1,
-   "text": "I work best where people often talk about beating competitor companies.",
    "block": "style",
    "rs": "agree"
   },
@@ -1169,7 +785,7 @@
    "id": "UP_lim_1",
    "scale": "UP_lim",
    "key": 1,
-   "text": "When I am under pressure, I ignore some rules to get things done.",
+   "text": "When I am under pressure, I sometimes ignore rules to get things done.",
    "block": "pressure",
    "rs": "agree"
   },
@@ -1246,62 +862,6 @@
    "rs": "agree"
   },
   {
-   "id": "UP_vol_3",
-   "scale": "UP_vol",
-   "key": -1,
-   "text": "When I am under pressure, I stay calm.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_cyn_3",
-   "scale": "UP_cyn",
-   "key": -1,
-   "text": "When I am under pressure, I believe others have good intentions.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_cau_3",
-   "scale": "UP_cau",
-   "key": -1,
-   "text": "When I am under pressure, I make difficult decisions quickly.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_bol_3",
-   "scale": "UP_bol",
-   "key": -1,
-   "text": "When I am under pressure, I look for people who disagree with me.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_lim_3",
-   "scale": "UP_lim",
-   "key": -1,
-   "text": "When I am under pressure, I follow agreed processes, even when they slow me down.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_per_3",
-   "scale": "UP_per",
-   "key": -1,
-   "text": "When I am under pressure, I accept work that is \"good enough\" if time is short.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
-   "id": "UP_dep_3",
-   "scale": "UP_dep",
-   "key": -1,
-   "text": "When I am under pressure, I make decisions on my own, without asking for approval.",
-   "block": "pressure",
-   "rs": "agree"
-  },
-  {
    "id": "AC2",
    "scale": "CHECK",
    "key": 0,
@@ -1342,14 +902,6 @@
    "rs": "agree"
   },
   {
-   "id": "OR_clan_2",
-   "scale": "OR_clan",
-   "key": 1,
-   "text": "In my organisation, managers spend real time coaching people and helping them develop.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
    "id": "OR_adhoc_2",
    "scale": "OR_adhoc",
    "key": 1,
@@ -1366,34 +918,10 @@
    "rs": "agree"
   },
   {
-   "id": "OR_hier_2",
-   "scale": "OR_hier",
-   "key": 1,
-   "text": "In my organisation, work follows a regular pattern with few surprises.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
    "id": "OR_clan_3",
    "scale": "OR_clan",
    "key": 1,
    "text": "In my organisation, people are asked for their opinion before decisions that affect them.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
-   "id": "OR_adhoc_3",
-   "scale": "OR_adhoc",
-   "key": 1,
-   "text": "In my organisation, people who suggest bold new ideas get time and support to try them.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
-   "id": "OR_market_3",
-   "scale": "OR_market",
-   "key": 1,
-   "text": "In my organisation, people often talk about beating competitor companies.",
    "block": "org",
    "rs": "agree"
   },
@@ -1409,7 +937,7 @@
    "id": "OE_clan_1",
    "scale": "OE_clan",
    "key": 1,
-   "text": "Senior leaders say (in speeches, values and meetings) that people come first and everyone should work as one team.",
+   "text": "Senior leaders say that people come first and everyone should work as one team.",
    "block": "org",
    "rs": "agree"
   },
@@ -1522,22 +1050,6 @@
    "scale": "OX_rec",
    "key": 1,
    "text": "I would tell a friend that my organisation is a great place to work.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
-   "id": "OX_psych_2",
-   "scale": "OX_psych",
-   "key": 1,
-   "text": "In my organisation, people are not punished for reporting problems.",
-   "block": "org",
-   "rs": "agree"
-  },
-  {
-   "id": "OX_cred_2",
-   "scale": "OX_cred",
-   "key": 1,
-   "text": "I trust the decisions of senior management.",
    "block": "org",
    "rs": "agree"
   },
@@ -1694,40 +1206,89 @@
    "rs": "agree"
   },
   {
-   "id": "CR_teamfit_2",
-   "scale": "CR_teamfit",
-   "key": 1,
-   "text": "My team’s way of working suits my style.",
-   "block": "criteria",
-   "rs": "agree"
-  },
-  {
    "id": "CR_stay_2",
    "scale": "CR_stay",
    "key": -1,
    "text": "I often think about leaving this organisation.",
    "block": "criteria",
    "rs": "agree"
-  },
-  {
-   "id": "CR_pofit_3",
-   "scale": "CR_pofit",
-   "key": 1,
-   "text": "The culture of my organisation helps me do my best work.",
-   "block": "criteria",
-   "rs": "agree"
-  },
-  {
-   "id": "CR_stay_3",
-   "scale": "CR_stay",
-   "key": -1,
-   "text": "I am actively looking for a job somewhere else.",
-   "block": "criteria",
-   "rs": "agree"
   }
  ],
  "changelog": [
   "FC-1.1: culture items (CP, OR, TC, OE) reworded as concrete, original behavioural statements to keep clear of the wording of proprietary culture instruments. Do not pool these items with FC-1.0 pilot data.",
-  "FC-1.2: every item, answer label and block introduction rewritten in plain English (short sentences, common words, no idioms) for non-native speakers. The IPIP-50 items are a plain-English adaptation with the same content and keying; confirm reliability and convergent validity before comparing with published IPIP norms."
- ]
+  "FC-1.2: every item, answer label and block introduction rewritten in plain English (short sentences, common words, no idioms) for non-native speakers. The IPIP-50 items are a plain-English adaptation with the same content and keying; confirm reliability and convergent validity before comparing with published IPIP norms.",
+  "FC-2.0 short form: 179 → 115 items. Personality = Mini-IPIP 20; two strongest items per motive, style and pressure scale; culture items use identical content for self, team and organisation; ESL recalibration of personality stems for Indian professionals. Not comparable item-for-item with FC-1.x."
+ ],
+ "form": {
+  "name": "Short form",
+  "items": 115,
+  "minutes": "12–15",
+  "dropped_from_FC_1_2": [
+   "P02",
+   "P03",
+   "P04",
+   "P05",
+   "P07",
+   "P08",
+   "P11",
+   "P12",
+   "P13",
+   "P14",
+   "P21",
+   "P24",
+   "P25",
+   "P26",
+   "P27",
+   "P34",
+   "P35",
+   "P36",
+   "P37",
+   "P38",
+   "P40",
+   "P41",
+   "P43",
+   "P44",
+   "P45",
+   "P46",
+   "P47",
+   "P48",
+   "P49",
+   "P50",
+   "MV_rec_3",
+   "MV_pow_3",
+   "MV_hed_3",
+   "MV_alt_3",
+   "MV_aff_3",
+   "MV_tra_3",
+   "MV_sec_3",
+   "MV_com_3",
+   "MV_aes_3",
+   "MV_sci_3",
+   "WS_pace_3",
+   "WS_risk_3",
+   "WS_conflict_3",
+   "WS_autonomy_3",
+   "CP_clan_2",
+   "CP_hier_2",
+   "CP_adhoc_3",
+   "CP_market_3",
+   "UP_vol_3",
+   "UP_cyn_3",
+   "UP_cau_3",
+   "UP_bol_3",
+   "UP_lim_3",
+   "UP_per_3",
+   "UP_dep_3",
+   "OR_clan_2",
+   "OR_hier_2",
+   "OR_adhoc_3",
+   "OR_market_3",
+   "OX_psych_2",
+   "OX_cred_2",
+   "CR_teamfit_2",
+   "CR_pofit_3",
+   "CR_stay_3"
+  ],
+  "personality_source": "Mini-IPIP (Donnellan, Oswald, Baird & Lucas, 2006, Psychological Assessment 18:192–203): the 20 IPIP-50 items with the best validity evidence, 4 per domain"
+ }
 }

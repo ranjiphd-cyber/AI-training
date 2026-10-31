@@ -1,6 +1,6 @@
 # Research protocol: validating the C-Psych culture-fit assessment
 
-**Instrument:** C-Psych Fit Check, version FC-1.2 (`src/instrument.json`). FC-1.1 reworded the culture items in original, behavioural language. FC-1.2 rewrote every item, answer label and instruction in plain English (short sentences, common words, no idioms; Flesch reading ease ≈ 72) so that non-native speakers can take part. Data from earlier versions is analysed separately.
+**Instrument:** C-Psych Fit Check, short form FC-2.0 (`src/instrument.json`; 115 items, about 12–15 minutes; rationale in [`platform-blueprint.md`](platform-blueprint.md)). Earlier history: FC-1.1 reworded the culture items in original, behavioural language. FC-1.2 rewrote every item, answer label and instruction in plain English (short sentences, common words, no idioms; Flesch reading ease ≈ 72) so that non-native speakers can take part. Data from earlier versions is analysed separately.
 **Status:** draft for ethics review. Adapt the sections marked *[complete]* before submission.
 
 ## 1. Background and aims
@@ -17,7 +17,7 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 
 | # | Question | Hypothesis / criterion |
 |---|---|---|
-| H1 | Are the scales internally consistent? | α and ω ≥ .70 for multi-item scales; corrected item–total r ≥ .30 |
+| H1 | Are the scales internally consistent? | Mini-IPIP domains α ≥ .60 (published range about .65–.77); two-item scales Spearman–Brown ≥ .60; corrected item–total r ≥ .30. Short scales are judged together with test–retest and validity |
 | H2 | Are scores stable over time? | Test–retest r ≥ .70 over 2–6 weeks |
 | H3 | Do the questionnaire scales measure the intended constructs? | IPIP domains correlate r ≥ .50 with the matching domains of established instruments (participant-entered Hogan HPI or other Big Five); motive and pressure scales correlate r ≥ .30 with MVPI and HDS analogues |
 | H4 | Do culture ratings reflect a shared organisational reality? | ICC(1) > .05 and ICC(k) ≥ .70 for organisations with ≥ 5 raters |
@@ -45,14 +45,14 @@ The study establishes whether the instrument is **reliable** and **valid**, and 
 
 | Domain | Scales | Items | Source |
 |---|---|---|---|
-| Personality | Extraversion, Agreeableness, Conscientiousness, Emotional Stability, Intellect/Imagination | 50 | IPIP Big-Five Factor Markers (Goldberg, 1992), public domain; plain-English adaptation with the same content and keying. Because the wording differs, H1 and H3 are tested on this version before published IPIP norms are used |
-| Work motives | Recognition, Influence, Enjoyment, Contribution, Belonging, Tradition, Security, Financial reward, Quality & design, Analysis & learning | 30 | New, provisional (MVPI-type constructs) |
-| Working style | Decision pace, risk appetite, directness, autonomy need | 12 | New, provisional |
-| Culture preference | Clan, Adhocracy, Market, Hierarchy | 12 | New, provisional (Competing Values Framework constructs) |
-| Under pressure | Volatility, mistrust, over-caution, over-confidence, limit-testing, perfectionism, over-dependence | 21 | New, provisional (Horney's moving away / against / toward clusters) |
-| Organisation | Lived CVF (12), espoused CVF (4), operating norms (8), psychological safety (3), leadership credibility (2), recommend (1) | 30 | New, provisional |
+| Personality | Extraversion, Agreeableness, Conscientiousness, Emotional Stability, Intellect/Imagination | 20 | Mini-IPIP (Donnellan et al., 2006), the validated 20-item short form of the IPIP-50 (Goldberg, 1992), public domain; ESL plain-English adaptation with the same content and keying. Because the wording differs, H1 and H3 are tested on this version before published norms are used |
+| Work motives | Recognition, Influence, Enjoyment, Contribution, Belonging, Tradition, Security, Financial reward, Quality & design, Analysis & learning | 20 | New, provisional (MVPI-type constructs) |
+| Working style | Decision pace, risk appetite, directness, autonomy need | 8 | New, provisional |
+| Culture preference | People-First, Innovation-Led, Results-Driven, Process-Driven (CVF Clan, Adhocracy, Market, Hierarchy) | 8 | New, provisional; same content as the team and organisation culture items (commensurate measurement) |
+| Under pressure | Volatility, mistrust, over-caution, over-confidence, limit-testing, perfectionism, over-dependence | 14 | New, provisional (Horney's moving away / against / toward clusters) |
+| Organisation | Lived culture (8), stated culture (4), operating norms (8), psychological safety (2), leadership credibility (1), recommend (1) | 24 | New, provisional |
 | Team | CVF (8), norms (4) | 12 | New, provisional |
-| Criteria | Perceived P–O fit (3), P–T fit (2), satisfaction (1), intention to stay (3), strain (1) | 10 | New, provisional |
+| Criteria | Perceived P–O fit (2), P–T fit (1), satisfaction (1), intention to stay (2), strain (1) | 7 | New, provisional |
 | Data quality | Instructed-response attention checks | 2 | — |
 | Feedback | Report accuracy ratings and comments | 5–7 | — |
 | Optional | Participant-entered Hogan HPI/HDS/MVPI or other Big Five percentiles; organisation OCAI/Denison results | — | Used for H3 |
@@ -78,7 +78,7 @@ Exclude records that are withdrawn, fail an attention check, take less than 8 mi
 `analysis/validate.py` produces sections 1–9 of the validation report (reliability, retest, convergent validity, ICC, criterion and incremental validity, report accuracy, scan agreement, group differences, provisional norms). After Phase 1:
 
 - **Structure:** confirmatory factor analysis of the IPIP domains and the new scales (for example with lavaan in R), and measurement invariance across gender and age bands.
-- **Item revision:** drop or rewrite items with item–total r < .30 or poor loadings, then release FC-1.2.
+- **Item revision:** drop or rewrite items with item–total r < .30 or poor loadings, then release FC-2.1.
 - **Calibration:** re-estimate the model weights (team / organisation / derailer contributions) against the criteria using cross-validation. Publish the old and new weights and their validities.
 - **Norms:** convert scale scores to percentiles from `norms.csv`, by population (country, level) where n ≥ 300.
 

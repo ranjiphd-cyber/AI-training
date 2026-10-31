@@ -4,10 +4,10 @@ A self-service web app that professionals complete to get a personal culture-fit
 
 It uses **the same fit engine** as the assessor tool in [`../culture-fit-architect`](../culture-fit-architect): the build script copies the engine in, so both tools always score identically.
 
-## What participants do (20–25 minutes)
+## What participants do (12–15 minutes, 115 questions)
 
 1. **Consent:** choose a mode. *Current employee* rates their own organisation and team, and their answers validate the tool. *Candidate* describes an organisation they are considering.
-2. **Questionnaire** (all in plain English for non-native speakers): IPIP Big Five personality (public domain, plain-English adaptation), work motives, working style and culture preferences, and behaviour under pressure, with two attention checks.
+2. **Questionnaire** (short form FC-2.0, in plain English calibrated for Indian professionals who speak English as a second language): Mini-IPIP Big Five personality (20 items, public domain), work motives, working style and culture preferences, and behaviour under pressure, with two attention checks.
 3. **Optional existing results:** Hogan or other Big Five scores, typed in or read from their report. These give convergent-validity evidence and are used in the report when complete.
 4. **Organisation and team:**
    - Ratings of lived and espoused culture, operating norms, psychological safety and leadership credibility.
@@ -37,6 +37,14 @@ It uses **the same fit engine** as the assessor tool in [`../culture-fit-archite
 
    They can download it as HTML.
 7. **Feedback:** how accurate each part of the report is, comments, and optional follow-up consent. Then submit.
+
+## Culture types in plain English
+
+People-First (CVF: Clan) · Innovation-Led (Adhocracy) · Results-Driven (Market) · Process-Driven (Hierarchy). Definitions are in the [blueprint](docs/platform-blueprint.md).
+
+## Recruiter and consultant invite links
+
+Add `?invite=CODE&by=Name&org=Company&unit=Unit&mode=candidate` to the app address. This pre-fills the organisation and tags responses with the invite code. During the research study nothing is shared with the inviter. See the blueprint, section 5.
 
 ## How the research changes the match
 
@@ -77,6 +85,7 @@ It uses **the same fit engine** as the assessor tool in [`../culture-fit-archite
 | `docs/setup-guide.md` | Step-by-step deployment |
 | `docs/research-protocol.md` | Hypotheses, design, sample size, measures, analysis plan, ethics |
 | `docs/item-bank.md` | All items with keys and sources (generated) |
+| `docs/platform-blueprint.md` | Plain-English culture types, item recalibration, short-form rationale, report modules, and candidate / recruiter / consultant workflows with data schemas |
 
 ## Quick start
 

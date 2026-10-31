@@ -185,8 +185,10 @@ def main():
         mm = m.dropna()
         alpha, omega = cronbach_alpha(m), omega_total(m)
         r_ii = float(mm.corr().values[np.triu_indices(len(its), 1)].mean()) if len(its) > 1 and len(mm) > 3 else np.nan
+        # Spearman-Brown is the recommended reliability for two-item scales (Eisinga, Grotenhuis & Pelzer, 2013)
+        sb = 2 * r_ii / (1 + r_ii) if len(its) == 2 and np.isfinite(r_ii) else np.nan
         scale_rows.append({"scale": sc, "label": LABEL.get(sc, sc), "items": len(its), "n": len(mm), "mean": S[sc].mean(), "sd": S[sc].std(),
-                           "alpha": alpha, "omega": omega, "mean_inter_item_r": r_ii})
+                           "alpha": alpha, "omega": omega, "mean_inter_item_r": r_ii, "spearman_brown": sb})
         if len(its) > 1:
             for it in its:
                 rest = m.drop(columns=it["id"]).sum(axis=1)
@@ -197,11 +199,15 @@ def main():
     sst, ist = pd.DataFrame(scale_rows), pd.DataFrame(item_rows)
     sst.to_csv(out / "scale_stats.csv", index=False)
     ist.to_csv(out / "item_stats.csv", index=False)
-    L += ["## 2. Internal consistency", "", "Targets: α and ω ≥ .70 (≥ .80 for scales used in decisions); corrected item–total r ≥ .30. Two-item and single-item scales are reported for information only.", "",
-          "| Scale | Items | n | Mean | SD | α | ω | Mean inter-item r | Status |", "|---|---|---|---|---|---|---|---|---|"]
+    L += ["## 2. Internal consistency", "",
+          "Targets for the short form (FC-2.0): 4-item personality scales α ≥ .60 (the Mini-IPIP's published range is about .65–.77) and test–retest ≥ .70; "
+          "two-item scales Spearman–Brown ≥ .60 and mean inter-item r between .30 and .70 (narrow constructs); corrected item–total r ≥ .30. "
+          "Short scales are judged mainly on stability and validity, not on α alone. Single items are reported for information.", "",
+          "| Scale | Items | n | Mean | SD | α | ω | Spearman–Brown | Mean inter-item r | Status |", "|---|---|---|---|---|---|---|---|---|---|"]
     for r in scale_rows:
-        status = "single item" if r["items"] == 1 else "✓" if (r["alpha"] or 0) >= .70 else "review" if (r["alpha"] or 0) >= .60 else "revise"
-        L.append(f"| {r['label']} (`{r['scale']}`) | {r['items']} | {r['n']} | {fmt(r['mean'], 1)} | {fmt(r['sd'], 1)} | {fmt(r['alpha'])} | {fmt(r['omega'])} | {fmt(r['mean_inter_item_r'])} | {status} |")
+        rel = r["spearman_brown"] if r["items"] == 2 else r["alpha"]
+        status = "single item" if r["items"] == 1 else "✓" if (rel or 0) >= .70 else "acceptable (short scale)" if (rel or 0) >= .60 else "revise"
+        L.append(f"| {r['label']} (`{r['scale']}`) | {r['items']} | {r['n']} | {fmt(r['mean'], 1)} | {fmt(r['sd'], 1)} | {fmt(r['alpha'])} | {fmt(r['omega'])} | {fmt(r['spearman_brown'])} | {fmt(r['mean_inter_item_r'])} | {status} |")
     weak = ist[ist["r_item_total"] < .30] if len(ist) else ist
     L += ["", f"Items with corrected item–total r < .30: **{len(weak)}**" + (" (see item_stats.csv): " + ", ".join(f"`{i}`" for i in weak["item"].head(20)) if len(weak) else "."), ""]
 

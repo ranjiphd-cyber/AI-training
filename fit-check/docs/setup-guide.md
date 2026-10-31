@@ -58,7 +58,7 @@ Any static host works instead, for example Netlify (drag and drop the `fit-check
 
 ## 5. Running the study
 
-- **Invite participants** with the link and a short note on purpose, time needed (20–25 minutes), anonymity, and what they get (an instant personal report).
+- **Invite participants** with the link and a short note on purpose, time needed (12–15 minutes), anonymity, and what they get (an instant personal report).
 - **Withdrawals:** once a month, open Apps Script and run `purgeWithdrawn`. This deletes withdrawn participants' rows from `responses` and `contacts`. You can also add a monthly time-driven trigger for it.
 - **Analysis:** download the `responses` tab as CSV (**File → Download → CSV**), then run:
 
@@ -83,4 +83,4 @@ Any static host works instead, for example Netlify (drag and drop the `fit-check
 
 ## Changing the questionnaire
 
-Edit `src/instrument.json`, increase `version` (for example `FC-1.2`), rebuild, and redeploy. Every record stores `instrument_version`, so the analysis can separate versions. New item IDs become new sheet columns automatically.
+Edit `src/instrument.json`, increase `version` (for example `FC-2.1`), rebuild, and redeploy. Every record stores `instrument_version`, so the analysis can separate versions. New item IDs become new sheet columns automatically.
