@@ -1,0 +1,271 @@
+req_id,phase,req_open_date,offer_accept_date,business_unit,job_level,source_channel,recruiter_id,recruiter_open_reqs,interview_rounds,approval_days,sourcing_days,screening_days,interview_days,offer_days,ttf_days,primary_delay_reason,offer_accepted
+B-0029,Baseline,2026-01-07,2026-03-12,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R08,10,5,14.1,23.1,3.4,22.5,1.0,64.1,Requisition approval delay,Y
+B-0014,Baseline,2026-01-08,2026-02-26,Corporate Functions,Professional,Agency,R07,28,5,3.5,5.3,11.1,28.4,1.0,48.9,Hiring-manager feedback delay,Y
+B-0178,Baseline,2026-01-11,2026-02-15,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R06,17,2,3.4,9.5,5.7,15.4,1.0,35.0,Low / poor-fit applicant pool,N
+B-0118,Baseline,2026-01-12,2026-03-02,Manufacturing,Operator/Technician,Job Board,R07,27,3,8.4,9.1,9.9,19.3,1.7,49.2,Interview scheduling / panel availability,Y
+B-0072,Baseline,2026-01-14,2026-03-13,IT & Digital,Professional,LinkedIn / Direct Sourcing,R08,20,3,7.8,21.3,6.8,20.6,1.0,57.5,Requisition approval delay,Y
+B-0104,Baseline,2026-01-14,2026-02-13,Sales & Service,Operator/Technician,Employee Referral,R01,11,2,11.8,2.9,6.2,6.9,3.8,30.0,Candidate decline or renege,Y
+B-0129,Baseline,2026-01-14,2026-04-02,IT & Digital,Operator/Technician,Agency,R08,20,5,8.4,25.8,7.8,28.7,7.2,77.5,Interview scheduling / panel availability,Y
+B-0159,Baseline,2026-01-15,2026-03-03,Engineering & R&D,Professional,Internal Mobility,R05,17,4,2.5,14.4,8.5,20.3,4.0,47.3,JD / requirement changed mid-search,Y
+B-0015,Baseline,2026-01-16,2026-03-07,Corporate Functions,Manager,Employee Referral,R08,14,3,17.2,7.5,5.2,14.4,4.5,49.7,Hiring-manager feedback delay,Y
+B-0100,Baseline,2026-01-17,2026-03-10,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R01,14,3,2.6,8.1,7.0,31.3,3.3,52.3,Requisition approval delay,Y
+B-0109,Baseline,2026-01-17,2026-02-24,Manufacturing,Professional,Job Board,R03,23,4,7.1,4.6,6.0,17.6,2.0,38.1,Interview scheduling / panel availability,Y
+B-0128,Baseline,2026-01-17,2026-04-15,Sales & Service,Operator/Technician,Employee Referral,R06,23,3,12.7,4.6,7.2,60.6,4.4,87.9,Hiring-manager feedback delay,Y
+B-0098,Baseline,2026-01-18,2026-03-16,Engineering & R&D,Professional,Agency,R08,16,3,10.8,10.2,7.0,16.3,13.3,57.2,Hiring-manager feedback delay,Y
+B-0127,Baseline,2026-01-19,2026-03-15,Manufacturing,Operator/Technician,Job Board,R06,20,5,1.9,14.8,8.9,24.1,4.7,55.2,Low / poor-fit applicant pool,Y
+B-0065,Baseline,2026-01-20,2026-03-20,Manufacturing,Professional,Employee Referral,R07,23,3,11.7,2.4,8.1,30.0,8.8,59.4,Hiring-manager feedback delay,Y
+B-0165,Baseline,2026-01-21,2026-02-19,Manufacturing,Professional,Internal Mobility,R02,24,3,4.7,5.8,8.5,11.0,1.0,28.6,Low / poor-fit applicant pool,Y
+B-0106,Baseline,2026-01-23,2026-03-12,Corporate Functions,Manager,LinkedIn / Direct Sourcing,R01,11,5,1.0,10.0,2.9,22.4,8.7,47.5,Hiring-manager feedback delay,N
+B-0151,Baseline,2026-01-23,2026-02-26,Engineering & R&D,Professional,Internal Mobility,R05,11,2,12.8,2.9,4.4,11.3,5.5,34.5,Requisition approval delay,Y
+B-0050,Baseline,2026-01-24,2026-03-12,IT & Digital,Professional,LinkedIn / Direct Sourcing,R08,15,3,5.5,8.2,4.0,21.3,7.7,46.7,Hiring-manager feedback delay,N
+B-0081,Baseline,2026-01-24,2026-04-22,Manufacturing,Manager,Job Board,R07,20,5,5.6,9.8,9.4,53.7,5.9,87.7,Hiring-manager feedback delay,N
+B-0132,Baseline,2026-01-24,2026-03-03,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R03,20,4,2.9,12.5,6.5,11.0,4.8,37.7,Offer & compensation approval,Y
+B-0041,Baseline,2026-01-25,2026-02-20,Engineering & R&D,Professional,Employee Referral,R03,13,2,5.1,9.1,5.0,7.8,1.0,26.4,Low / poor-fit applicant pool,Y
+B-0069,Baseline,2026-01-26,2026-04-10,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R04,30,4,13.6,9.4,9.0,37.4,5.0,74.4,Candidate decline or renege,Y
+B-0152,Baseline,2026-01-26,2026-03-27,Engineering & R&D,Operator/Technician,Employee Referral,R04,23,4,13.6,9.1,7.7,29.9,1.0,59.7,JD / requirement changed mid-search,N
+B-0158,Baseline,2026-01-27,2026-07-14,Manufacturing,Senior Leader,Employee Referral,R06,19,6,19.0,9.6,5.2,120.6,8.0,167.8,Hiring-manager feedback delay,N
+B-0049,Baseline,2026-01-28,2026-03-10,Manufacturing,Professional,Job Board,R07,26,4,2.6,5.6,6.6,23.5,2.0,41.1,Hiring-manager feedback delay,Y
+B-0053,Baseline,2026-01-28,2026-04-11,Engineering & R&D,Professional,Job Board,R03,17,5,12.7,10.3,7.8,37.5,3.9,73.0,Interview scheduling / panel availability,Y
+B-0083,Baseline,2026-01-28,2026-03-23,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R03,20,4,5.3,23.0,8.0,12.9,4.3,53.5,Interview scheduling / panel availability,Y
+B-0064,Baseline,2026-01-31,2026-05-12,Sales & Service,Manager,Employee Referral,R01,8,6,4.9,13.6,3.8,73.0,5.1,101.3,Hiring-manager feedback delay,Y
+B-0039,Baseline,2026-02-01,2026-04-17,Manufacturing,Operator/Technician,Job Board,R02,29,4,7.8,14.9,8.9,36.5,5.8,74.7,Requisition approval delay,N
+B-0061,Baseline,2026-02-01,2026-04-17,Engineering & R&D,Senior Leader,Job Board,R08,19,5,3.8,16.1,7.0,34.4,5.8,74.9,Hiring-manager feedback delay,Y
+B-0138,Baseline,2026-02-01,2026-03-15,Engineering & R&D,Professional,Internal Mobility,R04,27,5,2.8,13.1,12.0,12.2,3.9,41.6,Hiring-manager feedback delay,Y
+B-0030,Baseline,2026-02-03,2026-05-01,Manufacturing,Professional,Employee Referral,R06,22,5,2.7,12.4,10.0,59.8,4.0,87.3,Hiring-manager feedback delay,Y
+B-0043,Baseline,2026-02-03,2026-04-08,Manufacturing,Manager,LinkedIn / Direct Sourcing,R04,25,6,6.0,17.6,7.0,24.1,7.0,64.2,Hiring-manager feedback delay,Y
+B-0020,Baseline,2026-02-04,2026-03-30,Sales & Service,Operator/Technician,LinkedIn / Direct Sourcing,R02,25,4,1.0,18.3,7.6,26.6,1.0,54.5,Requisition approval delay,Y
+B-0161,Baseline,2026-02-04,2026-04-09,IT & Digital,Operator/Technician,Agency,R08,17,3,10.8,12.7,6.5,32.0,2.5,64.1,Hiring-manager feedback delay,Y
+B-0090,Baseline,2026-02-07,2026-03-22,Manufacturing,Professional,Job Board,R02,26,3,6.9,7.1,8.9,14.4,4.9,43.0,Low / poor-fit applicant pool,Y
+B-0131,Baseline,2026-02-08,2026-04-26,Sales & Service,Senior Leader,Job Board,R04,31,5,9.3,6.2,10.4,30.9,12.4,77.0,Requisition approval delay,N
+B-0087,Baseline,2026-02-09,2026-03-31,Engineering & R&D,Operator/Technician,Employee Referral,R02,19,5,4.5,14.4,6.6,22.2,3.7,49.8,Low / poor-fit applicant pool,Y
+B-0007,Baseline,2026-02-10,2026-04-12,Manufacturing,Manager,Job Board,R06,21,5,3.7,9.2,9.9,31.8,3.1,61.0,Hiring-manager feedback delay,Y
+B-0048,Baseline,2026-02-10,2026-05-07,Corporate Functions,Manager,Employee Referral,R01,19,3,18.8,6.1,11.9,44.7,3.6,86.0,Low / poor-fit applicant pool,Y
+B-0068,Baseline,2026-02-11,2026-03-16,Sales & Service,Operator/Technician,Employee Referral,R04,25,3,5.5,3.4,9.0,14.7,2.2,33.2,Candidate decline or renege,Y
+B-0164,Baseline,2026-02-11,2026-04-08,Sales & Service,Professional,LinkedIn / Direct Sourcing,R02,24,2,11.9,6.2,10.2,24.9,2.6,55.8,Requisition approval delay,Y
+B-0079,Baseline,2026-02-13,2026-03-28,Manufacturing,Operator/Technician,Internal Mobility,R07,24,5,1.7,2.0,9.3,26.8,5.3,42.7,Hiring-manager feedback delay,N
+B-0108,Baseline,2026-02-13,2026-05-15,Sales & Service,Professional,Employee Referral,R04,25,5,13.6,2.7,7.2,65.7,3.6,91.2,JD / requirement changed mid-search,Y
+B-0148,Baseline,2026-02-15,2026-03-28,Sales & Service,Professional,Internal Mobility,R03,15,4,23.7,2.4,4.8,11.3,1.4,41.2,Requisition approval delay,Y
+B-0139,Baseline,2026-02-18,2026-04-24,Engineering & R&D,Professional,Job Board,R07,25,3,10.3,19.9,8.3,23.9,2.1,65.3,Hiring-manager feedback delay,Y
+B-0051,Baseline,2026-02-19,2026-04-19,Sales & Service,Professional,Employee Referral,R01,13,5,3.5,8.3,4.9,41.8,2.0,58.9,Low / poor-fit applicant pool,Y
+B-0116,Baseline,2026-02-23,2026-03-31,Manufacturing,Operator/Technician,Job Board,R03,17,3,5.8,10.0,4.4,8.3,6.7,36.0,Offer & compensation approval,Y
+B-0005,Baseline,2026-02-24,2026-04-18,Corporate Functions,Operator/Technician,Employee Referral,R07,25,4,4.3,7.7,7.9,33.3,1.1,52.7,Hiring-manager feedback delay,Y
+B-0154,Baseline,2026-02-24,2026-04-15,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R05,18,3,9.2,4.4,5.7,28.3,2.1,49.7,Requisition approval delay,Y
+B-0176,Baseline,2026-02-24,2026-05-05,Corporate Functions,Professional,Employee Referral,R07,23,3,10.4,6.7,8.6,43.6,2.0,69.7,Hiring-manager feedback delay,Y
+B-0058,Baseline,2026-02-25,2026-04-01,Manufacturing,Operator/Technician,Employee Referral,R03,18,5,8.0,4.5,8.4,13.8,2.2,35.3,Requisition approval delay,N
+B-0110,Baseline,2026-02-25,2026-04-13,Manufacturing,Professional,Employee Referral,R05,14,3,10.2,14.5,6.7,13.1,3.9,46.8,Requisition approval delay,Y
+B-0031,Baseline,2026-02-26,2026-04-05,IT & Digital,Operator/Technician,Job Board,R02,20,4,1.0,14.2,6.7,11.4,3.9,38.0,Offer & compensation approval,Y
+B-0060,Baseline,2026-02-26,2026-04-17,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R06,20,4,5.3,10.5,5.4,20.5,8.6,50.3,Offer & compensation approval,Y
+B-0013,Baseline,2026-02-28,2026-04-28,Manufacturing,Manager,Job Board,R08,19,5,13.9,9.2,5.1,22.2,5.7,59.4,Requisition approval delay,N
+B-0170,Baseline,2026-02-28,2026-04-10,Sales & Service,Operator/Technician,Internal Mobility,R03,16,4,5.7,3.4,5.4,24.1,4.9,41.1,Hiring-manager feedback delay,Y
+B-0033,Baseline,2026-03-01,2026-04-29,Manufacturing,Manager,Job Board,R04,22,3,7.2,15.5,7.3,21.0,4.4,58.7,Hiring-manager feedback delay,N
+B-0084,Baseline,2026-03-01,2026-04-05,Engineering & R&D,Operator/Technician,Job Board,R02,21,4,2.4,10.3,5.5,13.8,2.0,34.8,Hiring-manager feedback delay,Y
+B-0085,Baseline,2026-03-02,2026-04-10,Engineering & R&D,Operator/Technician,Agency,R02,22,2,8.7,13.3,9.8,4.9,2.9,39.2,Requisition approval delay,Y
+B-0016,Baseline,2026-03-03,2026-05-08,Sales & Service,Professional,Job Board,R07,25,5,3.3,19.2,7.3,27.9,7.5,66.0,Low / poor-fit applicant pool,Y
+B-0018,Baseline,2026-03-04,2026-05-12,Manufacturing,Professional,Job Board,R06,19,4,4.6,14.4,9.6,33.8,6.0,69.2,Interview scheduling / panel availability,Y
+B-0126,Baseline,2026-03-04,2026-04-21,Engineering & R&D,Professional,Job Board,R01,14,3,12.1,14.7,6.2,9.3,5.2,48.3,Requisition approval delay,N
+B-0133,Baseline,2026-03-04,2026-05-10,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R04,29,5,1.3,2.5,7.0,54.4,1.5,66.7,Hiring-manager feedback delay,Y
+B-0094,Baseline,2026-03-06,2026-04-10,IT & Digital,Operator/Technician,Agency,R02,24,4,3.3,9.3,7.2,13.4,2.1,34.9,Interview scheduling / panel availability,N
+B-0057,Baseline,2026-03-07,2026-05-04,IT & Digital,Professional,LinkedIn / Direct Sourcing,R04,25,3,6.0,15.7,6.5,28.1,2.2,58.5,Hiring-manager feedback delay,Y
+B-0044,Baseline,2026-03-08,2026-05-11,Engineering & R&D,Operator/Technician,Employee Referral,R06,20,3,1.9,11.7,7.1,43.2,1.2,63.5,Hiring-manager feedback delay,N
+B-0080,Baseline,2026-03-08,2026-05-01,Sales & Service,Manager,Internal Mobility,R02,19,4,11.5,4.5,9.1,25.4,3.2,53.8,Hiring-manager feedback delay,Y
+B-0002,Baseline,2026-03-09,2026-05-14,Corporate Functions,Professional,Agency,R06,23,5,4.3,9.2,11.4,39.8,2.2,66.5,Hiring-manager feedback delay,Y
+B-0180,Baseline,2026-03-09,2026-06-08,Engineering & R&D,Operator/Technician,Job Board,R04,23,4,22.0,9.2,8.3,48.9,1.5,90.7,JD / requirement changed mid-search,N
+B-0150,Baseline,2026-03-10,2026-04-12,Corporate Functions,Operator/Technician,Agency,R07,22,3,6.6,2.0,6.0,16.4,2.5,33.1,Requisition approval delay,Y
+B-0089,Baseline,2026-03-12,2026-04-13,Manufacturing,Professional,LinkedIn / Direct Sourcing,R02,24,3,4.2,4.3,8.9,10.2,4.0,31.6,Offer & compensation approval,Y
+B-0073,Baseline,2026-03-13,2026-04-11,Corporate Functions,Professional,Agency,R08,18,3,4.3,11.6,5.5,6.4,1.4,28.8,Requisition approval delay,Y
+B-0006,Baseline,2026-03-14,2026-04-19,Manufacturing,Professional,Job Board,R02,20,4,1.2,10.0,6.5,15.3,2.5,36.3,Interview scheduling / panel availability,Y
+B-0070,Baseline,2026-03-17,2026-06-09,Engineering & R&D,Senior Leader,Job Board,R07,22,3,8.8,10.7,6.8,41.1,8.4,83.6,Low / poor-fit applicant pool,Y
+B-0086,Baseline,2026-03-19,2026-05-05,Manufacturing,Professional,LinkedIn / Direct Sourcing,R04,27,4,2.2,15.6,10.4,16.0,3.1,47.3,Candidate decline or renege,Y
+B-0142,Baseline,2026-03-19,2026-06-07,Manufacturing,Manager,Employee Referral,R03,18,6,7.9,2.7,9.8,52.4,6.5,80.2,Offer & compensation approval,N
+B-0052,Baseline,2026-03-20,2026-06-13,Manufacturing,Manager,Employee Referral,R06,21,4,11.4,12.1,6.9,48.7,5.4,85.4,Hiring-manager feedback delay,Y
+B-0145,Baseline,2026-03-21,2026-05-26,Sales & Service,Manager,Internal Mobility,R02,24,5,3.1,10.7,10.5,35.7,5.6,65.7,Hiring-manager feedback delay,N
+B-0076,Baseline,2026-03-23,2026-05-18,Corporate Functions,Professional,Job Board,R02,23,4,2.5,13.8,7.5,30.0,1.0,55.6,Hiring-manager feedback delay,N
+B-0088,Baseline,2026-03-23,2026-05-15,Manufacturing,Senior Leader,Job Board,R01,9,4,5.1,4.0,5.7,21.3,9.2,53.1,Interview scheduling / panel availability,N
+B-0099,Baseline,2026-03-26,2026-06-10,Sales & Service,Professional,Employee Referral,R07,24,2,10.5,5.3,8.3,43.6,10.0,76.1,Low / poor-fit applicant pool,Y
+B-0042,Baseline,2026-03-28,2026-05-31,Engineering & R&D,Manager,Employee Referral,R04,28,4,8.7,14.4,6.7,25.1,8.4,64.2,Requisition approval delay,N
+B-0071,Baseline,2026-03-29,2026-05-20,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R04,27,4,3.6,11.1,9.2,25.5,2.3,51.7,Hiring-manager feedback delay,N
+B-0146,Baseline,2026-03-30,2026-05-17,IT & Digital,Operator/Technician,LinkedIn / Direct Sourcing,R04,29,3,4.4,16.7,12.3,12.3,1.9,47.6,Hiring-manager feedback delay,Y
+B-0121,Baseline,2026-04-01,2026-05-04,IT & Digital,Professional,Agency,R03,18,2,3.3,10.1,7.1,8.3,4.7,33.1,Hiring-manager feedback delay,Y
+B-0143,Baseline,2026-04-03,2026-07-06,Engineering & R&D,Manager,Job Board,R02,24,6,15.1,24.0,6.7,38.4,6.4,93.9,Hiring-manager feedback delay,Y
+B-0174,Baseline,2026-04-03,2026-06-12,Engineering & R&D,Manager,Job Board,R07,22,3,13.0,17.8,7.4,26.2,2.8,70.5,Hiring-manager feedback delay,Y
+B-0167,Baseline,2026-04-04,2026-07-15,Sales & Service,Manager,LinkedIn / Direct Sourcing,R07,29,4,15.9,18.4,13.4,48.1,3.5,101.8,Requisition approval delay,Y
+B-0012,Baseline,2026-04-05,2026-06-03,Engineering & R&D,Manager,Internal Mobility,R04,26,3,14.5,9.1,6.8,24.3,4.3,59.1,Requisition approval delay,Y
+B-0113,Baseline,2026-04-05,2026-04-29,Manufacturing,Professional,Internal Mobility,R06,17,3,5.7,2.0,5.5,11.4,2.2,24.4,Hiring-manager feedback delay,Y
+B-0009,Baseline,2026-04-08,2026-05-23,Engineering & R&D,Operator/Technician,Job Board,R05,13,2,12.0,9.2,5.1,14.1,3.7,44.9,Candidate decline or renege,Y
+B-0102,Baseline,2026-04-09,2026-07-06,Sales & Service,Senior Leader,Internal Mobility,R01,13,6,10.0,8.6,7.6,50.0,7.7,88.5,Hiring-manager feedback delay,Y
+B-0078,Baseline,2026-04-13,2026-06-13,IT & Digital,Operator/Technician,Agency,R03,17,5,15.0,11.7,4.5,29.1,1.5,61.4,Requisition approval delay,Y
+B-0112,Baseline,2026-04-13,2026-06-05,IT & Digital,Operator/Technician,Job Board,R08,16,3,12.3,16.1,8.8,11.9,3.3,53.2,Requisition approval delay,Y
+B-0046,Baseline,2026-04-14,2026-06-07,Corporate Functions,Operator/Technician,LinkedIn / Direct Sourcing,R02,23,4,13.6,6.7,7.6,22.3,4.0,54.2,Hiring-manager feedback delay,N
+B-0066,Baseline,2026-04-16,2026-06-06,Sales & Service,Operator/Technician,LinkedIn / Direct Sourcing,R01,11,5,17.8,3.6,3.0,25.8,1.0,51.2,Hiring-manager feedback delay,Y
+B-0004,Baseline,2026-04-17,2026-05-25,Sales & Service,Manager,Job Board,R05,14,3,2.9,10.8,6.6,10.0,4.3,37.9,Interview scheduling / panel availability,Y
+B-0077,Baseline,2026-04-17,2026-06-17,Manufacturing,Professional,Internal Mobility,R07,24,3,10.9,5.1,10.3,30.4,6.5,60.8,Candidate decline or renege,N
+B-0026,Baseline,2026-04-19,2026-07-20,Manufacturing,Senior Leader,Job Board,R04,30,5,12.3,20.2,10.0,29.3,11.9,91.5,Requisition approval delay,N
+B-0008,Baseline,2026-04-20,2026-07-01,Engineering & R&D,Operator/Technician,Employee Referral,R02,20,5,4.4,6.0,7.6,43.8,11.6,71.8,Low / poor-fit applicant pool,Y
+B-0027,Baseline,2026-04-20,2026-06-12,Engineering & R&D,Professional,Job Board,R08,12,2,4.8,15.7,4.4,21.7,5.2,52.6,Requisition approval delay,Y
+B-0045,Baseline,2026-04-20,2026-05-22,Manufacturing,Operator/Technician,Internal Mobility,R05,15,5,6.2,2.0,6.5,19.1,1.0,32.4,Requisition approval delay,Y
+B-0111,Baseline,2026-04-21,2026-05-31,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R02,21,4,3.2,10.5,8.9,13.3,4.5,40.4,Offer & compensation approval,N
+B-0160,Baseline,2026-04-21,2026-06-25,Manufacturing,Professional,Employee Referral,R02,23,4,31.8,13.3,8.9,11.0,1.9,65.3,Requisition approval delay,Y
+B-0173,Baseline,2026-04-23,2026-05-19,IT & Digital,Operator/Technician,LinkedIn / Direct Sourcing,R01,12,2,3.2,9.5,5.8,5.7,2.2,26.4,Requisition approval delay,Y
+B-0136,Baseline,2026-04-24,2026-06-18,Corporate Functions,Manager,Employee Referral,R08,13,4,11.5,2.2,6.5,29.6,4.2,54.9,Candidate decline or renege,N
+B-0075,Baseline,2026-04-26,2026-06-08,Manufacturing,Professional,Job Board,R07,25,3,7.3,2.8,9.9,17.9,4.5,43.2,Hiring-manager feedback delay,Y
+B-0157,Baseline,2026-04-26,2026-06-03,Engineering & R&D,Manager,Employee Referral,R07,19,3,1.8,8.5,6.0,13.3,7.5,38.0,Requisition approval delay,Y
+B-0144,Baseline,2026-04-28,2026-06-26,Manufacturing,Professional,Internal Mobility,R05,16,3,2.7,8.3,6.5,37.1,6.6,58.8,Interview scheduling / panel availability,N
+B-0038,Baseline,2026-04-29,2026-05-28,Manufacturing,Operator/Technician,Job Board,R08,19,3,1.2,7.8,4.2,12.7,2.2,28.9,Offer & compensation approval,Y
+B-0103,Baseline,2026-04-29,2026-06-08,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R05,14,4,2.8,8.3,2.2,25.0,1.2,39.5,Hiring-manager feedback delay,Y
+B-0179,Baseline,2026-04-30,2026-07-07,Manufacturing,Senior Leader,LinkedIn / Direct Sourcing,R02,25,5,3.8,8.9,9.3,27.1,11.6,67.7,Offer & compensation approval,Y
+B-0082,Baseline,2026-05-01,2026-06-17,Engineering & R&D,Operator/Technician,Agency,R06,18,3,5.5,14.0,5.4,18.2,4.7,47.4,Interview scheduling / panel availability,Y
+B-0062,Baseline,2026-05-02,2026-07-21,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R07,23,5,5.7,19.7,8.9,40.6,4.9,79.8,Offer & compensation approval,N
+B-0003,Baseline,2026-05-05,2026-06-21,Manufacturing,Professional,Job Board,R05,17,5,2.2,8.6,7.7,22.7,5.4,47.4,Low / poor-fit applicant pool,Y
+B-0147,Baseline,2026-05-05,2026-06-26,Manufacturing,Professional,Job Board,R06,19,4,2.6,14.6,6.5,25.9,2.0,52.4,Hiring-manager feedback delay,N
+B-0036,Baseline,2026-05-06,2026-06-13,Corporate Functions,Operator/Technician,LinkedIn / Direct Sourcing,R03,18,3,4.3,17.3,5.9,8.4,2.6,38.5,Low / poor-fit applicant pool,Y
+B-0067,Baseline,2026-05-06,2026-06-18,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R06,21,2,1.8,12.4,9.0,14.5,5.7,43.4,Offer & compensation approval,Y
+B-0114,Baseline,2026-05-06,2026-06-11,Manufacturing,Professional,Job Board,R05,15,3,9.3,4.7,6.5,13.0,1.2,35.5,Requisition approval delay,Y
+B-0056,Baseline,2026-05-07,2026-06-14,IT & Digital,Professional,Employee Referral,R01,15,2,1.7,13.9,8.6,12.6,3.1,38.3,Low / poor-fit applicant pool,Y
+B-0140,Baseline,2026-05-07,2026-06-29,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R05,19,4,10.9,13.9,7.0,17.6,3.4,52.8,Requisition approval delay,Y
+B-0153,Baseline,2026-05-07,2026-07-20,Sales & Service,Professional,Job Board,R05,14,5,14.4,5.0,7.3,44.4,2.3,74.2,Requisition approval delay,N
+B-0155,Baseline,2026-05-08,2026-07-13,Engineering & R&D,Professional,Agency,R07,24,4,4.3,14.5,10.6,31.7,4.8,65.5,Hiring-manager feedback delay,N
+B-0130,Baseline,2026-05-09,2026-07-13,Corporate Functions,Professional,Employee Referral,R04,24,3,7.2,25.2,9.9,15.9,8.8,65.4,Requisition approval delay,Y
+B-0171,Baseline,2026-05-09,2026-06-10,Manufacturing,Professional,Employee Referral,R05,11,3,4.1,5.4,4.9,15.5,3.3,31.6,Hiring-manager feedback delay,N
+B-0001,Baseline,2026-05-10,2026-07-08,Corporate Functions,Professional,Agency,R01,8,5,6.5,11.8,3.8,32.4,4.7,58.8,Interview scheduling / panel availability,Y
+B-0166,Baseline,2026-05-12,2026-06-16,Manufacturing,Operator/Technician,Internal Mobility,R02,28,2,11.7,3.9,8.1,12.0,2.0,35.3,Low / poor-fit applicant pool,Y
+B-0134,Baseline,2026-05-14,2026-06-25,Sales & Service,Professional,LinkedIn / Direct Sourcing,R05,15,4,2.9,3.0,4.3,31.0,1.0,42.2,Requisition approval delay,Y
+B-0105,Baseline,2026-05-15,2026-08-12,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R02,18,5,1.0,2.1,8.8,73.5,3.6,89.0,Hiring-manager feedback delay,N
+B-0168,Baseline,2026-05-15,2026-08-18,Manufacturing,Senior Leader,Agency,R05,10,6,4.2,10.0,3.7,62.2,8.5,95.2,Hiring-manager feedback delay,Y
+B-0028,Baseline,2026-05-17,2026-07-06,Sales & Service,Professional,LinkedIn / Direct Sourcing,R07,25,5,5.7,5.9,9.5,22.2,7.0,50.3,Hiring-manager feedback delay,Y
+B-0172,Baseline,2026-05-17,2026-06-30,Manufacturing,Manager,LinkedIn / Direct Sourcing,R01,16,6,3.0,12.4,4.2,17.6,3.9,43.6,Interview scheduling / panel availability,N
+B-0063,Baseline,2026-05-19,2026-07-01,Corporate Functions,Professional,Job Board,R02,21,3,5.0,7.7,5.8,20.0,3.3,42.6,Offer & compensation approval,Y
+B-0092,Baseline,2026-05-19,2026-07-02,Engineering & R&D,Manager,LinkedIn / Direct Sourcing,R08,17,5,4.2,12.4,6.0,14.6,3.9,43.6,Low / poor-fit applicant pool,Y
+B-0125,Baseline,2026-05-22,2026-06-23,Manufacturing,Operator/Technician,Internal Mobility,R06,17,3,13.1,5.6,3.7,8.6,3.2,31.8,Candidate decline or renege,Y
+B-0175,Baseline,2026-05-22,2026-07-04,Manufacturing,Operator/Technician,Internal Mobility,R05,16,5,7.7,2.0,4.2,24.2,6.9,42.6,Requisition approval delay,Y
+B-0011,Baseline,2026-05-23,2026-07-10,IT & Digital,Professional,Job Board,R01,12,3,8.1,8.8,7.6,20.1,2.4,47.8,Low / poor-fit applicant pool,Y
+B-0123,Baseline,2026-05-23,2026-07-26,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R08,16,4,12.1,15.9,7.2,21.3,7.9,64.4,Requisition approval delay,Y
+B-0097,Baseline,2026-05-24,2026-07-11,Manufacturing,Manager,LinkedIn / Direct Sourcing,R01,14,6,5.8,11.6,5.1,17.9,5.4,48.3,Interview scheduling / panel availability,N
+B-0091,Baseline,2026-05-25,2026-09-06,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R04,30,5,12.4,12.6,8.6,67.4,3.3,104.3,Low / poor-fit applicant pool,N
+B-0149,Baseline,2026-05-26,2026-07-18,Engineering & R&D,Operator/Technician,LinkedIn / Direct Sourcing,R07,25,3,4.9,21.0,9.3,13.1,4.4,52.7,Offer & compensation approval,Y
+B-0017,Baseline,2026-05-29,2026-07-25,Corporate Functions,Manager,Internal Mobility,R03,17,5,4.8,12.6,5.9,27.6,5.9,56.9,Interview scheduling / panel availability,Y
+B-0024,Baseline,2026-05-29,2026-07-21,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R08,11,5,3.5,12.7,4.5,28.9,3.6,53.2,Hiring-manager feedback delay,Y
+B-0037,Baseline,2026-05-30,2026-07-23,Manufacturing,Professional,LinkedIn / Direct Sourcing,R04,33,3,4.6,2.8,11.0,24.7,10.7,53.8,Hiring-manager feedback delay,Y
+B-0115,Baseline,2026-05-30,2026-07-01,Manufacturing,Professional,Employee Referral,R03,15,4,3.7,5.8,5.2,12.5,6.5,32.1,Candidate decline or renege,Y
+B-0096,Baseline,2026-05-31,2026-07-10,Sales & Service,Operator/Technician,Internal Mobility,R07,18,4,5.5,3.3,4.4,28.0,1.0,39.8,JD / requirement changed mid-search,Y
+B-0120,Baseline,2026-05-31,2026-07-14,Sales & Service,Operator/Technician,LinkedIn / Direct Sourcing,R02,20,4,5.7,9.9,7.6,15.2,5.4,43.8,Hiring-manager feedback delay,Y
+B-0156,Baseline,2026-05-31,2026-08-07,Engineering & R&D,Professional,Job Board,R03,21,4,3.2,12.0,7.0,43.5,1.9,68.4,Hiring-manager feedback delay,Y
+B-0119,Baseline,2026-06-02,2026-07-28,Engineering & R&D,Professional,Job Board,R04,27,5,4.5,15.2,9.6,22.9,3.1,56.1,Hiring-manager feedback delay,Y
+B-0010,Baseline,2026-06-03,2026-07-13,Manufacturing,Professional,Job Board,R03,19,3,11.0,5.7,6.1,15.4,1.0,40.0,Requisition approval delay,N
+B-0117,Baseline,2026-06-05,2026-08-16,Engineering & R&D,Manager,Agency,R06,20,4,6.4,13.5,6.0,39.4,4.4,71.8,Hiring-manager feedback delay,N
+B-0032,Baseline,2026-06-07,2026-07-13,Corporate Functions,Professional,Agency,R06,19,5,3.2,5.4,6.7,17.8,3.5,36.2,Interview scheduling / panel availability,Y
+B-0059,Baseline,2026-06-07,2026-07-12,Sales & Service,Professional,Internal Mobility,R07,22,4,9.6,3.3,6.1,17.7,1.0,35.3,Requisition approval delay,Y
+B-0019,Baseline,2026-06-08,2026-08-14,Sales & Service,Operator/Technician,LinkedIn / Direct Sourcing,R05,15,4,9.9,8.7,4.9,37.9,5.3,66.7,Low / poor-fit applicant pool,Y
+B-0095,Baseline,2026-06-09,2026-08-28,Manufacturing,Professional,Job Board,R05,13,3,8.0,9.0,4.4,57.2,1.0,80.4,Hiring-manager feedback delay,Y
+B-0135,Baseline,2026-06-09,2026-08-24,Sales & Service,Professional,Job Board,R07,19,4,15.6,23.5,6.8,28.8,1.0,76.5,Low / poor-fit applicant pool,Y
+B-0124,Baseline,2026-06-10,2026-07-27,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R07,25,4,6.4,8.6,12.0,15.1,4.7,46.8,Interview scheduling / panel availability,Y
+B-0163,Baseline,2026-06-11,2026-09-01,Sales & Service,Professional,LinkedIn / Direct Sourcing,R05,8,3,19.1,13.6,4.1,43.0,1.9,81.7,Hiring-manager feedback delay,Y
+B-0023,Baseline,2026-06-12,2026-08-15,Corporate Functions,Operator/Technician,Internal Mobility,R01,12,5,3.5,6.8,4.6,45.5,5.9,63.9,Hiring-manager feedback delay,Y
+B-0021,Baseline,2026-06-15,2026-07-31,Corporate Functions,Professional,Job Board,R06,20,3,2.9,14.3,6.9,19.5,1.8,46.2,Low / poor-fit applicant pool,Y
+B-0169,Baseline,2026-06-18,2026-08-20,Engineering & R&D,Manager,Agency,R02,15,6,15.2,12.4,3.5,24.4,5.8,63.4,Requisition approval delay,Y
+B-0035,Baseline,2026-06-20,2026-07-09,Manufacturing,Professional,Agency,R03,19,2,1.2,2.0,5.5,5.6,5.5,19.4,Hiring-manager feedback delay,Y
+B-0141,Baseline,2026-06-20,2026-09-12,Sales & Service,Manager,Employee Referral,R02,21,6,18.7,12.2,9.2,36.7,5.8,83.5,Requisition approval delay,Y
+B-0137,Baseline,2026-06-22,2026-07-20,Manufacturing,Operator/Technician,Internal Mobility,R06,18,4,11.5,2.0,6.3,9.3,1.8,28.5,Interview scheduling / panel availability,Y
+B-0101,Baseline,2026-06-23,2026-07-28,Manufacturing,Professional,Employee Referral,R01,12,4,8.1,2.0,4.9,20.3,1.0,34.7,Hiring-manager feedback delay,Y
+B-0122,Baseline,2026-06-24,2026-10-10,Engineering & R&D,Professional,Employee Referral,R07,19,5,5.5,14.1,5.2,81.2,3.8,108.2,Hiring-manager feedback delay,N
+B-0022,Baseline,2026-06-25,2026-10-19,Engineering & R&D,Senior Leader,LinkedIn / Direct Sourcing,R07,26,6,5.1,13.4,6.2,79.2,5.6,116.5,Hiring-manager feedback delay,N
+B-0177,Baseline,2026-06-25,2026-07-30,Manufacturing,Operator/Technician,Employee Referral,R04,28,3,3.6,2.0,11.0,13.2,6.5,34.7,Requisition approval delay,N
+B-0040,Baseline,2026-06-26,2026-07-30,Engineering & R&D,Professional,Employee Referral,R08,13,2,1.0,16.4,3.5,7.9,6.8,34.0,Interview scheduling / panel availability,Y
+B-0093,Baseline,2026-06-26,2026-09-20,Engineering & R&D,Operator/Technician,Agency,R04,29,5,23.7,18.7,10.0,29.5,4.1,85.6,Interview scheduling / panel availability,N
+B-0047,Baseline,2026-06-27,2026-07-25,Engineering & R&D,Professional,Employee Referral,R03,15,3,2.2,10.7,7.6,4.3,4.5,27.7,Hiring-manager feedback delay,N
+B-0034,Baseline,2026-06-28,2026-08-21,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R04,23,3,18.0,8.8,7.1,16.3,4.0,54.2,Requisition approval delay,N
+B-0107,Baseline,2026-06-28,2026-09-16,IT & Digital,Operator/Technician,Agency,R06,21,5,8.5,6.8,9.0,48.6,7.2,79.7,Hiring-manager feedback delay,N
+B-0162,Baseline,2026-06-28,2026-09-02,Manufacturing,Manager,Agency,R06,16,5,6.3,2.0,5.1,45.7,5.2,66.4,Hiring-manager feedback delay,N
+B-0025,Baseline,2026-06-30,2026-07-30,Manufacturing,Operator/Technician,LinkedIn / Direct Sourcing,R05,10,2,2.5,11.7,3.4,10.0,1.9,29.5,Low / poor-fit applicant pool,Y
+B-0074,Baseline,2026-06-30,2026-07-30,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R06,17,3,1.0,5.4,7.2,13.4,2.8,29.8,Interview scheduling / panel availability,Y
+B-0054,Baseline,2026-07-01,2026-08-30,Engineering & R&D,Professional,Job Board,R07,26,4,1.2,11.5,8.0,34.8,3.3,59.6,Hiring-manager feedback delay,N
+B-0055,Baseline,2026-07-02,2026-08-12,Engineering & R&D,Professional,Employee Referral,R05,14,2,11.0,11.5,3.8,9.2,7.1,41.0,Offer & compensation approval,Y
+I-0009,Improve,2026-07-27,2026-08-22,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R06,15,3,1.4,7.9,4.6,9.1,2.7,25.7,Low / poor-fit applicant pool,Y
+I-0032,Improve,2026-07-27,2026-08-27,Manufacturing,Senior Leader,Job Board,R02,20,3,1.1,2.1,8.1,6.5,5.7,31.3,Interview scheduling / panel availability,Y
+I-0074,Improve,2026-07-27,2026-08-23,Manufacturing,Operator/Technician,Job Board,R01,17,2,2.3,7.9,4.7,9.2,2.0,26.9,Requisition approval delay,Y
+I-0082,Improve,2026-07-28,2026-08-28,Manufacturing,Professional,LinkedIn / Direct Sourcing,R07,17,3,2.4,14.8,5.3,7.0,1.2,30.7,Low / poor-fit applicant pool,Y
+I-0079,Improve,2026-07-31,2026-09-01,IT & Digital,Professional,LinkedIn / Direct Sourcing,R02,16,3,3.5,14.3,4.3,8.7,1.0,31.8,Hiring-manager feedback delay,Y
+I-0008,Improve,2026-08-02,2026-09-08,Engineering & R&D,Senior Leader,Job Board,R06,15,3,2.0,9.4,3.6,7.5,6.5,36.8,Low / poor-fit applicant pool,Y
+I-0058,Improve,2026-08-02,2026-09-02,Engineering & R&D,Manager,Job Board,R08,16,2,2.6,7.6,8.4,4.9,4.2,31.0,Low / poor-fit applicant pool,Y
+I-0013,Improve,2026-08-05,2026-09-15,Engineering & R&D,Professional,Job Board,R06,16,3,3.8,16.1,7.1,12.1,1.0,40.9,Interview scheduling / panel availability,N
+I-0067,Improve,2026-08-06,2026-09-08,Engineering & R&D,Manager,Employee Referral,R05,16,2,0.8,10.4,8.2,7.1,5.2,32.6,Low / poor-fit applicant pool,Y
+I-0037,Improve,2026-08-08,2026-09-01,Engineering & R&D,Operator/Technician,Job Board,R01,14,2,1.1,9.9,3.9,6.8,1.6,24.1,Low / poor-fit applicant pool,Y
+I-0041,Improve,2026-08-08,2026-08-31,Corporate Functions,Professional,Agency,R06,15,3,1.7,3.1,4.7,8.9,4.8,22.8,Interview scheduling / panel availability,N
+I-0049,Improve,2026-08-08,2026-09-12,IT & Digital,Manager,Employee Referral,R08,15,3,2.8,10.1,6.6,12.2,2.8,35.4,Hiring-manager feedback delay,Y
+I-0051,Improve,2026-08-09,2026-09-06,Manufacturing,Operator/Technician,Job Board,R04,16,3,3.9,3.1,8.2,11.5,1.0,28.5,Interview scheduling / panel availability,Y
+I-0060,Improve,2026-08-09,2026-09-10,Corporate Functions,Manager,Job Board,R05,20,3,0.9,2.9,9.2,11.6,4.5,32.4,Low / poor-fit applicant pool,Y
+I-0078,Improve,2026-08-09,2026-09-16,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R03,18,3,2.1,9.8,9.7,15.0,1.1,37.7,Hiring-manager feedback delay,Y
+I-0075,Improve,2026-08-10,2026-09-19,IT & Digital,Operator/Technician,LinkedIn / Direct Sourcing,R04,15,3,6.3,14.4,6.7,10.1,2.5,40.0,Low / poor-fit applicant pool,Y
+I-0028,Improve,2026-08-12,2026-09-16,Manufacturing,Operator/Technician,Job Board,R05,17,2,2.3,11.3,8.5,8.7,3.1,34.7,Requisition approval delay,Y
+I-0039,Improve,2026-08-12,2026-09-03,Corporate Functions,Operator/Technician,LinkedIn / Direct Sourcing,R05,12,2,1.3,7.9,3.1,8.2,2.0,22.5,Hiring-manager feedback delay,Y
+I-0011,Improve,2026-08-14,2026-09-11,Corporate Functions,Professional,LinkedIn / Direct Sourcing,R07,16,3,0.5,6.7,7.5,9.2,4.6,28.5,Low / poor-fit applicant pool,Y
+I-0025,Improve,2026-08-14,2026-09-12,Manufacturing,Manager,Job Board,R05,17,3,0.5,7.2,7.1,8.5,2.0,28.6,Hiring-manager feedback delay,Y
+I-0045,Improve,2026-08-20,2026-09-09,Corporate Functions,Professional,Agency,R03,14,3,0.7,5.1,3.5,7.7,3.1,19.7,Candidate decline or renege,N
+I-0005,Improve,2026-08-21,2026-09-15,IT & Digital,Professional,Internal Mobility,R01,23,3,2.7,4.9,7.7,8.0,4.2,25.1,Hiring-manager feedback delay,Y
+I-0017,Improve,2026-08-21,2026-10-06,IT & Digital,Senior Leader,Job Board,R06,16,4,3.0,6.8,8.5,14.1,5.5,45.7,Candidate decline or renege,Y
+I-0030,Improve,2026-08-21,2026-09-18,Sales & Service,Operator/Technician,Agency,R04,18,3,1.1,8.7,5.8,10.7,2.5,28.4,Interview scheduling / panel availability,Y
+I-0053,Improve,2026-08-21,2026-09-10,Manufacturing,Professional,Internal Mobility,R08,14,3,2.3,4.2,6.4,7.9,1.1,19.5,Interview scheduling / panel availability,Y
+I-0085,Improve,2026-08-23,2026-10-02,Manufacturing,Professional,Job Board,R01,17,3,1.5,5.1,5.0,23.7,3.5,39.6,Hiring-manager feedback delay,Y
+I-0018,Improve,2026-08-24,2026-09-14,Sales & Service,Professional,Employee Referral,R07,14,3,1.3,6.6,6.1,7.7,1.2,21.3,JD / requirement changed mid-search,Y
+I-0020,Improve,2026-08-24,2026-09-17,Manufacturing,Operator/Technician,Job Board,R07,18,2,1.7,2.4,9.8,7.2,1.9,23.8,Interview scheduling / panel availability,Y
+I-0072,Improve,2026-08-24,2026-09-24,IT & Digital,Professional,LinkedIn / Direct Sourcing,R06,19,2,3.3,7.0,7.8,11.3,1.7,31.1,Interview scheduling / panel availability,Y
+I-0014,Improve,2026-08-25,2026-10-09,Engineering & R&D,Manager,Job Board,R02,13,3,7.4,11.4,6.0,11.8,4.9,44.8,Requisition approval delay,Y
+I-0026,Improve,2026-08-26,2026-09-30,Manufacturing,Manager,LinkedIn / Direct Sourcing,R02,18,3,1.2,7.4,8.7,12.0,3.6,35.4,Hiring-manager feedback delay,Y
+I-0034,Improve,2026-08-30,2026-09-24,Engineering & R&D,Professional,Agency,R03,16,2,1.4,7.1,9.4,6.9,1.0,25.4,Offer & compensation approval,Y
+I-0002,Improve,2026-09-01,2026-09-21,Corporate Functions,Professional,Agency,R08,19,3,0.5,3.4,5.4,8.5,2.2,19.6,Offer & compensation approval,Y
+I-0016,Improve,2026-09-01,2026-10-07,Manufacturing,Manager,Agency,R06,19,3,0.5,6.9,5.2,18.6,2.3,35.6,JD / requirement changed mid-search,Y
+I-0089,Improve,2026-09-01,2026-09-29,Corporate Functions,Professional,Internal Mobility,R01,17,2,1.8,15.1,5.4,5.8,2.1,27.8,Requisition approval delay,Y
+I-0064,Improve,2026-09-02,2026-09-30,Sales & Service,Operator/Technician,Agency,R06,16,2,7.0,4.6,7.5,8.1,1.7,28.5,Hiring-manager feedback delay,Y
+I-0084,Improve,2026-09-02,2026-10-04,Engineering & R&D,Professional,Employee Referral,R08,17,3,4.2,13.4,6.7,8.8,1.0,32.5,Candidate decline or renege,Y
+I-0022,Improve,2026-09-03,2026-09-27,Manufacturing,Professional,Agency,R08,15,2,1.1,9.2,4.6,7.5,1.6,23.6,Offer & compensation approval,Y
+I-0059,Improve,2026-09-03,2026-10-07,Engineering & R&D,Professional,Employee Referral,R06,17,2,1.5,20.2,5.6,6.3,1.7,33.7,Requisition approval delay,Y
+I-0010,Improve,2026-09-04,2026-09-29,Engineering & R&D,Operator/Technician,Internal Mobility,R07,14,3,2.9,5.9,6.7,8.2,4.1,25.4,Offer & compensation approval,Y
+I-0043,Improve,2026-09-05,2026-09-28,Sales & Service,Professional,Employee Referral,R08,14,2,4.4,3.8,6.4,6.3,4.0,23.3,Candidate decline or renege,Y
+I-0081,Improve,2026-09-05,2026-09-26,Sales & Service,Professional,Employee Referral,R01,17,2,0.7,2.5,7.7,8.0,3.5,20.8,Interview scheduling / panel availability,Y
+I-0048,Improve,2026-09-06,2026-10-06,Manufacturing,Professional,LinkedIn / Direct Sourcing,R06,14,3,0.5,11.3,5.5,8.4,4.0,29.7,Low / poor-fit applicant pool,Y
+I-0038,Improve,2026-09-07,2026-10-06,Engineering & R&D,Operator/Technician,Job Board,R02,13,3,0.9,8.0,2.6,16.0,1.0,29.3,Low / poor-fit applicant pool,Y
+I-0057,Improve,2026-09-07,2026-09-26,Manufacturing,Manager,Employee Referral,R08,19,2,2.1,3.2,5.0,5.3,2.5,19.0,Low / poor-fit applicant pool,Y
+I-0066,Improve,2026-09-08,2026-10-02,Manufacturing,Operator/Technician,Job Board,R08,14,3,2.2,2.5,4.7,7.8,5.5,23.5,Interview scheduling / panel availability,Y
+I-0003,Improve,2026-09-10,2026-09-29,Corporate Functions,Operator/Technician,Employee Referral,R06,16,3,4.1,2.0,7.5,6.3,1.0,19.3,Requisition approval delay,Y
+I-0046,Improve,2026-09-10,2026-10-06,Sales & Service,Professional,Job Board,R02,17,2,1.7,8.0,6.0,5.3,3.7,25.5,Hiring-manager feedback delay,Y
+I-0047,Improve,2026-09-13,2026-10-16,Engineering & R&D,Professional,Job Board,R04,18,3,2.9,10.2,6.8,11.4,1.0,33.1,Low / poor-fit applicant pool,Y
+I-0080,Improve,2026-09-14,2026-10-04,Engineering & R&D,Professional,Internal Mobility,R02,15,3,1.0,4.9,4.5,10.2,1.7,19.9,Hiring-manager feedback delay,Y
+I-0070,Improve,2026-09-16,2026-10-09,Corporate Functions,Operator/Technician,LinkedIn / Direct Sourcing,R08,18,3,1.3,3.7,8.0,7.1,2.9,23.0,Candidate decline or renege,N
+I-0004,Improve,2026-09-17,2026-10-10,Sales & Service,Operator/Technician,Job Board,R03,14,2,1.2,6.7,4.5,7.2,2.8,23.2,Offer & compensation approval,Y
+I-0035,Improve,2026-09-17,2026-10-23,Manufacturing,Manager,LinkedIn / Direct Sourcing,R07,16,2,6.6,2.5,4.8,15.9,3.3,35.6,Hiring-manager feedback delay,Y
+I-0083,Improve,2026-09-17,2026-10-28,Engineering & R&D,Professional,Job Board,R04,17,3,1.6,18.3,7.5,12.0,1.0,41.2,Low / poor-fit applicant pool,Y
+I-0001,Improve,2026-09-18,2026-10-18,Manufacturing,Operator/Technician,Employee Referral,R04,14,3,1.1,7.7,7.2,13.3,2.4,30.1,Interview scheduling / panel availability,Y
+I-0055,Improve,2026-09-18,2026-10-28,Corporate Functions,Professional,Job Board,R02,17,3,0.5,6.6,7.7,23.0,1.5,40.1,Hiring-manager feedback delay,Y
+I-0061,Improve,2026-09-18,2026-10-15,Manufacturing,Operator/Technician,Job Board,R08,15,2,1.8,2.0,5.8,14.1,2.4,26.9,Hiring-manager feedback delay,Y
+I-0062,Improve,2026-09-18,2026-10-13,Manufacturing,Professional,Job Board,R03,17,2,2.0,8.8,3.4,8.7,1.0,24.7,Interview scheduling / panel availability,Y
+I-0087,Improve,2026-09-18,2026-10-14,Engineering & R&D,Professional,Employee Referral,R08,19,2,0.6,9.9,9.8,4.5,3.2,26.4,Low / poor-fit applicant pool,Y
+I-0007,Improve,2026-09-20,2026-10-17,Manufacturing,Operator/Technician,Job Board,R04,16,2,6.0,7.8,6.8,3.6,2.1,27.1,Low / poor-fit applicant pool,Y
+I-0044,Improve,2026-09-20,2026-10-20,Manufacturing,Professional,LinkedIn / Direct Sourcing,R02,20,3,1.3,7.1,8.2,10.6,2.3,29.5,Interview scheduling / panel availability,Y
+I-0056,Improve,2026-09-20,2026-11-23,Manufacturing,Manager,Employee Referral,R04,19,3,6.1,28.3,5.7,18.3,4.4,63.7,Low / poor-fit applicant pool,N
+I-0029,Improve,2026-09-21,2026-10-23,Sales & Service,Manager,Agency,R04,16,2,5.5,4.1,7.0,10.0,3.2,31.9,Requisition approval delay,Y
+I-0090,Improve,2026-09-21,2026-10-28,Manufacturing,Professional,LinkedIn / Direct Sourcing,R08,18,3,1.1,9.2,5.8,16.3,4.7,37.1,Low / poor-fit applicant pool,Y
+I-0068,Improve,2026-09-23,2026-11-01,Engineering & R&D,Manager,Job Board,R05,13,3,0.5,16.9,6.4,9.2,2.6,38.9,JD / requirement changed mid-search,Y
+I-0012,Improve,2026-09-26,2026-10-31,Sales & Service,Professional,Agency,R05,18,3,3.3,7.3,7.4,15.3,2.2,35.1,Low / poor-fit applicant pool,Y
+I-0069,Improve,2026-09-26,2026-10-23,Sales & Service,Operator/Technician,Employee Referral,R04,17,3,1.8,6.9,10.2,8.4,1.6,27.3,Hiring-manager feedback delay,Y
+I-0006,Improve,2026-09-27,2026-10-20,IT & Digital,Operator/Technician,Employee Referral,R01,17,2,3.6,5.5,6.3,8.0,1.0,22.8,Hiring-manager feedback delay,Y
+I-0031,Improve,2026-09-28,2026-10-29,Manufacturing,Manager,Job Board,R06,16,3,2.5,3.5,5.9,11.7,4.4,31.3,Hiring-manager feedback delay,Y
+I-0042,Improve,2026-09-28,2026-10-26,Engineering & R&D,Manager,Internal Mobility,R06,15,3,0.5,5.4,6.2,10.4,5.1,27.7,Hiring-manager feedback delay,Y
+I-0054,Improve,2026-09-28,2026-11-14,Engineering & R&D,Manager,Job Board,R05,17,2,8.7,11.2,9.7,9.1,5.3,47.3,Hiring-manager feedback delay,Y
+I-0023,Improve,2026-10-02,2026-10-28,Corporate Functions,Professional,Internal Mobility,R05,14,3,3.0,2.3,3.4,14.7,4.9,25.9,JD / requirement changed mid-search,Y
+I-0050,Improve,2026-10-02,2026-10-25,Manufacturing,Professional,LinkedIn / Direct Sourcing,R08,18,2,0.9,11.4,5.4,4.3,1.2,23.2,JD / requirement changed mid-search,Y
+I-0077,Improve,2026-10-04,2026-11-11,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R08,18,2,0.5,20.3,6.1,7.5,3.7,38.1,Low / poor-fit applicant pool,Y
+I-0086,Improve,2026-10-04,2026-11-13,Engineering & R&D,Manager,Job Board,R08,18,2,0.6,15.0,9.4,8.0,4.0,40.3,Hiring-manager feedback delay,Y
+I-0088,Improve,2026-10-06,2026-10-20,Manufacturing,Professional,Internal Mobility,R06,19,2,2.3,2.0,7.7,2.4,1.9,13.9,Requisition approval delay,Y
+I-0019,Improve,2026-10-08,2026-10-30,Engineering & R&D,Professional,Employee Referral,R05,13,3,1.4,6.1,5.3,9.5,1.7,22.4,Candidate decline or renege,Y
+I-0052,Improve,2026-10-09,2026-11-15,Engineering & R&D,Professional,Agency,R08,12,3,7.1,19.0,3.5,6.5,1.3,37.0,Low / poor-fit applicant pool,Y
+I-0065,Improve,2026-10-09,2026-11-04,Sales & Service,Professional,Job Board,R06,12,3,1.6,10.0,3.8,8.6,1.5,26.3,Candidate decline or renege,N
+I-0076,Improve,2026-10-13,2026-10-31,Manufacturing,Operator/Technician,Employee Referral,R07,15,2,1.6,8.5,4.3,3.7,1.3,17.8,Requisition approval delay,Y
+I-0021,Improve,2026-10-14,2026-11-28,Manufacturing,Professional,Agency,R07,19,3,2.6,2.7,9.1,26.0,5.2,45.2,Hiring-manager feedback delay,Y
+I-0063,Improve,2026-10-14,2026-11-14,Engineering & R&D,Operator/Technician,Job Board,R02,16,2,4.2,14.3,2.4,6.4,2.9,31.0,Requisition approval delay,Y
+I-0073,Improve,2026-10-15,2026-11-14,Manufacturing,Manager,LinkedIn / Direct Sourcing,R08,13,3,3.3,5.8,3.2,10.7,4.1,29.6,Interview scheduling / panel availability,Y
+I-0024,Improve,2026-10-16,2026-11-09,Sales & Service,Professional,Internal Mobility,R02,13,3,1.2,5.0,6.3,11.1,2.6,23.8,Hiring-manager feedback delay,Y
+I-0040,Improve,2026-10-16,2026-11-17,Manufacturing,Operator/Technician,Job Board,R04,17,3,2.5,6.9,6.4,14.7,1.0,32.3,Low / poor-fit applicant pool,Y
+I-0071,Improve,2026-10-17,2026-11-10,Sales & Service,Manager,LinkedIn / Direct Sourcing,R04,17,3,0.9,6.2,4.8,6.6,2.6,23.6,Low / poor-fit applicant pool,N
+I-0027,Improve,2026-10-18,2026-11-10,IT & Digital,Operator/Technician,LinkedIn / Direct Sourcing,R06,14,2,0.7,9.5,6.4,5.2,1.6,23.4,Offer & compensation approval,Y
+I-0033,Improve,2026-10-18,2026-11-10,Sales & Service,Professional,LinkedIn / Direct Sourcing,R07,11,2,2.0,6.2,4.2,9.3,1.1,22.8,Offer & compensation approval,Y
+I-0036,Improve,2026-10-21,2026-11-30,Corporate Functions,Operator/Technician,Job Board,R03,18,3,5.8,17.4,7.4,7.7,1.0,40.1,Requisition approval delay,Y
+I-0015,Improve,2026-10-22,2026-11-30,Engineering & R&D,Manager,Job Board,R03,19,3,4.1,11.7,5.3,10.5,4.1,39.0,Interview scheduling / panel availability,Y

@@ -1,0 +1,688 @@
+<title>TTF DMAIC Control Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar (data source + specs), tabbed DMAIC workspace below; tiles → charts → tables. */
+:root {
+  --bg: #f6f8f9; --panel: #ffffff; --ink: #1b2830; --ink-2: #4c5d66; --line: #d8e0e4; --soft: #eef2f4;
+  --slate: #1f3a4d; --teal: #0f7c80; --teal-soft: #dff0f0; --amber: #c98f00; --amber-soft: #fbefcc;
+  --red: #b4232a; --red-soft: #f8e1e2; --green: #2e7d4f; --green-soft: #def0e5;
+  --f-display: "Source Serif 4", Cambria, Georgia, serif; --f-body: "Public Sans", "Segoe UI", Arial, sans-serif; --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10181d; --panel: #172229; --ink: #e4ecef; --ink-2: #9db0b9; --line: #2b3b44; --soft: #1e2c34;
+  --slate: #cfe0e8; --teal: #3cb7b9; --teal-soft: #173a3c; --amber: #e8b53a; --amber-soft: #3a3016;
+  --red: #ef6f74; --red-soft: #3d1f22; --green: #5cc58a; --green-soft: #183326; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #10181d; --panel: #172229; --ink: #e4ecef; --ink-2: #9db0b9; --line: #2b3b44; --soft: #1e2c34;
+  --slate: #cfe0e8; --teal: #3cb7b9; --teal-soft: #173a3c; --amber: #e8b53a; --amber-soft: #3a3016;
+  --red: #ef6f74; --red-soft: #3d1f22; --green: #5cc58a; --green-soft: #183326; color-scheme: dark; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-block: 12px 10px; display: flex; flex-direction: column; gap: 10px; }
+.row1 { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; justify-content: space-between; }
+h1 { font-family: var(--f-display); font-size: 22px; margin: 0; color: var(--slate); letter-spacing: -0.01em; display: flex; align-items: center; gap: 12px; }
+.phases { display: inline-flex; gap: 4px; }
+.phases span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font: 600 11px var(--f-body); color: var(--ink-2); }
+.phases span.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+.src { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.src button { border: 0; background: transparent; padding: 7px 12px; font: 500 13px var(--f-body); color: var(--ink-2); cursor: pointer; }
+.src button[aria-pressed="true"] { background: var(--slate); color: var(--panel); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; }
+.fld { display: flex; flex-direction: column; gap: 2px; }
+.fld label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+input, select, textarea { font: 13px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }
+input[type=number] { width: 84px; font-family: var(--f-mono); }
+input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 11px; font: 500 13px var(--f-body); cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--teal); }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.danger { color: var(--red); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.banner { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--amber-soft); color: var(--ink); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.banner.team { background: var(--teal-soft); }
+.banner b { font-weight: 700; }
+nav.tabs { display: flex; gap: 2px; margin-top: 18px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 9px 14px; font: 600 14px var(--f-body); color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--slate); border-bottom-color: var(--teal); }
+nav.tabs .ph { font: 700 11px var(--f-body); color: var(--teal); margin-right: 6px; }
+section.view { display: flex; flex-direction: column; gap: 18px; padding-top: 18px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.tile .v { font: 700 30px/1.1 var(--f-display); color: var(--slate); font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--ink-2); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font: 600 11px var(--f-body); }
+.pill.good { background: var(--green-soft); color: var(--green); } .pill.bad { background: var(--red-soft); color: var(--red); } .pill.warn { background: var(--amber-soft); color: var(--amber); } .pill.neutral { background: var(--soft); color: var(--ink-2); }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; }
+.grid2.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .grid2, .grid2.even { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font: 700 17px var(--f-display); color: var(--slate); margin: 0 0 4px; text-wrap: balance; }
+.card .sub { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--ink-2); font: 11px var(--f-body); }
+.tip { position: absolute; pointer-events: none; background: var(--slate); color: var(--panel); font: 12px var(--f-body); padding: 5px 8px; border-radius: 5px; white-space: nowrap; transform: translate(-50%, -110%); z-index: 3; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font: 600 11px var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); border-bottom: 1px solid var(--line); padding: 7px 8px; white-space: nowrap; }
+td { border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: auto auto; gap: 6px 16px; font-size: 13px; }
+.kv dt { color: var(--ink-2); } .kv dd { margin: 0; text-align: right; font-family: var(--f-mono); }
+.verdict { margin-top: 12px; padding: 9px 12px; border-radius: 8px; background: var(--soft); font-size: 13px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+.legend i.box { height: 10px; width: 10px; }
+/* editor */
+.edbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.edtbl { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.edtbl table { font-size: 12.5px; }
+.edtbl th { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+.edtbl td { padding: 2px 3px; }
+.edtbl input, .edtbl select { border-color: transparent; background: transparent; padding: 4px 5px; width: 100%; min-width: 70px; border-radius: 4px; }
+.edtbl input:hover, .edtbl select:hover { border-color: var(--line); }
+.edtbl input[type=number] { width: 70px; }
+.edtbl input[type=date] { min-width: 120px; }
+.edtbl tr.warn td { background: var(--amber-soft); }
+.edtbl td.flag { font-size: 11px; color: var(--amber); white-space: nowrap; }
+.pager { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--panel); color: var(--ink); width: min(720px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(10, 20, 26, 0.45); }
+dialog .dh { padding: 16px 18px 6px; } dialog .db { padding: 6px 18px; } dialog .df { padding: 12px 18px 16px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+dialog h3 { margin: 0; font: 700 18px var(--f-display); color: var(--slate); }
+dialog textarea { width: 100%; min-height: 200px; font-family: var(--f-mono); font-size: 12px; box-sizing: border-box; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--slate); color: var(--panel); padding: 9px 16px; border-radius: 8px; font-size: 13px; z-index: 20; max-width: calc(100vw - 32px); }
+.muted { color: var(--ink-2); font-size: 12.5px; }
+.empty { padding: 28px; text-align: center; color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row1">
+      <h1>TTF DMAIC Control Room <span class="phases" aria-hidden="true"><span>D</span><span class="on">M</span><span class="on">A</span><span>I</span><span class="on">C</span></span></h1>
+      <div class="src" role="group" aria-label="Data source">
+        <button id="srcSample" aria-pressed="true">Illustrative sample</button>
+        <button id="srcTeam" aria-pressed="false">Team dataset <span id="teamCount">(…)</span></button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="fld"><label for="cUSL">USL (days)</label><input id="cUSL" type="number" min="1" step="1"></div>
+      <div class="fld"><label for="cTarget">Target median</label><input id="cTarget" type="number" min="1" step="1"></div>
+      <div class="fld"><label for="cCov">Cost of vacancy €/day</label><input id="cCov" type="number" min="0" step="10"></div>
+      <div class="fld"><label for="cHires">Hires / year</label><input id="cHires" type="number" min="0" step="50"></div>
+      <div class="fld"><label for="fPhase">Phase</label><select id="fPhase"></select></div>
+      <div class="fld"><label for="fBU">Business unit</label><select id="fBU"></select></div>
+      <div class="fld"><label for="fLevel">Job level</label><select id="fLevel"></select></div>
+      <div class="fld"><label for="cmpA">Compare</label><span style="display:flex;gap:4px;align-items:center"><select id="cmpA"></select><span class="muted">vs</span><select id="cmpB"></select></span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-tab="measure" aria-selected="false"><span class="ph">M</span>Measure</button>
+    <button role="tab" data-tab="analyze" aria-selected="false"><span class="ph">A</span>Analyze</button>
+    <button role="tab" data-tab="control" aria-selected="false"><span class="ph">I·C</span>Improve &amp; Control</button>
+    <button role="tab" data-tab="data" aria-selected="false">Data editor</button>
+  </nav>
+
+  <section class="view" id="v-overview">
+    <div class="tiles" id="tiles"></div>
+    <div class="grid2">
+      <div class="card"><h2>Individuals chart, staged by phase</h2><p class="sub">TTF days in requisition-open order. Limits recalculated for each phase; red dots break a 3σ limit.</p><div class="legend" id="lgI"></div><div class="chart" id="chI"></div></div>
+      <div class="card"><h2 id="baTitle">Before vs after</h2><p class="sub" id="baSub"></p><div class="tbl" id="baTable"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-measure" hidden>
+    <div class="grid2">
+      <div class="card"><h2>TTF distribution</h2><p class="sub">5-day bins. Bars past the USL count as defects.</p><div class="legend"><span><i class="box" style="background:var(--teal)"></i>≤ USL</span><span><i class="box" style="background:var(--red)"></i>&gt; USL (defect)</span><span><i style="background:var(--amber)"></i>USL</span></div><div class="chart" id="chHist"></div></div>
+      <div class="card"><h2>Capability &amp; normality</h2><p class="sub">Anderson-Darling decides the path: normal → mean/SD/Ppk; non-normal → median/IQR and percentile Ppk.</p><dl class="kv" id="capKV"></dl><div class="verdict" id="capVerdict"></div></div>
+    </div>
+    <div class="grid2 even">
+      <div class="card"><h2>Where the days go</h2><p class="sub">Median days per stage, by phase.</p><div class="legend" id="lgStage"></div><div class="chart" id="chStage"></div></div>
+      <div class="card"><h2>Moving range chart</h2><p class="sub">Point-to-point variation; UCL = 3.267 × MR̄ per phase.</p><div class="chart" id="chMR"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-analyze" hidden>
+    <div class="grid2">
+      <div class="card"><h2>Pareto of primary delay reasons</h2><p class="sub">Trust this after the attribute-agreement MSA passes (kit tab 6).</p><div class="chart" id="chPareto"></div></div>
+      <div class="card"><h2>Vital few</h2><p class="sub">Causes inside the 80% line.</p><div id="vital"></div></div>
+    </div>
+    <div class="card"><h2>Hypothesis tests: Y = TTF days</h2><p class="sub">α = 0.05. Non-parametric tests because lead times are rarely normal. Runs on the filtered data; the comparison phase is the left “Compare” choice.</p><div class="tbl" id="htTable"></div></div>
+    <div class="card"><h2>Multiple regression</h2><p class="sub">TTF = b0 + b1·Interview rounds + b2·Recruiter open reqs + b3·Approval days. VIF &lt; 5 means no multicollinearity.</p><div class="tbl" id="regTable"></div><div class="verdict" id="regVerdict"></div></div>
+  </section>
+
+  <section class="view" id="v-control" hidden>
+    <div class="grid2 even">
+      <div class="card"><h2>Box plot by phase</h2><p class="sub">Median, IQR box, whiskers to 1.5 × IQR, dots beyond.</p><div class="chart" id="chBox"></div></div>
+      <div class="card"><h2>Significance of the shift</h2><p class="sub" id="sigSub"></p><div class="tbl" id="sigTable"></div><div class="verdict" id="sigVerdict"></div></div>
+    </div>
+    <div class="grid2 even">
+      <div class="card"><h2>Financial realisation</h2><p class="sub">Notional cost-of-vacancy avoided = mean days saved × €/day × hires/year. Edit the inputs in the top bar.</p><dl class="kv" id="finKV"></dl></div>
+      <div class="card"><h2>Out-of-control signals</h2><p class="sub">Western Electric rules on the latest phase. Each signal needs a reaction-plan entry.</p><div class="tbl" id="oocTable"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-data" hidden>
+    <div class="card">
+      <h2>Requisition log</h2>
+      <p class="sub" id="edSub"></p>
+      <div class="edbar">
+        <button class="btn primary" id="bAdd">Add row</button>
+        <button class="btn" id="bPaste">Paste from Excel</button>
+        <label class="btn" for="fileIn">Import CSV</label><input type="file" id="fileIn" accept=".csv,.tsv,.txt" hidden>
+        <button class="btn" id="bExport">Download CSV</button>
+        <button class="btn" id="bTemplate">Download blank template</button>
+        <input id="search" type="search" placeholder="Search req, recruiter, reason…" style="flex:1;min-width:180px" aria-label="Search rows">
+      </div>
+      <div style="height:10px"></div>
+      <div class="edtbl" id="edTable"></div>
+      <div style="height:8px"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlgPaste">
+  <div class="dh"><h3>Paste requisition rows</h3><p class="muted">Copy rows from tab 1 of the Data Collection Kit (include the header row) and paste below. Tab- or comma-separated both work. Rows with an existing req_id are updated.</p></div>
+  <div class="db"><textarea id="pasteText" placeholder="req_id	phase	req_open_date	offer_accept_date	…"></textarea><p class="muted" id="pasteMsg"></p></div>
+  <div class="df"><button class="btn" id="pasteCancel">Cancel</button><button class="btn primary" id="pasteGo">Add rows</button></div>
+</dialog>
+<dialog id="dlgConfirm">
+  <div class="dh"><h3 id="cfTitle">Confirm</h3></div><div class="db"><p id="cfText"></p></div>
+  <div class="df"><button class="btn" id="cfNo">Cancel</button><button class="btn primary" id="cfYes">Continue</button></div>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>// Minimal statistics library for the TTF control room (no dependencies).
+const ST = (() => {
+  const sum = a => a.reduce((s, x) => s + x, 0);
+  const mean = a => a.length ? sum(a) / a.length : NaN;
+  const sd = a => { if (a.length < 2) return NaN; const m = mean(a); return Math.sqrt(sum(a.map(x => (x - m) ** 2)) / (a.length - 1)); };
+  const sorted = a => a.slice().sort((x, y) => x - y);
+  const q = (a, p) => { if (!a.length) return NaN; const s = sorted(a), h = (s.length - 1) * p, lo = Math.floor(h); return s[lo] + (h - lo) * ((s[Math.min(lo + 1, s.length - 1)]) - s[lo]); };
+  const median = a => q(a, 0.5);
+  function erf(x) { const t = 1 / (1 + 0.3275911 * Math.abs(x)); const y = 1 - (((((1.061405429 * t - 1.453152027) * t) + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x); return x >= 0 ? y : -y; }
+  const ncdf = z => 0.5 * (1 + erf(z / Math.SQRT2));
+  function ninv(p) { // Acklam
+    if (p <= 0) return -Infinity; if (p >= 1) return Infinity;
+    const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239],
+      b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572],
+      c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783],
+      d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416], pl = 0.02425;
+    let qq, r;
+    if (p < pl) { qq = Math.sqrt(-2 * Math.log(p)); return (((((c[0] * qq + c[1]) * qq + c[2]) * qq + c[3]) * qq + c[4]) * qq + c[5]) / ((((d[0] * qq + d[1]) * qq + d[2]) * qq + d[3]) * qq + 1); }
+    if (p <= 1 - pl) { qq = p - 0.5; r = qq * qq; return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * qq / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1); }
+    qq = Math.sqrt(-2 * Math.log(1 - p)); return -(((((c[0] * qq + c[1]) * qq + c[2]) * qq + c[3]) * qq + c[4]) * qq + c[5]) / ((((d[0] * qq + d[1]) * qq + d[2]) * qq + d[3]) * qq + 1);
+  }
+  function lgamma(x) { const g = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, 0.1208650973866179e-2, -0.5395239384953e-5]; let y = x, t = x + 5.5; t -= (x + 0.5) * Math.log(t); let s = 1.000000000190015; for (const c of g) s += c / ++y; return -t + Math.log(2.5066282746310005 * s / x); }
+  function gammaP(a, x) { // regularized lower incomplete gamma
+    if (x <= 0) return 0;
+    if (x < a + 1) { let ap = a, s = 1 / a, del = s; for (let n = 0; n < 500; n++) { ap++; del *= x / ap; s += del; if (Math.abs(del) < Math.abs(s) * 1e-12) break; } return s * Math.exp(-x + a * Math.log(x) - lgamma(a)); }
+    let b = x + 1 - a, c = 1e300, d = 1 / b, h = d; for (let i = 1; i < 500; i++) { const an = -i * (i - a); b += 2; d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300; c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < 1e-12) break; }
+    return 1 - Math.exp(-x + a * Math.log(x) - lgamma(a)) * h;
+  }
+  const chi2p = (x, k) => Math.max(0, 1 - gammaP(k / 2, x / 2));
+  function betacf(a, b, x) { let qab = a + b, qap = a + 1, qam = a - 1, c = 1, d = 1 - qab * x / qap; if (Math.abs(d) < 1e-300) d = 1e-300; d = 1 / d; let h = d;
+    for (let m = 1; m <= 300; m++) { const m2 = 2 * m; let aa = m * (b - m) * x / ((qam + m2) * (a + m2)); d = 1 + aa * d; if (Math.abs(d) < 1e-300) d = 1e-300; c = 1 + aa / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; h *= d * c;
+      aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2)); d = 1 + aa * d; if (Math.abs(d) < 1e-300) d = 1e-300; c = 1 + aa / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < 1e-12) break; }
+    return h; }
+  function ibeta(x, a, b) { if (x <= 0) return 0; if (x >= 1) return 1; const bt = Math.exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * Math.log(x) + b * Math.log(1 - x)); return x < (a + 1) / (a + b + 2) ? bt * betacf(a, b, x) / a : 1 - bt * betacf(b, a, 1 - x) / b; }
+  const tp2 = (t, df) => ibeta(df / (df + t * t), df / 2, 0.5); // two-sided p
+  const fp = (F, d1, d2) => F <= 0 ? 1 : ibeta(d2 / (d2 + d1 * F), d2 / 2, d1 / 2); // upper tail
+  function ranks(a) { const idx = a.map((v, i) => [v, i]).sort((x, y) => x[0] - y[0]); const r = new Array(a.length); let ties = 0;
+    for (let i = 0; i < idx.length;) { let j = i; while (j + 1 < idx.length && idx[j + 1][0] === idx[i][0]) j++; const rk = (i + j) / 2 + 1; for (let k = i; k <= j; k++) r[idx[k][1]] = rk; const t = j - i + 1; ties += t ** 3 - t; i = j + 1; }
+    return { r, ties }; }
+  function ad(x) { // Anderson-Darling normality, p per D'Agostino & Stephens
+    const n = x.length; if (n < 8) return { A2: NaN, p: NaN }; const m = mean(x), s = sd(x), z = sorted(x).map(v => (v - m) / s);
+    let S = 0; for (let i = 0; i < n; i++) { const F1 = Math.min(Math.max(ncdf(z[i]), 1e-15), 1 - 1e-15), F2 = Math.min(Math.max(ncdf(z[n - 1 - i]), 1e-15), 1 - 1e-15); S += (2 * i + 1) * (Math.log(F1) + Math.log(1 - F2)); }
+    const A2 = -n - S / n, a = A2 * (1 + 0.75 / n + 2.25 / (n * n)); let p;
+    if (a >= 0.6) p = Math.exp(1.2937 - 5.709 * a + 0.0186 * a * a); else if (a >= 0.34) p = Math.exp(0.9177 - 4.279 * a - 1.38 * a * a);
+    else if (a >= 0.2) p = 1 - Math.exp(-8.318 + 42.796 * a - 59.938 * a * a); else p = 1 - Math.exp(-13.436 + 101.14 * a - 223.73 * a * a);
+    return { A2, p: Math.min(1, Math.max(0, p)) }; }
+  function capability(x, USL) {
+    const n = x.length, m = mean(x), s = sd(x), med = median(x), pd = n ? x.filter(v => v > USL).length / n : NaN;
+    const mr = x.slice(1).map((v, i) => Math.abs(v - x[i])), mrbar = mean(mr);
+    return { n, mean: m, sd: s, median: med, q1: q(x, 0.25), q3: q(x, 0.75), min: Math.min(...x), max: Math.max(...x), pd, dpmo: pd * 1e6,
+      zbench: pd > 0 && pd < 1 ? ninv(1 - pd) : (pd === 0 ? Infinity : -Infinity),
+      ppkN: (USL - m) / (3 * s), ppkP: (USL - med) / (q(x, 0.99865) - med), ad: ad(x), adLog: x.every(v => v > 0) ? ad(x.map(Math.log)) : { p: NaN },
+      imr: { cl: m, mrbar, ucl: m + 2.66 * mrbar, lcl: Math.max(0, m - 2.66 * mrbar), mrUcl: 3.267 * mrbar } };
+  }
+  function kruskal(groups) { // groups: {name: [values]}
+    const names = Object.keys(groups).filter(k => groups[k].length > 0); if (names.length < 2) return null;
+    const all = [], lab = []; names.forEach((k, gi) => groups[k].forEach(v => { all.push(v); lab.push(gi); }));
+    const N = all.length, { r, ties } = ranks(all), Rs = names.map(() => 0), ns = names.map(k => groups[k].length);
+    r.forEach((rk, i) => Rs[lab[i]] += rk);
+    let H = 12 / (N * (N + 1)) * Rs.reduce((s, R, i) => s + R * R / ns[i], 0) - 3 * (N + 1); const corr = 1 - ties / (N ** 3 - N); if (corr > 0) H /= corr;
+    return { H, df: names.length - 1, p: chi2p(H, names.length - 1), groups: names.map((k, i) => ({ name: k, n: ns[i], median: median(groups[k]) })) };
+  }
+  function mannWhitney(a, b) { // one-sided: a > b
+    const all = a.concat(b), { r, ties } = ranks(all), n1 = a.length, n2 = b.length; if (!n1 || !n2) return null;
+    const R1 = sum(r.slice(0, n1)), U = R1 - n1 * (n1 + 1) / 2, mu = n1 * n2 / 2, N = n1 + n2;
+    const sig = Math.sqrt(n1 * n2 / 12 * ((N + 1) - ties / (N * (N - 1)))), z = (U - mu - 0.5) / sig;
+    return { U, z, p: 1 - ncdf(z) }; }
+  function moodMedian(groups) { const arrs = groups.filter(g => g.length); if (arrs.length < 2) return null; const gm = median([].concat(...arrs));
+    const above = arrs.map(g => g.filter(v => v > gm).length), below = arrs.map((g, i) => g.length - above[i]); const N = sum(arrs.map(g => g.length)), A = sum(above), Bl = N - A;
+    let chi = 0; arrs.forEach((g, i) => { const eA = g.length * A / N, eB = g.length * Bl / N; const y = arrs.length === 2 ? 0.5 : 0, dA = Math.max(0, Math.abs(above[i] - eA) - y), dB = Math.max(0, Math.abs(below[i] - eB) - y); chi += dA * dA / eA + dB * dB / eB; });
+    return { chi2: chi, df: arrs.length - 1, p: chi2p(chi, arrs.length - 1), medians: arrs.map(median) }; }
+  function levene(a, b) { // Brown-Forsythe (median-centred), = scipy default
+    const za = a.map(v => Math.abs(v - median(a))), zb = b.map(v => Math.abs(v - median(b))), all = za.concat(zb), N = all.length, k = 2, gm = mean(all);
+    const ssb = za.length * (mean(za) - gm) ** 2 + zb.length * (mean(zb) - gm) ** 2, ssw = sum(za.map(v => (v - mean(za)) ** 2)) + sum(zb.map(v => (v - mean(zb)) ** 2));
+    const W = (N - k) / (k - 1) * ssb / ssw; return { W, p: fp(W, k - 1, N - k) }; }
+  function pearson(x, y) { const mx = mean(x), my = mean(y); let sxy = 0, sxx = 0, syy = 0; for (let i = 0; i < x.length; i++) { sxy += (x[i] - mx) * (y[i] - my); sxx += (x[i] - mx) ** 2; syy += (y[i] - my) ** 2; } return sxy / Math.sqrt(sxx * syy); }
+  function spearman(x, y) { const n = x.length; if (n < 4) return null; const rho = pearson(ranks(x).r, ranks(y).r), t = rho * Math.sqrt((n - 2) / (1 - rho * rho)); return { rho, p: tp2(t, n - 2) }; }
+  function inv(M) { const n = M.length, A = M.map((r, i) => r.concat(Array.from({ length: n }, (_, j) => i === j ? 1 : 0)));
+    for (let c = 0; c < n; c++) { let p = c; for (let r = c + 1; r < n; r++) if (Math.abs(A[r][c]) > Math.abs(A[p][c])) p = r; if (Math.abs(A[p][c]) < 1e-12) return null; [A[c], A[p]] = [A[p], A[c]];
+      const d = A[c][c]; for (let j = 0; j < 2 * n; j++) A[c][j] /= d; for (let r = 0; r < n; r++) if (r !== c) { const f = A[r][c]; for (let j = 0; j < 2 * n; j++) A[r][j] -= f * A[c][j]; } }
+    return A.map(r => r.slice(n)); }
+  function ols(X, y, names) { // X: rows of predictors (no intercept)
+    const n = y.length, k = X[0].length + 1; if (n <= k + 1) return null; const Xd = X.map(r => [1, ...r]);
+    const XtX = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => sum(Xd.map(r => r[i] * r[j])))), XtXi = inv(XtX); if (!XtXi) return null;
+    const Xty = Array.from({ length: k }, (_, i) => sum(Xd.map((r, t) => r[i] * y[t]))), beta = XtXi.map(r => sum(r.map((v, j) => v * Xty[j])));
+    const res = y.map((v, t) => v - sum(Xd[t].map((x, j) => x * beta[j]))), sse = sum(res.map(e => e * e)), my = mean(y), sst = sum(y.map(v => (v - my) ** 2));
+    const r2 = 1 - sse / sst, r2a = 1 - (1 - r2) * (n - 1) / (n - k), s2 = sse / (n - k);
+    const vif = j => { const xj = X.map(r => r[j]), oth = X.map(r => r.filter((_, i) => i !== j)); if (!oth[0].length) return 1; const m = ols1(oth, xj); return m ? 1 / (1 - m) : NaN; };
+    return { r2, r2a, s: Math.sqrt(s2), n, residAD: ad(res).p, terms: beta.map((b, j) => { const se = Math.sqrt(s2 * XtXi[j][j]), t = b / se; return { term: j ? names[j - 1] : "Constant", coef: b, se, t, p: tp2(t, n - k), vif: j ? vif(j - 1) : null }; }) };
+  }
+  function ols1(X, y) { const n = y.length, k = X[0].length + 1, Xd = X.map(r => [1, ...r]);
+    const XtX = Array.from({ length: k }, (_, i) => Array.from({ length: k }, (_, j) => sum(Xd.map(r => r[i] * r[j])))), Xi = inv(XtX); if (!Xi) return null;
+    const Xty = Array.from({ length: k }, (_, i) => sum(Xd.map((r, t) => r[i] * y[t]))), b = Xi.map(r => sum(r.map((v, j) => v * Xty[j])));
+    const res = y.map((v, t) => v - sum(Xd[t].map((x, j) => x * b[j]))), my = mean(y); return 1 - sum(res.map(e => e * e)) / sum(y.map(v => (v - my) ** 2)); }
+  function chi2x2(t) { const [[a, b], [c, d]] = t, n = a + b + c + d; if ([a + b, c + d, a + c, b + d].some(v => v === 0)) return null;
+    const chi = n * Math.max(0, Math.abs(a * d - b * c) - n / 2) ** 2 / ((a + b) * (c + d) * (a + c) * (b + d)); return { chi2: chi, p: chi2p(chi, 1) }; } // Yates, = scipy default
+  return { mean, sd, median, q, ad, capability, kruskal, mannWhitney, moodMedian, levene, spearman, ols, chi2x2, ninv };
+})();
+if (typeof module !== "undefined") module.exports = ST;
+</script>
+<script>
+const SAMPLE = {"cols":["req_id","phase","req_open_date","offer_accept_date","business_unit","job_level","source_channel","recruiter_id","recruiter_open_reqs","interview_rounds","approval_days","sourcing_days","screening_days","interview_days","offer_days","ttf_days","primary_delay_reason","offer_accepted"],"rows":[["B-0029","Baseline","2026-01-07","2026-03-12","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R08",10.0,5.0,14.1,23.1,3.4,22.5,1.0,64.1,"Requisition approval delay","Y"],["B-0014","Baseline","2026-01-08","2026-02-26","Corporate Functions","Professional","Agency","R07",28.0,5.0,3.5,5.3,11.1,28.4,1.0,48.9,"Hiring-manager feedback delay","Y"],["B-0178","Baseline","2026-01-11","2026-02-15","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R06",17.0,2.0,3.4,9.5,5.7,15.4,1.0,35.0,"Low / poor-fit applicant pool","N"],["B-0118","Baseline","2026-01-12","2026-03-02","Manufacturing","Operator/Technician","Job Board","R07",27.0,3.0,8.4,9.1,9.9,19.3,1.7,49.2,"Interview scheduling / panel availability","Y"],["B-0072","Baseline","2026-01-14","2026-03-13","IT & Digital","Professional","LinkedIn / Direct Sourcing","R08",20.0,3.0,7.8,21.3,6.8,20.6,1.0,57.5,"Requisition approval delay","Y"],["B-0104","Baseline","2026-01-14","2026-02-13","Sales & Service","Operator/Technician","Employee Referral","R01",11.0,2.0,11.8,2.9,6.2,6.9,3.8,30.0,"Candidate decline or renege","Y"],["B-0129","Baseline","2026-01-14","2026-04-02","IT & Digital","Operator/Technician","Agency","R08",20.0,5.0,8.4,25.8,7.8,28.7,7.2,77.5,"Interview scheduling / panel availability","Y"],["B-0159","Baseline","2026-01-15","2026-03-03","Engineering & R&D","Professional","Internal Mobility","R05",17.0,4.0,2.5,14.4,8.5,20.3,4.0,47.3,"JD / requirement changed mid-search","Y"],["B-0015","Baseline","2026-01-16","2026-03-07","Corporate Functions","Manager","Employee Referral","R08",14.0,3.0,17.2,7.5,5.2,14.4,4.5,49.7,"Hiring-manager feedback delay","Y"],["B-0100","Baseline","2026-01-17","2026-03-10","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R01",14.0,3.0,2.6,8.1,7.0,31.3,3.3,52.3,"Requisition approval delay","Y"],["B-0109","Baseline","2026-01-17","2026-02-24","Manufacturing","Professional","Job Board","R03",23.0,4.0,7.1,4.6,6.0,17.6,2.0,38.1,"Interview scheduling / panel availability","Y"],["B-0128","Baseline","2026-01-17","2026-04-15","Sales & Service","Operator/Technician","Employee Referral","R06",23.0,3.0,12.7,4.6,7.2,60.6,4.4,87.9,"Hiring-manager feedback delay","Y"],["B-0098","Baseline","2026-01-18","2026-03-16","Engineering & R&D","Professional","Agency","R08",16.0,3.0,10.8,10.2,7.0,16.3,13.3,57.2,"Hiring-manager feedback delay","Y"],["B-0127","Baseline","2026-01-19","2026-03-15","Manufacturing","Operator/Technician","Job Board","R06",20.0,5.0,1.9,14.8,8.9,24.1,4.7,55.2,"Low / poor-fit applicant pool","Y"],["B-0065","Baseline","2026-01-20","2026-03-20","Manufacturing","Professional","Employee Referral","R07",23.0,3.0,11.7,2.4,8.1,30.0,8.8,59.4,"Hiring-manager feedback delay","Y"],["B-0165","Baseline","2026-01-21","2026-02-19","Manufacturing","Professional","Internal Mobility","R02",24.0,3.0,4.7,5.8,8.5,11.0,1.0,28.6,"Low / poor-fit applicant pool","Y"],["B-0106","Baseline","2026-01-23","2026-03-12","Corporate Functions","Manager","LinkedIn / Direct Sourcing","R01",11.0,5.0,1.0,10.0,2.9,22.4,8.7,47.5,"Hiring-manager feedback delay","N"],["B-0151","Baseline","2026-01-23","2026-02-26","Engineering & R&D","Professional","Internal Mobility","R05",11.0,2.0,12.8,2.9,4.4,11.3,5.5,34.5,"Requisition approval delay","Y"],["B-0050","Baseline","2026-01-24","2026-03-12","IT & Digital","Professional","LinkedIn / Direct Sourcing","R08",15.0,3.0,5.5,8.2,4.0,21.3,7.7,46.7,"Hiring-manager feedback delay","N"],["B-0081","Baseline","2026-01-24","2026-04-22","Manufacturing","Manager","Job Board","R07",20.0,5.0,5.6,9.8,9.4,53.7,5.9,87.7,"Hiring-manager feedback delay","N"],["B-0132","Baseline","2026-01-24","2026-03-03","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R03",20.0,4.0,2.9,12.5,6.5,11.0,4.8,37.7,"Offer & compensation approval","Y"],["B-0041","Baseline","2026-01-25","2026-02-20","Engineering & R&D","Professional","Employee Referral","R03",13.0,2.0,5.1,9.1,5.0,7.8,1.0,26.4,"Low / poor-fit applicant pool","Y"],["B-0069","Baseline","2026-01-26","2026-04-10","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R04",30.0,4.0,13.6,9.4,9.0,37.4,5.0,74.4,"Candidate decline or renege","Y"],["B-0152","Baseline","2026-01-26","2026-03-27","Engineering & R&D","Operator/Technician","Employee Referral","R04",23.0,4.0,13.6,9.1,7.7,29.9,1.0,59.7,"JD / requirement changed mid-search","N"],["B-0158","Baseline","2026-01-27","2026-07-14","Manufacturing","Senior Leader","Employee Referral","R06",19.0,6.0,19.0,9.6,5.2,120.6,8.0,167.8,"Hiring-manager feedback delay","N"],["B-0049","Baseline","2026-01-28","2026-03-10","Manufacturing","Professional","Job Board","R07",26.0,4.0,2.6,5.6,6.6,23.5,2.0,41.1,"Hiring-manager feedback delay","Y"],["B-0053","Baseline","2026-01-28","2026-04-11","Engineering & R&D","Professional","Job Board","R03",17.0,5.0,12.7,10.3,7.8,37.5,3.9,73.0,"Interview scheduling / panel availability","Y"],["B-0083","Baseline","2026-01-28","2026-03-23","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R03",20.0,4.0,5.3,23.0,8.0,12.9,4.3,53.5,"Interview scheduling / panel availability","Y"],["B-0064","Baseline","2026-01-31","2026-05-12","Sales & Service","Manager","Employee Referral","R01",8.0,6.0,4.9,13.6,3.8,73.0,5.1,101.3,"Hiring-manager feedback delay","Y"],["B-0039","Baseline","2026-02-01","2026-04-17","Manufacturing","Operator/Technician","Job Board","R02",29.0,4.0,7.8,14.9,8.9,36.5,5.8,74.7,"Requisition approval delay","N"],["B-0061","Baseline","2026-02-01","2026-04-17","Engineering & R&D","Senior Leader","Job Board","R08",19.0,5.0,3.8,16.1,7.0,34.4,5.8,74.9,"Hiring-manager feedback delay","Y"],["B-0138","Baseline","2026-02-01","2026-03-15","Engineering & R&D","Professional","Internal Mobility","R04",27.0,5.0,2.8,13.1,12.0,12.2,3.9,41.6,"Hiring-manager feedback delay","Y"],["B-0030","Baseline","2026-02-03","2026-05-01","Manufacturing","Professional","Employee Referral","R06",22.0,5.0,2.7,12.4,10.0,59.8,4.0,87.3,"Hiring-manager feedback delay","Y"],["B-0043","Baseline","2026-02-03","2026-04-08","Manufacturing","Manager","LinkedIn / Direct Sourcing","R04",25.0,6.0,6.0,17.6,7.0,24.1,7.0,64.2,"Hiring-manager feedback delay","Y"],["B-0020","Baseline","2026-02-04","2026-03-30","Sales & Service","Operator/Technician","LinkedIn / Direct Sourcing","R02",25.0,4.0,1.0,18.3,7.6,26.6,1.0,54.5,"Requisition approval delay","Y"],["B-0161","Baseline","2026-02-04","2026-04-09","IT & Digital","Operator/Technician","Agency","R08",17.0,3.0,10.8,12.7,6.5,32.0,2.5,64.1,"Hiring-manager feedback delay","Y"],["B-0090","Baseline","2026-02-07","2026-03-22","Manufacturing","Professional","Job Board","R02",26.0,3.0,6.9,7.1,8.9,14.4,4.9,43.0,"Low / poor-fit applicant pool","Y"],["B-0131","Baseline","2026-02-08","2026-04-26","Sales & Service","Senior Leader","Job Board","R04",31.0,5.0,9.3,6.2,10.4,30.9,12.4,77.0,"Requisition approval delay","N"],["B-0087","Baseline","2026-02-09","2026-03-31","Engineering & R&D","Operator/Technician","Employee Referral","R02",19.0,5.0,4.5,14.4,6.6,22.2,3.7,49.8,"Low / poor-fit applicant pool","Y"],["B-0007","Baseline","2026-02-10","2026-04-12","Manufacturing","Manager","Job Board","R06",21.0,5.0,3.7,9.2,9.9,31.8,3.1,61.0,"Hiring-manager feedback delay","Y"],["B-0048","Baseline","2026-02-10","2026-05-07","Corporate Functions","Manager","Employee Referral","R01",19.0,3.0,18.8,6.1,11.9,44.7,3.6,86.0,"Low / poor-fit applicant pool","Y"],["B-0068","Baseline","2026-02-11","2026-03-16","Sales & Service","Operator/Technician","Employee Referral","R04",25.0,3.0,5.5,3.4,9.0,14.7,2.2,33.2,"Candidate decline or renege","Y"],["B-0164","Baseline","2026-02-11","2026-04-08","Sales & Service","Professional","LinkedIn / Direct Sourcing","R02",24.0,2.0,11.9,6.2,10.2,24.9,2.6,55.8,"Requisition approval delay","Y"],["B-0079","Baseline","2026-02-13","2026-03-28","Manufacturing","Operator/Technician","Internal Mobility","R07",24.0,5.0,1.7,2.0,9.3,26.8,5.3,42.7,"Hiring-manager feedback delay","N"],["B-0108","Baseline","2026-02-13","2026-05-15","Sales & Service","Professional","Employee Referral","R04",25.0,5.0,13.6,2.7,7.2,65.7,3.6,91.2,"JD / requirement changed mid-search","Y"],["B-0148","Baseline","2026-02-15","2026-03-28","Sales & Service","Professional","Internal Mobility","R03",15.0,4.0,23.7,2.4,4.8,11.3,1.4,41.2,"Requisition approval delay","Y"],["B-0139","Baseline","2026-02-18","2026-04-24","Engineering & R&D","Professional","Job Board","R07",25.0,3.0,10.3,19.9,8.3,23.9,2.1,65.3,"Hiring-manager feedback delay","Y"],["B-0051","Baseline","2026-02-19","2026-04-19","Sales & Service","Professional","Employee Referral","R01",13.0,5.0,3.5,8.3,4.9,41.8,2.0,58.9,"Low / poor-fit applicant pool","Y"],["B-0116","Baseline","2026-02-23","2026-03-31","Manufacturing","Operator/Technician","Job Board","R03",17.0,3.0,5.8,10.0,4.4,8.3,6.7,36.0,"Offer & compensation approval","Y"],["B-0005","Baseline","2026-02-24","2026-04-18","Corporate Functions","Operator/Technician","Employee Referral","R07",25.0,4.0,4.3,7.7,7.9,33.3,1.1,52.7,"Hiring-manager feedback delay","Y"],["B-0154","Baseline","2026-02-24","2026-04-15","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R05",18.0,3.0,9.2,4.4,5.7,28.3,2.1,49.7,"Requisition approval delay","Y"],["B-0176","Baseline","2026-02-24","2026-05-05","Corporate Functions","Professional","Employee Referral","R07",23.0,3.0,10.4,6.7,8.6,43.6,2.0,69.7,"Hiring-manager feedback delay","Y"],["B-0058","Baseline","2026-02-25","2026-04-01","Manufacturing","Operator/Technician","Employee Referral","R03",18.0,5.0,8.0,4.5,8.4,13.8,2.2,35.3,"Requisition approval delay","N"],["B-0110","Baseline","2026-02-25","2026-04-13","Manufacturing","Professional","Employee Referral","R05",14.0,3.0,10.2,14.5,6.7,13.1,3.9,46.8,"Requisition approval delay","Y"],["B-0031","Baseline","2026-02-26","2026-04-05","IT & Digital","Operator/Technician","Job Board","R02",20.0,4.0,1.0,14.2,6.7,11.4,3.9,38.0,"Offer & compensation approval","Y"],["B-0060","Baseline","2026-02-26","2026-04-17","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R06",20.0,4.0,5.3,10.5,5.4,20.5,8.6,50.3,"Offer & compensation approval","Y"],["B-0013","Baseline","2026-02-28","2026-04-28","Manufacturing","Manager","Job Board","R08",19.0,5.0,13.9,9.2,5.1,22.2,5.7,59.4,"Requisition approval delay","N"],["B-0170","Baseline","2026-02-28","2026-04-10","Sales & Service","Operator/Technician","Internal Mobility","R03",16.0,4.0,5.7,3.4,5.4,24.1,4.9,41.1,"Hiring-manager feedback delay","Y"],["B-0033","Baseline","2026-03-01","2026-04-29","Manufacturing","Manager","Job Board","R04",22.0,3.0,7.2,15.5,7.3,21.0,4.4,58.7,"Hiring-manager feedback delay","N"],["B-0084","Baseline","2026-03-01","2026-04-05","Engineering & R&D","Operator/Technician","Job Board","R02",21.0,4.0,2.4,10.3,5.5,13.8,2.0,34.8,"Hiring-manager feedback delay","Y"],["B-0085","Baseline","2026-03-02","2026-04-10","Engineering & R&D","Operator/Technician","Agency","R02",22.0,2.0,8.7,13.3,9.8,4.9,2.9,39.2,"Requisition approval delay","Y"],["B-0016","Baseline","2026-03-03","2026-05-08","Sales & Service","Professional","Job Board","R07",25.0,5.0,3.3,19.2,7.3,27.9,7.5,66.0,"Low / poor-fit applicant pool","Y"],["B-0018","Baseline","2026-03-04","2026-05-12","Manufacturing","Professional","Job Board","R06",19.0,4.0,4.6,14.4,9.6,33.8,6.0,69.2,"Interview scheduling / panel availability","Y"],["B-0126","Baseline","2026-03-04","2026-04-21","Engineering & R&D","Professional","Job Board","R01",14.0,3.0,12.1,14.7,6.2,9.3,5.2,48.3,"Requisition approval delay","N"],["B-0133","Baseline","2026-03-04","2026-05-10","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R04",29.0,5.0,1.3,2.5,7.0,54.4,1.5,66.7,"Hiring-manager feedback delay","Y"],["B-0094","Baseline","2026-03-06","2026-04-10","IT & Digital","Operator/Technician","Agency","R02",24.0,4.0,3.3,9.3,7.2,13.4,2.1,34.9,"Interview scheduling / panel availability","N"],["B-0057","Baseline","2026-03-07","2026-05-04","IT & Digital","Professional","LinkedIn / Direct Sourcing","R04",25.0,3.0,6.0,15.7,6.5,28.1,2.2,58.5,"Hiring-manager feedback delay","Y"],["B-0044","Baseline","2026-03-08","2026-05-11","Engineering & R&D","Operator/Technician","Employee Referral","R06",20.0,3.0,1.9,11.7,7.1,43.2,1.2,63.5,"Hiring-manager feedback delay","N"],["B-0080","Baseline","2026-03-08","2026-05-01","Sales & Service","Manager","Internal Mobility","R02",19.0,4.0,11.5,4.5,9.1,25.4,3.2,53.8,"Hiring-manager feedback delay","Y"],["B-0002","Baseline","2026-03-09","2026-05-14","Corporate Functions","Professional","Agency","R06",23.0,5.0,4.3,9.2,11.4,39.8,2.2,66.5,"Hiring-manager feedback delay","Y"],["B-0180","Baseline","2026-03-09","2026-06-08","Engineering & R&D","Operator/Technician","Job Board","R04",23.0,4.0,22.0,9.2,8.3,48.9,1.5,90.7,"JD / requirement changed mid-search","N"],["B-0150","Baseline","2026-03-10","2026-04-12","Corporate Functions","Operator/Technician","Agency","R07",22.0,3.0,6.6,2.0,6.0,16.4,2.5,33.1,"Requisition approval delay","Y"],["B-0089","Baseline","2026-03-12","2026-04-13","Manufacturing","Professional","LinkedIn / Direct Sourcing","R02",24.0,3.0,4.2,4.3,8.9,10.2,4.0,31.6,"Offer & compensation approval","Y"],["B-0073","Baseline","2026-03-13","2026-04-11","Corporate Functions","Professional","Agency","R08",18.0,3.0,4.3,11.6,5.5,6.4,1.4,28.8,"Requisition approval delay","Y"],["B-0006","Baseline","2026-03-14","2026-04-19","Manufacturing","Professional","Job Board","R02",20.0,4.0,1.2,10.0,6.5,15.3,2.5,36.3,"Interview scheduling / panel availability","Y"],["B-0070","Baseline","2026-03-17","2026-06-09","Engineering & R&D","Senior Leader","Job Board","R07",22.0,3.0,8.8,10.7,6.8,41.1,8.4,83.6,"Low / poor-fit applicant pool","Y"],["B-0086","Baseline","2026-03-19","2026-05-05","Manufacturing","Professional","LinkedIn / Direct Sourcing","R04",27.0,4.0,2.2,15.6,10.4,16.0,3.1,47.3,"Candidate decline or renege","Y"],["B-0142","Baseline","2026-03-19","2026-06-07","Manufacturing","Manager","Employee Referral","R03",18.0,6.0,7.9,2.7,9.8,52.4,6.5,80.2,"Offer & compensation approval","N"],["B-0052","Baseline","2026-03-20","2026-06-13","Manufacturing","Manager","Employee Referral","R06",21.0,4.0,11.4,12.1,6.9,48.7,5.4,85.4,"Hiring-manager feedback delay","Y"],["B-0145","Baseline","2026-03-21","2026-05-26","Sales & Service","Manager","Internal Mobility","R02",24.0,5.0,3.1,10.7,10.5,35.7,5.6,65.7,"Hiring-manager feedback delay","N"],["B-0076","Baseline","2026-03-23","2026-05-18","Corporate Functions","Professional","Job Board","R02",23.0,4.0,2.5,13.8,7.5,30.0,1.0,55.6,"Hiring-manager feedback delay","N"],["B-0088","Baseline","2026-03-23","2026-05-15","Manufacturing","Senior Leader","Job Board","R01",9.0,4.0,5.1,4.0,5.7,21.3,9.2,53.1,"Interview scheduling / panel availability","N"],["B-0099","Baseline","2026-03-26","2026-06-10","Sales & Service","Professional","Employee Referral","R07",24.0,2.0,10.5,5.3,8.3,43.6,10.0,76.1,"Low / poor-fit applicant pool","Y"],["B-0042","Baseline","2026-03-28","2026-05-31","Engineering & R&D","Manager","Employee Referral","R04",28.0,4.0,8.7,14.4,6.7,25.1,8.4,64.2,"Requisition approval delay","N"],["B-0071","Baseline","2026-03-29","2026-05-20","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R04",27.0,4.0,3.6,11.1,9.2,25.5,2.3,51.7,"Hiring-manager feedback delay","N"],["B-0146","Baseline","2026-03-30","2026-05-17","IT & Digital","Operator/Technician","LinkedIn / Direct Sourcing","R04",29.0,3.0,4.4,16.7,12.3,12.3,1.9,47.6,"Hiring-manager feedback delay","Y"],["B-0121","Baseline","2026-04-01","2026-05-04","IT & Digital","Professional","Agency","R03",18.0,2.0,3.3,10.1,7.1,8.3,4.7,33.1,"Hiring-manager feedback delay","Y"],["B-0143","Baseline","2026-04-03","2026-07-06","Engineering & R&D","Manager","Job Board","R02",24.0,6.0,15.1,24.0,6.7,38.4,6.4,93.9,"Hiring-manager feedback delay","Y"],["B-0174","Baseline","2026-04-03","2026-06-12","Engineering & R&D","Manager","Job Board","R07",22.0,3.0,13.0,17.8,7.4,26.2,2.8,70.5,"Hiring-manager feedback delay","Y"],["B-0167","Baseline","2026-04-04","2026-07-15","Sales & Service","Manager","LinkedIn / Direct Sourcing","R07",29.0,4.0,15.9,18.4,13.4,48.1,3.5,101.8,"Requisition approval delay","Y"],["B-0012","Baseline","2026-04-05","2026-06-03","Engineering & R&D","Manager","Internal Mobility","R04",26.0,3.0,14.5,9.1,6.8,24.3,4.3,59.1,"Requisition approval delay","Y"],["B-0113","Baseline","2026-04-05","2026-04-29","Manufacturing","Professional","Internal Mobility","R06",17.0,3.0,5.7,2.0,5.5,11.4,2.2,24.4,"Hiring-manager feedback delay","Y"],["B-0009","Baseline","2026-04-08","2026-05-23","Engineering & R&D","Operator/Technician","Job Board","R05",13.0,2.0,12.0,9.2,5.1,14.1,3.7,44.9,"Candidate decline or renege","Y"],["B-0102","Baseline","2026-04-09","2026-07-06","Sales & Service","Senior Leader","Internal Mobility","R01",13.0,6.0,10.0,8.6,7.6,50.0,7.7,88.5,"Hiring-manager feedback delay","Y"],["B-0078","Baseline","2026-04-13","2026-06-13","IT & Digital","Operator/Technician","Agency","R03",17.0,5.0,15.0,11.7,4.5,29.1,1.5,61.4,"Requisition approval delay","Y"],["B-0112","Baseline","2026-04-13","2026-06-05","IT & Digital","Operator/Technician","Job Board","R08",16.0,3.0,12.3,16.1,8.8,11.9,3.3,53.2,"Requisition approval delay","Y"],["B-0046","Baseline","2026-04-14","2026-06-07","Corporate Functions","Operator/Technician","LinkedIn / Direct Sourcing","R02",23.0,4.0,13.6,6.7,7.6,22.3,4.0,54.2,"Hiring-manager feedback delay","N"],["B-0066","Baseline","2026-04-16","2026-06-06","Sales & Service","Operator/Technician","LinkedIn / Direct Sourcing","R01",11.0,5.0,17.8,3.6,3.0,25.8,1.0,51.2,"Hiring-manager feedback delay","Y"],["B-0004","Baseline","2026-04-17","2026-05-25","Sales & Service","Manager","Job Board","R05",14.0,3.0,2.9,10.8,6.6,10.0,4.3,37.9,"Interview scheduling / panel availability","Y"],["B-0077","Baseline","2026-04-17","2026-06-17","Manufacturing","Professional","Internal Mobility","R07",24.0,3.0,10.9,5.1,10.3,30.4,6.5,60.8,"Candidate decline or renege","N"],["B-0026","Baseline","2026-04-19","2026-07-20","Manufacturing","Senior Leader","Job Board","R04",30.0,5.0,12.3,20.2,10.0,29.3,11.9,91.5,"Requisition approval delay","N"],["B-0008","Baseline","2026-04-20","2026-07-01","Engineering & R&D","Operator/Technician","Employee Referral","R02",20.0,5.0,4.4,6.0,7.6,43.8,11.6,71.8,"Low / poor-fit applicant pool","Y"],["B-0027","Baseline","2026-04-20","2026-06-12","Engineering & R&D","Professional","Job Board","R08",12.0,2.0,4.8,15.7,4.4,21.7,5.2,52.6,"Requisition approval delay","Y"],["B-0045","Baseline","2026-04-20","2026-05-22","Manufacturing","Operator/Technician","Internal Mobility","R05",15.0,5.0,6.2,2.0,6.5,19.1,1.0,32.4,"Requisition approval delay","Y"],["B-0111","Baseline","2026-04-21","2026-05-31","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R02",21.0,4.0,3.2,10.5,8.9,13.3,4.5,40.4,"Offer & compensation approval","N"],["B-0160","Baseline","2026-04-21","2026-06-25","Manufacturing","Professional","Employee Referral","R02",23.0,4.0,31.8,13.3,8.9,11.0,1.9,65.3,"Requisition approval delay","Y"],["B-0173","Baseline","2026-04-23","2026-05-19","IT & Digital","Operator/Technician","LinkedIn / Direct Sourcing","R01",12.0,2.0,3.2,9.5,5.8,5.7,2.2,26.4,"Requisition approval delay","Y"],["B-0136","Baseline","2026-04-24","2026-06-18","Corporate Functions","Manager","Employee Referral","R08",13.0,4.0,11.5,2.2,6.5,29.6,4.2,54.9,"Candidate decline or renege","N"],["B-0075","Baseline","2026-04-26","2026-06-08","Manufacturing","Professional","Job Board","R07",25.0,3.0,7.3,2.8,9.9,17.9,4.5,43.2,"Hiring-manager feedback delay","Y"],["B-0157","Baseline","2026-04-26","2026-06-03","Engineering & R&D","Manager","Employee Referral","R07",19.0,3.0,1.8,8.5,6.0,13.3,7.5,38.0,"Requisition approval delay","Y"],["B-0144","Baseline","2026-04-28","2026-06-26","Manufacturing","Professional","Internal Mobility","R05",16.0,3.0,2.7,8.3,6.5,37.1,6.6,58.8,"Interview scheduling / panel availability","N"],["B-0038","Baseline","2026-04-29","2026-05-28","Manufacturing","Operator/Technician","Job Board","R08",19.0,3.0,1.2,7.8,4.2,12.7,2.2,28.9,"Offer & compensation approval","Y"],["B-0103","Baseline","2026-04-29","2026-06-08","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R05",14.0,4.0,2.8,8.3,2.2,25.0,1.2,39.5,"Hiring-manager feedback delay","Y"],["B-0179","Baseline","2026-04-30","2026-07-07","Manufacturing","Senior Leader","LinkedIn / Direct Sourcing","R02",25.0,5.0,3.8,8.9,9.3,27.1,11.6,67.7,"Offer & compensation approval","Y"],["B-0082","Baseline","2026-05-01","2026-06-17","Engineering & R&D","Operator/Technician","Agency","R06",18.0,3.0,5.5,14.0,5.4,18.2,4.7,47.4,"Interview scheduling / panel availability","Y"],["B-0062","Baseline","2026-05-02","2026-07-21","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R07",23.0,5.0,5.7,19.7,8.9,40.6,4.9,79.8,"Offer & compensation approval","N"],["B-0003","Baseline","2026-05-05","2026-06-21","Manufacturing","Professional","Job Board","R05",17.0,5.0,2.2,8.6,7.7,22.7,5.4,47.4,"Low / poor-fit applicant pool","Y"],["B-0147","Baseline","2026-05-05","2026-06-26","Manufacturing","Professional","Job Board","R06",19.0,4.0,2.6,14.6,6.5,25.9,2.0,52.4,"Hiring-manager feedback delay","N"],["B-0036","Baseline","2026-05-06","2026-06-13","Corporate Functions","Operator/Technician","LinkedIn / Direct Sourcing","R03",18.0,3.0,4.3,17.3,5.9,8.4,2.6,38.5,"Low / poor-fit applicant pool","Y"],["B-0067","Baseline","2026-05-06","2026-06-18","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R06",21.0,2.0,1.8,12.4,9.0,14.5,5.7,43.4,"Offer & compensation approval","Y"],["B-0114","Baseline","2026-05-06","2026-06-11","Manufacturing","Professional","Job Board","R05",15.0,3.0,9.3,4.7,6.5,13.0,1.2,35.5,"Requisition approval delay","Y"],["B-0056","Baseline","2026-05-07","2026-06-14","IT & Digital","Professional","Employee Referral","R01",15.0,2.0,1.7,13.9,8.6,12.6,3.1,38.3,"Low / poor-fit applicant pool","Y"],["B-0140","Baseline","2026-05-07","2026-06-29","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R05",19.0,4.0,10.9,13.9,7.0,17.6,3.4,52.8,"Requisition approval delay","Y"],["B-0153","Baseline","2026-05-07","2026-07-20","Sales & Service","Professional","Job Board","R05",14.0,5.0,14.4,5.0,7.3,44.4,2.3,74.2,"Requisition approval delay","N"],["B-0155","Baseline","2026-05-08","2026-07-13","Engineering & R&D","Professional","Agency","R07",24.0,4.0,4.3,14.5,10.6,31.7,4.8,65.5,"Hiring-manager feedback delay","N"],["B-0130","Baseline","2026-05-09","2026-07-13","Corporate Functions","Professional","Employee Referral","R04",24.0,3.0,7.2,25.2,9.9,15.9,8.8,65.4,"Requisition approval delay","Y"],["B-0171","Baseline","2026-05-09","2026-06-10","Manufacturing","Professional","Employee Referral","R05",11.0,3.0,4.1,5.4,4.9,15.5,3.3,31.6,"Hiring-manager feedback delay","N"],["B-0001","Baseline","2026-05-10","2026-07-08","Corporate Functions","Professional","Agency","R01",8.0,5.0,6.5,11.8,3.8,32.4,4.7,58.8,"Interview scheduling / panel availability","Y"],["B-0166","Baseline","2026-05-12","2026-06-16","Manufacturing","Operator/Technician","Internal Mobility","R02",28.0,2.0,11.7,3.9,8.1,12.0,2.0,35.3,"Low / poor-fit applicant pool","Y"],["B-0134","Baseline","2026-05-14","2026-06-25","Sales & Service","Professional","LinkedIn / Direct Sourcing","R05",15.0,4.0,2.9,3.0,4.3,31.0,1.0,42.2,"Requisition approval delay","Y"],["B-0105","Baseline","2026-05-15","2026-08-12","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R02",18.0,5.0,1.0,2.1,8.8,73.5,3.6,89.0,"Hiring-manager feedback delay","N"],["B-0168","Baseline","2026-05-15","2026-08-18","Manufacturing","Senior Leader","Agency","R05",10.0,6.0,4.2,10.0,3.7,62.2,8.5,95.2,"Hiring-manager feedback delay","Y"],["B-0028","Baseline","2026-05-17","2026-07-06","Sales & Service","Professional","LinkedIn / Direct Sourcing","R07",25.0,5.0,5.7,5.9,9.5,22.2,7.0,50.3,"Hiring-manager feedback delay","Y"],["B-0172","Baseline","2026-05-17","2026-06-30","Manufacturing","Manager","LinkedIn / Direct Sourcing","R01",16.0,6.0,3.0,12.4,4.2,17.6,3.9,43.6,"Interview scheduling / panel availability","N"],["B-0063","Baseline","2026-05-19","2026-07-01","Corporate Functions","Professional","Job Board","R02",21.0,3.0,5.0,7.7,5.8,20.0,3.3,42.6,"Offer & compensation approval","Y"],["B-0092","Baseline","2026-05-19","2026-07-02","Engineering & R&D","Manager","LinkedIn / Direct Sourcing","R08",17.0,5.0,4.2,12.4,6.0,14.6,3.9,43.6,"Low / poor-fit applicant pool","Y"],["B-0125","Baseline","2026-05-22","2026-06-23","Manufacturing","Operator/Technician","Internal Mobility","R06",17.0,3.0,13.1,5.6,3.7,8.6,3.2,31.8,"Candidate decline or renege","Y"],["B-0175","Baseline","2026-05-22","2026-07-04","Manufacturing","Operator/Technician","Internal Mobility","R05",16.0,5.0,7.7,2.0,4.2,24.2,6.9,42.6,"Requisition approval delay","Y"],["B-0011","Baseline","2026-05-23","2026-07-10","IT & Digital","Professional","Job Board","R01",12.0,3.0,8.1,8.8,7.6,20.1,2.4,47.8,"Low / poor-fit applicant pool","Y"],["B-0123","Baseline","2026-05-23","2026-07-26","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R08",16.0,4.0,12.1,15.9,7.2,21.3,7.9,64.4,"Requisition approval delay","Y"],["B-0097","Baseline","2026-05-24","2026-07-11","Manufacturing","Manager","LinkedIn / Direct Sourcing","R01",14.0,6.0,5.8,11.6,5.1,17.9,5.4,48.3,"Interview scheduling / panel availability","N"],["B-0091","Baseline","2026-05-25","2026-09-06","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R04",30.0,5.0,12.4,12.6,8.6,67.4,3.3,104.3,"Low / poor-fit applicant pool","N"],["B-0149","Baseline","2026-05-26","2026-07-18","Engineering & R&D","Operator/Technician","LinkedIn / Direct Sourcing","R07",25.0,3.0,4.9,21.0,9.3,13.1,4.4,52.7,"Offer & compensation approval","Y"],["B-0017","Baseline","2026-05-29","2026-07-25","Corporate Functions","Manager","Internal Mobility","R03",17.0,5.0,4.8,12.6,5.9,27.6,5.9,56.9,"Interview scheduling / panel availability","Y"],["B-0024","Baseline","2026-05-29","2026-07-21","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R08",11.0,5.0,3.5,12.7,4.5,28.9,3.6,53.2,"Hiring-manager feedback delay","Y"],["B-0037","Baseline","2026-05-30","2026-07-23","Manufacturing","Professional","LinkedIn / Direct Sourcing","R04",33.0,3.0,4.6,2.8,11.0,24.7,10.7,53.8,"Hiring-manager feedback delay","Y"],["B-0115","Baseline","2026-05-30","2026-07-01","Manufacturing","Professional","Employee Referral","R03",15.0,4.0,3.7,5.8,5.2,12.5,6.5,32.1,"Candidate decline or renege","Y"],["B-0096","Baseline","2026-05-31","2026-07-10","Sales & Service","Operator/Technician","Internal Mobility","R07",18.0,4.0,5.5,3.3,4.4,28.0,1.0,39.8,"JD / requirement changed mid-search","Y"],["B-0120","Baseline","2026-05-31","2026-07-14","Sales & Service","Operator/Technician","LinkedIn / Direct Sourcing","R02",20.0,4.0,5.7,9.9,7.6,15.2,5.4,43.8,"Hiring-manager feedback delay","Y"],["B-0156","Baseline","2026-05-31","2026-08-07","Engineering & R&D","Professional","Job Board","R03",21.0,4.0,3.2,12.0,7.0,43.5,1.9,68.4,"Hiring-manager feedback delay","Y"],["B-0119","Baseline","2026-06-02","2026-07-28","Engineering & R&D","Professional","Job Board","R04",27.0,5.0,4.5,15.2,9.6,22.9,3.1,56.1,"Hiring-manager feedback delay","Y"],["B-0010","Baseline","2026-06-03","2026-07-13","Manufacturing","Professional","Job Board","R03",19.0,3.0,11.0,5.7,6.1,15.4,1.0,40.0,"Requisition approval delay","N"],["B-0117","Baseline","2026-06-05","2026-08-16","Engineering & R&D","Manager","Agency","R06",20.0,4.0,6.4,13.5,6.0,39.4,4.4,71.8,"Hiring-manager feedback delay","N"],["B-0032","Baseline","2026-06-07","2026-07-13","Corporate Functions","Professional","Agency","R06",19.0,5.0,3.2,5.4,6.7,17.8,3.5,36.2,"Interview scheduling / panel availability","Y"],["B-0059","Baseline","2026-06-07","2026-07-12","Sales & Service","Professional","Internal Mobility","R07",22.0,4.0,9.6,3.3,6.1,17.7,1.0,35.3,"Requisition approval delay","Y"],["B-0019","Baseline","2026-06-08","2026-08-14","Sales & Service","Operator/Technician","LinkedIn / Direct Sourcing","R05",15.0,4.0,9.9,8.7,4.9,37.9,5.3,66.7,"Low / poor-fit applicant pool","Y"],["B-0095","Baseline","2026-06-09","2026-08-28","Manufacturing","Professional","Job Board","R05",13.0,3.0,8.0,9.0,4.4,57.2,1.0,80.4,"Hiring-manager feedback delay","Y"],["B-0135","Baseline","2026-06-09","2026-08-24","Sales & Service","Professional","Job Board","R07",19.0,4.0,15.6,23.5,6.8,28.8,1.0,76.5,"Low / poor-fit applicant pool","Y"],["B-0124","Baseline","2026-06-10","2026-07-27","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R07",25.0,4.0,6.4,8.6,12.0,15.1,4.7,46.8,"Interview scheduling / panel availability","Y"],["B-0163","Baseline","2026-06-11","2026-09-01","Sales & Service","Professional","LinkedIn / Direct Sourcing","R05",8.0,3.0,19.1,13.6,4.1,43.0,1.9,81.7,"Hiring-manager feedback delay","Y"],["B-0023","Baseline","2026-06-12","2026-08-15","Corporate Functions","Operator/Technician","Internal Mobility","R01",12.0,5.0,3.5,6.8,4.6,45.5,5.9,63.9,"Hiring-manager feedback delay","Y"],["B-0021","Baseline","2026-06-15","2026-07-31","Corporate Functions","Professional","Job Board","R06",20.0,3.0,2.9,14.3,6.9,19.5,1.8,46.2,"Low / poor-fit applicant pool","Y"],["B-0169","Baseline","2026-06-18","2026-08-20","Engineering & R&D","Manager","Agency","R02",15.0,6.0,15.2,12.4,3.5,24.4,5.8,63.4,"Requisition approval delay","Y"],["B-0035","Baseline","2026-06-20","2026-07-09","Manufacturing","Professional","Agency","R03",19.0,2.0,1.2,2.0,5.5,5.6,5.5,19.4,"Hiring-manager feedback delay","Y"],["B-0141","Baseline","2026-06-20","2026-09-12","Sales & Service","Manager","Employee Referral","R02",21.0,6.0,18.7,12.2,9.2,36.7,5.8,83.5,"Requisition approval delay","Y"],["B-0137","Baseline","2026-06-22","2026-07-20","Manufacturing","Operator/Technician","Internal Mobility","R06",18.0,4.0,11.5,2.0,6.3,9.3,1.8,28.5,"Interview scheduling / panel availability","Y"],["B-0101","Baseline","2026-06-23","2026-07-28","Manufacturing","Professional","Employee Referral","R01",12.0,4.0,8.1,2.0,4.9,20.3,1.0,34.7,"Hiring-manager feedback delay","Y"],["B-0122","Baseline","2026-06-24","2026-10-10","Engineering & R&D","Professional","Employee Referral","R07",19.0,5.0,5.5,14.1,5.2,81.2,3.8,108.2,"Hiring-manager feedback delay","N"],["B-0022","Baseline","2026-06-25","2026-10-19","Engineering & R&D","Senior Leader","LinkedIn / Direct Sourcing","R07",26.0,6.0,5.1,13.4,6.2,79.2,5.6,116.5,"Hiring-manager feedback delay","N"],["B-0177","Baseline","2026-06-25","2026-07-30","Manufacturing","Operator/Technician","Employee Referral","R04",28.0,3.0,3.6,2.0,11.0,13.2,6.5,34.7,"Requisition approval delay","N"],["B-0040","Baseline","2026-06-26","2026-07-30","Engineering & R&D","Professional","Employee Referral","R08",13.0,2.0,1.0,16.4,3.5,7.9,6.8,34.0,"Interview scheduling / panel availability","Y"],["B-0093","Baseline","2026-06-26","2026-09-20","Engineering & R&D","Operator/Technician","Agency","R04",29.0,5.0,23.7,18.7,10.0,29.5,4.1,85.6,"Interview scheduling / panel availability","N"],["B-0047","Baseline","2026-06-27","2026-07-25","Engineering & R&D","Professional","Employee Referral","R03",15.0,3.0,2.2,10.7,7.6,4.3,4.5,27.7,"Hiring-manager feedback delay","N"],["B-0034","Baseline","2026-06-28","2026-08-21","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R04",23.0,3.0,18.0,8.8,7.1,16.3,4.0,54.2,"Requisition approval delay","N"],["B-0107","Baseline","2026-06-28","2026-09-16","IT & Digital","Operator/Technician","Agency","R06",21.0,5.0,8.5,6.8,9.0,48.6,7.2,79.7,"Hiring-manager feedback delay","N"],["B-0162","Baseline","2026-06-28","2026-09-02","Manufacturing","Manager","Agency","R06",16.0,5.0,6.3,2.0,5.1,45.7,5.2,66.4,"Hiring-manager feedback delay","N"],["B-0025","Baseline","2026-06-30","2026-07-30","Manufacturing","Operator/Technician","LinkedIn / Direct Sourcing","R05",10.0,2.0,2.5,11.7,3.4,10.0,1.9,29.5,"Low / poor-fit applicant pool","Y"],["B-0074","Baseline","2026-06-30","2026-07-30","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R06",17.0,3.0,1.0,5.4,7.2,13.4,2.8,29.8,"Interview scheduling / panel availability","Y"],["B-0054","Baseline","2026-07-01","2026-08-30","Engineering & R&D","Professional","Job Board","R07",26.0,4.0,1.2,11.5,8.0,34.8,3.3,59.6,"Hiring-manager feedback delay","N"],["B-0055","Baseline","2026-07-02","2026-08-12","Engineering & R&D","Professional","Employee Referral","R05",14.0,2.0,11.0,11.5,3.8,9.2,7.1,41.0,"Offer & compensation approval","Y"],["I-0009","Improve","2026-07-27","2026-08-22","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R06",15.0,3.0,1.4,7.9,4.6,9.1,2.7,25.7,"Low / poor-fit applicant pool","Y"],["I-0032","Improve","2026-07-27","2026-08-27","Manufacturing","Senior Leader","Job Board","R02",20.0,3.0,1.1,2.1,8.1,6.5,5.7,31.3,"Interview scheduling / panel availability","Y"],["I-0074","Improve","2026-07-27","2026-08-23","Manufacturing","Operator/Technician","Job Board","R01",17.0,2.0,2.3,7.9,4.7,9.2,2.0,26.9,"Requisition approval delay","Y"],["I-0082","Improve","2026-07-28","2026-08-28","Manufacturing","Professional","LinkedIn / Direct Sourcing","R07",17.0,3.0,2.4,14.8,5.3,7.0,1.2,30.7,"Low / poor-fit applicant pool","Y"],["I-0079","Improve","2026-07-31","2026-09-01","IT & Digital","Professional","LinkedIn / Direct Sourcing","R02",16.0,3.0,3.5,14.3,4.3,8.7,1.0,31.8,"Hiring-manager feedback delay","Y"],["I-0008","Improve","2026-08-02","2026-09-08","Engineering & R&D","Senior Leader","Job Board","R06",15.0,3.0,2.0,9.4,3.6,7.5,6.5,36.8,"Low / poor-fit applicant pool","Y"],["I-0058","Improve","2026-08-02","2026-09-02","Engineering & R&D","Manager","Job Board","R08",16.0,2.0,2.6,7.6,8.4,4.9,4.2,31.0,"Low / poor-fit applicant pool","Y"],["I-0013","Improve","2026-08-05","2026-09-15","Engineering & R&D","Professional","Job Board","R06",16.0,3.0,3.8,16.1,7.1,12.1,1.0,40.9,"Interview scheduling / panel availability","N"],["I-0067","Improve","2026-08-06","2026-09-08","Engineering & R&D","Manager","Employee Referral","R05",16.0,2.0,0.8,10.4,8.2,7.1,5.2,32.6,"Low / poor-fit applicant pool","Y"],["I-0037","Improve","2026-08-08","2026-09-01","Engineering & R&D","Operator/Technician","Job Board","R01",14.0,2.0,1.1,9.9,3.9,6.8,1.6,24.1,"Low / poor-fit applicant pool","Y"],["I-0041","Improve","2026-08-08","2026-08-31","Corporate Functions","Professional","Agency","R06",15.0,3.0,1.7,3.1,4.7,8.9,4.8,22.8,"Interview scheduling / panel availability","N"],["I-0049","Improve","2026-08-08","2026-09-12","IT & Digital","Manager","Employee Referral","R08",15.0,3.0,2.8,10.1,6.6,12.2,2.8,35.4,"Hiring-manager feedback delay","Y"],["I-0051","Improve","2026-08-09","2026-09-06","Manufacturing","Operator/Technician","Job Board","R04",16.0,3.0,3.9,3.1,8.2,11.5,1.0,28.5,"Interview scheduling / panel availability","Y"],["I-0060","Improve","2026-08-09","2026-09-10","Corporate Functions","Manager","Job Board","R05",20.0,3.0,0.9,2.9,9.2,11.6,4.5,32.4,"Low / poor-fit applicant pool","Y"],["I-0078","Improve","2026-08-09","2026-09-16","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R03",18.0,3.0,2.1,9.8,9.7,15.0,1.1,37.7,"Hiring-manager feedback delay","Y"],["I-0075","Improve","2026-08-10","2026-09-19","IT & Digital","Operator/Technician","LinkedIn / Direct Sourcing","R04",15.0,3.0,6.3,14.4,6.7,10.1,2.5,40.0,"Low / poor-fit applicant pool","Y"],["I-0028","Improve","2026-08-12","2026-09-16","Manufacturing","Operator/Technician","Job Board","R05",17.0,2.0,2.3,11.3,8.5,8.7,3.1,34.7,"Requisition approval delay","Y"],["I-0039","Improve","2026-08-12","2026-09-03","Corporate Functions","Operator/Technician","LinkedIn / Direct Sourcing","R05",12.0,2.0,1.3,7.9,3.1,8.2,2.0,22.5,"Hiring-manager feedback delay","Y"],["I-0011","Improve","2026-08-14","2026-09-11","Corporate Functions","Professional","LinkedIn / Direct Sourcing","R07",16.0,3.0,0.5,6.7,7.5,9.2,4.6,28.5,"Low / poor-fit applicant pool","Y"],["I-0025","Improve","2026-08-14","2026-09-12","Manufacturing","Manager","Job Board","R05",17.0,3.0,0.5,7.2,7.1,8.5,2.0,28.6,"Hiring-manager feedback delay","Y"],["I-0045","Improve","2026-08-20","2026-09-09","Corporate Functions","Professional","Agency","R03",14.0,3.0,0.7,5.1,3.5,7.7,3.1,19.7,"Candidate decline or renege","N"],["I-0005","Improve","2026-08-21","2026-09-15","IT & Digital","Professional","Internal Mobility","R01",23.0,3.0,2.7,4.9,7.7,8.0,4.2,25.1,"Hiring-manager feedback delay","Y"],["I-0017","Improve","2026-08-21","2026-10-06","IT & Digital","Senior Leader","Job Board","R06",16.0,4.0,3.0,6.8,8.5,14.1,5.5,45.7,"Candidate decline or renege","Y"],["I-0030","Improve","2026-08-21","2026-09-18","Sales & Service","Operator/Technician","Agency","R04",18.0,3.0,1.1,8.7,5.8,10.7,2.5,28.4,"Interview scheduling / panel availability","Y"],["I-0053","Improve","2026-08-21","2026-09-10","Manufacturing","Professional","Internal Mobility","R08",14.0,3.0,2.3,4.2,6.4,7.9,1.1,19.5,"Interview scheduling / panel availability","Y"],["I-0085","Improve","2026-08-23","2026-10-02","Manufacturing","Professional","Job Board","R01",17.0,3.0,1.5,5.1,5.0,23.7,3.5,39.6,"Hiring-manager feedback delay","Y"],["I-0018","Improve","2026-08-24","2026-09-14","Sales & Service","Professional","Employee Referral","R07",14.0,3.0,1.3,6.6,6.1,7.7,1.2,21.3,"JD / requirement changed mid-search","Y"],["I-0020","Improve","2026-08-24","2026-09-17","Manufacturing","Operator/Technician","Job Board","R07",18.0,2.0,1.7,2.4,9.8,7.2,1.9,23.8,"Interview scheduling / panel availability","Y"],["I-0072","Improve","2026-08-24","2026-09-24","IT & Digital","Professional","LinkedIn / Direct Sourcing","R06",19.0,2.0,3.3,7.0,7.8,11.3,1.7,31.1,"Interview scheduling / panel availability","Y"],["I-0014","Improve","2026-08-25","2026-10-09","Engineering & R&D","Manager","Job Board","R02",13.0,3.0,7.4,11.4,6.0,11.8,4.9,44.8,"Requisition approval delay","Y"],["I-0026","Improve","2026-08-26","2026-09-30","Manufacturing","Manager","LinkedIn / Direct Sourcing","R02",18.0,3.0,1.2,7.4,8.7,12.0,3.6,35.4,"Hiring-manager feedback delay","Y"],["I-0034","Improve","2026-08-30","2026-09-24","Engineering & R&D","Professional","Agency","R03",16.0,2.0,1.4,7.1,9.4,6.9,1.0,25.4,"Offer & compensation approval","Y"],["I-0002","Improve","2026-09-01","2026-09-21","Corporate Functions","Professional","Agency","R08",19.0,3.0,0.5,3.4,5.4,8.5,2.2,19.6,"Offer & compensation approval","Y"],["I-0016","Improve","2026-09-01","2026-10-07","Manufacturing","Manager","Agency","R06",19.0,3.0,0.5,6.9,5.2,18.6,2.3,35.6,"JD / requirement changed mid-search","Y"],["I-0089","Improve","2026-09-01","2026-09-29","Corporate Functions","Professional","Internal Mobility","R01",17.0,2.0,1.8,15.1,5.4,5.8,2.1,27.8,"Requisition approval delay","Y"],["I-0064","Improve","2026-09-02","2026-09-30","Sales & Service","Operator/Technician","Agency","R06",16.0,2.0,7.0,4.6,7.5,8.1,1.7,28.5,"Hiring-manager feedback delay","Y"],["I-0084","Improve","2026-09-02","2026-10-04","Engineering & R&D","Professional","Employee Referral","R08",17.0,3.0,4.2,13.4,6.7,8.8,1.0,32.5,"Candidate decline or renege","Y"],["I-0022","Improve","2026-09-03","2026-09-27","Manufacturing","Professional","Agency","R08",15.0,2.0,1.1,9.2,4.6,7.5,1.6,23.6,"Offer & compensation approval","Y"],["I-0059","Improve","2026-09-03","2026-10-07","Engineering & R&D","Professional","Employee Referral","R06",17.0,2.0,1.5,20.2,5.6,6.3,1.7,33.7,"Requisition approval delay","Y"],["I-0010","Improve","2026-09-04","2026-09-29","Engineering & R&D","Operator/Technician","Internal Mobility","R07",14.0,3.0,2.9,5.9,6.7,8.2,4.1,25.4,"Offer & compensation approval","Y"],["I-0043","Improve","2026-09-05","2026-09-28","Sales & Service","Professional","Employee Referral","R08",14.0,2.0,4.4,3.8,6.4,6.3,4.0,23.3,"Candidate decline or renege","Y"],["I-0081","Improve","2026-09-05","2026-09-26","Sales & Service","Professional","Employee Referral","R01",17.0,2.0,0.7,2.5,7.7,8.0,3.5,20.8,"Interview scheduling / panel availability","Y"],["I-0048","Improve","2026-09-06","2026-10-06","Manufacturing","Professional","LinkedIn / Direct Sourcing","R06",14.0,3.0,0.5,11.3,5.5,8.4,4.0,29.7,"Low / poor-fit applicant pool","Y"],["I-0038","Improve","2026-09-07","2026-10-06","Engineering & R&D","Operator/Technician","Job Board","R02",13.0,3.0,0.9,8.0,2.6,16.0,1.0,29.3,"Low / poor-fit applicant pool","Y"],["I-0057","Improve","2026-09-07","2026-09-26","Manufacturing","Manager","Employee Referral","R08",19.0,2.0,2.1,3.2,5.0,5.3,2.5,19.0,"Low / poor-fit applicant pool","Y"],["I-0066","Improve","2026-09-08","2026-10-02","Manufacturing","Operator/Technician","Job Board","R08",14.0,3.0,2.2,2.5,4.7,7.8,5.5,23.5,"Interview scheduling / panel availability","Y"],["I-0003","Improve","2026-09-10","2026-09-29","Corporate Functions","Operator/Technician","Employee Referral","R06",16.0,3.0,4.1,2.0,7.5,6.3,1.0,19.3,"Requisition approval delay","Y"],["I-0046","Improve","2026-09-10","2026-10-06","Sales & Service","Professional","Job Board","R02",17.0,2.0,1.7,8.0,6.0,5.3,3.7,25.5,"Hiring-manager feedback delay","Y"],["I-0047","Improve","2026-09-13","2026-10-16","Engineering & R&D","Professional","Job Board","R04",18.0,3.0,2.9,10.2,6.8,11.4,1.0,33.1,"Low / poor-fit applicant pool","Y"],["I-0080","Improve","2026-09-14","2026-10-04","Engineering & R&D","Professional","Internal Mobility","R02",15.0,3.0,1.0,4.9,4.5,10.2,1.7,19.9,"Hiring-manager feedback delay","Y"],["I-0070","Improve","2026-09-16","2026-10-09","Corporate Functions","Operator/Technician","LinkedIn / Direct Sourcing","R08",18.0,3.0,1.3,3.7,8.0,7.1,2.9,23.0,"Candidate decline or renege","N"],["I-0004","Improve","2026-09-17","2026-10-10","Sales & Service","Operator/Technician","Job Board","R03",14.0,2.0,1.2,6.7,4.5,7.2,2.8,23.2,"Offer & compensation approval","Y"],["I-0035","Improve","2026-09-17","2026-10-23","Manufacturing","Manager","LinkedIn / Direct Sourcing","R07",16.0,2.0,6.6,2.5,4.8,15.9,3.3,35.6,"Hiring-manager feedback delay","Y"],["I-0083","Improve","2026-09-17","2026-10-28","Engineering & R&D","Professional","Job Board","R04",17.0,3.0,1.6,18.3,7.5,12.0,1.0,41.2,"Low / poor-fit applicant pool","Y"],["I-0001","Improve","2026-09-18","2026-10-18","Manufacturing","Operator/Technician","Employee Referral","R04",14.0,3.0,1.1,7.7,7.2,13.3,2.4,30.1,"Interview scheduling / panel availability","Y"],["I-0055","Improve","2026-09-18","2026-10-28","Corporate Functions","Professional","Job Board","R02",17.0,3.0,0.5,6.6,7.7,23.0,1.5,40.1,"Hiring-manager feedback delay","Y"],["I-0061","Improve","2026-09-18","2026-10-15","Manufacturing","Operator/Technician","Job Board","R08",15.0,2.0,1.8,2.0,5.8,14.1,2.4,26.9,"Hiring-manager feedback delay","Y"],["I-0062","Improve","2026-09-18","2026-10-13","Manufacturing","Professional","Job Board","R03",17.0,2.0,2.0,8.8,3.4,8.7,1.0,24.7,"Interview scheduling / panel availability","Y"],["I-0087","Improve","2026-09-18","2026-10-14","Engineering & R&D","Professional","Employee Referral","R08",19.0,2.0,0.6,9.9,9.8,4.5,3.2,26.4,"Low / poor-fit applicant pool","Y"],["I-0007","Improve","2026-09-20","2026-10-17","Manufacturing","Operator/Technician","Job Board","R04",16.0,2.0,6.0,7.8,6.8,3.6,2.1,27.1,"Low / poor-fit applicant pool","Y"],["I-0044","Improve","2026-09-20","2026-10-20","Manufacturing","Professional","LinkedIn / Direct Sourcing","R02",20.0,3.0,1.3,7.1,8.2,10.6,2.3,29.5,"Interview scheduling / panel availability","Y"],["I-0056","Improve","2026-09-20","2026-11-23","Manufacturing","Manager","Employee Referral","R04",19.0,3.0,6.1,28.3,5.7,18.3,4.4,63.7,"Low / poor-fit applicant pool","N"],["I-0029","Improve","2026-09-21","2026-10-23","Sales & Service","Manager","Agency","R04",16.0,2.0,5.5,4.1,7.0,10.0,3.2,31.9,"Requisition approval delay","Y"],["I-0090","Improve","2026-09-21","2026-10-28","Manufacturing","Professional","LinkedIn / Direct Sourcing","R08",18.0,3.0,1.1,9.2,5.8,16.3,4.7,37.1,"Low / poor-fit applicant pool","Y"],["I-0068","Improve","2026-09-23","2026-11-01","Engineering & R&D","Manager","Job Board","R05",13.0,3.0,0.5,16.9,6.4,9.2,2.6,38.9,"JD / requirement changed mid-search","Y"],["I-0012","Improve","2026-09-26","2026-10-31","Sales & Service","Professional","Agency","R05",18.0,3.0,3.3,7.3,7.4,15.3,2.2,35.1,"Low / poor-fit applicant pool","Y"],["I-0069","Improve","2026-09-26","2026-10-23","Sales & Service","Operator/Technician","Employee Referral","R04",17.0,3.0,1.8,6.9,10.2,8.4,1.6,27.3,"Hiring-manager feedback delay","Y"],["I-0006","Improve","2026-09-27","2026-10-20","IT & Digital","Operator/Technician","Employee Referral","R01",17.0,2.0,3.6,5.5,6.3,8.0,1.0,22.8,"Hiring-manager feedback delay","Y"],["I-0031","Improve","2026-09-28","2026-10-29","Manufacturing","Manager","Job Board","R06",16.0,3.0,2.5,3.5,5.9,11.7,4.4,31.3,"Hiring-manager feedback delay","Y"],["I-0042","Improve","2026-09-28","2026-10-26","Engineering & R&D","Manager","Internal Mobility","R06",15.0,3.0,0.5,5.4,6.2,10.4,5.1,27.7,"Hiring-manager feedback delay","Y"],["I-0054","Improve","2026-09-28","2026-11-14","Engineering & R&D","Manager","Job Board","R05",17.0,2.0,8.7,11.2,9.7,9.1,5.3,47.3,"Hiring-manager feedback delay","Y"],["I-0023","Improve","2026-10-02","2026-10-28","Corporate Functions","Professional","Internal Mobility","R05",14.0,3.0,3.0,2.3,3.4,14.7,4.9,25.9,"JD / requirement changed mid-search","Y"],["I-0050","Improve","2026-10-02","2026-10-25","Manufacturing","Professional","LinkedIn / Direct Sourcing","R08",18.0,2.0,0.9,11.4,5.4,4.3,1.2,23.2,"JD / requirement changed mid-search","Y"],["I-0077","Improve","2026-10-04","2026-11-11","Engineering & R&D","Professional","LinkedIn / Direct Sourcing","R08",18.0,2.0,0.5,20.3,6.1,7.5,3.7,38.1,"Low / poor-fit applicant pool","Y"],["I-0086","Improve","2026-10-04","2026-11-13","Engineering & R&D","Manager","Job Board","R08",18.0,2.0,0.6,15.0,9.4,8.0,4.0,40.3,"Hiring-manager feedback delay","Y"],["I-0088","Improve","2026-10-06","2026-10-20","Manufacturing","Professional","Internal Mobility","R06",19.0,2.0,2.3,2.0,7.7,2.4,1.9,13.9,"Requisition approval delay","Y"],["I-0019","Improve","2026-10-08","2026-10-30","Engineering & R&D","Professional","Employee Referral","R05",13.0,3.0,1.4,6.1,5.3,9.5,1.7,22.4,"Candidate decline or renege","Y"],["I-0052","Improve","2026-10-09","2026-11-15","Engineering & R&D","Professional","Agency","R08",12.0,3.0,7.1,19.0,3.5,6.5,1.3,37.0,"Low / poor-fit applicant pool","Y"],["I-0065","Improve","2026-10-09","2026-11-04","Sales & Service","Professional","Job Board","R06",12.0,3.0,1.6,10.0,3.8,8.6,1.5,26.3,"Candidate decline or renege","N"],["I-0076","Improve","2026-10-13","2026-10-31","Manufacturing","Operator/Technician","Employee Referral","R07",15.0,2.0,1.6,8.5,4.3,3.7,1.3,17.8,"Requisition approval delay","Y"],["I-0021","Improve","2026-10-14","2026-11-28","Manufacturing","Professional","Agency","R07",19.0,3.0,2.6,2.7,9.1,26.0,5.2,45.2,"Hiring-manager feedback delay","Y"],["I-0063","Improve","2026-10-14","2026-11-14","Engineering & R&D","Operator/Technician","Job Board","R02",16.0,2.0,4.2,14.3,2.4,6.4,2.9,31.0,"Requisition approval delay","Y"],["I-0073","Improve","2026-10-15","2026-11-14","Manufacturing","Manager","LinkedIn / Direct Sourcing","R08",13.0,3.0,3.3,5.8,3.2,10.7,4.1,29.6,"Interview scheduling / panel availability","Y"],["I-0024","Improve","2026-10-16","2026-11-09","Sales & Service","Professional","Internal Mobility","R02",13.0,3.0,1.2,5.0,6.3,11.1,2.6,23.8,"Hiring-manager feedback delay","Y"],["I-0040","Improve","2026-10-16","2026-11-17","Manufacturing","Operator/Technician","Job Board","R04",17.0,3.0,2.5,6.9,6.4,14.7,1.0,32.3,"Low / poor-fit applicant pool","Y"],["I-0071","Improve","2026-10-17","2026-11-10","Sales & Service","Manager","LinkedIn / Direct Sourcing","R04",17.0,3.0,0.9,6.2,4.8,6.6,2.6,23.6,"Low / poor-fit applicant pool","N"],["I-0027","Improve","2026-10-18","2026-11-10","IT & Digital","Operator/Technician","LinkedIn / Direct Sourcing","R06",14.0,2.0,0.7,9.5,6.4,5.2,1.6,23.4,"Offer & compensation approval","Y"],["I-0033","Improve","2026-10-18","2026-11-10","Sales & Service","Professional","LinkedIn / Direct Sourcing","R07",11.0,2.0,2.0,6.2,4.2,9.3,1.1,22.8,"Offer & compensation approval","Y"],["I-0036","Improve","2026-10-21","2026-11-30","Corporate Functions","Operator/Technician","Job Board","R03",18.0,3.0,5.8,17.4,7.4,7.7,1.0,40.1,"Requisition approval delay","Y"],["I-0015","Improve","2026-10-22","2026-11-30","Engineering & R&D","Manager","Job Board","R03",19.0,3.0,4.1,11.7,5.3,10.5,4.1,39.0,"Interview scheduling / panel availability","Y"]]};
+const COLS = SAMPLE.cols;
+const NUM = new Set(["recruiter_open_reqs","interview_rounds","approval_days","sourcing_days","screening_days","interview_days","offer_days","ttf_days"]);
+const LISTS = {
+  phase: ["Baseline","Improve","Control"],
+  business_unit: ["Manufacturing","Engineering & R&D","Sales & Service","Corporate Functions","IT & Digital"],
+  job_level: ["Operator/Technician","Professional","Manager","Senior Leader"],
+  source_channel: ["Employee Referral","Job Board","LinkedIn / Direct Sourcing","Agency","Internal Mobility"],
+  primary_delay_reason: ["Hiring-manager feedback delay","Interview scheduling / panel availability","Requisition approval delay","Offer & compensation approval","Low / poor-fit applicant pool","Candidate decline or renege","JD / requirement changed mid-search","No delay"],
+  offer_accepted: ["Y","N"],
+};
+const STAGES = [["approval_days","Approval"],["sourcing_days","Sourcing"],["screening_days","Screening"],["interview_days","Interviewing"],["offer_days","Offer"]];
+const DEF_SPEC = { USL: 45, target: 35, cov: 450, hires: 1200 };
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const f1 = x => Number.isFinite(x) ? x.toFixed(1) : "–", f2 = x => Number.isFinite(x) ? x.toFixed(2) : "–";
+const pct = x => Number.isFinite(x) ? (x * 100).toFixed(1) + "%" : "–";
+const pf = p => !Number.isFinite(p) ? "–" : p < 0.001 ? "< 0.001" : p.toFixed(3);
+const SVGNS = "http://www.w3.org/2000/svg";
+const safeLS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+// ---------- state
+const state = {
+  mode: "sample", sampleRows: [], teamRows: new Map(), spec: { ...DEF_SPEC }, teamSpec: null,
+  db: null, dl: null, canWrite: null, readOnly: false, tab: "overview", page: 0, search: "", busy: false,
+};
+function rowFromArr(a) { const o = {}; COLS.forEach((c, i) => o[c] = a[i]); return o; }
+function loadSample() {
+  let saved = null; try { saved = JSON.parse(safeLS.get("ttf-sample-edits") || "null"); } catch (e) {}
+  state.sampleRows = (saved && Array.isArray(saved.rows) ? saved.rows : SAMPLE.rows.map(rowFromArr)).map((r, i) => ({ _k: "s" + i, ...r }));
+  try { const sp = JSON.parse(safeLS.get("ttf-sample-spec") || "null"); if (sp) state.spec = { ...DEF_SPEC, ...sp }; } catch (e) {}
+}
+function saveSampleLocal() { safeLS.set("ttf-sample-edits", JSON.stringify({ rows: state.sampleRows.map(({ _k, ...r }) => r) })); }
+function rows() { return state.mode === "team" ? [...state.teamRows.values()] : state.sampleRows; }
+function spec() { return state.mode === "team" ? { ...DEF_SPEC, ...(state.teamSpec || {}) } : state.spec; }
+function ttf(r) { const v = Number(r.ttf_days); if (r.ttf_days !== "" && r.ttf_days != null && Number.isFinite(v)) return v;
+  if (r.req_open_date && r.offer_accept_date) { const d = (Date.parse(r.offer_accept_date) - Date.parse(r.req_open_date)) / 864e5; return Number.isFinite(d) ? d : NaN; } return NaN; }
+function filtered() {
+  const ph = $("fPhase").value, bu = $("fBU").value, lv = $("fLevel").value;
+  return rows().filter(r => (!ph || r.phase === ph) && (!bu || r.business_unit === bu) && (!lv || r.job_level === lv))
+    .map(r => ({ ...r, _t: ttf(r) })).filter(r => Number.isFinite(r._t)).sort((a, b) => String(a.req_open_date).localeCompare(String(b.req_open_date)));
+}
+function phasesPresent(rs) { const order = ["Baseline", "Improve", "Control"]; const s = new Set(rs.map(r => r.phase)); return order.filter(p => s.has(p)).concat([...s].filter(p => !order.includes(p) && p)); }
+
+// ---------- control bar
+function fillSelect(el, opts, allLabel, keep) { const cur = keep ?? el.value; el.innerHTML = (allLabel ? `<option value="">${allLabel}</option>` : "") + opts.map(o => `<option>${esc(o)}</option>`).join(""); if ([...el.options].some(o => o.value === cur)) el.value = cur; }
+function syncControls() {
+  const sp = spec(); $("cUSL").value = sp.USL; $("cTarget").value = sp.target; $("cCov").value = sp.cov; $("cHires").value = sp.hires;
+  const rs = rows(), ph = phasesPresent(rs);
+  fillSelect($("fPhase"), ph, "All phases"); fillSelect($("fBU"), [...new Set(LISTS.business_unit.concat(rs.map(r => r.business_unit).filter(Boolean)))], "All units"); fillSelect($("fLevel"), LISTS.job_level, "All levels");
+  const a = $("cmpA").value || ph[0] || "Baseline", b = $("cmpB").value || ph.find(p => p !== a) || "Improve";
+  fillSelect($("cmpA"), ph.length ? ph : LISTS.phase, null, a); fillSelect($("cmpB"), ph.length ? ph : LISTS.phase, null, b);
+  $("srcSample").setAttribute("aria-pressed", state.mode === "sample"); $("srcTeam").setAttribute("aria-pressed", state.mode === "team");
+  $("teamCount").textContent = state.db ? `(${state.teamRows.size})` : "(unavailable)";
+}
+let specTimer = null;
+function onSpecInput() {
+  const v = k => Number($(k).value);
+  const next = { USL: v("cUSL") || DEF_SPEC.USL, target: v("cTarget") || DEF_SPEC.target, cov: Number.isFinite(v("cCov")) ? v("cCov") : DEF_SPEC.cov, hires: Number.isFinite(v("cHires")) ? v("cHires") : DEF_SPEC.hires };
+  if (state.mode === "team") { state.teamSpec = next; clearTimeout(specTimer); specTimer = setTimeout(() => writeSpec(next), 700); }
+  else { state.spec = next; safeLS.set("ttf-sample-spec", JSON.stringify(next)); }
+  renderAll(false);
+}
+async function writeSpec(next) { if (!state.db || state.readOnly) return; try { await state.db.doc("config/spec").set(next); } catch (e) { handleWriteErr(e); } }
+
+function renderBanner() {
+  const b = $("banner");
+  if (state.mode === "sample") {
+    b.className = "banner";
+    b.innerHTML = `<span><b>Illustrative sample data.</b> 270 synthetic requisitions that show how the analysis works. Your edits here stay in this browser only.</span>` +
+      (state.db ? `<button class="btn" id="goTeam">Switch to the team dataset</button>` : `<span class="muted">The shared team dataset needs you to be signed in to claude.ai.</span>`);
+    const g = $("goTeam"); if (g) g.onclick = () => setMode("team");
+  } else {
+    b.className = "banner team";
+    const n = state.teamRows.size;
+    b.innerHTML = `<span><b>Team dataset</b>: ${n} requisition${n === 1 ? "" : "s"}, shared with everyone who can open this page. Changes save automatically.${state.readOnly ? " You have view-only access." : ""}</span>` +
+      (n === 0 ? `<button class="btn primary" id="goData">Add your first requisitions</button>` : "");
+    const g = $("goData"); if (g) g.onclick = () => setTab("data");
+  }
+}
+function setMode(m) { if (m === "team" && !state.db) { toast("The team dataset isn't available in this view."); return; } state.mode = m; state.page = 0; safeLS.set("ttf-mode", m); syncControls(); renderAll(true); }
+function setTab(t) { state.tab = t; document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t)); document.querySelectorAll("section.view").forEach(s => s.hidden = s.id !== "v-" + t); renderAll(false); }
+
+// ---------- chart primitives
+function svgEl(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function frame(host, W, H) { host.innerHTML = ""; const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img" }, host); const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; host.appendChild(tip); return { s, tip }; }
+function showTip(host, tip, evt, text) { const r = host.getBoundingClientRect(); let x = evt.clientX - r.left, y = evt.clientY - r.top; tip.textContent = text; tip.hidden = false; const w = tip.offsetWidth; x = Math.min(Math.max(x, w / 2 + 4), r.width - w / 2 - 4); tip.style.left = x + "px"; tip.style.top = y + "px"; }
+function niceMax(v) { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function yAxis(s, x0, x1, y, max, ticks, fmt) { for (let i = 0; i <= ticks; i++) { const v = max * i / ticks, yy = y(v); svgEl("line", { x1: x0, x2: x1, y1: yy, y2: yy, stroke: css("--line"), "stroke-width": 1 }, s); svgEl("text", { x: x0 - 6, y: yy + 4, "text-anchor": "end" }, s).textContent = fmt ? fmt(v) : Math.round(v); } }
+function hostW(host) { return Math.max(320, Math.min(1000, host.clientWidth || 640)); }
+
+function chartIndividuals(host, rs, phaseKey, sp, mr) {
+  const W = hostW(host), H = mr ? 220 : 300, m = { l: 44, r: 12, t: 12, b: 26 }; const { s, tip } = frame(host, W, H);
+  if (rs.length < 2) { host.innerHTML = `<div class="empty">Need at least 2 requisitions with a TTF to draw this chart.</div>`; return; }
+  const segs = []; let cur = null; rs.forEach((r, i) => { if (!cur || cur.phase !== r[phaseKey]) { cur = { phase: r[phaseKey], from: i, vals: [] }; segs.push(cur); } cur.vals.push(r._t); });
+  segs.forEach(g => { const mrs = g.vals.slice(1).map((v, i) => Math.abs(v - g.vals[i])); g.mrbar = ST.mean(mrs); g.cl = ST.mean(g.vals); g.ucl = g.cl + 2.66 * g.mrbar; g.lcl = Math.max(0, g.cl - 2.66 * g.mrbar); g.mrs = mrs; });
+  const vals = mr ? rs.map((r, i) => { const g = segs.find(g => i >= g.from && i < g.from + g.vals.length); return i === g.from ? null : Math.abs(r._t - rs[i - 1]._t); }) : rs.map(r => r._t);
+  const max = niceMax(Math.max(...vals.filter(v => v != null), ...segs.map(g => mr ? 3.267 * g.mrbar : g.ucl), mr ? 0 : sp.USL) * 1.05);
+  const x = i => m.l + (W - m.l - m.r) * (rs.length === 1 ? 0.5 : i / (rs.length - 1)), y = v => H - m.b - (H - m.t - m.b) * v / max;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  segs.forEach((g, k) => { const xa = x(g.from), xb = x(g.from + g.vals.length - 1);
+    if (k > 0) svgEl("line", { x1: xa - 0.5 * (x(1) - x(0)), x2: xa - 0.5 * (x(1) - x(0)), y1: m.t, y2: H - m.b, stroke: css("--ink-2"), "stroke-dasharray": "3 3" }, s);
+    svgEl("text", { x: xa + 4, y: m.t + 10 }, s).textContent = g.phase || "(no phase)";
+    const lines = mr ? [[3.267 * g.mrbar, "--red"], [g.mrbar, "--slate"]] : [[g.ucl, "--red"], [g.cl, "--slate"], [g.lcl, "--red"]];
+    lines.forEach(([v, c]) => svgEl("line", { x1: xa, x2: xb, y1: y(v), y2: y(v), stroke: css(c), "stroke-width": 1.5, "stroke-dasharray": c === "--slate" ? "" : "5 3" }, s)); });
+  if (!mr) svgEl("line", { x1: m.l, x2: W - m.r, y1: y(sp.USL), y2: y(sp.USL), stroke: css("--amber"), "stroke-width": 1.5 }, s);
+  let d = ""; vals.forEach((v, i) => { if (v == null) return; d += (d && vals[i - 1] != null ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1); });
+  svgEl("path", { d, fill: "none", stroke: css("--ink-2"), "stroke-width": 1, opacity: 0.85 }, s);
+  vals.forEach((v, i) => { if (v == null) return; const g = segs.find(g => i >= g.from && i < g.from + g.vals.length); const out = mr ? v > 3.267 * g.mrbar : (v > g.ucl || v < g.lcl);
+    const c = svgEl("circle", { cx: x(i), cy: y(v), r: out ? 4 : 2.2, fill: out ? css("--red") : css("--teal") }, s);
+    c.addEventListener("pointerenter", e => showTip(host, tip, e, `${rs[i].req_id} · ${f1(v)} d${mr ? " MR" : ""}${out ? " · out of control" : ""}`)); c.addEventListener("pointerleave", () => tip.hidden = true); });
+  svgEl("text", { x: m.l, y: H - 6 }, s).textContent = "1"; svgEl("text", { x: W - m.r, y: H - 6, "text-anchor": "end" }, s).textContent = rs.length + " reqs";
+  return segs;
+}
+function chartHist(host, xs, sp) {
+  const W = hostW(host), H = 280, m = { l: 40, r: 12, t: 12, b: 30 }; const { s, tip } = frame(host, W, H);
+  if (!xs.length) { host.innerHTML = `<div class="empty">No requisitions match the filters.</div>`; return; }
+  const lo = Math.floor(Math.min(...xs) / 5) * 5, hi = Math.ceil((Math.max(...xs) + 0.001) / 5) * 5, bins = []; for (let b = lo; b < hi; b += 5) bins.push({ b, n: xs.filter(v => v >= b && v < b + 5).length });
+  const max = niceMax(Math.max(...bins.map(b => b.n))), bw = (W - m.l - m.r) / bins.length, y = v => H - m.b - (H - m.t - m.b) * v / max;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  bins.forEach((b, i) => { const r = svgEl("rect", { x: m.l + i * bw + 1, y: y(b.n), width: Math.max(1, bw - 2), height: H - m.b - y(b.n), fill: b.b >= sp.USL ? css("--red") : css("--teal"), rx: 1.5 }, s);
+    r.addEventListener("pointerenter", e => showTip(host, tip, e, `${b.b}–${b.b + 5} d: ${b.n} reqs`)); r.addEventListener("pointerleave", () => tip.hidden = true);
+    if (bins.length <= 24 || i % 2 === 0) svgEl("text", { x: m.l + i * bw + bw / 2, y: H - 12, "text-anchor": "middle" }, s).textContent = b.b; });
+  const xu = m.l + (sp.USL - lo) / 5 * bw; if (xu >= m.l && xu <= W - m.r) { svgEl("line", { x1: xu, x2: xu, y1: m.t, y2: H - m.b, stroke: css("--amber"), "stroke-width": 2 }, s); svgEl("text", { x: xu + 4, y: m.t + 10 }, s).textContent = `USL ${sp.USL}`; }
+}
+function chartStage(host, byPhase) {
+  const W = hostW(host), phases = Object.keys(byPhase), rowH = 18 * Math.max(1, phases.length) + 12, H = STAGES.length * rowH + 20, m = { l: 92, r: 40, t: 6, b: 14 };
+  const { s, tip } = frame(host, W, H); if (!phases.length) { host.innerHTML = `<div class="empty">No stage data.</div>`; return; }
+  const cols = [css("--ink-2"), css("--teal"), css("--amber")]; const max = niceMax(Math.max(1, ...phases.flatMap(p => STAGES.map(([k]) => byPhase[p][k] || 0))));
+  const x = v => m.l + (W - m.l - m.r) * v / max;
+  STAGES.forEach(([k, lab], i) => { const y0 = m.t + i * rowH; svgEl("text", { x: m.l - 8, y: y0 + rowH / 2 + 2, "text-anchor": "end" }, s).textContent = lab;
+    phases.forEach((p, j) => { const v = byPhase[p][k]; if (!Number.isFinite(v)) return; const r = svgEl("rect", { x: m.l, y: y0 + 4 + j * 18, width: Math.max(1, x(v) - m.l), height: 14, fill: cols[j % 3], rx: 2 }, s);
+      svgEl("text", { x: x(v) + 4, y: y0 + 15 + j * 18 }, s).textContent = f1(v);
+      r.addEventListener("pointerenter", e => showTip(host, tip, e, `${p} · ${lab}: median ${f1(v)} d`)); r.addEventListener("pointerleave", () => tip.hidden = true); }); });
+  $("lgStage").innerHTML = phases.map((p, j) => `<span><i class="box" style="background:${cols[j % 3]}"></i>${esc(p)}</span>`).join("");
+}
+function chartPareto(host, items) {
+  const W = hostW(host), H = 300, m = { l: 40, r: 40, t: 14, b: 70 }; const { s, tip } = frame(host, W, H);
+  if (!items.length) { host.innerHTML = `<div class="empty">No delay reasons recorded in the filtered data.</div>`; return; }
+  const max = niceMax(items[0].n), bw = (W - m.l - m.r) / items.length, y = v => H - m.b - (H - m.t - m.b) * v / max, y2 = p => H - m.b - (H - m.t - m.b) * p;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  [0, 0.5, 0.8, 1].forEach(p => svgEl("text", { x: W - m.r + 6, y: y2(p) + 4 }, s).textContent = Math.round(p * 100) + "%");
+  svgEl("line", { x1: m.l, x2: W - m.r, y1: y2(0.8), y2: y2(0.8), stroke: css("--amber"), "stroke-dasharray": "4 3" }, s);
+  let d = ""; items.forEach((it, i) => { const cx = m.l + i * bw + bw / 2;
+    const r = svgEl("rect", { x: m.l + i * bw + bw * 0.12, y: y(it.n), width: bw * 0.76, height: H - m.b - y(it.n), fill: it.cumPrev < 0.8 ? css("--teal") : css("--ink-2"), rx: 2, opacity: it.cumPrev < 0.8 ? 1 : 0.55 }, s);
+    r.addEventListener("pointerenter", e => showTip(host, tip, e, `${it.reason}: ${it.n} (${pct(it.p)}), cum ${pct(it.cum)}`)); r.addEventListener("pointerleave", () => tip.hidden = true);
+    svgEl("text", { x: cx, y: y(it.n) - 4, "text-anchor": "middle" }, s).textContent = it.n;
+    const short = it.reason.replace(/ \/.*| delay| approval| or renege| mid-search| changed/g, "").replace("Hiring-manager feedback", "HM feedback").replace("Interview scheduling", "Scheduling").slice(0, 16);
+    const t = svgEl("text", { x: cx, y: H - m.b + 12, "text-anchor": "end", transform: `rotate(-35 ${cx} ${H - m.b + 12})` }, s); t.textContent = short;
+    d += (i ? "L" : "M") + cx + "," + y2(it.cum); });
+  svgEl("path", { d, fill: "none", stroke: css("--amber"), "stroke-width": 2 }, s);
+  items.forEach((it, i) => svgEl("circle", { cx: m.l + i * bw + bw / 2, cy: y2(it.cum), r: 3.5, fill: css("--amber") }, s));
+}
+function chartBox(host, groups) {
+  const names = Object.keys(groups).filter(k => groups[k].length >= 3); const W = hostW(host), H = 300, m = { l: 44, r: 12, t: 14, b: 30 }; const { s, tip } = frame(host, W, H);
+  if (!names.length) { host.innerHTML = `<div class="empty">Need at least 3 requisitions per phase.</div>`; return; }
+  const all = names.flatMap(k => groups[k]), max = niceMax(Math.max(...all) * 1.05), y = v => H - m.b - (H - m.t - m.b) * v / max, bw = (W - m.l - m.r) / names.length;
+  yAxis(s, m.l, W - m.r, y, max, 4); const sp = spec(); svgEl("line", { x1: m.l, x2: W - m.r, y1: y(sp.USL), y2: y(sp.USL), stroke: css("--amber"), "stroke-width": 1.5 }, s);
+  svgEl("text", { x: W - m.r - 4, y: y(sp.USL) - 4, "text-anchor": "end" }, s).textContent = `USL ${sp.USL}`;
+  const cols = [css("--ink-2"), css("--teal"), css("--amber")];
+  names.forEach((k, i) => { const v = groups[k], q1 = ST.q(v, .25), q3 = ST.q(v, .75), md = ST.median(v), iqr = q3 - q1, lo = Math.min(...v.filter(x => x >= q1 - 1.5 * iqr)), hi = Math.max(...v.filter(x => x <= q3 + 1.5 * iqr)), cx = m.l + i * bw + bw / 2, w = Math.min(90, bw * 0.45);
+    svgEl("line", { x1: cx, x2: cx, y1: y(hi), y2: y(lo), stroke: css("--ink-2") }, s);
+    const b = svgEl("rect", { x: cx - w / 2, y: y(q3), width: w, height: Math.max(1, y(q1) - y(q3)), fill: cols[i % 3], opacity: 0.85, rx: 3 }, s);
+    b.addEventListener("pointerenter", e => showTip(host, tip, e, `${k}: median ${f1(md)}, IQR ${f1(q1)}–${f1(q3)}, n=${v.length}`)); b.addEventListener("pointerleave", () => tip.hidden = true);
+    svgEl("line", { x1: cx - w / 2, x2: cx + w / 2, y1: y(md), y2: y(md), stroke: css("--panel"), "stroke-width": 2.5 }, s);
+    v.filter(x => x < lo || x > hi).forEach(x => svgEl("circle", { cx, cy: y(x), r: 2.5, fill: "none", stroke: css("--red") }, s));
+    svgEl("text", { x: cx, y: H - 10, "text-anchor": "middle" }, s).textContent = `${k} (n=${v.length})`; });
+}
+
+// ---------- analysis renderers
+function tile(k, v, s, pill) { return `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s || ""}${pill ? " " + pill : ""}</span></div>`; }
+function renderOverview(rs, sp) {
+  const xs = rs.map(r => r._t), c = xs.length ? ST.capability(xs, sp.USL) : null, acc = rs.filter(r => r.offer_accepted === "Y").length / (rs.filter(r => r.offer_accepted).length || NaN);
+  const P = (ok, txt) => `<span class="pill ${ok ? "good" : "bad"}">${txt}</span>`;
+  $("tiles").innerHTML = !c ? `<div class="empty">No requisitions match the filters.</div>` : [
+    tile("Requisitions", c.n, "filled, with TTF"),
+    tile("Median TTF", f1(c.median) + "<small style='font-size:14px'> d</small>", `IQR ${f1(c.q1)}–${f1(c.q3)}`, P(c.median <= sp.target, c.median <= sp.target ? "on target" : `target ${sp.target}`)),
+    tile(`% over ${sp.USL} days`, pct(c.pd), `${Math.round(c.dpmo).toLocaleString()} DPMO`, P(c.pd <= 0.1, c.pd <= 0.1 ? "≤ 10%" : "> 10%")),
+    tile("Z-bench", Number.isFinite(c.zbench) ? f2(c.zbench) : (c.zbench > 0 ? "∞" : "–∞"), "long-term σ from defect rate"),
+    tile("Ppk", f2(c.ad.p >= 0.05 ? c.ppkN : c.ppkP), c.ad.p >= 0.05 ? "normal method" : "percentile method", P((c.ad.p >= 0.05 ? c.ppkN : c.ppkP) >= 1, (c.ad.p >= 0.05 ? c.ppkN : c.ppkP) >= 1 ? "capable" : "not capable")),
+    tile("Offer acceptance", pct(acc), "preferred candidate accepted"),
+  ].join("");
+  const lg = `<span><i style="background:var(--slate)"></i>Centre line</span><span><i style="background:var(--red)"></i>UCL / LCL</span><span><i style="background:var(--amber)"></i>USL</span>`;
+  $("lgI").innerHTML = lg; chartIndividuals($("chI"), rs, "phase", sp, false);
+  renderBA(rs, sp);
+}
+function renderBA(rs, sp) {
+  const A = $("cmpA").value, B = $("cmpB").value, a = rs.filter(r => r.phase === A).map(r => r._t), b = rs.filter(r => r.phase === B).map(r => r._t);
+  $("baTitle").textContent = `${A} vs ${B}`;
+  if (a.length < 3 || b.length < 3 || A === B) { $("baSub").textContent = "Pick two different phases with at least 3 requisitions each in the Compare boxes."; $("baTable").innerHTML = ""; return; }
+  const ca = ST.capability(a, sp.USL), cb = ST.capability(b, sp.USL), mw = ST.mannWhitney(a, b);
+  $("baSub").innerHTML = `Mann-Whitney (${esc(A)} &gt; ${esc(B)}) p ${pf(mw.p)}: ${mw.p < 0.05 ? "<span class='pill good'>significant shift</span>" : "<span class='pill neutral'>no significant shift</span>"}`;
+  const accA = rs.filter(r => r.phase === A), accB = rs.filter(r => r.phase === B), acc = g => g.filter(r => r.offer_accepted === "Y").length / (g.filter(r => r.offer_accepted).length || NaN);
+  const line = (k, x, y, better) => `<tr><td>${k}</td><td class="num">${x}</td><td class="num">${y}</td><td>${better == null ? "" : better ? "<span class='pill good'>better</span>" : "<span class='pill bad'>worse</span>"}</td></tr>`;
+  $("baTable").innerHTML = `<table><thead><tr><th>Metric</th><th class="num">${esc(A)}</th><th class="num">${esc(B)}</th><th></th></tr></thead><tbody>
+    ${line("n", ca.n, cb.n)}${line("Median TTF", f1(ca.median), f1(cb.median), cb.median < ca.median)}${line("IQR", `${f1(ca.q1)}–${f1(ca.q3)}`, `${f1(cb.q1)}–${f1(cb.q3)}`, (cb.q3 - cb.q1) < (ca.q3 - ca.q1))}
+    ${line("Std dev", f1(ca.sd), f1(cb.sd), cb.sd < ca.sd)}${line(`% > ${sp.USL} d`, pct(ca.pd), pct(cb.pd), cb.pd < ca.pd)}${line("Z-bench", f2(ca.zbench), f2(cb.zbench), cb.zbench > ca.zbench)}
+    ${line("Ppk (percentile)", f2(ca.ppkP), f2(cb.ppkP), cb.ppkP > ca.ppkP)}${line("Offer acceptance", pct(acc(accA)), pct(acc(accB)), acc(accB) > acc(accA))}</tbody></table>`;
+}
+function renderMeasure(rs, sp) {
+  const xs = rs.map(r => r._t); chartHist($("chHist"), xs, sp);
+  if (xs.length < 8) { $("capKV").innerHTML = ""; $("capVerdict").textContent = "Need at least 8 requisitions for the normality test."; }
+  else { const c = ST.capability(xs, sp.USL), normal = c.ad.p >= 0.05;
+    const kv = [["n", c.n], ["Median", f1(c.median) + " d"], ["IQR", `${f1(c.q1)} – ${f1(c.q3)} d`], ["Mean / SD", `${f1(c.mean)} / ${f1(c.sd)} d`], ["Range", `${f1(c.min)} – ${f1(c.max)} d`],
+      ["A-D A² · p (raw)", `${f2(c.ad.A2)} · ${pf(c.ad.p)}`], ["A-D p (log TTF)", pf(c.adLog.p)], ["% > USL · DPMO", `${pct(c.pd)} · ${Math.round(c.dpmo).toLocaleString()}`], ["Z-bench", f2(c.zbench)],
+      ["Ppk (normal)", f2(c.ppkN)], ["Ppk (percentile)", f2(c.ppkP)], ["I-chart CL · UCL", `${f1(c.imr.cl)} · ${f1(c.imr.ucl)}`]];
+    $("capKV").innerHTML = kv.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+    $("capVerdict").innerHTML = normal ? `<b>Normal</b> (p ≥ 0.05): report mean, SD and normal Ppk = ${f2(c.ppkN)}.` :
+      `<b>Non-normal</b> (p ${pf(c.ad.p)}): report median and IQR; use percentile Ppk = ${f2(c.ppkP)} and non-parametric tests.${c.adLog.p >= 0.05 ? " Log(TTF) is normal, so a lognormal capability model also fits." : ""}`; }
+  const byPhase = {}; phasesPresent(rs).forEach(p => { const g = rs.filter(r => r.phase === p); byPhase[p] = Object.fromEntries(STAGES.map(([k]) => [k, ST.median(g.map(r => Number(r[k])).filter(Number.isFinite))])); });
+  chartStage($("chStage"), byPhase); chartIndividuals($("chMR"), rs, "phase", sp, true);
+}
+function paretoItems(rs) { const c = {}; rs.forEach(r => { if (r.primary_delay_reason && r.primary_delay_reason !== "No delay") c[r.primary_delay_reason] = (c[r.primary_delay_reason] || 0) + 1; });
+  const tot = Object.values(c).reduce((a, b) => a + b, 0); let cum = 0; return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([reason, n]) => { const cumPrev = cum; cum += n / tot; return { reason, n, p: n / tot, cum, cumPrev }; }); }
+function renderAnalyze(rs, sp) {
+  const A = $("cmpA").value, base = rs.filter(r => r.phase === A).length >= 10 ? rs.filter(r => r.phase === A) : rs;
+  const items = paretoItems(base); chartPareto($("chPareto"), items);
+  $("vital").innerHTML = items.filter(i => i.cumPrev < 0.8).map(i => `<div class="tile" style="margin-bottom:8px"><span class="v" style="font-size:24px">${pct(i.p)}</span><span class="s" style="color:var(--ink);font-size:13px">${esc(i.reason)}</span></div>`).join("") || `<div class="empty">No reasons recorded.</div>`;
+  const y = base.map(r => r._t), grp = k => { const g = {}; base.forEach(r => { if (r[k]) (g[r[k]] = g[r[k]] || []).push(r._t); }); return g; };
+  const tests = [];
+  [["Job level", "job_level"], ["Business unit", "business_unit"], ["Recruiter", "recruiter_id"], ["Source channel", "source_channel"]].forEach(([lab, k]) => { const kw = ST.kruskal(grp(k)); if (kw) tests.push([`${lab} (${kw.groups.length} groups)`, "Kruskal-Wallis", `H = ${f2(kw.H)}`, kw.p, kw.groups.sort((a, b) => b.median - a.median).slice(0, 2).map(g => `${esc(g.name)} ${f1(g.median)}`).join(", ") + " (slowest)"]); });
+  [["Interview rounds", "interview_rounds"], ["Recruiter open reqs", "recruiter_open_reqs"], ["Approval days", "approval_days"]].forEach(([lab, k]) => { const pr = base.filter(r => Number.isFinite(Number(r[k]))); const sr = ST.spearman(pr.map(r => Number(r[k])), pr.map(r => r._t)); if (sr) tests.push([lab, "Spearman ρ", `ρ = ${f2(sr.rho)}`, sr.p, sr.rho > 0 ? "higher X → longer TTF" : "higher X → shorter TTF"]); });
+  const t = [[0, 0], [0, 0]]; base.forEach(r => { if (r.offer_accepted === "Y" || r.offer_accepted === "N") t[r._t <= sp.USL ? 0 : 1][r.offer_accepted === "Y" ? 0 : 1]++; }); const ch = ST.chi2x2(t);
+  if (ch) tests.push([`Offer accepted × TTF ≤/> ${sp.USL} d`, "Chi-square (Yates)", `χ² = ${f2(ch.chi2)}`, ch.p, `accept ${pct(t[0][0] / (t[0][0] + t[0][1]))} vs ${pct(t[1][0] / (t[1][0] + t[1][1]))}`]);
+  $("htTable").innerHTML = `<table><thead><tr><th>X</th><th>Test</th><th class="num">Statistic</th><th class="num">p</th><th>Verdict</th><th>Detail</th></tr></thead><tbody>${tests.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num">${pf(r[3])}</td><td>${r[3] < 0.05 ? "<span class='pill good'>vital X</span>" : "<span class='pill neutral'>not significant</span>"}</td><td class="muted">${r[4]}</td></tr>`).join("")}</tbody></table>
+    <p class="muted" style="margin-top:8px">Tested on ${base.length} requisitions${base !== rs ? ` in the ${esc(A)} phase` : ""}.</p>`;
+  const rr = base.filter(r => ["interview_rounds", "recruiter_open_reqs", "approval_days"].every(k => Number.isFinite(Number(r[k])) && r[k] !== ""));
+  const m = rr.length > 10 ? ST.ols(rr.map(r => [Number(r.interview_rounds), Number(r.recruiter_open_reqs), Number(r.approval_days)]), rr.map(r => r._t), ["Interview rounds", "Recruiter open reqs", "Approval days"]) : null;
+  if (!m) { $("regTable").innerHTML = `<div class="empty">Need more than 10 complete rows.</div>`; $("regVerdict").textContent = ""; return; }
+  $("regTable").innerHTML = `<table><thead><tr><th>Term</th><th class="num">Coef</th><th class="num">SE</th><th class="num">T</th><th class="num">p</th><th class="num">VIF</th></tr></thead><tbody>${m.terms.map(t => `<tr><td>${t.term}</td><td class="num">${f2(t.coef)}</td><td class="num">${f2(t.se)}</td><td class="num">${f2(t.t)}</td><td class="num">${pf(t.p)}</td><td class="num">${t.vif == null ? "–" : f2(t.vif)}</td></tr>`).join("")}</tbody></table>`;
+  $("regVerdict").innerHTML = `R-sq <b>${pct(m.r2)}</b> · R-sq(adj) ${pct(m.r2a)} · S = ${f1(m.s)} d · n = ${m.n} · residual A-D p ${pf(m.residAD)}${m.residAD < 0.05 ? " (non-normal residuals: refit on log TTF before using p-values for decisions)" : ""}. ` +
+    m.terms.slice(1).filter(t => t.p < 0.05).map(t => `${t.term}: +${f2(t.coef)} d per unit`).join(" · ");
+}
+function renderControl(rs, sp) {
+  const groups = {}; phasesPresent(rs).forEach(p => groups[p] = rs.filter(r => r.phase === p).map(r => r._t)); chartBox($("chBox"), groups);
+  const A = $("cmpA").value, B = $("cmpB").value, a = groups[A] || [], b = groups[B] || [];
+  $("sigSub").textContent = `${A} (n=${a.length}) vs ${B} (n=${b.length}).`;
+  if (a.length < 3 || b.length < 3 || A === B) { $("sigTable").innerHTML = `<div class="empty">Pick two different phases with data in Compare.</div>`; $("sigVerdict").textContent = ""; $("finKV").innerHTML = ""; }
+  else { const mw = ST.mannWhitney(a, b), md = ST.moodMedian([a, b]), lv = ST.levene(a, b);
+    const row = (t, h, s_, p) => `<tr><td>${t}</td><td>${h}</td><td class="num">${s_}</td><td class="num">${pf(p)}</td><td>${p < 0.05 ? "<span class='pill good'>reject H₀</span>" : "<span class='pill neutral'>fail to reject</span>"}</td></tr>`;
+    $("sigTable").innerHTML = `<table><thead><tr><th>Test</th><th>H₁</th><th class="num">Statistic</th><th class="num">p</th><th></th></tr></thead><tbody>
+      ${row("Mann-Whitney", `${esc(A)} &gt; ${esc(B)}`, `U = ${Math.round(mw.U)}`, mw.p)}${row("Mood's median", "medians differ", `χ² = ${f2(md.chi2)}`, md.p)}${row("Levene (Brown-Forsythe)", "spread differs", `W = ${f2(lv.W)}`, lv.p)}</tbody></table>`;
+    const shift = ST.median(a) - ST.median(b);
+    $("sigVerdict").innerHTML = mw.p < 0.05 ? `Median moved <b>${f1(shift)} days</b> (${f1(ST.median(a))} → ${f1(ST.median(b))}); the shift is statistically significant.` : `No significant improvement yet (p ${pf(mw.p)}). Keep collecting data or revisit the solutions.`;
+    const saved = ST.mean(a) - ST.mean(b), val = saved * sp.cov * sp.hires;
+    $("finKV").innerHTML = [["Mean TTF " + A, f1(ST.mean(a)) + " d"], ["Mean TTF " + B, f1(ST.mean(b)) + " d"], ["Mean days saved / hire", f1(saved) + " d"], ["Cost of vacancy / day", "€" + sp.cov.toLocaleString()], ["Hires per year", sp.hires.toLocaleString()],
+      ["Annual cost-of-vacancy avoided", `<b>€${(val / 1e6).toFixed(2)}M</b>`], ["Status", "Notional until Finance validates the rate"]].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join(""); }
+  // Western Electric on latest phase
+  const ph = phasesPresent(rs), last = ph[ph.length - 1], g = rs.filter(r => r.phase === last), xs = g.map(r => r._t), sig = [];
+  if (xs.length >= 8) { const cl = ST.mean(xs), mrbar = ST.mean(xs.slice(1).map((v, i) => Math.abs(v - xs[i]))), s1 = mrbar / 1.128;
+    xs.forEach((v, i) => { if (Math.abs(v - cl) > 3 * s1) sig.push([g[i].req_id, "Rule 1", "beyond 3σ", f1(v)]);
+      if (i >= 7 && xs.slice(i - 7, i + 1).every(u => u > cl)) sig.push([g[i].req_id, "Rule 2", "8 in a row above centre", f1(v)]);
+      if (i >= 7 && xs.slice(i - 7, i + 1).every(u => u < cl)) sig.push([g[i].req_id, "Rule 2", "8 in a row below centre (good)", f1(v)]);
+      if (i >= 5 && xs.slice(i - 5, i + 1).every((u, k, arr) => k === 0 || u > arr[k - 1])) sig.push([g[i].req_id, "Rule 3", "6 rising in a row", f1(v)]);
+      if (i >= 2 && xs.slice(i - 2, i + 1).filter(u => u - cl > 2 * s1).length >= 2) sig.push([g[i].req_id, "Rule 4", "2 of 3 beyond +2σ", f1(v)]); }); }
+  $("oocTable").innerHTML = !last ? "" : sig.length ? `<p class="muted">Phase: ${esc(last)}</p><table><thead><tr><th>Req</th><th>Rule</th><th>Signal</th><th class="num">TTF</th></tr></thead><tbody>${sig.slice(0, 12).map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td class="num">${r[3]}</td></tr>`).join("")}</tbody></table>${sig.length > 12 ? `<p class="muted">+ ${sig.length - 12} more</p>` : ""}`
+    : `<div class="verdict"><span class="pill good">in control</span> No signals in the ${esc(last)} phase (n = ${xs.length}).</div>`;
+}
+
+// ---------- editor
+const PAGE = 40;
+const EDCOLS = COLS;
+function edRows() { const q = state.search.toLowerCase(); const ph = $("fPhase").value, bu = $("fBU").value, lv = $("fLevel").value;
+  return rows().filter(r => (!ph || r.phase === ph) && (!bu || r.business_unit === bu) && (!lv || r.job_level === lv) && (!q || [r.req_id, r.recruiter_id, r.primary_delay_reason, r.business_unit].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => String(b.req_open_date).localeCompare(String(a.req_open_date))); }
+function flagsFor(r) { const f = []; if (!Number.isFinite(ttf(r))) f.push("no TTF");
+  if (r.req_open_date && r.offer_accept_date && r.ttf_days !== "" && r.ttf_days != null) { const d = (Date.parse(r.offer_accept_date) - Date.parse(r.req_open_date)) / 864e5; if (Math.abs(d - Number(r.ttf_days)) > 1.5) f.push("dates ≠ TTF"); }
+  const st = STAGES.map(([k]) => Number(r[k])); if (st.every(Number.isFinite) && Number.isFinite(ttf(r)) && Math.abs(st.reduce((a, b) => a + b, 0) - ttf(r)) > Math.max(5, ttf(r) * 0.15)) f.push("stages ≠ TTF");
+  if (!r.phase) f.push("no phase"); return f; }
+function renderEditor() {
+  const list = edRows(), pages = Math.max(1, Math.ceil(list.length / PAGE)); state.page = Math.min(state.page, pages - 1);
+  const slice = list.slice(state.page * PAGE, state.page * PAGE + PAGE), ro = state.mode === "team" && state.readOnly;
+  $("edSub").textContent = state.mode === "team" ? (ro ? "View-only: you can read the team dataset but not change it." : "Edits save to the shared team dataset as you leave each cell.") : "Edits apply to the illustrative sample in this browser only. Switch to the team dataset to work on real data.";
+  ["bAdd", "bPaste"].forEach(id => $(id).disabled = ro); $("fileIn").disabled = ro;
+  if (!list.length) { $("edTable").innerHTML = `<div class="empty">${state.mode === "team" ? "No requisitions yet. Paste rows from the Data Collection Kit, import its CSV, or add a row." : "No rows match the filters."}</div>`; $("pager").innerHTML = ""; return; }
+  const cell = (r, c) => { const v = r[c] ?? "", dis = ro || (c === "req_id" && state.mode === "team") ? " disabled" : "", lab = `aria-label="${c} for ${esc(r.req_id)}"`;
+    if (LISTS[c]) return `<select data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}><option value=""></option>${LISTS[c].concat(LISTS[c].includes(v) || !v ? [] : [v]).map(o => `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+    if (c.endsWith("_date")) return `<input type="date" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`;
+    if (NUM.has(c)) return `<input type="number" step="0.1" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`;
+    return `<input type="text" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`; };
+  $("edTable").innerHTML = `<table><thead><tr><th></th>${EDCOLS.map(c => `<th>${c.replace(/_/g, " ")}</th>`).join("")}<th>checks</th></tr></thead><tbody>${slice.map(r => { const f = flagsFor(r);
+    return `<tr class="${f.length ? "warn" : ""}"><td><button class="btn danger" data-del="${esc(r._k)}" aria-label="Delete ${esc(r.req_id)}" ${ro ? "disabled" : ""} style="padding:2px 7px">×</button></td>${EDCOLS.map(c => `<td>${cell(r, c)}</td>`).join("")}<td class="flag">${f.join(" · ")}</td></tr>`; }).join("")}</tbody></table>`;
+  $("pager").innerHTML = `<button class="btn" id="pPrev" ${state.page === 0 ? "disabled" : ""}>Previous</button><span>Rows ${state.page * PAGE + 1}–${state.page * PAGE + slice.length} of ${list.length}</span><button class="btn" id="pNext" ${state.page >= pages - 1 ? "disabled" : ""}>Next</button>`;
+  $("pPrev").onclick = () => { state.page--; renderEditor(); }; $("pNext").onclick = () => { state.page++; renderEditor(); };
+}
+function findRow(k) { return state.mode === "team" ? state.teamRows.get(k) : state.sampleRows.find(r => r._k === k); }
+function clean(r) { const o = {}; COLS.forEach(c => { let v = r[c]; if (NUM.has(c)) v = v === "" || v == null || !Number.isFinite(Number(v)) ? "" : Number(v); o[c] = v ?? ""; }); return o; }
+const docId = id => String(id).trim().replace(/[^A-Za-z0-9_\-.~:@+]/g, "_").replace(/^\.+$/, "_").slice(0, 120) || ("row_" + Date.now());
+async function persistRow(r) { if (state.mode === "sample") { saveSampleLocal(); return; } if (!state.db || state.readOnly) return;
+  try { await state.db.collection("reqs").doc(r._k).set(clean(r)); } catch (e) { handleWriteErr(e); } }
+function handleWriteErr(e) { const c = e && e.code; if (c === "invalid_argument" && state.canWrite == null) { state.readOnly = true; toast("You have view-only access to the team dataset."); renderAll(false); }
+  else if (c === "quota_exceeded") toast("The team dataset is full. Delete old rows before adding more."); else if (c === "resource_exhausted") toast("Saving too fast. Wait a moment and try again."); else toast("Couldn't save that change. Check your connection and try again."); }
+let anTimer = null; const reAnalyze = () => { clearTimeout(anTimer); anTimer = setTimeout(() => renderAll(false, true), 400); };
+$("edTable").addEventListener("change", async e => { const el = e.target, k = el.dataset.k, c = el.dataset.c; if (!k || !c) return; const r = findRow(k); if (!r) return;
+  r[c] = NUM.has(c) ? (el.value === "" ? "" : Number(el.value)) : el.value;
+  if (state.mode === "sample" && c === "req_id") {} await persistRow(r); reAnalyze(); const tr = el.closest("tr"); const f = flagsFor(r); tr.className = f.length ? "warn" : ""; tr.lastElementChild.textContent = f.join(" · "); });
+$("edTable").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (!b) return; const r = findRow(b.dataset.del); if (!r) return;
+  confirmDlg("Delete requisition", `Delete ${r.req_id}? ${state.mode === "team" ? "This removes it from the team dataset for everyone." : ""}`, async () => {
+    if (state.mode === "team") { try { await state.db.collection("reqs").doc(r._k).delete(); } catch (err) { handleWriteErr(err); } }
+    else { state.sampleRows = state.sampleRows.filter(x => x !== r); saveSampleLocal(); renderAll(false); } toast(`Deleted ${r.req_id}`); }); });
+$("bAdd").onclick = async () => { const today = new Date().toISOString().slice(0, 10), id = "NEW-" + Date.now().toString(36).slice(-5).toUpperCase();
+  const r = { req_id: id, phase: phasesPresent(rows()).slice(-1)[0] || "Baseline", req_open_date: today, offer_accept_date: "", business_unit: "", job_level: "", source_channel: "", recruiter_id: "", recruiter_open_reqs: "", interview_rounds: "", approval_days: "", sourcing_days: "", screening_days: "", interview_days: "", offer_days: "", ttf_days: "", primary_delay_reason: "", offer_accepted: "" };
+  if (state.mode === "team") { r._k = docId(id); state.teamRows.set(r._k, r); await persistRow(r); } else { r._k = "s" + Date.now(); state.sampleRows.unshift(r); saveSampleLocal(); }
+  state.search = ""; $("search").value = ""; $("fPhase").value = ""; state.page = 0; renderAll(false); toast(`Added ${id}. Fill in the row; rows without a TTF are left out of the analysis.`); };
+$("search").addEventListener("input", e => { state.search = e.target.value; state.page = 0; renderEditor(); });
+
+// ---------- import / export
+function parseTable(text) {
+  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim()); if (!lines.length) return { rows: [], err: "Nothing to import." };
+  const sep = lines[0].includes("\t") ? "\t" : ",";
+  const split = l => { if (sep === "\t") return l.split("\t"); const out = []; let cur = "", q = false; for (let i = 0; i < l.length; i++) { const ch = l[i]; if (q) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; } else if (ch === '"') q = true; else if (ch === ",") { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
+  let head = split(lines[0]).map(h => h.trim().toLowerCase().replace(/\s+/g, "_")), start = 1;
+  if (!head.includes("req_id")) { head = COLS.slice(); start = 0; }
+  const idx = COLS.map(c => head.indexOf(c)); if (idx[0] < 0) return { rows: [], err: "Couldn't find a req_id column." };
+  const out = []; for (let i = start; i < lines.length; i++) { const v = split(lines[i]); const r = {}; COLS.forEach((c, j) => { let x = idx[j] >= 0 ? (v[idx[j]] ?? "").trim() : ""; if (c.endsWith("_date") && x) { const d = new Date(x); if (/^\d{1,2}[./-]\d{1,2}[./-]\d{4}$/.test(x)) { const [a, b, y] = x.split(/[./-]/); x = `${y}-${b.padStart(2, "0")}-${a.padStart(2, "0")}`; } else if (!isNaN(d)) x = d.toISOString().slice(0, 10); } r[c] = NUM.has(c) ? (x === "" ? "" : Number(x.replace(",", "."))) : x; });
+    if (r.req_id && !/^example/i.test(r.notes || "")) out.push(r); }
+  return { rows: out, err: out.length ? "" : "No data rows found under the header." };
+}
+async function importRows(list) {
+  if (!list.length) return;
+  if (state.mode === "sample") { list.forEach((r, i) => { const ex = state.sampleRows.find(x => x.req_id === r.req_id); if (ex) Object.assign(ex, r); else state.sampleRows.unshift({ _k: "s" + Date.now() + i, ...r }); }); saveSampleLocal(); renderAll(false); toast(`Imported ${list.length} rows into the sample (this browser only).`); return; }
+  if (!state.db || state.readOnly) { toast("You can't change the team dataset from this view."); return; }
+  state.busy = true; let done = 0, fail = 0; const queue = list.slice();
+  const worker = async () => { while (queue.length) { const r = queue.shift(), k = docId(r.req_id); for (let attempt = 0; attempt < 4; attempt++) { try { await state.db.collection("reqs").doc(k).set(clean(r)); done++; break; }
+    catch (e) { if ((e.code === "resource_exhausted" || e.code === "unavailable") && attempt < 3) await new Promise(res => setTimeout(res, 600 * (attempt + 1) + Math.random() * 400)); else { fail++; if (e.code === "invalid_argument" || e.code === "quota_exceeded") { handleWriteErr(e); queue.length = 0; } break; } } }
+    if ((done + fail) % 10 === 0) toast(`Saving… ${done + fail} of ${list.length}`, true); } };
+  await Promise.all([worker(), worker(), worker()]); state.busy = false;
+  toast(fail ? `Saved ${done} rows; ${fail} failed. Try importing the failed rows again.` : `Saved ${done} rows to the team dataset.`); renderAll(false);
+}
+$("bPaste").onclick = () => { $("pasteText").value = ""; $("pasteMsg").textContent = ""; $("dlgPaste").showModal(); };
+$("pasteCancel").onclick = () => $("dlgPaste").close();
+$("pasteGo").onclick = async () => { const p = parseTable($("pasteText").value); if (p.err) { $("pasteMsg").textContent = p.err; return; } $("dlgPaste").close(); await importRows(p.rows); };
+$("fileIn").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; const p = parseTable(await f.text()); e.target.value = ""; if (p.err) { toast(p.err); return; }
+  confirmDlg("Import CSV", `Import ${p.rows.length} rows from ${f.name}${state.mode === "team" ? " into the team dataset? Rows with an existing req_id are overwritten." : " into the sample view?"}`, () => importRows(p.rows)); });
+const toCSV = list => [COLS.join(",")].concat(list.map(r => COLS.map(c => { const v = String(r[c] ?? ""); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(","))).join("\n");
+async function save(filename, data) { if (!state.dl) { toast("Downloads aren't available in this view."); return; } try { const r = await state.dl.save({ filename, data }); if (r && r.status === "saved") toast(`Saved ${filename}`); } catch (e) { if (e && e.code !== "cancelled" && e.code !== "declined") toast("The download didn't start."); } }
+$("bExport").onclick = () => save(state.mode === "team" ? "ttf_team_dataset.csv" : "ttf_illustrative_sample.csv", toCSV(edRows()));
+$("bTemplate").onclick = () => save("ttf_requisition_template.csv", COLS.join(",") + "\nREQ-10234,Baseline,2026-03-02,2026-04-20,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R04,22,4,6,10,7,24,4,49,Hiring-manager feedback delay,Y\n");
+
+// ---------- dialogs, toast
+let cfAction = null;
+function confirmDlg(title, text, fn) { $("cfTitle").textContent = title; $("cfText").textContent = text; cfAction = fn; $("dlgConfirm").showModal(); }
+$("cfNo").onclick = () => $("dlgConfirm").close(); $("cfYes").onclick = () => { $("dlgConfirm").close(); if (cfAction) cfAction(); cfAction = null; };
+let toastT = null; function toast(t, sticky) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); if (!sticky) toastT = setTimeout(() => el.hidden = true, 3500); }
+
+// ---------- render
+function renderAll(resync, analysisOnly) {
+  if (resync) syncControls(); renderBanner();
+  const rs = filtered(), sp = spec();
+  if (state.tab === "overview") renderOverview(rs, sp); if (state.tab === "measure") renderMeasure(rs, sp); if (state.tab === "analyze") renderAnalyze(rs, sp); if (state.tab === "control") renderControl(rs, sp);
+  if (state.tab === "data" && !analysisOnly) renderEditor();
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+["cUSL", "cTarget", "cCov", "cHires"].forEach(id => $(id).addEventListener("input", onSpecInput));
+["fPhase", "fBU", "fLevel", "cmpA", "cmpB"].forEach(id => $(id).addEventListener("change", () => { state.page = 0; renderAll(false); }));
+$("srcSample").onclick = () => setMode("sample"); $("srcTeam").onclick = () => setMode("team");
+let rzT = null; window.addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(() => renderAll(false, true), 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => renderAll(false, true));
+new MutationObserver(() => renderAll(false, true)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+loadSample(); syncControls(); renderAll(true);
+
+// ---------- capabilities
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  const [db, user, dl] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
+  state.dl = dl;
+  if (user && typeof user.can === "function") { try { const c = await user.can("data.write"); state.canWrite = c; if (c === false) state.readOnly = true; } catch (e) {} }
+  if (!db) { syncControls(); renderAll(false); return; }
+  state.db = db; let first = true;
+  db.collection("reqs").onSnapshot(snap => {
+    const m = new Map(); snap.docs.forEach(d => { if (d.exists) { const v = d.data(); m.set(d.id, { _k: d.id, ...v }); } }); state.teamRows = m;
+    if (first) { first = false; if (m.size > 0 && safeLS.get("ttf-mode") !== "sample") state.mode = "team"; }
+    if (!state.busy) { syncControls(); renderAll(false, document.activeElement && document.activeElement.closest && document.activeElement.closest("#edTable")); } else $("teamCount").textContent = `(${m.size})`;
+  }, err => { toast("The team dataset stopped updating. Reload the page to reconnect."); });
+  db.doc("config/spec").onSnapshot(snap => { state.teamSpec = snap.exists ? snap.data() : null; if (state.mode === "team" && !(document.activeElement && /^c(USL|Target|Cov|Hires)$/.test(document.activeElement.id))) { syncControls(); renderAll(false, true); } }, () => {});
+  syncControls(); renderAll(false);
+})();
+</script>

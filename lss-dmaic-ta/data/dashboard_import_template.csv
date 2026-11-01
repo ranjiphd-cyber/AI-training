@@ -1,0 +1,2 @@
+req_id,phase,req_open_date,offer_accept_date,business_unit,job_level,source_channel,recruiter_id,recruiter_open_reqs,interview_rounds,approval_days,sourcing_days,screening_days,interview_days,offer_days,ttf_days,primary_delay_reason,offer_accepted
+REQ-10234,Baseline,2026-03-02,2026-04-20,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R04,22,4,6,10,7,24,4,49,Hiring-manager feedback delay,Y

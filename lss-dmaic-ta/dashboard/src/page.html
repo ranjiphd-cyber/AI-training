@@ -1,0 +1,589 @@
+<title>TTF DMAIC Control Room</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky control bar (data source + specs), tabbed DMAIC workspace below; tiles → charts → tables. */
+:root {
+  --bg: #f6f8f9; --panel: #ffffff; --ink: #1b2830; --ink-2: #4c5d66; --line: #d8e0e4; --soft: #eef2f4;
+  --slate: #1f3a4d; --teal: #0f7c80; --teal-soft: #dff0f0; --amber: #c98f00; --amber-soft: #fbefcc;
+  --red: #b4232a; --red-soft: #f8e1e2; --green: #2e7d4f; --green-soft: #def0e5;
+  --f-display: "Source Serif 4", Cambria, Georgia, serif; --f-body: "Public Sans", "Segoe UI", Arial, sans-serif; --f-mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #10181d; --panel: #172229; --ink: #e4ecef; --ink-2: #9db0b9; --line: #2b3b44; --soft: #1e2c34;
+  --slate: #cfe0e8; --teal: #3cb7b9; --teal-soft: #173a3c; --amber: #e8b53a; --amber-soft: #3a3016;
+  --red: #ef6f74; --red-soft: #3d1f22; --green: #5cc58a; --green-soft: #183326; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #10181d; --panel: #172229; --ink: #e4ecef; --ink-2: #9db0b9; --line: #2b3b44; --soft: #1e2c34;
+  --slate: #cfe0e8; --teal: #3cb7b9; --teal-soft: #173a3c; --amber: #e8b53a; --amber-soft: #3a3016;
+  --red: #ef6f74; --red-soft: #3d1f22; --green: #5cc58a; --green-soft: #183326; color-scheme: dark; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1320px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px; }
+header.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+header.top .wrap { padding-block: 12px 10px; display: flex; flex-direction: column; gap: 10px; }
+.row1 { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; justify-content: space-between; }
+h1 { font-family: var(--f-display); font-size: 22px; margin: 0; color: var(--slate); letter-spacing: -0.01em; display: flex; align-items: center; gap: 12px; }
+.phases { display: inline-flex; gap: 4px; }
+.phases span { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); display: grid; place-items: center; font: 600 11px var(--f-body); color: var(--ink-2); }
+.phases span.on { background: var(--teal); border-color: var(--teal); color: #fff; }
+.src { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.src button { border: 0; background: transparent; padding: 7px 12px; font: 500 13px var(--f-body); color: var(--ink-2); cursor: pointer; }
+.src button[aria-pressed="true"] { background: var(--slate); color: var(--panel); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: end; }
+.fld { display: flex; flex-direction: column; gap: 2px; }
+.fld label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+input, select, textarea { font: 13px var(--f-body); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; }
+input[type=number] { width: 84px; font-family: var(--f-mono); }
+input:focus-visible, select:focus-visible, button:focus-visible, textarea:focus-visible { outline: 2px solid var(--teal); outline-offset: 1px; }
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 11px; font: 500 13px var(--f-body); cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--teal); }
+.btn.primary { background: var(--teal); border-color: var(--teal); color: #fff; }
+.btn.danger { color: var(--red); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.banner { margin-top: 14px; padding: 10px 14px; border-radius: 8px; background: var(--amber-soft); color: var(--ink); font-size: 13px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.banner.team { background: var(--teal-soft); }
+.banner b { font-weight: 700; }
+nav.tabs { display: flex; gap: 2px; margin-top: 18px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+nav.tabs button { background: none; border: 0; border-bottom: 3px solid transparent; padding: 9px 14px; font: 600 14px var(--f-body); color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+nav.tabs button[aria-selected="true"] { color: var(--slate); border-bottom-color: var(--teal); }
+nav.tabs .ph { font: 700 11px var(--f-body); color: var(--teal); margin-right: 6px; }
+section.view { display: flex; flex-direction: column; gap: 18px; padding-top: 18px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tile .k { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); font-weight: 600; }
+.tile .v { font: 700 30px/1.1 var(--f-display); color: var(--slate); font-variant-numeric: tabular-nums; }
+.tile .s { font-size: 12px; color: var(--ink-2); }
+.pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font: 600 11px var(--f-body); }
+.pill.good { background: var(--green-soft); color: var(--green); } .pill.bad { background: var(--red-soft); color: var(--red); } .pill.warn { background: var(--amber-soft); color: var(--amber); } .pill.neutral { background: var(--soft); color: var(--ink-2); }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; }
+.grid2.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .grid2, .grid2.even { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.card h2 { font: 700 17px var(--f-display); color: var(--slate); margin: 0 0 4px; text-wrap: balance; }
+.card .sub { font-size: 12.5px; color: var(--ink-2); margin: 0 0 10px; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--ink-2); font: 11px var(--f-body); }
+.tip { position: absolute; pointer-events: none; background: var(--slate); color: var(--panel); font: 12px var(--f-body); padding: 5px 8px; border-radius: 5px; white-space: nowrap; transform: translate(-50%, -110%); z-index: 3; }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th { text-align: left; font: 600 11px var(--f-body); text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-2); border-bottom: 1px solid var(--line); padding: 7px 8px; white-space: nowrap; }
+td { border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+td.num, th.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+.kv { display: grid; grid-template-columns: auto auto; gap: 6px 16px; font-size: 13px; }
+.kv dt { color: var(--ink-2); } .kv dd { margin: 0; text-align: right; font-family: var(--f-mono); }
+.verdict { margin-top: 12px; padding: 9px 12px; border-radius: 8px; background: var(--soft); font-size: 13px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-2); margin-bottom: 6px; }
+.legend i { display: inline-block; width: 12px; height: 3px; vertical-align: middle; margin-right: 5px; border-radius: 2px; }
+.legend i.box { height: 10px; width: 10px; }
+/* editor */
+.edbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.edtbl { overflow: auto; max-height: 70vh; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.edtbl table { font-size: 12.5px; }
+.edtbl th { position: sticky; top: 0; background: var(--panel); z-index: 1; }
+.edtbl td { padding: 2px 3px; }
+.edtbl input, .edtbl select { border-color: transparent; background: transparent; padding: 4px 5px; width: 100%; min-width: 70px; border-radius: 4px; }
+.edtbl input:hover, .edtbl select:hover { border-color: var(--line); }
+.edtbl input[type=number] { width: 70px; }
+.edtbl input[type=date] { min-width: 120px; }
+.edtbl tr.warn td { background: var(--amber-soft); }
+.edtbl td.flag { font-size: 11px; color: var(--amber); white-space: nowrap; }
+.pager { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--ink-2); }
+dialog { border: 1px solid var(--line); border-radius: 12px; padding: 0; background: var(--panel); color: var(--ink); width: min(720px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(10, 20, 26, 0.45); }
+dialog .dh { padding: 16px 18px 6px; } dialog .db { padding: 6px 18px; } dialog .df { padding: 12px 18px 16px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+dialog h3 { margin: 0; font: 700 18px var(--f-display); color: var(--slate); }
+dialog textarea { width: 100%; min-height: 200px; font-family: var(--f-mono); font-size: 12px; box-sizing: border-box; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--slate); color: var(--panel); padding: 9px 16px; border-radius: 8px; font-size: 13px; z-index: 20; max-width: calc(100vw - 32px); }
+.muted { color: var(--ink-2); font-size: 12.5px; }
+.empty { padding: 28px; text-align: center; color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="row1">
+      <h1>TTF DMAIC Control Room <span class="phases" aria-hidden="true"><span>D</span><span class="on">M</span><span class="on">A</span><span>I</span><span class="on">C</span></span></h1>
+      <div class="src" role="group" aria-label="Data source">
+        <button id="srcSample" aria-pressed="true">Illustrative sample</button>
+        <button id="srcTeam" aria-pressed="false">Team dataset <span id="teamCount">(…)</span></button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="fld"><label for="cUSL">USL (days)</label><input id="cUSL" type="number" min="1" step="1"></div>
+      <div class="fld"><label for="cTarget">Target median</label><input id="cTarget" type="number" min="1" step="1"></div>
+      <div class="fld"><label for="cCov">Cost of vacancy €/day</label><input id="cCov" type="number" min="0" step="10"></div>
+      <div class="fld"><label for="cHires">Hires / year</label><input id="cHires" type="number" min="0" step="50"></div>
+      <div class="fld"><label for="fPhase">Phase</label><select id="fPhase"></select></div>
+      <div class="fld"><label for="fBU">Business unit</label><select id="fBU"></select></div>
+      <div class="fld"><label for="fLevel">Job level</label><select id="fLevel"></select></div>
+      <div class="fld"><label for="cmpA">Compare</label><span style="display:flex;gap:4px;align-items:center"><select id="cmpA"></select><span class="muted">vs</span><select id="cmpB"></select></span></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="banner" class="banner"></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-tab="measure" aria-selected="false"><span class="ph">M</span>Measure</button>
+    <button role="tab" data-tab="analyze" aria-selected="false"><span class="ph">A</span>Analyze</button>
+    <button role="tab" data-tab="control" aria-selected="false"><span class="ph">I·C</span>Improve &amp; Control</button>
+    <button role="tab" data-tab="data" aria-selected="false">Data editor</button>
+  </nav>
+
+  <section class="view" id="v-overview">
+    <div class="tiles" id="tiles"></div>
+    <div class="grid2">
+      <div class="card"><h2>Individuals chart, staged by phase</h2><p class="sub">TTF days in requisition-open order. Limits recalculated for each phase; red dots break a 3σ limit.</p><div class="legend" id="lgI"></div><div class="chart" id="chI"></div></div>
+      <div class="card"><h2 id="baTitle">Before vs after</h2><p class="sub" id="baSub"></p><div class="tbl" id="baTable"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-measure" hidden>
+    <div class="grid2">
+      <div class="card"><h2>TTF distribution</h2><p class="sub">5-day bins. Bars past the USL count as defects.</p><div class="legend"><span><i class="box" style="background:var(--teal)"></i>≤ USL</span><span><i class="box" style="background:var(--red)"></i>&gt; USL (defect)</span><span><i style="background:var(--amber)"></i>USL</span></div><div class="chart" id="chHist"></div></div>
+      <div class="card"><h2>Capability &amp; normality</h2><p class="sub">Anderson-Darling decides the path: normal → mean/SD/Ppk; non-normal → median/IQR and percentile Ppk.</p><dl class="kv" id="capKV"></dl><div class="verdict" id="capVerdict"></div></div>
+    </div>
+    <div class="grid2 even">
+      <div class="card"><h2>Where the days go</h2><p class="sub">Median days per stage, by phase.</p><div class="legend" id="lgStage"></div><div class="chart" id="chStage"></div></div>
+      <div class="card"><h2>Moving range chart</h2><p class="sub">Point-to-point variation; UCL = 3.267 × MR̄ per phase.</p><div class="chart" id="chMR"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-analyze" hidden>
+    <div class="grid2">
+      <div class="card"><h2>Pareto of primary delay reasons</h2><p class="sub">Trust this after the attribute-agreement MSA passes (kit tab 6).</p><div class="chart" id="chPareto"></div></div>
+      <div class="card"><h2>Vital few</h2><p class="sub">Causes inside the 80% line.</p><div id="vital"></div></div>
+    </div>
+    <div class="card"><h2>Hypothesis tests: Y = TTF days</h2><p class="sub">α = 0.05. Non-parametric tests because lead times are rarely normal. Runs on the filtered data; the comparison phase is the left “Compare” choice.</p><div class="tbl" id="htTable"></div></div>
+    <div class="card"><h2>Multiple regression</h2><p class="sub">TTF = b0 + b1·Interview rounds + b2·Recruiter open reqs + b3·Approval days. VIF &lt; 5 means no multicollinearity.</p><div class="tbl" id="regTable"></div><div class="verdict" id="regVerdict"></div></div>
+  </section>
+
+  <section class="view" id="v-control" hidden>
+    <div class="grid2 even">
+      <div class="card"><h2>Box plot by phase</h2><p class="sub">Median, IQR box, whiskers to 1.5 × IQR, dots beyond.</p><div class="chart" id="chBox"></div></div>
+      <div class="card"><h2>Significance of the shift</h2><p class="sub" id="sigSub"></p><div class="tbl" id="sigTable"></div><div class="verdict" id="sigVerdict"></div></div>
+    </div>
+    <div class="grid2 even">
+      <div class="card"><h2>Financial realisation</h2><p class="sub">Notional cost-of-vacancy avoided = mean days saved × €/day × hires/year. Edit the inputs in the top bar.</p><dl class="kv" id="finKV"></dl></div>
+      <div class="card"><h2>Out-of-control signals</h2><p class="sub">Western Electric rules on the latest phase. Each signal needs a reaction-plan entry.</p><div class="tbl" id="oocTable"></div></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-data" hidden>
+    <div class="card">
+      <h2>Requisition log</h2>
+      <p class="sub" id="edSub"></p>
+      <div class="edbar">
+        <button class="btn primary" id="bAdd">Add row</button>
+        <button class="btn" id="bPaste">Paste from Excel</button>
+        <label class="btn" for="fileIn">Import CSV</label><input type="file" id="fileIn" accept=".csv,.tsv,.txt" hidden>
+        <button class="btn" id="bExport">Download CSV</button>
+        <button class="btn" id="bTemplate">Download blank template</button>
+        <input id="search" type="search" placeholder="Search req, recruiter, reason…" style="flex:1;min-width:180px" aria-label="Search rows">
+      </div>
+      <div style="height:10px"></div>
+      <div class="edtbl" id="edTable"></div>
+      <div style="height:8px"></div>
+      <div class="pager" id="pager"></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dlgPaste">
+  <div class="dh"><h3>Paste requisition rows</h3><p class="muted">Copy rows from tab 1 of the Data Collection Kit (include the header row) and paste below. Tab- or comma-separated both work. Rows with an existing req_id are updated.</p></div>
+  <div class="db"><textarea id="pasteText" placeholder="req_id	phase	req_open_date	offer_accept_date	…"></textarea><p class="muted" id="pasteMsg"></p></div>
+  <div class="df"><button class="btn" id="pasteCancel">Cancel</button><button class="btn primary" id="pasteGo">Add rows</button></div>
+</dialog>
+<dialog id="dlgConfirm">
+  <div class="dh"><h3 id="cfTitle">Confirm</h3></div><div class="db"><p id="cfText"></p></div>
+  <div class="df"><button class="btn" id="cfNo">Cancel</button><button class="btn primary" id="cfYes">Continue</button></div>
+</dialog>
+<div class="toast" id="toast" hidden></div>
+
+<script>/*__STATS__*/</script>
+<script>
+const SAMPLE = /*__SAMPLE__*/null;
+const COLS = SAMPLE.cols;
+const NUM = new Set(["recruiter_open_reqs","interview_rounds","approval_days","sourcing_days","screening_days","interview_days","offer_days","ttf_days"]);
+const LISTS = {
+  phase: ["Baseline","Improve","Control"],
+  business_unit: ["Manufacturing","Engineering & R&D","Sales & Service","Corporate Functions","IT & Digital"],
+  job_level: ["Operator/Technician","Professional","Manager","Senior Leader"],
+  source_channel: ["Employee Referral","Job Board","LinkedIn / Direct Sourcing","Agency","Internal Mobility"],
+  primary_delay_reason: ["Hiring-manager feedback delay","Interview scheduling / panel availability","Requisition approval delay","Offer & compensation approval","Low / poor-fit applicant pool","Candidate decline or renege","JD / requirement changed mid-search","No delay"],
+  offer_accepted: ["Y","N"],
+};
+const STAGES = [["approval_days","Approval"],["sourcing_days","Sourcing"],["screening_days","Screening"],["interview_days","Interviewing"],["offer_days","Offer"]];
+const DEF_SPEC = { USL: 45, target: 35, cov: 450, hires: 1200 };
+const $ = id => document.getElementById(id);
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const f1 = x => Number.isFinite(x) ? x.toFixed(1) : "–", f2 = x => Number.isFinite(x) ? x.toFixed(2) : "–";
+const pct = x => Number.isFinite(x) ? (x * 100).toFixed(1) + "%" : "–";
+const pf = p => !Number.isFinite(p) ? "–" : p < 0.001 ? "< 0.001" : p.toFixed(3);
+const SVGNS = "http://www.w3.org/2000/svg";
+const safeLS = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+
+// ---------- state
+const state = {
+  mode: "sample", sampleRows: [], teamRows: new Map(), spec: { ...DEF_SPEC }, teamSpec: null,
+  db: null, dl: null, canWrite: null, readOnly: false, tab: "overview", page: 0, search: "", busy: false,
+};
+function rowFromArr(a) { const o = {}; COLS.forEach((c, i) => o[c] = a[i]); return o; }
+function loadSample() {
+  let saved = null; try { saved = JSON.parse(safeLS.get("ttf-sample-edits") || "null"); } catch (e) {}
+  state.sampleRows = (saved && Array.isArray(saved.rows) ? saved.rows : SAMPLE.rows.map(rowFromArr)).map((r, i) => ({ _k: "s" + i, ...r }));
+  try { const sp = JSON.parse(safeLS.get("ttf-sample-spec") || "null"); if (sp) state.spec = { ...DEF_SPEC, ...sp }; } catch (e) {}
+}
+function saveSampleLocal() { safeLS.set("ttf-sample-edits", JSON.stringify({ rows: state.sampleRows.map(({ _k, ...r }) => r) })); }
+function rows() { return state.mode === "team" ? [...state.teamRows.values()] : state.sampleRows; }
+function spec() { return state.mode === "team" ? { ...DEF_SPEC, ...(state.teamSpec || {}) } : state.spec; }
+function ttf(r) { const v = Number(r.ttf_days); if (r.ttf_days !== "" && r.ttf_days != null && Number.isFinite(v)) return v;
+  if (r.req_open_date && r.offer_accept_date) { const d = (Date.parse(r.offer_accept_date) - Date.parse(r.req_open_date)) / 864e5; return Number.isFinite(d) ? d : NaN; } return NaN; }
+function filtered() {
+  const ph = $("fPhase").value, bu = $("fBU").value, lv = $("fLevel").value;
+  return rows().filter(r => (!ph || r.phase === ph) && (!bu || r.business_unit === bu) && (!lv || r.job_level === lv))
+    .map(r => ({ ...r, _t: ttf(r) })).filter(r => Number.isFinite(r._t)).sort((a, b) => String(a.req_open_date).localeCompare(String(b.req_open_date)));
+}
+function phasesPresent(rs) { const order = ["Baseline", "Improve", "Control"]; const s = new Set(rs.map(r => r.phase)); return order.filter(p => s.has(p)).concat([...s].filter(p => !order.includes(p) && p)); }
+
+// ---------- control bar
+function fillSelect(el, opts, allLabel, keep) { const cur = keep ?? el.value; el.innerHTML = (allLabel ? `<option value="">${allLabel}</option>` : "") + opts.map(o => `<option>${esc(o)}</option>`).join(""); if ([...el.options].some(o => o.value === cur)) el.value = cur; }
+function syncControls() {
+  const sp = spec(); $("cUSL").value = sp.USL; $("cTarget").value = sp.target; $("cCov").value = sp.cov; $("cHires").value = sp.hires;
+  const rs = rows(), ph = phasesPresent(rs);
+  fillSelect($("fPhase"), ph, "All phases"); fillSelect($("fBU"), [...new Set(LISTS.business_unit.concat(rs.map(r => r.business_unit).filter(Boolean)))], "All units"); fillSelect($("fLevel"), LISTS.job_level, "All levels");
+  const a = $("cmpA").value || ph[0] || "Baseline", b = $("cmpB").value || ph.find(p => p !== a) || "Improve";
+  fillSelect($("cmpA"), ph.length ? ph : LISTS.phase, null, a); fillSelect($("cmpB"), ph.length ? ph : LISTS.phase, null, b);
+  $("srcSample").setAttribute("aria-pressed", state.mode === "sample"); $("srcTeam").setAttribute("aria-pressed", state.mode === "team");
+  $("teamCount").textContent = state.db ? `(${state.teamRows.size})` : "(unavailable)";
+}
+let specTimer = null;
+function onSpecInput() {
+  const v = k => Number($(k).value);
+  const next = { USL: v("cUSL") || DEF_SPEC.USL, target: v("cTarget") || DEF_SPEC.target, cov: Number.isFinite(v("cCov")) ? v("cCov") : DEF_SPEC.cov, hires: Number.isFinite(v("cHires")) ? v("cHires") : DEF_SPEC.hires };
+  if (state.mode === "team") { state.teamSpec = next; clearTimeout(specTimer); specTimer = setTimeout(() => writeSpec(next), 700); }
+  else { state.spec = next; safeLS.set("ttf-sample-spec", JSON.stringify(next)); }
+  renderAll(false);
+}
+async function writeSpec(next) { if (!state.db || state.readOnly) return; try { await state.db.doc("config/spec").set(next); } catch (e) { handleWriteErr(e); } }
+
+function renderBanner() {
+  const b = $("banner");
+  if (state.mode === "sample") {
+    b.className = "banner";
+    b.innerHTML = `<span><b>Illustrative sample data.</b> 270 synthetic requisitions that show how the analysis works. Your edits here stay in this browser only.</span>` +
+      (state.db ? `<button class="btn" id="goTeam">Switch to the team dataset</button>` : `<span class="muted">The shared team dataset needs you to be signed in to claude.ai.</span>`);
+    const g = $("goTeam"); if (g) g.onclick = () => setMode("team");
+  } else {
+    b.className = "banner team";
+    const n = state.teamRows.size;
+    b.innerHTML = `<span><b>Team dataset</b>: ${n} requisition${n === 1 ? "" : "s"}, shared with everyone who can open this page. Changes save automatically.${state.readOnly ? " You have view-only access." : ""}</span>` +
+      (n === 0 ? `<button class="btn primary" id="goData">Add your first requisitions</button>` : "");
+    const g = $("goData"); if (g) g.onclick = () => setTab("data");
+  }
+}
+function setMode(m) { if (m === "team" && !state.db) { toast("The team dataset isn't available in this view."); return; } state.mode = m; state.page = 0; safeLS.set("ttf-mode", m); syncControls(); renderAll(true); }
+function setTab(t) { state.tab = t; document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === t)); document.querySelectorAll("section.view").forEach(s => s.hidden = s.id !== "v-" + t); renderAll(false); }
+
+// ---------- chart primitives
+function svgEl(tag, attrs, parent) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function frame(host, W, H) { host.innerHTML = ""; const s = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, width: "100%", role: "img" }, host); const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; host.appendChild(tip); return { s, tip }; }
+function showTip(host, tip, evt, text) { const r = host.getBoundingClientRect(); let x = evt.clientX - r.left, y = evt.clientY - r.top; tip.textContent = text; tip.hidden = false; const w = tip.offsetWidth; x = Math.min(Math.max(x, w / 2 + 4), r.width - w / 2 - 4); tip.style.left = x + "px"; tip.style.top = y + "px"; }
+function niceMax(v) { if (!(v > 0)) return 1; const p = 10 ** Math.floor(Math.log10(v)), n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+function yAxis(s, x0, x1, y, max, ticks, fmt) { for (let i = 0; i <= ticks; i++) { const v = max * i / ticks, yy = y(v); svgEl("line", { x1: x0, x2: x1, y1: yy, y2: yy, stroke: css("--line"), "stroke-width": 1 }, s); svgEl("text", { x: x0 - 6, y: yy + 4, "text-anchor": "end" }, s).textContent = fmt ? fmt(v) : Math.round(v); } }
+function hostW(host) { return Math.max(320, Math.min(1000, host.clientWidth || 640)); }
+
+function chartIndividuals(host, rs, phaseKey, sp, mr) {
+  const W = hostW(host), H = mr ? 220 : 300, m = { l: 44, r: 12, t: 12, b: 26 }; const { s, tip } = frame(host, W, H);
+  if (rs.length < 2) { host.innerHTML = `<div class="empty">Need at least 2 requisitions with a TTF to draw this chart.</div>`; return; }
+  const segs = []; let cur = null; rs.forEach((r, i) => { if (!cur || cur.phase !== r[phaseKey]) { cur = { phase: r[phaseKey], from: i, vals: [] }; segs.push(cur); } cur.vals.push(r._t); });
+  segs.forEach(g => { const mrs = g.vals.slice(1).map((v, i) => Math.abs(v - g.vals[i])); g.mrbar = ST.mean(mrs); g.cl = ST.mean(g.vals); g.ucl = g.cl + 2.66 * g.mrbar; g.lcl = Math.max(0, g.cl - 2.66 * g.mrbar); g.mrs = mrs; });
+  const vals = mr ? rs.map((r, i) => { const g = segs.find(g => i >= g.from && i < g.from + g.vals.length); return i === g.from ? null : Math.abs(r._t - rs[i - 1]._t); }) : rs.map(r => r._t);
+  const max = niceMax(Math.max(...vals.filter(v => v != null), ...segs.map(g => mr ? 3.267 * g.mrbar : g.ucl), mr ? 0 : sp.USL) * 1.05);
+  const x = i => m.l + (W - m.l - m.r) * (rs.length === 1 ? 0.5 : i / (rs.length - 1)), y = v => H - m.b - (H - m.t - m.b) * v / max;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  segs.forEach((g, k) => { const xa = x(g.from), xb = x(g.from + g.vals.length - 1);
+    if (k > 0) svgEl("line", { x1: xa - 0.5 * (x(1) - x(0)), x2: xa - 0.5 * (x(1) - x(0)), y1: m.t, y2: H - m.b, stroke: css("--ink-2"), "stroke-dasharray": "3 3" }, s);
+    svgEl("text", { x: xa + 4, y: m.t + 10 }, s).textContent = g.phase || "(no phase)";
+    const lines = mr ? [[3.267 * g.mrbar, "--red"], [g.mrbar, "--slate"]] : [[g.ucl, "--red"], [g.cl, "--slate"], [g.lcl, "--red"]];
+    lines.forEach(([v, c]) => svgEl("line", { x1: xa, x2: xb, y1: y(v), y2: y(v), stroke: css(c), "stroke-width": 1.5, "stroke-dasharray": c === "--slate" ? "" : "5 3" }, s)); });
+  if (!mr) svgEl("line", { x1: m.l, x2: W - m.r, y1: y(sp.USL), y2: y(sp.USL), stroke: css("--amber"), "stroke-width": 1.5 }, s);
+  let d = ""; vals.forEach((v, i) => { if (v == null) return; d += (d && vals[i - 1] != null ? "L" : "M") + x(i).toFixed(1) + "," + y(v).toFixed(1); });
+  svgEl("path", { d, fill: "none", stroke: css("--ink-2"), "stroke-width": 1, opacity: 0.85 }, s);
+  vals.forEach((v, i) => { if (v == null) return; const g = segs.find(g => i >= g.from && i < g.from + g.vals.length); const out = mr ? v > 3.267 * g.mrbar : (v > g.ucl || v < g.lcl);
+    const c = svgEl("circle", { cx: x(i), cy: y(v), r: out ? 4 : 2.2, fill: out ? css("--red") : css("--teal") }, s);
+    c.addEventListener("pointerenter", e => showTip(host, tip, e, `${rs[i].req_id} · ${f1(v)} d${mr ? " MR" : ""}${out ? " · out of control" : ""}`)); c.addEventListener("pointerleave", () => tip.hidden = true); });
+  svgEl("text", { x: m.l, y: H - 6 }, s).textContent = "1"; svgEl("text", { x: W - m.r, y: H - 6, "text-anchor": "end" }, s).textContent = rs.length + " reqs";
+  return segs;
+}
+function chartHist(host, xs, sp) {
+  const W = hostW(host), H = 280, m = { l: 40, r: 12, t: 12, b: 30 }; const { s, tip } = frame(host, W, H);
+  if (!xs.length) { host.innerHTML = `<div class="empty">No requisitions match the filters.</div>`; return; }
+  const lo = Math.floor(Math.min(...xs) / 5) * 5, hi = Math.ceil((Math.max(...xs) + 0.001) / 5) * 5, bins = []; for (let b = lo; b < hi; b += 5) bins.push({ b, n: xs.filter(v => v >= b && v < b + 5).length });
+  const max = niceMax(Math.max(...bins.map(b => b.n))), bw = (W - m.l - m.r) / bins.length, y = v => H - m.b - (H - m.t - m.b) * v / max;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  bins.forEach((b, i) => { const r = svgEl("rect", { x: m.l + i * bw + 1, y: y(b.n), width: Math.max(1, bw - 2), height: H - m.b - y(b.n), fill: b.b >= sp.USL ? css("--red") : css("--teal"), rx: 1.5 }, s);
+    r.addEventListener("pointerenter", e => showTip(host, tip, e, `${b.b}–${b.b + 5} d: ${b.n} reqs`)); r.addEventListener("pointerleave", () => tip.hidden = true);
+    if (bins.length <= 24 || i % 2 === 0) svgEl("text", { x: m.l + i * bw + bw / 2, y: H - 12, "text-anchor": "middle" }, s).textContent = b.b; });
+  const xu = m.l + (sp.USL - lo) / 5 * bw; if (xu >= m.l && xu <= W - m.r) { svgEl("line", { x1: xu, x2: xu, y1: m.t, y2: H - m.b, stroke: css("--amber"), "stroke-width": 2 }, s); svgEl("text", { x: xu + 4, y: m.t + 10 }, s).textContent = `USL ${sp.USL}`; }
+}
+function chartStage(host, byPhase) {
+  const W = hostW(host), phases = Object.keys(byPhase), rowH = 18 * Math.max(1, phases.length) + 12, H = STAGES.length * rowH + 20, m = { l: 92, r: 40, t: 6, b: 14 };
+  const { s, tip } = frame(host, W, H); if (!phases.length) { host.innerHTML = `<div class="empty">No stage data.</div>`; return; }
+  const cols = [css("--ink-2"), css("--teal"), css("--amber")]; const max = niceMax(Math.max(1, ...phases.flatMap(p => STAGES.map(([k]) => byPhase[p][k] || 0))));
+  const x = v => m.l + (W - m.l - m.r) * v / max;
+  STAGES.forEach(([k, lab], i) => { const y0 = m.t + i * rowH; svgEl("text", { x: m.l - 8, y: y0 + rowH / 2 + 2, "text-anchor": "end" }, s).textContent = lab;
+    phases.forEach((p, j) => { const v = byPhase[p][k]; if (!Number.isFinite(v)) return; const r = svgEl("rect", { x: m.l, y: y0 + 4 + j * 18, width: Math.max(1, x(v) - m.l), height: 14, fill: cols[j % 3], rx: 2 }, s);
+      svgEl("text", { x: x(v) + 4, y: y0 + 15 + j * 18 }, s).textContent = f1(v);
+      r.addEventListener("pointerenter", e => showTip(host, tip, e, `${p} · ${lab}: median ${f1(v)} d`)); r.addEventListener("pointerleave", () => tip.hidden = true); }); });
+  $("lgStage").innerHTML = phases.map((p, j) => `<span><i class="box" style="background:${cols[j % 3]}"></i>${esc(p)}</span>`).join("");
+}
+function chartPareto(host, items) {
+  const W = hostW(host), H = 300, m = { l: 40, r: 40, t: 14, b: 70 }; const { s, tip } = frame(host, W, H);
+  if (!items.length) { host.innerHTML = `<div class="empty">No delay reasons recorded in the filtered data.</div>`; return; }
+  const max = niceMax(items[0].n), bw = (W - m.l - m.r) / items.length, y = v => H - m.b - (H - m.t - m.b) * v / max, y2 = p => H - m.b - (H - m.t - m.b) * p;
+  yAxis(s, m.l, W - m.r, y, max, 4);
+  [0, 0.5, 0.8, 1].forEach(p => svgEl("text", { x: W - m.r + 6, y: y2(p) + 4 }, s).textContent = Math.round(p * 100) + "%");
+  svgEl("line", { x1: m.l, x2: W - m.r, y1: y2(0.8), y2: y2(0.8), stroke: css("--amber"), "stroke-dasharray": "4 3" }, s);
+  let d = ""; items.forEach((it, i) => { const cx = m.l + i * bw + bw / 2;
+    const r = svgEl("rect", { x: m.l + i * bw + bw * 0.12, y: y(it.n), width: bw * 0.76, height: H - m.b - y(it.n), fill: it.cumPrev < 0.8 ? css("--teal") : css("--ink-2"), rx: 2, opacity: it.cumPrev < 0.8 ? 1 : 0.55 }, s);
+    r.addEventListener("pointerenter", e => showTip(host, tip, e, `${it.reason}: ${it.n} (${pct(it.p)}), cum ${pct(it.cum)}`)); r.addEventListener("pointerleave", () => tip.hidden = true);
+    svgEl("text", { x: cx, y: y(it.n) - 4, "text-anchor": "middle" }, s).textContent = it.n;
+    const short = it.reason.replace(/ \/.*| delay| approval| or renege| mid-search| changed/g, "").replace("Hiring-manager feedback", "HM feedback").replace("Interview scheduling", "Scheduling").slice(0, 16);
+    const t = svgEl("text", { x: cx, y: H - m.b + 12, "text-anchor": "end", transform: `rotate(-35 ${cx} ${H - m.b + 12})` }, s); t.textContent = short;
+    d += (i ? "L" : "M") + cx + "," + y2(it.cum); });
+  svgEl("path", { d, fill: "none", stroke: css("--amber"), "stroke-width": 2 }, s);
+  items.forEach((it, i) => svgEl("circle", { cx: m.l + i * bw + bw / 2, cy: y2(it.cum), r: 3.5, fill: css("--amber") }, s));
+}
+function chartBox(host, groups) {
+  const names = Object.keys(groups).filter(k => groups[k].length >= 3); const W = hostW(host), H = 300, m = { l: 44, r: 12, t: 14, b: 30 }; const { s, tip } = frame(host, W, H);
+  if (!names.length) { host.innerHTML = `<div class="empty">Need at least 3 requisitions per phase.</div>`; return; }
+  const all = names.flatMap(k => groups[k]), max = niceMax(Math.max(...all) * 1.05), y = v => H - m.b - (H - m.t - m.b) * v / max, bw = (W - m.l - m.r) / names.length;
+  yAxis(s, m.l, W - m.r, y, max, 4); const sp = spec(); svgEl("line", { x1: m.l, x2: W - m.r, y1: y(sp.USL), y2: y(sp.USL), stroke: css("--amber"), "stroke-width": 1.5 }, s);
+  svgEl("text", { x: W - m.r - 4, y: y(sp.USL) - 4, "text-anchor": "end" }, s).textContent = `USL ${sp.USL}`;
+  const cols = [css("--ink-2"), css("--teal"), css("--amber")];
+  names.forEach((k, i) => { const v = groups[k], q1 = ST.q(v, .25), q3 = ST.q(v, .75), md = ST.median(v), iqr = q3 - q1, lo = Math.min(...v.filter(x => x >= q1 - 1.5 * iqr)), hi = Math.max(...v.filter(x => x <= q3 + 1.5 * iqr)), cx = m.l + i * bw + bw / 2, w = Math.min(90, bw * 0.45);
+    svgEl("line", { x1: cx, x2: cx, y1: y(hi), y2: y(lo), stroke: css("--ink-2") }, s);
+    const b = svgEl("rect", { x: cx - w / 2, y: y(q3), width: w, height: Math.max(1, y(q1) - y(q3)), fill: cols[i % 3], opacity: 0.85, rx: 3 }, s);
+    b.addEventListener("pointerenter", e => showTip(host, tip, e, `${k}: median ${f1(md)}, IQR ${f1(q1)}–${f1(q3)}, n=${v.length}`)); b.addEventListener("pointerleave", () => tip.hidden = true);
+    svgEl("line", { x1: cx - w / 2, x2: cx + w / 2, y1: y(md), y2: y(md), stroke: css("--panel"), "stroke-width": 2.5 }, s);
+    v.filter(x => x < lo || x > hi).forEach(x => svgEl("circle", { cx, cy: y(x), r: 2.5, fill: "none", stroke: css("--red") }, s));
+    svgEl("text", { x: cx, y: H - 10, "text-anchor": "middle" }, s).textContent = `${k} (n=${v.length})`; });
+}
+
+// ---------- analysis renderers
+function tile(k, v, s, pill) { return `<div class="tile"><span class="k">${k}</span><span class="v">${v}</span><span class="s">${s || ""}${pill ? " " + pill : ""}</span></div>`; }
+function renderOverview(rs, sp) {
+  const xs = rs.map(r => r._t), c = xs.length ? ST.capability(xs, sp.USL) : null, acc = rs.filter(r => r.offer_accepted === "Y").length / (rs.filter(r => r.offer_accepted).length || NaN);
+  const P = (ok, txt) => `<span class="pill ${ok ? "good" : "bad"}">${txt}</span>`;
+  $("tiles").innerHTML = !c ? `<div class="empty">No requisitions match the filters.</div>` : [
+    tile("Requisitions", c.n, "filled, with TTF"),
+    tile("Median TTF", f1(c.median) + "<small style='font-size:14px'> d</small>", `IQR ${f1(c.q1)}–${f1(c.q3)}`, P(c.median <= sp.target, c.median <= sp.target ? "on target" : `target ${sp.target}`)),
+    tile(`% over ${sp.USL} days`, pct(c.pd), `${Math.round(c.dpmo).toLocaleString()} DPMO`, P(c.pd <= 0.1, c.pd <= 0.1 ? "≤ 10%" : "> 10%")),
+    tile("Z-bench", Number.isFinite(c.zbench) ? f2(c.zbench) : (c.zbench > 0 ? "∞" : "–∞"), "long-term σ from defect rate"),
+    tile("Ppk", f2(c.ad.p >= 0.05 ? c.ppkN : c.ppkP), c.ad.p >= 0.05 ? "normal method" : "percentile method", P((c.ad.p >= 0.05 ? c.ppkN : c.ppkP) >= 1, (c.ad.p >= 0.05 ? c.ppkN : c.ppkP) >= 1 ? "capable" : "not capable")),
+    tile("Offer acceptance", pct(acc), "preferred candidate accepted"),
+  ].join("");
+  const lg = `<span><i style="background:var(--slate)"></i>Centre line</span><span><i style="background:var(--red)"></i>UCL / LCL</span><span><i style="background:var(--amber)"></i>USL</span>`;
+  $("lgI").innerHTML = lg; chartIndividuals($("chI"), rs, "phase", sp, false);
+  renderBA(rs, sp);
+}
+function renderBA(rs, sp) {
+  const A = $("cmpA").value, B = $("cmpB").value, a = rs.filter(r => r.phase === A).map(r => r._t), b = rs.filter(r => r.phase === B).map(r => r._t);
+  $("baTitle").textContent = `${A} vs ${B}`;
+  if (a.length < 3 || b.length < 3 || A === B) { $("baSub").textContent = "Pick two different phases with at least 3 requisitions each in the Compare boxes."; $("baTable").innerHTML = ""; return; }
+  const ca = ST.capability(a, sp.USL), cb = ST.capability(b, sp.USL), mw = ST.mannWhitney(a, b);
+  $("baSub").innerHTML = `Mann-Whitney (${esc(A)} &gt; ${esc(B)}) p ${pf(mw.p)}: ${mw.p < 0.05 ? "<span class='pill good'>significant shift</span>" : "<span class='pill neutral'>no significant shift</span>"}`;
+  const accA = rs.filter(r => r.phase === A), accB = rs.filter(r => r.phase === B), acc = g => g.filter(r => r.offer_accepted === "Y").length / (g.filter(r => r.offer_accepted).length || NaN);
+  const line = (k, x, y, better) => `<tr><td>${k}</td><td class="num">${x}</td><td class="num">${y}</td><td>${better == null ? "" : better ? "<span class='pill good'>better</span>" : "<span class='pill bad'>worse</span>"}</td></tr>`;
+  $("baTable").innerHTML = `<table><thead><tr><th>Metric</th><th class="num">${esc(A)}</th><th class="num">${esc(B)}</th><th></th></tr></thead><tbody>
+    ${line("n", ca.n, cb.n)}${line("Median TTF", f1(ca.median), f1(cb.median), cb.median < ca.median)}${line("IQR", `${f1(ca.q1)}–${f1(ca.q3)}`, `${f1(cb.q1)}–${f1(cb.q3)}`, (cb.q3 - cb.q1) < (ca.q3 - ca.q1))}
+    ${line("Std dev", f1(ca.sd), f1(cb.sd), cb.sd < ca.sd)}${line(`% > ${sp.USL} d`, pct(ca.pd), pct(cb.pd), cb.pd < ca.pd)}${line("Z-bench", f2(ca.zbench), f2(cb.zbench), cb.zbench > ca.zbench)}
+    ${line("Ppk (percentile)", f2(ca.ppkP), f2(cb.ppkP), cb.ppkP > ca.ppkP)}${line("Offer acceptance", pct(acc(accA)), pct(acc(accB)), acc(accB) > acc(accA))}</tbody></table>`;
+}
+function renderMeasure(rs, sp) {
+  const xs = rs.map(r => r._t); chartHist($("chHist"), xs, sp);
+  if (xs.length < 8) { $("capKV").innerHTML = ""; $("capVerdict").textContent = "Need at least 8 requisitions for the normality test."; }
+  else { const c = ST.capability(xs, sp.USL), normal = c.ad.p >= 0.05;
+    const kv = [["n", c.n], ["Median", f1(c.median) + " d"], ["IQR", `${f1(c.q1)} – ${f1(c.q3)} d`], ["Mean / SD", `${f1(c.mean)} / ${f1(c.sd)} d`], ["Range", `${f1(c.min)} – ${f1(c.max)} d`],
+      ["A-D A² · p (raw)", `${f2(c.ad.A2)} · ${pf(c.ad.p)}`], ["A-D p (log TTF)", pf(c.adLog.p)], ["% > USL · DPMO", `${pct(c.pd)} · ${Math.round(c.dpmo).toLocaleString()}`], ["Z-bench", f2(c.zbench)],
+      ["Ppk (normal)", f2(c.ppkN)], ["Ppk (percentile)", f2(c.ppkP)], ["I-chart CL · UCL", `${f1(c.imr.cl)} · ${f1(c.imr.ucl)}`]];
+    $("capKV").innerHTML = kv.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join("");
+    $("capVerdict").innerHTML = normal ? `<b>Normal</b> (p ≥ 0.05): report mean, SD and normal Ppk = ${f2(c.ppkN)}.` :
+      `<b>Non-normal</b> (p ${pf(c.ad.p)}): report median and IQR; use percentile Ppk = ${f2(c.ppkP)} and non-parametric tests.${c.adLog.p >= 0.05 ? " Log(TTF) is normal, so a lognormal capability model also fits." : ""}`; }
+  const byPhase = {}; phasesPresent(rs).forEach(p => { const g = rs.filter(r => r.phase === p); byPhase[p] = Object.fromEntries(STAGES.map(([k]) => [k, ST.median(g.map(r => Number(r[k])).filter(Number.isFinite))])); });
+  chartStage($("chStage"), byPhase); chartIndividuals($("chMR"), rs, "phase", sp, true);
+}
+function paretoItems(rs) { const c = {}; rs.forEach(r => { if (r.primary_delay_reason && r.primary_delay_reason !== "No delay") c[r.primary_delay_reason] = (c[r.primary_delay_reason] || 0) + 1; });
+  const tot = Object.values(c).reduce((a, b) => a + b, 0); let cum = 0; return Object.entries(c).sort((a, b) => b[1] - a[1]).map(([reason, n]) => { const cumPrev = cum; cum += n / tot; return { reason, n, p: n / tot, cum, cumPrev }; }); }
+function renderAnalyze(rs, sp) {
+  const A = $("cmpA").value, base = rs.filter(r => r.phase === A).length >= 10 ? rs.filter(r => r.phase === A) : rs;
+  const items = paretoItems(base); chartPareto($("chPareto"), items);
+  $("vital").innerHTML = items.filter(i => i.cumPrev < 0.8).map(i => `<div class="tile" style="margin-bottom:8px"><span class="v" style="font-size:24px">${pct(i.p)}</span><span class="s" style="color:var(--ink);font-size:13px">${esc(i.reason)}</span></div>`).join("") || `<div class="empty">No reasons recorded.</div>`;
+  const y = base.map(r => r._t), grp = k => { const g = {}; base.forEach(r => { if (r[k]) (g[r[k]] = g[r[k]] || []).push(r._t); }); return g; };
+  const tests = [];
+  [["Job level", "job_level"], ["Business unit", "business_unit"], ["Recruiter", "recruiter_id"], ["Source channel", "source_channel"]].forEach(([lab, k]) => { const kw = ST.kruskal(grp(k)); if (kw) tests.push([`${lab} (${kw.groups.length} groups)`, "Kruskal-Wallis", `H = ${f2(kw.H)}`, kw.p, kw.groups.sort((a, b) => b.median - a.median).slice(0, 2).map(g => `${esc(g.name)} ${f1(g.median)}`).join(", ") + " (slowest)"]); });
+  [["Interview rounds", "interview_rounds"], ["Recruiter open reqs", "recruiter_open_reqs"], ["Approval days", "approval_days"]].forEach(([lab, k]) => { const pr = base.filter(r => Number.isFinite(Number(r[k]))); const sr = ST.spearman(pr.map(r => Number(r[k])), pr.map(r => r._t)); if (sr) tests.push([lab, "Spearman ρ", `ρ = ${f2(sr.rho)}`, sr.p, sr.rho > 0 ? "higher X → longer TTF" : "higher X → shorter TTF"]); });
+  const t = [[0, 0], [0, 0]]; base.forEach(r => { if (r.offer_accepted === "Y" || r.offer_accepted === "N") t[r._t <= sp.USL ? 0 : 1][r.offer_accepted === "Y" ? 0 : 1]++; }); const ch = ST.chi2x2(t);
+  if (ch) tests.push([`Offer accepted × TTF ≤/> ${sp.USL} d`, "Chi-square (Yates)", `χ² = ${f2(ch.chi2)}`, ch.p, `accept ${pct(t[0][0] / (t[0][0] + t[0][1]))} vs ${pct(t[1][0] / (t[1][0] + t[1][1]))}`]);
+  $("htTable").innerHTML = `<table><thead><tr><th>X</th><th>Test</th><th class="num">Statistic</th><th class="num">p</th><th>Verdict</th><th>Detail</th></tr></thead><tbody>${tests.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num">${pf(r[3])}</td><td>${r[3] < 0.05 ? "<span class='pill good'>vital X</span>" : "<span class='pill neutral'>not significant</span>"}</td><td class="muted">${r[4]}</td></tr>`).join("")}</tbody></table>
+    <p class="muted" style="margin-top:8px">Tested on ${base.length} requisitions${base !== rs ? ` in the ${esc(A)} phase` : ""}.</p>`;
+  const rr = base.filter(r => ["interview_rounds", "recruiter_open_reqs", "approval_days"].every(k => Number.isFinite(Number(r[k])) && r[k] !== ""));
+  const m = rr.length > 10 ? ST.ols(rr.map(r => [Number(r.interview_rounds), Number(r.recruiter_open_reqs), Number(r.approval_days)]), rr.map(r => r._t), ["Interview rounds", "Recruiter open reqs", "Approval days"]) : null;
+  if (!m) { $("regTable").innerHTML = `<div class="empty">Need more than 10 complete rows.</div>`; $("regVerdict").textContent = ""; return; }
+  $("regTable").innerHTML = `<table><thead><tr><th>Term</th><th class="num">Coef</th><th class="num">SE</th><th class="num">T</th><th class="num">p</th><th class="num">VIF</th></tr></thead><tbody>${m.terms.map(t => `<tr><td>${t.term}</td><td class="num">${f2(t.coef)}</td><td class="num">${f2(t.se)}</td><td class="num">${f2(t.t)}</td><td class="num">${pf(t.p)}</td><td class="num">${t.vif == null ? "–" : f2(t.vif)}</td></tr>`).join("")}</tbody></table>`;
+  $("regVerdict").innerHTML = `R-sq <b>${pct(m.r2)}</b> · R-sq(adj) ${pct(m.r2a)} · S = ${f1(m.s)} d · n = ${m.n} · residual A-D p ${pf(m.residAD)}${m.residAD < 0.05 ? " (non-normal residuals: refit on log TTF before using p-values for decisions)" : ""}. ` +
+    m.terms.slice(1).filter(t => t.p < 0.05).map(t => `${t.term}: +${f2(t.coef)} d per unit`).join(" · ");
+}
+function renderControl(rs, sp) {
+  const groups = {}; phasesPresent(rs).forEach(p => groups[p] = rs.filter(r => r.phase === p).map(r => r._t)); chartBox($("chBox"), groups);
+  const A = $("cmpA").value, B = $("cmpB").value, a = groups[A] || [], b = groups[B] || [];
+  $("sigSub").textContent = `${A} (n=${a.length}) vs ${B} (n=${b.length}).`;
+  if (a.length < 3 || b.length < 3 || A === B) { $("sigTable").innerHTML = `<div class="empty">Pick two different phases with data in Compare.</div>`; $("sigVerdict").textContent = ""; $("finKV").innerHTML = ""; }
+  else { const mw = ST.mannWhitney(a, b), md = ST.moodMedian([a, b]), lv = ST.levene(a, b);
+    const row = (t, h, s_, p) => `<tr><td>${t}</td><td>${h}</td><td class="num">${s_}</td><td class="num">${pf(p)}</td><td>${p < 0.05 ? "<span class='pill good'>reject H₀</span>" : "<span class='pill neutral'>fail to reject</span>"}</td></tr>`;
+    $("sigTable").innerHTML = `<table><thead><tr><th>Test</th><th>H₁</th><th class="num">Statistic</th><th class="num">p</th><th></th></tr></thead><tbody>
+      ${row("Mann-Whitney", `${esc(A)} &gt; ${esc(B)}`, `U = ${Math.round(mw.U)}`, mw.p)}${row("Mood's median", "medians differ", `χ² = ${f2(md.chi2)}`, md.p)}${row("Levene (Brown-Forsythe)", "spread differs", `W = ${f2(lv.W)}`, lv.p)}</tbody></table>`;
+    const shift = ST.median(a) - ST.median(b);
+    $("sigVerdict").innerHTML = mw.p < 0.05 ? `Median moved <b>${f1(shift)} days</b> (${f1(ST.median(a))} → ${f1(ST.median(b))}); the shift is statistically significant.` : `No significant improvement yet (p ${pf(mw.p)}). Keep collecting data or revisit the solutions.`;
+    const saved = ST.mean(a) - ST.mean(b), val = saved * sp.cov * sp.hires;
+    $("finKV").innerHTML = [["Mean TTF " + A, f1(ST.mean(a)) + " d"], ["Mean TTF " + B, f1(ST.mean(b)) + " d"], ["Mean days saved / hire", f1(saved) + " d"], ["Cost of vacancy / day", "€" + sp.cov.toLocaleString()], ["Hires per year", sp.hires.toLocaleString()],
+      ["Annual cost-of-vacancy avoided", `<b>€${(val / 1e6).toFixed(2)}M</b>`], ["Status", "Notional until Finance validates the rate"]].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join(""); }
+  // Western Electric on latest phase
+  const ph = phasesPresent(rs), last = ph[ph.length - 1], g = rs.filter(r => r.phase === last), xs = g.map(r => r._t), sig = [];
+  if (xs.length >= 8) { const cl = ST.mean(xs), mrbar = ST.mean(xs.slice(1).map((v, i) => Math.abs(v - xs[i]))), s1 = mrbar / 1.128;
+    xs.forEach((v, i) => { if (Math.abs(v - cl) > 3 * s1) sig.push([g[i].req_id, "Rule 1", "beyond 3σ", f1(v)]);
+      if (i >= 7 && xs.slice(i - 7, i + 1).every(u => u > cl)) sig.push([g[i].req_id, "Rule 2", "8 in a row above centre", f1(v)]);
+      if (i >= 7 && xs.slice(i - 7, i + 1).every(u => u < cl)) sig.push([g[i].req_id, "Rule 2", "8 in a row below centre (good)", f1(v)]);
+      if (i >= 5 && xs.slice(i - 5, i + 1).every((u, k, arr) => k === 0 || u > arr[k - 1])) sig.push([g[i].req_id, "Rule 3", "6 rising in a row", f1(v)]);
+      if (i >= 2 && xs.slice(i - 2, i + 1).filter(u => u - cl > 2 * s1).length >= 2) sig.push([g[i].req_id, "Rule 4", "2 of 3 beyond +2σ", f1(v)]); }); }
+  $("oocTable").innerHTML = !last ? "" : sig.length ? `<p class="muted">Phase: ${esc(last)}</p><table><thead><tr><th>Req</th><th>Rule</th><th>Signal</th><th class="num">TTF</th></tr></thead><tbody>${sig.slice(0, 12).map(r => `<tr><td>${esc(r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td class="num">${r[3]}</td></tr>`).join("")}</tbody></table>${sig.length > 12 ? `<p class="muted">+ ${sig.length - 12} more</p>` : ""}`
+    : `<div class="verdict"><span class="pill good">in control</span> No signals in the ${esc(last)} phase (n = ${xs.length}).</div>`;
+}
+
+// ---------- editor
+const PAGE = 40;
+const EDCOLS = COLS;
+function edRows() { const q = state.search.toLowerCase(); const ph = $("fPhase").value, bu = $("fBU").value, lv = $("fLevel").value;
+  return rows().filter(r => (!ph || r.phase === ph) && (!bu || r.business_unit === bu) && (!lv || r.job_level === lv) && (!q || [r.req_id, r.recruiter_id, r.primary_delay_reason, r.business_unit].join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => String(b.req_open_date).localeCompare(String(a.req_open_date))); }
+function flagsFor(r) { const f = []; if (!Number.isFinite(ttf(r))) f.push("no TTF");
+  if (r.req_open_date && r.offer_accept_date && r.ttf_days !== "" && r.ttf_days != null) { const d = (Date.parse(r.offer_accept_date) - Date.parse(r.req_open_date)) / 864e5; if (Math.abs(d - Number(r.ttf_days)) > 1.5) f.push("dates ≠ TTF"); }
+  const st = STAGES.map(([k]) => Number(r[k])); if (st.every(Number.isFinite) && Number.isFinite(ttf(r)) && Math.abs(st.reduce((a, b) => a + b, 0) - ttf(r)) > Math.max(5, ttf(r) * 0.15)) f.push("stages ≠ TTF");
+  if (!r.phase) f.push("no phase"); return f; }
+function renderEditor() {
+  const list = edRows(), pages = Math.max(1, Math.ceil(list.length / PAGE)); state.page = Math.min(state.page, pages - 1);
+  const slice = list.slice(state.page * PAGE, state.page * PAGE + PAGE), ro = state.mode === "team" && state.readOnly;
+  $("edSub").textContent = state.mode === "team" ? (ro ? "View-only: you can read the team dataset but not change it." : "Edits save to the shared team dataset as you leave each cell.") : "Edits apply to the illustrative sample in this browser only. Switch to the team dataset to work on real data.";
+  ["bAdd", "bPaste"].forEach(id => $(id).disabled = ro); $("fileIn").disabled = ro;
+  if (!list.length) { $("edTable").innerHTML = `<div class="empty">${state.mode === "team" ? "No requisitions yet. Paste rows from the Data Collection Kit, import its CSV, or add a row." : "No rows match the filters."}</div>`; $("pager").innerHTML = ""; return; }
+  const cell = (r, c) => { const v = r[c] ?? "", dis = ro || (c === "req_id" && state.mode === "team") ? " disabled" : "", lab = `aria-label="${c} for ${esc(r.req_id)}"`;
+    if (LISTS[c]) return `<select data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}><option value=""></option>${LISTS[c].concat(LISTS[c].includes(v) || !v ? [] : [v]).map(o => `<option${o === v ? " selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+    if (c.endsWith("_date")) return `<input type="date" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`;
+    if (NUM.has(c)) return `<input type="number" step="0.1" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`;
+    return `<input type="text" value="${esc(v)}" data-k="${esc(r._k)}" data-c="${c}" ${lab}${dis}>`; };
+  $("edTable").innerHTML = `<table><thead><tr><th></th>${EDCOLS.map(c => `<th>${c.replace(/_/g, " ")}</th>`).join("")}<th>checks</th></tr></thead><tbody>${slice.map(r => { const f = flagsFor(r);
+    return `<tr class="${f.length ? "warn" : ""}"><td><button class="btn danger" data-del="${esc(r._k)}" aria-label="Delete ${esc(r.req_id)}" ${ro ? "disabled" : ""} style="padding:2px 7px">×</button></td>${EDCOLS.map(c => `<td>${cell(r, c)}</td>`).join("")}<td class="flag">${f.join(" · ")}</td></tr>`; }).join("")}</tbody></table>`;
+  $("pager").innerHTML = `<button class="btn" id="pPrev" ${state.page === 0 ? "disabled" : ""}>Previous</button><span>Rows ${state.page * PAGE + 1}–${state.page * PAGE + slice.length} of ${list.length}</span><button class="btn" id="pNext" ${state.page >= pages - 1 ? "disabled" : ""}>Next</button>`;
+  $("pPrev").onclick = () => { state.page--; renderEditor(); }; $("pNext").onclick = () => { state.page++; renderEditor(); };
+}
+function findRow(k) { return state.mode === "team" ? state.teamRows.get(k) : state.sampleRows.find(r => r._k === k); }
+function clean(r) { const o = {}; COLS.forEach(c => { let v = r[c]; if (NUM.has(c)) v = v === "" || v == null || !Number.isFinite(Number(v)) ? "" : Number(v); o[c] = v ?? ""; }); return o; }
+const docId = id => String(id).trim().replace(/[^A-Za-z0-9_\-.~:@+]/g, "_").replace(/^\.+$/, "_").slice(0, 120) || ("row_" + Date.now());
+async function persistRow(r) { if (state.mode === "sample") { saveSampleLocal(); return; } if (!state.db || state.readOnly) return;
+  try { await state.db.collection("reqs").doc(r._k).set(clean(r)); } catch (e) { handleWriteErr(e); } }
+function handleWriteErr(e) { const c = e && e.code; if (c === "invalid_argument" && state.canWrite == null) { state.readOnly = true; toast("You have view-only access to the team dataset."); renderAll(false); }
+  else if (c === "quota_exceeded") toast("The team dataset is full. Delete old rows before adding more."); else if (c === "resource_exhausted") toast("Saving too fast. Wait a moment and try again."); else toast("Couldn't save that change. Check your connection and try again."); }
+let anTimer = null; const reAnalyze = () => { clearTimeout(anTimer); anTimer = setTimeout(() => renderAll(false, true), 400); };
+$("edTable").addEventListener("change", async e => { const el = e.target, k = el.dataset.k, c = el.dataset.c; if (!k || !c) return; const r = findRow(k); if (!r) return;
+  r[c] = NUM.has(c) ? (el.value === "" ? "" : Number(el.value)) : el.value;
+  if (state.mode === "sample" && c === "req_id") {} await persistRow(r); reAnalyze(); const tr = el.closest("tr"); const f = flagsFor(r); tr.className = f.length ? "warn" : ""; tr.lastElementChild.textContent = f.join(" · "); });
+$("edTable").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (!b) return; const r = findRow(b.dataset.del); if (!r) return;
+  confirmDlg("Delete requisition", `Delete ${r.req_id}? ${state.mode === "team" ? "This removes it from the team dataset for everyone." : ""}`, async () => {
+    if (state.mode === "team") { try { await state.db.collection("reqs").doc(r._k).delete(); } catch (err) { handleWriteErr(err); } }
+    else { state.sampleRows = state.sampleRows.filter(x => x !== r); saveSampleLocal(); renderAll(false); } toast(`Deleted ${r.req_id}`); }); });
+$("bAdd").onclick = async () => { const today = new Date().toISOString().slice(0, 10), id = "NEW-" + Date.now().toString(36).slice(-5).toUpperCase();
+  const r = { req_id: id, phase: phasesPresent(rows()).slice(-1)[0] || "Baseline", req_open_date: today, offer_accept_date: "", business_unit: "", job_level: "", source_channel: "", recruiter_id: "", recruiter_open_reqs: "", interview_rounds: "", approval_days: "", sourcing_days: "", screening_days: "", interview_days: "", offer_days: "", ttf_days: "", primary_delay_reason: "", offer_accepted: "" };
+  if (state.mode === "team") { r._k = docId(id); state.teamRows.set(r._k, r); await persistRow(r); } else { r._k = "s" + Date.now(); state.sampleRows.unshift(r); saveSampleLocal(); }
+  state.search = ""; $("search").value = ""; $("fPhase").value = ""; state.page = 0; renderAll(false); toast(`Added ${id}. Fill in the row; rows without a TTF are left out of the analysis.`); };
+$("search").addEventListener("input", e => { state.search = e.target.value; state.page = 0; renderEditor(); });
+
+// ---------- import / export
+function parseTable(text) {
+  const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim()); if (!lines.length) return { rows: [], err: "Nothing to import." };
+  const sep = lines[0].includes("\t") ? "\t" : ",";
+  const split = l => { if (sep === "\t") return l.split("\t"); const out = []; let cur = "", q = false; for (let i = 0; i < l.length; i++) { const ch = l[i]; if (q) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') q = false; else cur += ch; } else if (ch === '"') q = true; else if (ch === ",") { out.push(cur); cur = ""; } else cur += ch; } out.push(cur); return out; };
+  let head = split(lines[0]).map(h => h.trim().toLowerCase().replace(/\s+/g, "_")), start = 1;
+  if (!head.includes("req_id")) { head = COLS.slice(); start = 0; }
+  const idx = COLS.map(c => head.indexOf(c)); if (idx[0] < 0) return { rows: [], err: "Couldn't find a req_id column." };
+  const out = []; for (let i = start; i < lines.length; i++) { const v = split(lines[i]); const r = {}; COLS.forEach((c, j) => { let x = idx[j] >= 0 ? (v[idx[j]] ?? "").trim() : ""; if (c.endsWith("_date") && x) { const d = new Date(x); if (/^\d{1,2}[./-]\d{1,2}[./-]\d{4}$/.test(x)) { const [a, b, y] = x.split(/[./-]/); x = `${y}-${b.padStart(2, "0")}-${a.padStart(2, "0")}`; } else if (!isNaN(d)) x = d.toISOString().slice(0, 10); } r[c] = NUM.has(c) ? (x === "" ? "" : Number(x.replace(",", "."))) : x; });
+    if (r.req_id && !/^example/i.test(r.notes || "")) out.push(r); }
+  return { rows: out, err: out.length ? "" : "No data rows found under the header." };
+}
+async function importRows(list) {
+  if (!list.length) return;
+  if (state.mode === "sample") { list.forEach((r, i) => { const ex = state.sampleRows.find(x => x.req_id === r.req_id); if (ex) Object.assign(ex, r); else state.sampleRows.unshift({ _k: "s" + Date.now() + i, ...r }); }); saveSampleLocal(); renderAll(false); toast(`Imported ${list.length} rows into the sample (this browser only).`); return; }
+  if (!state.db || state.readOnly) { toast("You can't change the team dataset from this view."); return; }
+  state.busy = true; let done = 0, fail = 0; const queue = list.slice();
+  const worker = async () => { while (queue.length) { const r = queue.shift(), k = docId(r.req_id); for (let attempt = 0; attempt < 4; attempt++) { try { await state.db.collection("reqs").doc(k).set(clean(r)); done++; break; }
+    catch (e) { if ((e.code === "resource_exhausted" || e.code === "unavailable") && attempt < 3) await new Promise(res => setTimeout(res, 600 * (attempt + 1) + Math.random() * 400)); else { fail++; if (e.code === "invalid_argument" || e.code === "quota_exceeded") { handleWriteErr(e); queue.length = 0; } break; } } }
+    if ((done + fail) % 10 === 0) toast(`Saving… ${done + fail} of ${list.length}`, true); } };
+  await Promise.all([worker(), worker(), worker()]); state.busy = false;
+  toast(fail ? `Saved ${done} rows; ${fail} failed. Try importing the failed rows again.` : `Saved ${done} rows to the team dataset.`); renderAll(false);
+}
+$("bPaste").onclick = () => { $("pasteText").value = ""; $("pasteMsg").textContent = ""; $("dlgPaste").showModal(); };
+$("pasteCancel").onclick = () => $("dlgPaste").close();
+$("pasteGo").onclick = async () => { const p = parseTable($("pasteText").value); if (p.err) { $("pasteMsg").textContent = p.err; return; } $("dlgPaste").close(); await importRows(p.rows); };
+$("fileIn").addEventListener("change", async e => { const f = e.target.files[0]; if (!f) return; const p = parseTable(await f.text()); e.target.value = ""; if (p.err) { toast(p.err); return; }
+  confirmDlg("Import CSV", `Import ${p.rows.length} rows from ${f.name}${state.mode === "team" ? " into the team dataset? Rows with an existing req_id are overwritten." : " into the sample view?"}`, () => importRows(p.rows)); });
+const toCSV = list => [COLS.join(",")].concat(list.map(r => COLS.map(c => { const v = String(r[c] ?? ""); return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }).join(","))).join("\n");
+async function save(filename, data) { if (!state.dl) { toast("Downloads aren't available in this view."); return; } try { const r = await state.dl.save({ filename, data }); if (r && r.status === "saved") toast(`Saved ${filename}`); } catch (e) { if (e && e.code !== "cancelled" && e.code !== "declined") toast("The download didn't start."); } }
+$("bExport").onclick = () => save(state.mode === "team" ? "ttf_team_dataset.csv" : "ttf_illustrative_sample.csv", toCSV(edRows()));
+$("bTemplate").onclick = () => save("ttf_requisition_template.csv", COLS.join(",") + "\nREQ-10234,Baseline,2026-03-02,2026-04-20,Engineering & R&D,Professional,LinkedIn / Direct Sourcing,R04,22,4,6,10,7,24,4,49,Hiring-manager feedback delay,Y\n");
+
+// ---------- dialogs, toast
+let cfAction = null;
+function confirmDlg(title, text, fn) { $("cfTitle").textContent = title; $("cfText").textContent = text; cfAction = fn; $("dlgConfirm").showModal(); }
+$("cfNo").onclick = () => $("dlgConfirm").close(); $("cfYes").onclick = () => { $("dlgConfirm").close(); if (cfAction) cfAction(); cfAction = null; };
+let toastT = null; function toast(t, sticky) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toastT); if (!sticky) toastT = setTimeout(() => el.hidden = true, 3500); }
+
+// ---------- render
+function renderAll(resync, analysisOnly) {
+  if (resync) syncControls(); renderBanner();
+  const rs = filtered(), sp = spec();
+  if (state.tab === "overview") renderOverview(rs, sp); if (state.tab === "measure") renderMeasure(rs, sp); if (state.tab === "analyze") renderAnalyze(rs, sp); if (state.tab === "control") renderControl(rs, sp);
+  if (state.tab === "data" && !analysisOnly) renderEditor();
+}
+document.querySelectorAll("nav.tabs button").forEach(b => b.onclick = () => setTab(b.dataset.tab));
+["cUSL", "cTarget", "cCov", "cHires"].forEach(id => $(id).addEventListener("input", onSpecInput));
+["fPhase", "fBU", "fLevel", "cmpA", "cmpB"].forEach(id => $(id).addEventListener("change", () => { state.page = 0; renderAll(false); }));
+$("srcSample").onclick = () => setMode("sample"); $("srcTeam").onclick = () => setMode("team");
+let rzT = null; window.addEventListener("resize", () => { clearTimeout(rzT); rzT = setTimeout(() => renderAll(false, true), 200); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => renderAll(false, true));
+new MutationObserver(() => renderAll(false, true)).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+loadSample(); syncControls(); renderAll(true);
+
+// ---------- capabilities
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  const [db, user, dl] = await Promise.all([claude.use("db"), claude.use("user"), claude.use("downloads")]);
+  state.dl = dl;
+  if (user && typeof user.can === "function") { try { const c = await user.can("data.write"); state.canWrite = c; if (c === false) state.readOnly = true; } catch (e) {} }
+  if (!db) { syncControls(); renderAll(false); return; }
+  state.db = db; let first = true;
+  db.collection("reqs").onSnapshot(snap => {
+    const m = new Map(); snap.docs.forEach(d => { if (d.exists) { const v = d.data(); m.set(d.id, { _k: d.id, ...v }); } }); state.teamRows = m;
+    if (first) { first = false; if (m.size > 0 && safeLS.get("ttf-mode") !== "sample") state.mode = "team"; }
+    if (!state.busy) { syncControls(); renderAll(false, document.activeElement && document.activeElement.closest && document.activeElement.closest("#edTable")); } else $("teamCount").textContent = `(${m.size})`;
+  }, err => { toast("The team dataset stopped updating. Reload the page to reconnect."); });
+  db.doc("config/spec").onSnapshot(snap => { state.teamSpec = snap.exists ? snap.data() : null; if (state.mode === "team" && !(document.activeElement && /^c(USL|Target|Cov|Hires)$/.test(document.activeElement.id))) { syncControls(); renderAll(false, true); } }, () => {});
+  syncControls(); renderAll(false);
+})();
+</script>
