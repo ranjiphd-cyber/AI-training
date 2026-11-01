@@ -118,11 +118,12 @@ const chartBase = {
   const s = slide(`${B.outcome_label} is ${f1(K.K1.current)} ${B.unit} at the median, and one case in ten takes over ${f1(K.K3.current)} ${B.unit}`, "Executive summary", B.config.dmaic_stage);
   stat(s, f1(K.K1.current), B.unit, `Median ${B.outcome_label.toLowerCase()}\n95% CI ${K.K1.ci95.join("–")} · n = ${K.K1.n}`, 0.5, 1.35, 2.1);
   stat(s, f1(K.K3.current), B.unit, `90th percentile\nn = ${K.K3.n}`, 2.75, 1.35, 2.0, true);
-  stat(s, f1(K.K4 && K.K4.current), "%", `Offer acceptance rate\nn = ${K.K4 ? K.K4.n : 0} mature offers`, 4.9, 1.35, 2.2);
+  const third = K.K4 || B.kpis.find((k) => k.kind === "Process");
+  if (third) stat(s, f1(third.current), third.unit, `${third.name}\nn = ${third.n}`, 4.9, 1.35, 2.2);
   s.addText("What this means", { x: 7.3, y: 1.35, w: 2.2, h: 0.3, fontSize: 11, bold: true, color: INK, margin: 0, isTextBox: true });
   s.addText([
     { text: "The baseline is measured. No target has been approved yet.", options: { bullet: true, breakLine: true } },
-    { text: "Most of the delay sits before the shortlist.", options: { bullet: true, breakLine: true } },
+    { text: B.charts.pareto_longest_stage[0] ? `Most delay sits in '${B.charts.pareto_longest_stage[0].category}'.` : "Stage-level delay not yet measured.", options: { bullet: true, breakLine: true } },
     { text: "Causes are still hypotheses.", options: { bullet: true } }],
     { x: 7.3, y: 1.68, w: 2.2, h: 1.3, fontSize: 10.5, color: INK, margin: 0, paraSpaceAfter: 4, valign: "top", isTextBox: true });
   const dec = (B.registers.approvals || []).filter((a) => a.status !== "Approved");
@@ -130,7 +131,7 @@ const chartBase = {
   table(s, [[th("ID"), th("Decision / approval"), th("Approver"), th("Status")],
     ...dec.slice(0, 4).map((a) => [td(a.id), td(a.item), td(a.approver_role), td(a.status, { fill: { color: a.status.startsWith("Requires") ? CORAL : PEACH }, bold: true })])],
     { y: 3.32, colW: [0.8, 4.6, 1.6, 2.0], rowH: 0.3 });
-  source(s, `Source: ${K.K1.source}, ${K.K1.period}; completed cases only for median and P90. Cancelled requisitions excluded.`);
+  source(s, `Source: ${K.K1.source}, ${K.K1.period}; completed cases only for median and P90. ${B.data_quality.exclusions.filter((e) => /scope/.test(e.rule)).map((e) => e.rule + " (" + e.rows + ")").join("; ")}`);
   s.addNotes("Open with the decision. The baseline is solid enough to agree the CTQ requirement. It is not yet solid enough for a savings case.");
 }
 
@@ -147,7 +148,7 @@ const chartBase = {
   s.addShape(pres.shapes.LINE, { x: 0.5, y: 3.35, w: 9, h: 0, line: { color: RULE, width: 0.75 } });
   s.addText([{ text: "In scope  ", options: { bold: true } }, { text: B.config.scope || "TBC" }], { x: 0.5, y: 3.5, w: 4.3, h: 0.9, fontSize: 10.5, color: INK, margin: 0, valign: "top", isTextBox: true });
   s.addText([{ text: "Out of scope  ", options: { bold: true } }, { text: B.config.exclusions || "TBC" }], { x: 5.2, y: 3.5, w: 4.3, h: 0.9, fontSize: 10.5, color: INK, margin: 0, valign: "top", isTextBox: true });
-  source(s, "VOC and VOB not yet captured. The requirement must come from hiring managers and candidates, not from the baseline.");
+  source(s, "VOC and VOB not yet captured. The requirement must come from customers, not from the baseline.");
 }
 
 // ---------- 4 CTQs
@@ -163,8 +164,8 @@ const chartBase = {
 
 // ---------- 5 Process map
 {
-  const s = slide("The open-to-shortlist stage is the longest stage in almost half of requisitions", "Measure", "Measure");
   const st = B.charts.stage_stats, names = B.process_stages, worst = B.charts.pareto_longest_stage[0];
+  const s = slide(`'${worst.category}' is the longest stage in ${f1(worst.pct)}% of cases`, "Measure", "Measure");
   const w = 2.75, gap = 0.37;
   names.forEach((n, i) => {
     const x = 0.5 + i * (w + gap), hot = n === worst.category;
@@ -245,26 +246,29 @@ const chartBase = {
 
 // ---------- 9 Segmentation
 {
-  const seg = B.charts.segments.job_family;
-  const groups = Object.entries(seg.groups).sort((a, b) => b[1].median - a[1].median);
-  const fJ = B.findings.find((f) => /job family/.test(f.finding));
-  const fB = B.findings.find((f) => /business unit/.test(f.finding));
-  const s = slide("Engineering roles take longest; differences between business units cannot be told apart", "Analyze", "Analyze");
-  const colors = groups.map((_, i) => (i === 0 ? CORAL_D : GREY));
-  s.addChart(pres.charts.BAR, [{ name: "Median", labels: groups.map((g) => `${g[0]} (n=${g[1].n})`), values: groups.map((g) => g[1].median) }],
-    { ...chartBase, x: 0.5, y: 1.3, w: 5.4, h: 3.0, barDir: "bar", chartColors: colors, invertedColors: colors, catAxisOrientation: "maxMin",
-      showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisHidden: true, valGridLine: { style: "none" }, barGapWidthPct: 55,
-      showTitle: true, title: `Median ${B.outcome_label.toLowerCase()} by job family (${B.unit})`, titleFontSize: 10, titleColor: INK });
-  s.addText([
-    { text: "Job family", options: { bold: true, breakLine: true } },
-    { text: `${seg.p_text}; effect size ε² = ${seg.epsilon_squared}`, options: { breakLine: true } },
-    { text: fJ ? fJ.implication : "", options: { breakLine: true } },
-    { text: " ", options: { breakLine: true } },
-    { text: "Business unit", options: { bold: true, breakLine: true } },
-    { text: fB ? fB.finding.replace(/^No statistically detectable difference in [a-z ]+ by business unit /, "No detectable difference ") : "", options: { breakLine: true } },
-    { text: "This does not prove the units are equal.", options: {} }],
-    { x: 6.2, y: 1.4, w: 3.3, h: 3.2, fontSize: 10.5, color: INK, margin: 0, valign: "top", isTextBox: true, paraSpaceAfter: 2 });
-  source(s, "Kruskal-Wallis test on completed cases. These are associations only, with no adjustment for case mix. Results are not attributed to teams or individuals.");
+  const lbl = (k) => (B.segment_labels || {})[k] || k.replace(/_/g, " ");
+  const segs = Object.entries(B.charts.segments).filter(([, v]) => v.groups);
+  if (segs.length) {
+    const [key, seg] = segs.reduce((a, b) => (a[1].p <= b[1].p ? a : b));
+    const groups = Object.entries(seg.groups).sort((a, b) => b[1].median - a[1].median);
+    const det = seg.p < 0.05;
+    const s = slide(det ? `${groups[0][0]} takes longest by ${lbl(key)}: ${f1(groups[0][1].median)} vs ${f1(groups[groups.length - 1][1].median)} ${B.unit}` : `No detectable difference by ${lbl(key)}`, "Analyze", "Analyze");
+    const colors = groups.map((_, i) => (i === 0 && det ? CORAL_D : GREY));
+    s.addChart(pres.charts.BAR, [{ name: "Median", labels: groups.map((g) => `${g[0]} (n=${g[1].n})`), values: groups.map((g) => g[1].median) }],
+      { ...chartBase, x: 0.5, y: 1.3, w: 5.4, h: 3.0, barDir: "bar", chartColors: colors, invertedColors: colors, catAxisOrientation: "maxMin",
+        showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisHidden: true, valGridLine: { style: "none" }, barGapWidthPct: 55,
+        showTitle: true, title: `Median ${B.outcome_label.toLowerCase()} by ${lbl(key)} (${B.unit})`, titleFontSize: 10, titleColor: INK });
+    const lines = [];
+    segs.forEach(([k, v], i) => {
+      const f = B.findings.find((x) => x.finding.includes(lbl(k)));
+      lines.push({ text: lbl(k).replace(/^./, (c) => c.toUpperCase()), options: { bold: true, breakLine: true } });
+      lines.push({ text: `${v.p_text}; effect size ε² = ${v.epsilon_squared}`, options: { breakLine: true } });
+      lines.push({ text: f ? f.implication : "", options: { breakLine: i < segs.length - 1 } });
+      if (i < segs.length - 1) lines.push({ text: " ", options: { breakLine: true } });
+    });
+    s.addText(lines, { x: 6.2, y: 1.4, w: 3.3, h: 3.2, fontSize: 10.5, color: INK, margin: 0, valign: "top", isTextBox: true, paraSpaceAfter: 2, fit: "shrink" });
+    source(s, "Kruskal-Wallis test on completed cases. These are associations only, with no adjustment for case mix. Results are not attributed to teams or individuals.");
+  }
 }
 
 // ---------- 10 Findings table
@@ -282,7 +286,7 @@ const chartBase = {
     ...B.registers.causes.map((c) => [td(c.issue), td(c.hypothesized_cause), td(c.contributor_role), td(c.evidence_required), td(c.status, { fill: { color: PEACH }, bold: true })])],
     { colW: [1.6, 2.2, 1.9, 2.1, 1.2] });
   s.addText([{ text: "Next: ", options: { bold: true } },
-    { text: "a cross-functional workshop (silent idea generation, fishbone, Five Whys) and a Gemba walk on the shortlist stage. Ideas stay as hypotheses until they are tested against data. “Human error” is not accepted as a root cause." }],
+    { text: `a cross-functional workshop (silent idea generation, fishbone, Five Whys) and a Gemba walk on the '${B.charts.pareto_longest_stage[0] ? B.charts.pareto_longest_stage[0].category : "slowest"}' stage. Ideas stay as hypotheses until they are tested against data. “Human error” is not accepted as a root cause.` }],
     { x: 0.5, y: 2.55, w: 9, h: 0.8, fontSize: 11, color: INK, margin: 0, valign: "top", isTextBox: true });
   source(s, "No stakeholder input has been collected yet. Nothing on this slide reflects stakeholder views.");
 }
@@ -317,10 +321,10 @@ if (B.refresh_comparison) {
 
 // ---------- 14 Next actions
 {
-  const s = slide("Three actions close the Measure gate within three weeks", "Governance", B.config.dmaic_stage);
+  const s = slide(`${B.registers.actions.length} actions to close the ${B.config.dmaic_stage} gate`, "Governance", B.config.dmaic_stage);
   table(s, [[th("Action"), th("Owner"), th("Proposed timing"), th("Completion evidence"), th("Status")],
     ...B.registers.actions.map((a, i) => [td(a.action, { bold: true }), td(a.owner), td(a.due),
-      td(["Signed VOC summary", "Verification sheet, match rate", "Cause register updated"][i] || ""), td(a.status, { fill: { color: CREAM } })])],
+      td(a.evidence || "TBC"), td(a.status, { fill: { color: CREAM } })])],
     { colW: [3.1, 1.4, 1.2, 2.1, 1.2], rowH: 0.36 });
   s.addText("Open questions", { x: 0.5, y: 3.25, w: 9, h: 0.3, fontSize: 12, bold: true, color: INK, margin: 0, isTextBox: true });
   s.addText(B.registers.questions.slice(0, 4).map((q, i, a) => ({ text: `${q.question} (${q.owner})`, options: { bullet: true, breakLine: i < a.length - 1 } })),

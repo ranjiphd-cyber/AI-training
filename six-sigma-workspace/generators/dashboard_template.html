@@ -222,8 +222,7 @@ const MODULES = [
    <div class="sechead"><span class="eyebrow">Module 6 · Baseline and segmentation</span><h2>${esc(B.outcome_label)}: baseline</h2>
    <p class="muted">Filters recompute the measures below from the analysis records, using the same rules as the engine. The control chart and Kaplan-Meier figures are not filtered.</p></div>
    <form class="filters" id="flt" onsubmit="event.preventDefault()">
-     <label for="f-seg">Business unit<select id="f-seg"></select></label>
-     <label for="f-jf">Job family<select id="f-jf"></select></label>
+     ${SEGS.map((k,i)=>`<label for="f-s${i}">${esc(SEGLBL(k))}<select id="f-s${i}"></select></label>`).join("")}
      <label for="f-from">Cohort from<input type="date" id="f-from"></label>
      <label for="f-to">Cohort to<input type="date" id="f-to"></label>
      <button type="button" id="f-reset">Reset filters</button></form>
@@ -277,15 +276,17 @@ const MODULES = [
 
 /* ---------- baseline filtering ---------- */
 const REC = B.records;
+const SEGS = Object.keys(B.charts.segments||{});
+const SEGLBL = k => (B.segment_labels||{})[k] || k.replace(/_/g," ").replace(/^./,c=>c.toUpperCase());
 function opts(id, vals){ $(id).innerHTML = `<option value="">All</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join(""); }
 function compute(f){
-  const rs = REC.filter(r=>(!f.seg||r.segment===f.seg)&&(!f.jf||r.job_family===f.jf)&&(!f.from||r.week>=f.from)&&(!f.to||r.week<=f.to));
+  const rs = REC.filter(r=>SEGS.every((k,i)=>!f["s"+i]||String(r[k])===f["s"+i])&&(!f.from||r.week>=f.from)&&(!f.to||r.week<=f.to));
   const done = rs.filter(r=>r.outcome_days!==null).map(r=>r.outcome_days);
   const stages = B.process_stages.map(s=>{const v=rs.filter(r=>r[s]!==null).map(r=>r[s]); return {s, median:median(v), n:v.length}});
   return {rs, done, med:median(done), p90:pct(done,90), stages};
 }
 function renderBaseline(){
-  const f={seg:$("#f-seg").value, jf:$("#f-jf").value, from:$("#f-from").value, to:$("#f-to").value};
+  const f={from:$("#f-from").value, to:$("#f-to").value}; SEGS.forEach((k,i)=>f["s"+i]=$("#f-s"+i).value);
   const c=compute(f), filtered=Object.values(f).some(Boolean);
   const card=(t,v,u,sub)=>`<div class="panel kpi"><span class="eyebrow">${filtered?"Filtered":"All cases"}</span><h3>${t}</h3><div class="v">${v===null?'<span class="muted" style="font-size:1rem">Insufficient data</span>':fmt(v,u==="cases"?0:1)+`<small>${u}</small>`}</div><span class="muted num">${sub}</span></div>`;
   $("#fk").innerHTML = card("Median "+B.outcome_label.toLowerCase(), c.done.length>=10?c.med:null, B.unit, `n = ${c.done.length} completed of ${c.rs.length} in scope`)
@@ -297,9 +298,10 @@ function renderBaseline(){
   tipOn($("#main"));
 }
 function initBaseline(){
-  opts("#f-seg",[...new Set(REC.map(r=>r.segment))].sort()); opts("#f-jf",[...new Set(REC.map(r=>r.job_family))].sort());
-  ["#f-seg","#f-jf","#f-from","#f-to"].forEach(s=>$(s).addEventListener("change",renderBaseline));
-  $("#f-reset").addEventListener("click",()=>{["#f-seg","#f-jf","#f-from","#f-to"].forEach(s=>$(s).value="");renderBaseline()});
+  const ids=[...SEGS.map((k,i)=>"#f-s"+i),"#f-from","#f-to"];
+  SEGS.forEach((k,i)=>opts("#f-s"+i,[...new Set(REC.map(r=>String(r[k])))].sort()));
+  ids.forEach(s=>$(s).addEventListener("change",renderBaseline));
+  $("#f-reset").addEventListener("click",()=>{ids.forEach(s=>$(s).value="");renderBaseline()});
   renderBaseline();
 }
 function reconcile(){

@@ -1,0 +1,143 @@
+{
+  "pack_id": "employee_experience",
+  "label": "Employee Experience",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Survey response, or employee journey event (e.g. onboarding case) - choose one per analysis",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Pseudonymised response or case ID",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Reporting group (site, function, tenure band) - suppressed below minimum group size",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "response_ts",
+      "type": "datetime",
+      "description": "Survey submitted / event date",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "rating",
+      "type": "number",
+      "description": "Item response (state the scale, e.g. 1-5, 1-7, 0-10)",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "comment_theme",
+      "type": "category",
+      "description": "Coded theme of the free-text comment (double-coded)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "journey_start_ts",
+      "type": "datetime",
+      "description": "Journey start (e.g. start date)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "journey_end_ts",
+      "type": "datetime",
+      "description": "Journey milestone (e.g. productive sign-off)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "day1_ready",
+      "type": "boolean",
+      "description": "Equipment, access and buddy ready on day 1",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "employee_name",
+      "type": "text",
+      "description": "DO NOT LOAD - aggregate, anonymous analysis only",
+      "required": false,
+      "pii": true
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "ENPS",
+      "name": "eNPS",
+      "definition": "% promoters (9-10) minus % detractors (0-6); always report all three shares",
+      "unit": "points",
+      "numerator": "-",
+      "denominator": "responses",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": "Positive eNPS does not mean detractors are absent"
+    },
+    {
+      "metric_id": "T2B",
+      "name": "Top-2-box share",
+      "definition": "Responses in the top two scale points / responses",
+      "unit": "%",
+      "numerator": "top-2-box responses",
+      "denominator": "responses",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": "Ordinal: report the distribution; 7-point scales have a midpoint"
+    },
+    {
+      "metric_id": "D1R",
+      "name": "Day-1 readiness",
+      "definition": "New joiners with equipment, access and buddy ready on day 1 / new joiners",
+      "unit": "%",
+      "numerator": "ready",
+      "denominator": "new joiners",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "TTP",
+      "name": "Time to productivity",
+      "definition": "Days from start date to productive sign-off",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "signed-off joiners",
+      "start_event": "journey_start_ts",
+      "stop_event": "journey_end_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": "Open cases are censored"
+    }
+  ],
+  "process_stages": [
+    "Attract",
+    "Hire",
+    "Onboard",
+    "Develop",
+    "Retain",
+    "Exit"
+  ],
+  "balancing_measures": [
+    "Response rate and non-response bias",
+    "Workload / overtime",
+    "Early attrition",
+    "Absence"
+  ],
+  "sensitivity_notes": "Anonymous, aggregate reporting only, with groups suppressed below the minimum size set by organisation policy. Never combine with individual psychometric or performance data for decisions. Send works-council, legal and privacy questions for qualified review."
+}

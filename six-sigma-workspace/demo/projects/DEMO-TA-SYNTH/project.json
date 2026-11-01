@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "engine_version": "0.1.0",
-  "created_at": "2026-11-01T04:10:06+00:00",
+  "created_at": "2026-11-01T04:41:57+00:00",
   "document_control": {
     "title": "Six Sigma project workspace - DEMO-TA-SYNTH",
     "owner": null,
@@ -43,7 +43,7 @@
     "assumptions": [
       {
         "id": "ASM-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "statement": "Timestamps in the ATS reflect real events (pending sample verification)",
         "label": "Assumption",
@@ -52,7 +52,7 @@
       },
       {
         "id": "ASM-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "statement": "Calendar days used; business-day rule not yet agreed",
         "label": "Assumption",
@@ -61,7 +61,7 @@
       },
       {
         "id": "ASM-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "statement": "Practical-importance threshold of 5 days (proposed)",
         "label": "Proposed target",
@@ -72,7 +72,7 @@
     "questions": [
       {
         "id": "Q-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "question": "What time-to-offer do hiring managers need for their critical roles? (VOC)",
         "priority": "High",
@@ -81,7 +81,7 @@
       },
       {
         "id": "Q-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "question": "Is 'First Interview' captured consistently in BU-B?",
         "priority": "High",
@@ -90,7 +90,7 @@
       },
       {
         "id": "Q-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "question": "Were there policy or system changes Jan-Jun 2026?",
         "priority": "Medium",
@@ -99,7 +99,7 @@
       },
       {
         "id": "Q-004",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "question": "Which dashboard platform is approved for client data?",
         "priority": "High",
@@ -108,7 +108,7 @@
       },
       {
         "id": "Q-005",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "question": "Is a business-day calendar required?",
         "priority": "Medium",
@@ -119,7 +119,7 @@
     "risks": [
       {
         "id": "RSK-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "description": "Personal data exposure in candidate-level extracts",
         "severity": "High",
@@ -129,7 +129,7 @@
       },
       {
         "id": "RSK-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "description": "Findings misread as individual recruiter performance",
         "severity": "High",
@@ -139,7 +139,7 @@
       },
       {
         "id": "RSK-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "description": "Completion bias in recent cohorts",
         "severity": "Medium",
@@ -152,7 +152,7 @@
     "approvals": [
       {
         "id": "APR-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "item": "Project charter",
         "approver_role": "Sponsor",
@@ -161,7 +161,7 @@
       },
       {
         "id": "APR-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "item": "CTQ definitions",
         "approver_role": "Process owner",
@@ -170,18 +170,18 @@
       },
       {
         "id": "APR-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "item": "Baseline results v001",
         "approver_role": "Sponsor",
         "linked_id": "v001",
         "status": "Requires revalidation",
         "approved_by": "[Demo approver - synthetic]",
-        "updated_at": "2026-11-01T04:10:06+00:00"
+        "updated_at": "2026-11-01T04:41:57+00:00"
       },
       {
         "id": "APR-004",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "item": "Measure gate",
         "approver_role": "Sponsor",
@@ -193,7 +193,7 @@
     "ctqs": [
       {
         "id": "CTQ-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "metric": "Time to offer",
         "definition": "Calendar days from requisition approval to first offer extended",
@@ -213,7 +213,7 @@
       },
       {
         "id": "CTQ-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "metric": "Offer acceptance rate",
         "definition": "Offers accepted / offers extended (offers >=14 days old)",
@@ -228,7 +228,7 @@
       },
       {
         "id": "CTQ-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "metric": "Hiring manager satisfaction",
         "definition": "Top-2-box share on 7-point post-offer pulse",
@@ -246,7 +246,7 @@
     "causes": [
       {
         "id": "C-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "issue": "Long open-to-shortlist stage",
         "hypothesized_cause": "Role profile not finalised at requisition approval",
@@ -264,29 +264,32 @@
     "actions": [
       {
         "id": "ACT-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "action": "Confirm VOC requirement with 8-10 hiring managers",
         "owner": "Process owner",
         "due": "Week 2",
+        "evidence": "Signed VOC summary",
         "status": "Not started"
       },
       {
         "id": "ACT-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "action": "Verify 30 random timestamps against source e-mails",
         "owner": "Data owner",
         "due": "Week 2",
+        "evidence": "Verification sheet, match rate",
         "status": "Not started"
       },
       {
         "id": "ACT-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "lead.demo",
         "action": "Run root-cause workshop on open-to-shortlist stage",
         "owner": "Project lead",
         "due": "Week 3",
+        "evidence": "Cause register updated",
         "status": "Not started"
       }
     ],
@@ -295,7 +298,7 @@
     "data_requests": [
       {
         "id": "DR-001",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "engine",
         "question": "Why is 'first_interview_ts' missing for 17.5% of records, and can it be captured?",
         "required_field": "first_interview_ts",
@@ -311,7 +314,7 @@
       },
       {
         "id": "DR-002",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "engine",
         "question": "Why is 'offer_ts' missing for 12.6% of records, and can it be captured?",
         "required_field": "offer_ts",
@@ -327,7 +330,7 @@
       },
       {
         "id": "DR-003",
-        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_at": "2026-11-01T04:41:57+00:00",
         "created_by": "engine",
         "question": "Why is 'offer_accept_ts' missing for 30.0% of records, and can it be captured?",
         "required_field": "offer_accept_ts",
@@ -350,7 +353,7 @@
       "original_name": "SYNTHETIC_requisitions_extract_2026-08-14.csv",
       "sha256": "0496cea2f08216176662d6a4a8aedbf4d1316c189724d58cbd7679f96755928a",
       "uploaded_by": "lead.demo",
-      "uploaded_at": "2026-11-01T04:10:06+00:00",
+      "uploaded_at": "2026-11-01T04:41:57+00:00",
       "description": "baseline extract (SYNTHETIC)",
       "sheets": {
         "csv": {
@@ -378,7 +381,7 @@
       "original_name": "SYNTHETIC_requisitions_extract_2026-09-11.csv",
       "sha256": "5001f62bd715a3317649f4c62af9296efa7bdfaffde473dccac9aab62f44738a",
       "uploaded_by": "lead.demo",
-      "uploaded_at": "2026-11-01T04:10:06+00:00",
+      "uploaded_at": "2026-11-01T04:41:57+00:00",
       "description": "refresh extract (SYNTHETIC)",
       "sheets": {
         "csv": {
@@ -437,8 +440,8 @@
   },
   "analysis_runs": [
     {
-      "run_id": "RUN-82b1548d",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-f9ccb979",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -2162,8 +2165,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-bee792c9",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-1ad39678",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -2315,8 +2318,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-f129fe78",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-a58ea12a",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -2374,8 +2377,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-6ab37e82",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-d3c20049",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -2433,8 +2436,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-631df830",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-d329366e",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -4370,8 +4373,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-5aaf0026",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-6608b026",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -4551,8 +4554,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-ae34d579",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-26ef912a",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -4610,8 +4613,8 @@
       "status": "Current"
     },
     {
-      "run_id": "RUN-87155deb",
-      "at": "2026-11-01T04:10:06+00:00",
+      "run_id": "RUN-217fd1f9",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "plan": {
         "observation_unit": "Requisition",
@@ -4672,17 +4675,17 @@
   "versions": [
     {
       "version": "v001",
-      "created_at": "2026-11-01T04:10:06+00:00",
+      "created_at": "2026-11-01T04:41:57+00:00",
       "status": "Approved by [Demo approver - synthetic]",
-      "content_hash": "32a6c66a45bec85d",
+      "content_hash": "ffa7ebb7b5dccc96",
       "note": "baseline - SYNTHETIC",
-      "approved_at": "2026-11-01T04:10:06+00:00"
+      "approved_at": "2026-11-01T04:41:57+00:00"
     },
     {
       "version": "v002",
-      "created_at": "2026-11-01T04:10:06+00:00",
+      "created_at": "2026-11-01T04:41:57+00:00",
       "status": "Draft - pending review",
-      "content_hash": "531c502dc84df624",
+      "content_hash": "ae79e88bdd45c04e",
       "note": "refresh - SYNTHETIC"
     }
   ],
@@ -4716,259 +4719,259 @@
   },
   "change_log": [
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "create_project",
       "detail": "Project created in mode RUN PROJECT"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:ctqs",
       "detail": "CTQ-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:ctqs",
       "detail": "CTQ-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:ctqs",
       "detail": "CTQ-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:assumptions",
       "detail": "ASM-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:assumptions",
       "detail": "ASM-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:assumptions",
       "detail": "ASM-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:questions",
       "detail": "Q-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:questions",
       "detail": "Q-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:questions",
       "detail": "Q-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:questions",
       "detail": "Q-004"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:questions",
       "detail": "Q-005"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:risks",
       "detail": "RSK-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:risks",
       "detail": "RSK-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:risks",
       "detail": "RSK-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:approvals",
       "detail": "APR-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:approvals",
       "detail": "APR-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:approvals",
       "detail": "APR-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:approvals",
       "detail": "APR-004"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:causes",
       "detail": "C-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:actions",
       "detail": "ACT-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:actions",
       "detail": "ACT-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "add:actions",
       "detail": "ACT-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "upload",
       "detail": "UP-001 SYNTHETIC_requisitions_extract_2026-08-14.csv"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "duplicate_upload",
       "detail": "SYNTHETIC_requisitions_extract_2026-08-14.csv == UP-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "engine",
       "action": "add:data_requests",
       "detail": "DR-001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "engine",
       "action": "add:data_requests",
       "detail": "DR-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "engine",
       "action": "add:data_requests",
       "detail": "DR-003"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-82b1548d"
+      "detail": "RUN-f9ccb979"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-bee792c9"
+      "detail": "RUN-1ad39678"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-f129fe78"
+      "detail": "RUN-a58ea12a"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-6ab37e82"
+      "detail": "RUN-d3c20049"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "create_version",
       "detail": "v001"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "upload",
       "detail": "UP-002 SYNTHETIC_requisitions_extract_2026-09-11.csv"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "duplicate_upload",
       "detail": "SYNTHETIC_requisitions_extract_2026-09-11.csv == UP-002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-631df830"
+      "detail": "RUN-d329366e"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-5aaf0026"
+      "detail": "RUN-6608b026"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-ae34d579"
+      "detail": "RUN-26ef912a"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "analysis_run",
-      "detail": "RUN-87155deb"
+      "detail": "RUN-217fd1f9"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "analyst.demo",
       "action": "create_version",
       "detail": "v002"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "promote",
       "detail": "v001 approved by [Demo approver - synthetic]"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "update:approvals",
       "detail": "APR-003: {\"status\": [\"Pending\", \"Approved\"], \"approved_by\": [null, \"[Demo approver - synthetic]\"]}"
     },
     {
-      "at": "2026-11-01T04:10:06+00:00",
+      "at": "2026-11-01T04:41:57+00:00",
       "actor": "lead.demo",
       "action": "flag_revalidation",
       "detail": "[\"APR-003\"]"

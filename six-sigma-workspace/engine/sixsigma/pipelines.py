@@ -259,6 +259,7 @@ def build_baseline_bundle(state: dict, df: pd.DataFrame, pc: dict, dataset_versi
         "analysis_runs": [{"run_id": v["run_id"], "name": k, "plan": v["plan"], "environment": v["environment"],
                            "dataset_version": v["dataset_version"], "at": v["at"]} for k, v in runs.items()],
         "process_stages": stage_names,
+        "segment_labels": pc.get("segment_labels", {}),
         "registers": {k: state["registers"][k] for k in ("ctqs", "assumptions", "questions", "risks", "decisions",
                                                           "approvals", "causes", "actions", "data_requests", "improvements",
                                                           "benefits", "controls")},

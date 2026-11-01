@@ -1,16 +1,33 @@
-# Lean Six Sigma Project Workspace (v0.1, tested prototype)
+# Lean Six Sigma Project Workspace (v0.2, tested prototype)
+
+## Start here: Six Sigma Studio (`app/six_sigma_studio.html`)
+
+An interactive, department-agnostic DMAIC tool in one HTML file. Open it in a browser, or use the published claude.ai version.
+
+1. **Organisation and team:** choose any of 14 departments (or Other), the process, the phase and the people.
+2. **Charter:** business case, VOC/VOB, a problem-statement builder that flags embedded causes or solutions, goal, scope and milestones.
+3. **CTQs:** pick from the department's metric library or write your own. There are four measurement types: duration, proportion, continuous and rating (including eNPS).
+4. **Data needs:** the tool lists the fields it needs, with operational definitions. It includes a precision calculator and downloadable collection templates.
+5. **Upload and map:** CSV or Excel, with automatic column mapping, scope exclusions and a data-quality profile. Raw data stays in the browser tab.
+6. **Analysis:** baseline with confidence intervals, open-case handling (Kaplan-Meier), control charts with signal rules, stage bottlenecks, Pareto, segment tests, and findings written as Finding → Evidence → Implication → Action → Limitation.
+7. **Recommendations and next steps:** rule-based and traceable to the evidence, plus a DMAIC checklist. An optional AI coach in claude.ai sends a summary only, never raw data.
+8. **Registers:** SIPOC, stakeholder input, cause evidence, improvement scoring, pilots, actions, benefits, control plan, approvals, risks, assumptions, decisions, questions, versions and change log.
+9. **Exports:** PowerPoint deck in your palette, project file (.json), data-collection templates and communication templates.
+
+Three synthetic examples are built in: HR query resolution (duration), onboarding eNPS (rating) and weld defect rate (proportion). On the same file, the Studio's figures match the tested Python engine.
 
 A reusable workspace for running Lean Six Sigma (DMAIC) engagements across clients and departments. It covers the charter and CTQs, data intake and quality, baseline and analysis, root-cause evidence, improvement, benefits and control. One versioned results bundle feeds both the **dashboard** and the **executive deck**, so their figures always agree.
 
-> **Status:** generated code + 15 passing acceptance tests on **synthetic** data. Not deployed. The platform choice is pending your approval (see `docs/WORKSPACE_BLUEPRINT.md` §7).
+> **Status:** generated code + 16 passing acceptance tests (including a headless-browser test of the Studio) on **synthetic** data. Not deployed. The platform choice is pending your approval (see `docs/WORKSPACE_BLUEPRINT.md` §7).
 
 ## What's here
 
 | Path | What it is |
 |---|---|
+| `app/six_sigma_studio.html` | **Interactive Studio** (see above) |
 | `docs/WORKSPACE_BLUEPRINT.md` | Architecture, 13 module specifications, data model, workflow contracts, platform comparison, backlog, acceptance results |
 | `engine/sixsigma/` | Python engine: project isolation and registers, upload/mapping/data quality, statistics with safeguards, versioning and refresh, templates |
-| `config/department_packs/` | 13 optional department packs (fields, metric library, stages, balancing measures, sensitivity notes) |
+| `config/department_packs/` | 14 optional department packs (now including Employee Experience) (fields, metric library, stages, balancing measures, sensitivity notes) |
 | `config/palette.json` | Your palette: coral `#E5A094`, peach `#F5D6BC`, cream `#F8F4E8`, sage `#D7E6B7`, plus neutral ink tones |
 | `outputs/Six_Sigma_Project_Workspace_TEMPLATE.xlsx` | Blank Excel workspace: 17 module sheets + 7 registers, dropdowns, prioritisation and FMEA formulas |
 | `templates/communication/` | 12 communication templates, from launch to closure, all marked Draft – pending approval |

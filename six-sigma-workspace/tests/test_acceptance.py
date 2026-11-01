@@ -221,7 +221,7 @@ def test_dashboard_and_deck_reconcile(demo_outputs):
       await p.waitForTimeout(500);
       const ok = await p.evaluate(() => window.__RECON__);
       await p.goto('file://{demo_outputs / 'DEMO-TA-SYNTH_dashboard.html'}#baseline'); await p.waitForTimeout(300);
-      await p.selectOption('#f-jf', 'Engineering'); await p.waitForTimeout(200);
+      await p.selectOption('#f-s1', 'Engineering'); await p.waitForTimeout(200);
       const filtered = await p.textContent('#fk');
       console.log(JSON.stringify({{ok, errs, filtered}})); await b.close(); }})();"""
     out = subprocess.run(["node", "-e", js], capture_output=True, text=True, timeout=120)
@@ -272,3 +272,26 @@ def test_funnel_missing_timestamp_is_not_dropout():
 def test_censored_cases_are_kept():
     km = A.kaplan_meier([5, 10, 15, 20, 25], [1, 1, 0, 1, 0])
     assert km["n"] == 5 and km["censored"] == 2 and km["km_median"] == 20.0
+
+
+# Studio (browser app) -----------------------------------------------------------
+def test_studio_end_to_end_reconciles_with_engine():
+    env = {**os.environ, "NODE_PATH": os.pathsep.join(filter(None, [str(ROOT / "node_modules"), "/opt/node22/lib/node_modules", os.environ.get("NODE_PATH", "")]))}
+    try:
+        out = subprocess.run(["node", str(ROOT / "tests" / "studio_e2e.js")], capture_output=True, text=True, timeout=300, env=env)
+    except FileNotFoundError:
+        pytest.skip("node not available")
+    if "Cannot find module 'playwright'" in out.stderr:
+        pytest.skip("playwright not available")
+    res = json.loads(out.stdout.strip().splitlines()[-1])
+    assert res["errors"] == [] and not res["overflow"]
+    assert len(res["examples"]) == 3 and all(e["deckBytes"] > 50_000 and e["findings"] >= 3 for e in res["examples"])
+    from pptx import Presentation
+    for e in res["examples"]:
+        assert len(Presentation(e["deck"]).slides) >= 12
+    # same file, same scope rule -> same figures as the Python engine
+    k = {kid: (v, n) for kid, v, n in res["upload"]["kpis"]}
+    assert res["upload"]["mapping"]["start"] == "Req Opened" and res["upload"]["mapping"]["end"] == "Offer Date"
+    assert k["K1"][1] == 417 and abs(k["K1"][0] - 27.0) < 0.01
+    assert abs(k["K2"][0] - 41.52) < 0.01
+    assert k["K3"][1] == 452 and abs(k["K3"][0] - 27.94) < 0.05

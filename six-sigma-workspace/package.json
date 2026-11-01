@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "description": "Reusable Lean Six Sigma project workspace - deck generator dependencies",
-  "scripts": { "deck": "node generators/build_deck.js" },
-  "dependencies": { "pptxgenjs": "3.12.0" }
+  "scripts": {
+    "deck": "node generators/build_deck.js",
+    "test:studio": "node tests/studio_e2e.js"
+  },
+  "dependencies": {
+    "pptxgenjs": "3.12.0",
+    "xlsx": "0.18.5"
+  }
 }

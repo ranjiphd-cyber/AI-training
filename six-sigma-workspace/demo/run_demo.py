@@ -102,10 +102,10 @@ def run():
                  contributor_role="Analyst (pattern in data - not stakeholder input)", observation="Stage is longest in most cases",
                  evidence_required="Count of reqs with profile edits after approval; Gemba", validation_method="Data pull + observation",
                  owner="Process owner", status="Hypothesized")
-    for a, own, due in [("Confirm VOC requirement with 8-10 hiring managers", "Process owner", "Week 2"),
-                        ("Verify 30 random timestamps against source e-mails", "Data owner", "Week 2"),
-                        ("Run root-cause workshop on open-to-shortlist stage", "Project lead", "Week 3")]:
-        P.add_record(s, "actions", LEAD, action=a, owner=own, due=due, status="Not started")
+    for a, own, due, ev in [("Confirm VOC requirement with 8-10 hiring managers", "Process owner", "Week 2", "Signed VOC summary"),
+                            ("Verify 30 random timestamps against source e-mails", "Data owner", "Week 2", "Verification sheet, match rate"),
+                            ("Run root-cause workshop on open-to-shortlist stage", "Project lead", "Week 3", "Cause register updated")]:
+        P.add_record(s, "actions", LEAD, action=a, owner=own, due=due, evidence=ev, status="Not started")
     P.save_state(pdir, s)
 
     outputs = {}

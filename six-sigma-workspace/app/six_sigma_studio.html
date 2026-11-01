@@ -1,0 +1,1183 @@
+<title>Six Sigma Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<style>
+/* Layout: project bar on top; module rail on the left (tabs on phones); one module at a time, summary before detail. */
+:root{
+  --coral:#E5A094; --peach:#F5D6BC; --cream:#F8F4E8; --sage:#D7E6B7;
+  --bg:#FFFFFF; --surface:#FFFFFF; --tint:#F8F4E8; --ink:#2B2B2B; --ink-soft:#5C5852; --rule:#E2DCD0;
+  --mark:#3F3B35; --mark-soft:#B9B1A3; --signal:#A8584B; --input:#FFFFFF;
+  --st-bad:#E5A094; --st-warn:#F5D6BC; --st-ok:#D7E6B7; --st-na:#F1ECE0;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",Calibri,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1B1A17; --surface:#23211D; --tint:#2B2823; --ink:#EEE9DF; --ink-soft:#B8B0A2; --rule:#3A362F; --input:#1F1D1A;
+  --mark:#DDD5C7; --mark-soft:#6E675C; --signal:#E5A094;
+  --st-bad:#6E3A33; --st-warn:#5C4530; --st-ok:#3E4A2B; --st-na:#2E2B25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B1A17; --surface:#23211D; --tint:#2B2823; --ink:#EEE9DF; --ink-soft:#B8B0A2; --rule:#3A362F; --input:#1F1D1A;
+  --mark:#DDD5C7; --mark-soft:#6E675C; --signal:#E5A094;
+  --st-bad:#6E3A33; --st-warn:#5C4530; --st-ok:#3E4A2B; --st-na:#2E2B25; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:1.15rem;font-weight:700} h2{font-size:1.25rem;font-weight:600} h3{font-size:.98rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.muted{color:var(--ink-soft)} .small{font-size:.85rem}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);border-bottom:1px solid var(--rule)}
+.bar .in{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bar .grow{flex:1 1 200px;min-width:0}
+.shell{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:calc(100vh - 60px)}
+nav.rail{border-right:1px solid var(--rule);padding:14px 10px;display:grid;align-content:start;gap:2px;position:sticky;top:60px;max-height:calc(100vh - 60px);overflow:auto;padding-left:max(10px,env(safe-area-inset-left,0px))}
+nav.rail .ph{margin-top:10px;padding:0 8px}
+nav.rail a{display:flex;justify-content:space-between;gap:6px;padding:6px 8px;border-radius:6px;color:var(--ink);text-decoration:none;font-size:.9rem}
+nav.rail a[aria-current="page"]{background:var(--tint);font-weight:600}
+nav.rail a .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink-soft);flex:none;margin-top:6px}
+nav.rail a .dot.done{background:var(--ink);border-color:var(--ink)}
+main{padding-block:20px 60px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0;display:grid;gap:18px;align-content:start;max-width:1180px}
+.sechead{display:grid;gap:4px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:16px;min-width:0;display:grid;gap:10px;align-content:start}
+.panel.tint{background:var(--tint);border-color:transparent}
+.kpi .v{font-family:var(--display);font-size:1.8rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .v small{font-size:.85rem;font-weight:500;color:var(--ink-soft);margin-left:4px}
+.kpi dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:4px 0 0;font-size:.78rem}
+.kpi dt{color:var(--ink-soft)} .kpi dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.panel,.finding,.rec{overflow-wrap:break-word}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;padding:2px 8px;border-radius:999px;background:var(--st-na);white-space:nowrap;font-weight:600;color:var(--ink)}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink)}
+.chip.ok{background:var(--st-ok)} .chip.ok::before{background:var(--ink)}
+.chip.warn{background:var(--st-warn)} .chip.warn::before{border-style:dashed}
+.chip.bad{background:var(--st-bad)} .chip.bad::before{border-radius:1px;background:var(--ink)}
+label.f{display:grid;gap:3px;font-size:.8rem;color:var(--ink-soft);min-width:0}
+label.f span.req::after{content:" *";color:var(--signal)}
+input,select,textarea,button{font:inherit;font-size:.9rem;color:var(--ink)}
+input,select,textarea{padding:7px 9px;border:1px solid var(--rule);border-radius:6px;background:var(--input);width:100%;min-width:0}
+textarea{min-height:64px;resize:vertical}
+input[type=checkbox]{width:auto}
+button{padding:7px 12px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);cursor:pointer;font-weight:600}
+button.primary{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.ghost{background:transparent}
+button:disabled{opacity:.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.84rem}
+th,td{text-align:left;padding:6px 7px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;color:var(--ink-soft);font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;background:var(--tint);white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+table.edit td{padding:3px}
+table.edit input,table.edit select,table.edit textarea{padding:5px 6px;font-size:.84rem;min-width:110px}
+table.edit textarea{min-height:34px}
+.finding{display:grid;gap:5px;padding:12px 14px;border:1px solid var(--rule);border-radius:8px}
+.finding .r{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:.87rem}
+.finding .r span:first-child{color:var(--ink-soft);font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.empty{padding:16px;border:1.5px dashed var(--rule);border-radius:8px;color:var(--ink-soft);display:grid;gap:6px}
+.steps{display:grid;gap:6px}
+.step{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:start;padding:8px 10px;border:1px solid var(--rule);border-radius:6px}
+.step .box{width:14px;height:14px;border:1.5px solid var(--ink);border-radius:3px;margin-top:4px}
+.step.done .box{background:var(--ink)}
+.step.done .t{color:var(--ink-soft);text-decoration:line-through}
+.rec{display:grid;gap:6px;padding:12px 14px;border-radius:8px;border:1px solid var(--rule)}
+.rec.hi{background:var(--tint)}
+.preview{white-space:pre-wrap;font-family:var(--body);font-size:.88rem;background:var(--tint);border-radius:6px;padding:12px;max-height:420px;overflow:auto}
+.toast{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:6px;z-index:30;max-width:340px;font-size:.88rem}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.78rem;padding:6px 8px;border-radius:4px;z-index:20;max-width:260px}
+svg{display:block;max-width:100%;height:auto}
+svg text{fill:var(--ink-soft);font-family:var(--mono);font-size:11px}
+svg .lbl{fill:var(--ink)}
+.banner{background:var(--st-warn);border-radius:6px;padding:8px 12px;font-size:.86rem}
+.phases{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.phases div{padding:6px 8px;border-radius:4px;background:var(--st-na);font-size:.76rem;min-width:0}
+.phases b{display:block;font-family:var(--display);font-size:.85rem}
+.phases .cur{background:var(--st-warn);outline:2px solid var(--ink);outline-offset:-2px}
+.phases .ok{background:var(--st-ok)}
+@media (max-width:820px){
+  .shell{grid-template-columns:1fr}
+  nav.rail{position:static;max-height:none;border-right:0;border-bottom:1px solid var(--rule);display:flex;overflow-x:auto;gap:4px;padding:8px max(16px,env(safe-area-inset-left,0px))}
+  nav.rail .ph{display:none} nav.rail a{white-space:nowrap;flex:none} nav.rail a .dot{display:none}
+  main{padding-left:max(16px,env(safe-area-inset-left,0px))}
+  .finding .r{grid-template-columns:1fr}
+  .phases{grid-template-columns:repeat(5,minmax(64px,1fr));overflow-x:auto}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="bar"><div class="in">
+  <div class="grow"><span class="eyebrow">Six Sigma Studio</span><h1 id="ptitle">Loading…</h1></div>
+  <label class="f" for="proj-sel" style="min-width:200px">Project<select id="proj-sel"></select></label>
+  <button id="btn-new">New project</button>
+  <button id="btn-example">Load example</button>
+  <span id="save-state" class="small muted" aria-live="polite"></span>
+</div></div>
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="Modules"></nav>
+  <main id="main"></main>
+</div>
+<div class="tip" id="tip" hidden></div>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   Six Sigma Studio - department-agnostic DMAIC workspace (prototype v0.2)
+   Charter -> CTQs -> data requirements -> upload & map -> analysis ->
+   recommendations & next steps -> registers -> PowerPoint.
+   Raw uploaded data stays in this browser tab; projects save without it.
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = v => v === null || v === undefined ? "" : String(v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const nid = () => Math.random().toString(36).slice(2, 10);
+const nowISO = () => new Date().toISOString().slice(0, 19).replace("T", " ");
+const fmt = (v, d = 1) => v === null || v === undefined || Number.isNaN(v) ? "–" : Number(v).toFixed(d);
+const fmtP = p => p === null || p === undefined || Number.isNaN(p) ? "n/a" : p < 0.001 ? "p < 0.001" : "p = " + p.toFixed(3);
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3800); }
+
+/* ------------------------------------------------------------------ constants */
+const DEPARTMENTS = ["Talent Acquisition", "HR Operations", "Employee Experience", "Learning & Development", "Finance", "Procurement", "Supply Chain", "Manufacturing", "Sales", "Marketing", "Customer Service", "IT", "Healthcare Operations", "Other"];
+const MODES = ["RUN PROJECT", "REFRESH PROJECT", "BUILD TEMPLATE"];
+const DMAIC = ["Define", "Measure", "Analyze", "Improve", "Control"];
+const LABELS = ["Verified fact", "Calculated result", "Stakeholder opinion", "Hypothesis", "Assumption", "Proposed target", "Approved decision", "Unresolved question"];
+const CAUSE_STATUS = ["Hypothesized", "Supported", "Validated for stated context", "Rejected", "Unresolved"];
+const APPROVAL = ["Pending", "Approved", "Approved with conditions", "Rejected", "Requires revalidation"];
+const STATUS = ["Not started", "In progress", "Complete", "Blocked"];
+const BSTAGE = ["Forecast", "Pilot estimate", "Realized benefit", "Annualized projection"];
+const BTYPE = ["Hard savings", "Cost avoidance", "Released capacity", "Revenue opportunity", "Intangible benefit"];
+const GATE = ["Not started", "In progress", "Evidence ready", "Approved"];
+const CTQ_TYPES = {
+  duration: "Time between two events (cycle / lead time)",
+  proportion: "Yes/No outcome per unit (defect, success, compliance rate)",
+  continuous: "Measured value per unit (dimension, cost, score on a continuous scale)",
+  rating: "Survey rating (Likert 1–5 / 1–7, or 0–10 eNPS)",
+};
+
+/* Metric library: suggestions only - every CTQ stays editable. */
+const LIB = {
+  "Talent Acquisition": [["Time to offer", "duration", "days", "Requisition approved", "First offer extended", "lower"], ["Offer acceptance rate", "proportion", "%", "", "", "higher", "Offers accepted", "Offers extended"], ["Hiring manager satisfaction", "rating", "score", "", "", "higher"]],
+  "HR Operations": [["HR query resolution time", "duration", "days", "Query logged", "Query resolved", "lower"], ["First contact resolution", "proportion", "%", "", "", "higher", "Queries resolved without reopening", "Queries resolved"], ["Payroll accuracy", "proportion", "%", "", "", "higher", "Error-free payslips", "Payslips issued"]],
+  "Employee Experience": [["Onboarding eNPS (0–10)", "rating", "score", "", "", "higher"], ["Day-1 readiness", "proportion", "%", "", "", "higher", "New joiners with equipment, access and buddy on day 1", "New joiners"], ["Time to productivity", "duration", "days", "Start date", "Signed-off as productive", "lower"], ["Engagement item (1–5)", "rating", "score", "", "", "higher"]],
+  "Learning & Development": [["Completion rate", "proportion", "%", "", "", "higher", "Completions", "Enrolments (same cohort)"], ["Time to competence", "duration", "days", "Enrolment", "Competence sign-off", "lower"], ["Post-assessment score", "continuous", "points", "", "", "higher"]],
+  "Finance": [["Invoice processing time", "duration", "days", "Invoice received", "Invoice paid", "lower"], ["First-time match rate", "proportion", "%", "", "", "higher", "Invoices matched without exception", "Invoices processed"], ["Month-end close duration", "duration", "days", "Period end", "Close sign-off", "lower"]],
+  "Procurement": [["PR-to-PO cycle time", "duration", "days", "Requisition raised", "PO issued", "lower"], ["Contract compliance", "proportion", "%", "", "", "higher", "On-contract purchases", "Purchases"]],
+  "Supply Chain": [["On time in full", "proportion", "%", "", "", "higher", "Order lines delivered on time and in full", "Order lines due"], ["Order cycle time", "duration", "days", "Order received", "Order shipped", "lower"]],
+  "Manufacturing": [["Defect rate", "proportion", "%", "", "", "lower", "Defective units", "Units inspected"], ["CTQ dimension", "continuous", "mm", "", "", "nominal"], ["Changeover time", "duration", "minutes", "Last good part", "First good part", "lower"]],
+  "Sales": [["Win rate", "proportion", "%", "", "", "higher", "Opportunities won", "Opportunities closed"], ["Sales cycle length", "duration", "days", "Opportunity created", "Opportunity closed", "lower"]],
+  "Marketing": [["Lead-to-MQL conversion", "proportion", "%", "", "", "higher", "MQLs", "Leads"], ["Campaign launch lead time", "duration", "days", "Brief approved", "Campaign live", "lower"]],
+  "Customer Service": [["Resolution time", "duration", "hours", "Case opened", "Case closed", "lower"], ["Customer satisfaction (CSAT)", "rating", "score", "", "", "higher"], ["Repeat contact rate", "proportion", "%", "", "", "lower", "Customers contacting again within 7 days", "Customers contacting"]],
+  "IT": [["Time to restore service", "duration", "hours", "Incident logged", "Service restored", "lower"], ["SLA attainment", "proportion", "%", "", "", "higher", "Incidents resolved within SLA", "Incidents resolved"]],
+  "Healthcare Operations": [["Door-to-clinician time", "duration", "minutes", "Arrival", "Seen by clinician", "lower"], ["Length of stay", "duration", "hours", "Admission", "Discharge", "lower"]],
+  "Other": [["Cycle time", "duration", "days", "Process start", "Process end", "lower"], ["Defect rate", "proportion", "%", "", "", "lower", "Defective units", "Units"]],
+};
+
+/* Register column definitions [field, header, type, options] */
+const REG = {
+  sipoc: [["s", "Suppliers"], ["i", "Inputs"], ["p", "Process step"], ["o", "Outputs"], ["c", "Customers"]],
+  stakeholder: [["role", "Contributor role"], ["group", "Group", "sel", ["Process owner", "Frontline", "Customer", "Upstream", "Downstream", "System owner", "Control function"]], ["method", "Method", "sel", ["Silent ideation", "Interview", "Survey", "Workshop", "Gemba"]], ["issue", "Issue observed"], ["idea", "Possible cause (hypothesis)"], ["evidence", "Evidence that would confirm"], ["label", "Label", "sel", LABELS]],
+  causes: [["issue", "Issue"], ["cause", "Hypothesized cause"], ["by", "Raised by (role)"], ["evidence", "Evidence required"], ["method", "Validation method"], ["result", "Result"], ["owner", "Owner"], ["status", "Status", "sel", CAUSE_STATUS]],
+  improvements: [["change", "Change"], ["link", "CTQ → finding → cause"], ["mechanism", "Expected mechanism"], ["impact", "Customer impact 1–5", "num"], ["evid", "Evidence strength 1–5", "num"], ["cost", "Cost (5=low) 1–5", "num"], ["effort", "Effort (5=low) 1–5", "num"], ["risk", "Risk (5=low) 1–5", "num"], ["decision", "Decision", "sel", APPROVAL]],
+  pilots: [["owner", "Owner"], ["population", "Population"], ["intervention", "Intervention"], ["comparison", "Comparison approach"], ["duration", "Duration rationale"], ["success", "Success criteria"], ["guardrails", "Guardrails"], ["stop", "Stop rule"], ["approval", "Approval", "sel", APPROVAL]],
+  actions: [["action", "Action"], ["owner", "Owner"], ["due", "Due"], ["evidence", "Completion evidence"], ["status", "Status", "sel", STATUS]],
+  benefits: [["desc", "Benefit"], ["stage", "Stage", "sel", BSTAGE], ["type", "Type", "sel", BTYPE], ["formula", "Formula"], ["value", "Net value", "num"], ["currency", "Currency"], ["horizon", "Time horizon"], ["finance", "Finance approval", "sel", APPROVAL]],
+  controls: [["metric", "Metric / CTQ"], ["owner", "Owner"], ["freq", "Review frequency"], ["method", "Monitoring method"], ["trigger", "Trigger"], ["response", "Response"], ["timing", "Response time"], ["escalation", "Escalation"], ["where", "Evidence location"]],
+  approvals: [["item", "Item"], ["role", "Approver role"], ["name", "Approver name"], ["status", "Status", "sel", APPROVAL], ["date", "Date"]],
+  risks: [["desc", "Risk / issue"], ["severity", "Severity", "sel", ["Low", "Medium", "High", "Critical"]], ["owner", "Owner"], ["mitigation", "Mitigation"], ["status", "Status", "sel", STATUS]],
+  assumptions: [["statement", "Statement"], ["label", "Label", "sel", LABELS], ["owner", "Owner"], ["status", "Status", "sel", STATUS]],
+  decisions: [["decision", "Decision"], ["rationale", "Rationale"], ["by", "Decided by"], ["date", "Date"], ["label", "Label", "sel", LABELS]],
+  questions: [["q", "Question"], ["priority", "Priority", "sel", ["High", "Medium", "Low"]], ["owner", "Owner"], ["status", "Status", "sel", ["Open", "Answered", "Closed"]]],
+  datareq: [["q", "Question"], ["field", "Required field"], ["def", "Operational definition"], ["source", "Source"], ["method", "Collection method"], ["sampling", "Sampling / precision rationale"], ["owner", "Owner"], ["freq", "Frequency"], ["validation", "Validation"], ["evidence", "Completion evidence"], ["status", "Status", "sel", STATUS]],
+};
+
+/* ------------------------------------------------------------------ project model */
+function blankProject(id) {
+  const p = {
+    id: id || "P-" + nid().toUpperCase(), schema: 2, created: nowISO(), updated: nowISO(),
+    org: { organization: "", industry: "", department: "", process: "", site: "", mode: "RUN PROJECT", dmaic: "Define", observationUnit: "" },
+    team: { sponsor: "", owner: "", lead: "", members: "", stakeholders: "" },
+    charter: { businessCase: "", voc: "", vob: "", ps: { process: "", population: "", gap: "", period: "", impact: "" }, goal: "", scope: "", exclusions: "", constraints: "", milestones: "", deliverables: "", deadline: "", platform: "", privacy: "", invited: "" },
+    ctqs: [], primary: null, weights: { impact: .30, evid: .25, cost: .15, effort: .15, risk: .15 },
+    mapping: { id: "", start: "", end: "", time: "", value: "", flag: "", flagYes: "", rating: "", category: "", stages: [], segments: [], excludeCol: "", excludeVals: "" },
+    options: { dayFirst: false, asOf: "", measurementVerified: false, specApproved: false },
+    fileMeta: null, results: null, versions: [], gates: Object.fromEntries(DMAIC.map(g => [g, { status: "Not started", by: "", date: "" }])),
+    log: [], example: false,
+  };
+  for (const k of Object.keys(REG)) p[k] = [];
+  return p;
+}
+function newCTQ(type = "duration") {
+  return { id: "CTQ-" + nid().slice(0, 4).toUpperCase(), name: "", type, definition: "", unit: type === "proportion" ? "%" : type === "rating" ? "score" : "days", numerator: "", denominator: "", population: "", start: "", stop: "", direction: "lower", source: "", owner: "", requirement: "", target: "", targetStatus: "Not set", lsl: "", usl: "", scaleMin: "1", scaleMax: "5", minGroup: "", practical: "" };
+}
+
+/* ------------------------------------------------------------------ app state */
+const S = { projects: {}, cur: null, data: null, store: null, dirty: false, ai: null, sample: null, downloads: null };
+
+/* ------------------------------------------------------------------ persistence: private db (per viewer) or browser storage */
+const Store = {
+  mode: "memory", db: null, uid: null,
+  async init() {
+    try { const ls = window.localStorage; ls.setItem("_t", "1"); ls.removeItem("_t"); this.mode = "local"; } catch (e) { this.mode = "memory"; }
+    if (window.claude && claude.use) {
+      try {
+        const [db, user] = await Promise.all([claude.use("db"), claude.use("user")]);
+        const uid = user ? await user.id() : null;
+        if (db && uid) { this.db = db; this.uid = uid; this.mode = "cloud"; }
+      } catch (e) { /* stay local */ }
+      claude.use("downloads").then(d => S.downloads = d).catch(() => {});
+      claude.use("sample").then(s => { S.sample = s; if (S.cur && route() === "recs") render(); }).catch(() => {});
+    }
+  },
+  col() { return this.db.collection("data/users/" + this.uid); },
+  async list() {
+    if (this.mode === "cloud") {
+      try { const snap = await this.col().get(); const out = {}; snap.docs.forEach(d => { const b = d.data(); if (b && b.project) out[d.id] = JSON.parse(b.project); }); return out; }
+      catch (e) { this.mode = "local"; }
+    }
+    if (this.mode === "local") { try { return JSON.parse(localStorage.getItem("ss-studio-projects") || "{}"); } catch (e) { return {}; } }
+    return {};
+  },
+  async save(p) {
+    if (p.example) return "Example – not saved until you edit";
+    if (this.mode === "cloud") {
+      try { await this.col().doc(p.id).set({ project: JSON.stringify(p), updated: p.updated }); return "Saved privately to your account"; }
+      catch (e) { if (e && e.code === "quota_exceeded") return "Storage full – export the project"; this.mode = "local"; }
+    }
+    if (this.mode === "local") { try { const all = JSON.parse(localStorage.getItem("ss-studio-projects") || "{}"); all[p.id] = p; localStorage.setItem("ss-studio-projects", JSON.stringify(all)); return "Saved in this browser"; } catch (e) { return "Not saved – export the project"; } }
+    return "Not saved (no storage) – export the project";
+  },
+  async remove(id) {
+    if (this.mode === "cloud") { try { await this.col().doc(id).delete(); } catch (e) { } }
+    try { const all = JSON.parse(localStorage.getItem("ss-studio-projects") || "{}"); delete all[id]; localStorage.setItem("ss-studio-projects", JSON.stringify(all)); } catch (e) { }
+  },
+};
+let saveTimer = null;
+function touch(reason) {
+  const p = S.cur; if (!p) return;
+  if (p.example) { p.example = false; p.id = "P-" + nid().toUpperCase(); p.org.organization = p.org.organization.replace(" (example)", ""); S.projects[p.id] = p; fillProjectSelect(); }
+  p.updated = nowISO();
+  if (reason) { p.log.push({ at: p.updated, what: reason }); if (p.log.length > 300) p.log.splice(0, p.log.length - 300); }
+  $("#save-state").textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => { $("#save-state").textContent = await Store.save(S.cur); }, 900);
+  $("#ptitle").textContent = title(p);
+  const o = $("#proj-sel").selectedOptions[0]; if (o) o.textContent = title(p);
+}
+
+/* ------------------------------------------------------------------ downloads */
+async function saveFile(filename, data) {
+  if (S.downloads) {
+    try { await S.downloads.save({ filename, data }); toast("Saved " + filename); return; }
+    catch (e) { if (e && e.code === "declined") { toast("Download cancelled"); return; } if (e && e.code === "rate_limited") { toast("A save prompt is already open"); return; } }
+  }
+  try {
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); toast("Downloading " + filename);
+  } catch (e) { toast("This view cannot save files. Open the page in claude.ai or locally."); }
+}
+
+/* ================================================================== STATISTICS */
+function sorted(a) { return [...a].sort((x, y) => x - y); }
+function quant(a, p) { if (!a.length) return null; const s = sorted(a), h = (s.length - 1) * p, lo = Math.floor(h), hi = Math.ceil(h); return s[lo] + (s[hi] - s[lo]) * (h - lo); }
+const median = a => quant(a, 0.5);
+const meanOf = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+function sdOf(a) { if (a.length < 2) return null; const m = meanOf(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); }
+function mulberry(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function bootMedianCI(v, B = 1000) {
+  if (v.length < 10) return null;
+  const r = mulberry(20261101), n = v.length, meds = new Float64Array(B), tmp = new Float64Array(n);
+  for (let b = 0; b < B; b++) { for (let i = 0; i < n; i++) tmp[i] = v[(r() * n) | 0]; meds[b] = median(Array.from(tmp)); }
+  return [quant(Array.from(meds), .025), quant(Array.from(meds), .975)];
+}
+function wilson(k, n, z = 1.96) { if (!n) return null; const p = k / n, d = 1 + z * z / n, c = (p + z * z / (2 * n)) / d, h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d; return [Math.max(0, c - h) * 100, Math.min(1, c + h) * 100]; }
+function gammaln(x) { const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, .1208650973866179e-2, -.5395239384953e-5]; let y = x, t = x + 5.5; t -= (x + .5) * Math.log(t); let s = 1.000000000190015; for (const ci of c) s += ci / ++y; return -t + Math.log(2.5066282746310005 * s / x); }
+function gser(a, x) { let ap = a, sum = 1 / a, del = sum; for (let n = 0; n < 500; n++) { ap++; del *= x / ap; sum += del; if (Math.abs(del) < Math.abs(sum) * 1e-14) break; } return sum * Math.exp(-x + a * Math.log(x) - gammaln(a)); }
+function gcf(a, x) { let b = x + 1 - a, c = 1e300, d = 1 / b, h = d; for (let i = 1; i < 500; i++) { const an = -i * (i - a); b += 2; d = an * d + b; if (Math.abs(d) < 1e-300) d = 1e-300; c = b + an / c; if (Math.abs(c) < 1e-300) c = 1e-300; d = 1 / d; const del = d * c; h *= del; if (Math.abs(del - 1) < 1e-14) break; } return Math.exp(-x + a * Math.log(x) - gammaln(a)) * h; }
+function chi2sf(x, k) { if (x <= 0) return 1; const a = k / 2, xx = x / 2; return xx < a + 1 ? 1 - gser(a, xx) : gcf(a, xx); }
+function kruskal(groups) {
+  const names = Object.keys(groups); if (names.length < 2) return null;
+  const all = []; names.forEach((g, gi) => groups[g].forEach(v => all.push([v, gi])));
+  all.sort((a, b) => a[0] - b[0]); const N = all.length, ranks = new Float64Array(N); let tie = 0;
+  for (let i = 0; i < N;) { let j = i; while (j + 1 < N && all[j + 1][0] === all[i][0]) j++; const r = (i + j + 2) / 2; for (let k = i; k <= j; k++) ranks[k] = r; const t = j - i + 1; tie += t ** 3 - t; i = j + 1; }
+  const R = new Float64Array(names.length), n = new Float64Array(names.length);
+  all.forEach(([, gi], i) => { R[gi] += ranks[i]; n[gi]++; });
+  let H = 12 / (N * (N + 1)) * names.reduce((s, _, i) => s + R[i] * R[i] / n[i], 0) - 3 * (N + 1);
+  H /= (1 - tie / (N ** 3 - N)) || 1; const df = names.length - 1;
+  return { H, df, p: chi2sf(H, df), eps2: Math.max(0, (H - names.length + 1) / (N - names.length)), N };
+}
+function chi2test(rows) { // rows: [[a,b],...]
+  const R = rows.map(r => r[0] + r[1]), C = [0, 1].map(j => rows.reduce((s, r) => s + r[j], 0)), N = R.reduce((a, b) => a + b, 0);
+  let chi = 0, minE = Infinity; rows.forEach((r, i) => [0, 1].forEach(j => { const e = R[i] * C[j] / N; minE = Math.min(minE, e); if (e > 0) chi += (r[j] - e) ** 2 / e; }));
+  const df = rows.length - 1; return { chi, df, p: chi2sf(chi, df), minE, V: Math.sqrt(chi / (N * 1)) };
+}
+function kaplanMeier(d) { // d: [{t, e}]
+  const s = d.filter(x => x.t !== null && !Number.isNaN(x.t)).sort((a, b) => a.t - b.t);
+  let atRisk = s.length, surv = 1, med = null; const curve = [];
+  for (let i = 0; i < s.length;) { let j = i, ev = 0; while (j < s.length && s[j].t === s[i].t) { if (s[j].e) ev++; j++; } if (ev) { surv *= 1 - ev / atRisk; curve.push([s[i].t, surv]); if (med === null && surv <= .5) med = s[i].t; } atRisk -= j - i; i = j; }
+  return { n: s.length, events: s.filter(x => x.e).length, censored: s.filter(x => !x.e).length, median: med, curve };
+}
+function imr(values, labels) {
+  if (values.length < 12) return { status: "Insufficient evidence; at least 12 time-ordered points are needed", n: values.length };
+  const mr = values.slice(1).map((v, i) => Math.abs(v - values[i])), cl = meanOf(values), mrbar = meanOf(mr), ucl = cl + 2.66 * mrbar, lcl = cl - 2.66 * mrbar, sig = [];
+  values.forEach((x, i) => { if (x > ucl || x < lcl) sig.push({ rule: 1, i, label: labels[i], detail: "beyond 3-sigma limit" }); });
+  let run = 1; for (let i = 1; i < values.length; i++) { const a = Math.sign(values[i] - cl), b = Math.sign(values[i - 1] - cl); run = a === b && a !== 0 ? run + 1 : 1; if (run === 8) sig.push({ rule: 2, i, label: labels[i], detail: "8 points on one side of centre" }); }
+  run = 1; for (let i = 2; i < values.length; i++) { const a = Math.sign(values[i] - values[i - 1]), b = Math.sign(values[i - 1] - values[i - 2]); run = a === b && a !== 0 ? run + 1 : 1; if (run === 5) sig.push({ rule: 3, i, label: labels[i], detail: "6 points trending" }); }
+  return { n: values.length, values, labels, cl, ucl, lcl, signals: sig };
+}
+function pchart(k, n, labels) {
+  if (k.length < 12) return { status: "Insufficient evidence; at least 12 periods are needed", n: k.length };
+  const pbar = k.reduce((a, b) => a + b, 0) / n.reduce((a, b) => a + b, 0), vals = k.map((x, i) => x / n[i] * 100), sig = [];
+  const ucl = n.map(m => Math.min(100, (pbar + 3 * Math.sqrt(pbar * (1 - pbar) / m)) * 100)), lcl = n.map(m => Math.max(0, (pbar - 3 * Math.sqrt(pbar * (1 - pbar) / m)) * 100));
+  vals.forEach((v, i) => { if (v > ucl[i] || v < lcl[i]) sig.push({ rule: 1, i, label: labels[i], detail: "beyond 3-sigma limit" }); });
+  let run = 1; for (let i = 1; i < vals.length; i++) { const a = Math.sign(vals[i] - pbar * 100), b = Math.sign(vals[i - 1] - pbar * 100); run = a === b && a !== 0 ? run + 1 : 1; if (run === 8) sig.push({ rule: 2, i, label: labels[i], detail: "8 points on one side of centre" }); }
+  return { n: vals.length, values: vals, labels, cl: pbar * 100, ucl: Math.max(...ucl), lcl: Math.min(...lcl), uclArr: ucl, lclArr: lcl, signals: sig, sizes: n };
+}
+function pareto(vals) { const m = new Map(); vals.forEach(v => m.set(v, (m.get(v) || 0) + 1)); const tot = vals.length; let c = 0; return [...m.entries()].sort((a, b) => b[1] - a[1]).map(([k, n]) => { c += n; return { cat: String(k), n, pct: n / tot * 100, cum: c / tot * 100 }; }); }
+function precisionN(kind, a, b) { if (kind === "prop") { const p = a, E = b / 100; return Math.ceil(1.96 ** 2 * p * (1 - p) / (E * E)); } return Math.ceil((1.96 * a / b) ** 2); }
+
+/* ================================================================== DATA HANDLING */
+const PII = /(^|[\s_])(name|first.?name|last.?name|surname|e.?mail|phone|mobile|dob|birth|address|postcode|zip|ssn|national.?id|passport|personnummer|aadhaar|pan|patient.?id|employee.?name)($|[\s_])/i;
+function parseDate(v) {
+  if (v === null || v === undefined || v === "") return null;
+  if (v instanceof Date) return isNaN(v) ? NaN : v;
+  if (typeof v === "number") return v > 20000 && v < 80000 ? new Date(Math.round((v - 25569) * 86400000)) : NaN;
+  let s = String(v).trim(); if (!s) return null;
+  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})(.*)$/);
+  if (m) { const [d1, d2] = S.cur.options.dayFirst ? [m[2], m[1]] : [m[1], m[2]]; s = `${m[3]}-${d1.padStart(2, "0")}-${d2.padStart(2, "0")}${m[4] ? "T" + m[4].trim() : ""}`; }
+  const d = new Date(s.replace(" ", "T")); return isNaN(d) ? NaN : d;
+}
+function parseNum(v) { if (v === null || v === undefined || v === "") return null; if (typeof v === "number") return v; const n = Number(String(v).replace(/,/g, "").trim()); return String(v).trim() === "" ? null : Number.isFinite(n) ? n : NaN; }
+function parseFlag(v, yes) {
+  if (v === null || v === undefined || v === "") return null;
+  const s = String(v).trim().toLowerCase(); if (yes) return s === String(yes).trim().toLowerCase() ? 1 : 0;
+  if (["1", "true", "yes", "y", "defect", "fail", "failed"].includes(s)) return 1; if (["0", "false", "no", "n", "pass", "ok", "passed"].includes(s)) return 0; return NaN;
+}
+const weekStart = d => { const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const day = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - day); return x.toISOString().slice(0, 10); };
+const unitDiv = u => ({ minutes: 60000, hours: 3600000, days: 86400000, weeks: 604800000 }[u] || 86400000);
+async function hashText(t) { try { const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join(""); } catch (e) { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return "x" + (h >>> 0).toString(16); } }
+
+async function loadFile(file) {
+  const buf = await file.arrayBuffer();
+  if (typeof XLSX === "undefined") { toast("The spreadsheet reader did not load. Check your connection and reload."); return; }
+  const wb = XLSX.read(buf, { type: "array", cellDates: true });
+  const sheets = wb.SheetNames;
+  const pick = sheets.length > 1 ? sheets.find(s => !/readme|instruction|definition|list/i.test(s)) || sheets[0] : sheets[0];
+  await setData(XLSX.utils.sheet_to_json(wb.Sheets[pick], { defval: null, raw: true }), file.name, sheets, pick, wb);
+}
+async function setData(rows, name, sheets = [], sheet = "", wb = null) {
+  const cols = rows.length ? Object.keys(rows[0]) : [];
+  const hash = await hashText(JSON.stringify(rows.slice(0, 2000)) + rows.length);
+  const p = S.cur, prev = p.fileMeta;
+  S.data = { rows, cols, name, sheets, sheet, wb };
+  const dup = prev && prev.hash === hash;
+  const schema = prev ? { missing: prev.cols.filter(c => !cols.includes(c)), added: cols.filter(c => !prev.cols.includes(c)) } : null;
+  p.fileMeta = { name, rows: rows.length, cols, hash, sheet, loadedAt: nowISO(), duplicateOfPrevious: !!dup, schemaChange: schema };
+  autoMap(false);
+  touch(`Loaded data ${name} (${rows.length} rows)`);
+  if (dup) toast("This file is identical to the last one loaded (same content hash).");
+  else if (schema && (schema.missing.length || schema.added.length)) toast("Columns changed since the last file. Check the mapping.");
+}
+const SUGGEST = {
+  id: /(^id$|_id$|\bid\b|number|ref|key|ticket|case|req)/i, start: /(start|open|creat|receiv|logged|arriv|begin|enrol|request|raised|approved)/i,
+  end: /(end|clos|resolv|complet|finish|paid|ship|discharg|done|restor|offer date|accepted)/i, time: /(date|time|week|month|period|timestamp|submitted)/i,
+  value: /(value|measure|amount|length|weight|dim|cost|size|thickness)/i, flag: /(flag|defect|pass|fail|success|breach|won|reopen|ok\b|compliant)/i,
+  rating: /(rating|score|nps|csat|satisf|likel|recommend)/i, category: /(reason|category|type|cause|code|theme)/i,
+  segments: /(site|team|unit|dept|department|region|channel|shift|line|function|location|band|grade|family|segment|\bbu\b|plant|priority|tenure)/i,
+};
+function autoMap(force) {
+  const m = S.cur.mapping, cols = S.data ? S.data.cols : [], ct = primaryCTQ();
+  const used = new Set(); const take = (role) => { if (!force && m[role] && cols.includes(m[role])) { used.add(m[role]); return; } const c = cols.find(c => !used.has(c) && SUGGEST[role].test(c)); m[role] = c || ""; if (c) used.add(c); };
+  ["id", "start", "end", "rating", "value", "flag", "category", "time"].forEach(take);
+  if (ct && ct.type === "duration" && m.start && m.end) { const si = cols.indexOf(m.start), ei = cols.indexOf(m.end); if (force || !m.stages.length) m.stages = cols.filter((c, i) => i > si && i < ei && /date|ts|time|at$|on$/i.test(c + "") || (i > si && i < ei && S.data.rows.slice(0, 20).some(r => parseDate(r[c]) instanceof Date))); }
+  if (force || !m.segments.length) m.segments = cols.filter(c => !used.has(c) && SUGGEST.segments.test(c)).slice(0, 3);
+}
+
+/* ================================================================== ANALYSIS */
+function primaryCTQ() { const p = S.cur; return p ? p.ctqs.find(c => c.id === p.primary) || p.ctqs[0] || null : null; }
+function requiredRoles(ct) {
+  if (!ct) return [];
+  const base = [["id", "Record ID", "Unique, pseudonymised ID for one observation unit", false]];
+  const t = {
+    duration: [["start", "Start event timestamp", ct.start || "When the clock starts", true], ["end", "End event timestamp", (ct.stop || "When the clock stops") + " — leave blank if still open", true], ["stages", "Intermediate stage timestamps (optional, in order)", "Lets the tool find the bottleneck stage", false]],
+    proportion: [["flag", "Outcome flag", "1/Yes = the unit counts in the numerator (" + (ct.numerator || "numerator") + ")", true], ["time", "Event date", "Needed for the p-chart (stability over time)", false]],
+    continuous: [["value", "Measured value", "Numeric value in " + (ct.unit || "the CTQ unit"), true], ["time", "Measurement date / sequence", "Needed for the control chart", false]],
+    rating: [["rating", "Rating", `Response on a ${ct.scaleMin}–${ct.scaleMax} scale`, true], ["time", "Response date", "Lets you track change over time", false]],
+  }[ct.type] || [];
+  return [...base, ...t, ["category", "Category / reason code (optional)", "Defect type, delay reason, comment theme — drives the Pareto", false], ["segments", "Segments (optional, up to 3)", "Site, team, channel, shift… for stratification", false]];
+}
+
+function analyze() {
+  const p = S.cur, ct = primaryCTQ(), D = S.data;
+  if (!ct || !D) return null;
+  const m = p.mapping, rows = D.rows, N = rows.length, unit = ct.unit || "days";
+  const dq = { rows: N, cols: D.cols.length, missing: {}, invalid: {}, dupIds: 0, exactDup: 0, chron: 0, pii: D.cols.filter(c => PII.test(String(c))), notes: [] };
+  const seen = new Set(), seenRows = new Set();
+  rows.forEach(r => { const k = JSON.stringify(r); if (seenRows.has(k)) dq.exactDup++; else seenRows.add(k); if (m.id) { const v = r[m.id]; if (v !== null && v !== "") { if (seen.has(v)) dq.dupIds++; else seen.add(v); } } });
+  // de-duplicate exact rows and repeated IDs (keep last) - logged
+  let recs = []; const keyIdx = new Map(); const exact = new Set();
+  rows.forEach(r => { const k = JSON.stringify(r); if (exact.has(k)) return; exact.add(k); if (m.id && r[m.id] !== null && r[m.id] !== "") { if (keyIdx.has(r[m.id])) recs[keyIdx.get(r[m.id])] = r; else { keyIdx.set(r[m.id], recs.length); recs.push(r); } } else recs.push(r); });
+  const transforms = [{ step: "Remove exact duplicate rows", removed: dq.exactDup }, { step: "Keep last record per ID", removed: N - dq.exactDup - recs.length }];
+  const scopeEx = [];
+  if (m.excludeCol && String(m.excludeVals || "").trim()) { const vals = String(m.excludeVals).split(",").map(x => x.trim().toLowerCase()).filter(Boolean); const before = recs.length; recs = recs.filter(r => !vals.includes(String(r[m.excludeCol] ?? "").trim().toLowerCase())); scopeEx.push({ rule: `Out of scope: ${m.excludeCol} = ${vals.join(" / ")}`, rows: before - recs.length }); }
+  const miss = col => { const n = recs.filter(r => r[col] === null || r[col] === undefined || r[col] === "").length; dq.missing[col] = { n, pct: recs.length ? n / recs.length * 100 : 0 }; };
+  const roleCols = [m.id, m.start, m.end, m.time, m.value, m.flag, m.rating, m.category, ...m.stages, ...m.segments].filter(Boolean);
+  [...new Set(roleCols)].forEach(miss);
+  const segs = m.segments.filter(Boolean).slice(0, 3);
+  const R = { at: nowISO(), type: ct.type, ctq: { ...ct }, unit, file: p.fileMeta ? { name: p.fileMeta.name, hash: p.fileMeta.hash.slice(0, 12) } : null, kpis: [], charts: {}, segments: [], findings: [], dq, transforms, exclusions: [...scopeEx], method: [] };
+  const timeOf = r => { const c = m.time || m.start || m.end; const d = c ? parseDate(r[c]) : null; return d instanceof Date ? d : null; };
+  const allTimes = recs.map(timeOf).filter(Boolean); R.period = allTimes.length ? `${fmtD(new Date(Math.min(...allTimes)))} – ${fmtD(new Date(Math.max(...allTimes)))}` : "Period not mapped";
+  const kpi = (id, name, value, u, n, den, kind, ci, note) => R.kpis.push({ id, name, value, unit: u, n, den, kind, ci, note, target: ct.target || "", targetStatus: ct.targetStatus || "Not set", period: R.period, source: p.fileMeta ? p.fileMeta.name : "", refreshed: nowISO().slice(0, 10) });
+  let outcome = []; // [{v, seg..., t}]
+  const segVals = r => Object.fromEntries(segs.map(s => [s, r[s] === null || r[s] === "" ? "(blank)" : String(r[s])]));
+
+  if (ct.type === "duration") {
+    if (!m.start || !m.end) return { error: "Map the start and end timestamps first." };
+    const div = unitDiv(unit); let bad = 0, unparse = 0; const km = [];
+    const asOf = p.options.asOf ? parseDate(p.options.asOf) : new Date(Math.max(...recs.flatMap(r => [parseDate(r[m.start]), parseDate(r[m.end])]).filter(d => d instanceof Date)));
+    const stageCols = [m.start, ...m.stages, m.end];
+    recs.forEach(r => {
+      const s = parseDate(r[m.start]), e = parseDate(r[m.end]);
+      if (Number.isNaN(s) || Number.isNaN(e)) { unparse++; return; }
+      if (!(s instanceof Date)) return;
+      const ts = stageCols.map(c => parseDate(r[c])); let chronBad = false;
+      for (let i = 0; i < ts.length; i++) for (let j = i + 1; j < ts.length; j++) if (ts[i] instanceof Date && ts[j] instanceof Date && ts[j] < ts[i]) chronBad = true;
+      if (chronBad) { bad++; return; }
+      if (e instanceof Date) { const v = (e - s) / div; outcome.push({ v, t: s, ...segVals(r), cat: m.category ? r[m.category] : null, stages: ts }); km.push({ t: v, e: true }); }
+      else if (asOf instanceof Date && !isNaN(asOf)) km.push({ t: (asOf - s) / div, e: false });
+    });
+    dq.chron = bad; dq.invalid.timestamps = unparse;
+    R.exclusions.push({ rule: "Chronology violation (a later event before an earlier one) – excluded from durations, sent for correction", rows: bad }, { rule: "Unparseable timestamps – excluded", rows: unparse });
+    const v = outcome.map(o => o.v), K = kaplanMeier(km), ci = bootMedianCI(v);
+    kpi("K1", "Median " + (ct.name || "duration").toLowerCase(), median(v), unit, v.length, "completed cases", "Outcome", ci);
+    kpi("K2", "90th percentile", quant(v, .9), unit, v.length, "completed cases", "Outcome");
+    kpi("K3", "Median incl. open cases (Kaplan-Meier)", K.median, unit, K.n, "completed + open", "Outcome", null, `${K.censored} open cases kept as censored`);
+    R.charts.hist = v; R.km = K;
+    // stages
+    if (m.stages.length) {
+      const names = stageCols.slice(1).map((c, i) => `${stageCols[i]} → ${c}`);
+      const st = names.map((nm, i) => { const d = outcome.map(o => o.stages[i] instanceof Date && o.stages[i + 1] instanceof Date ? (o.stages[i + 1] - o.stages[i]) / div : null).filter(x => x !== null); return { name: nm, median: median(d), p90: quant(d, .9), n: d.length }; });
+      R.charts.stages = st;
+      const full = outcome.filter(o => o.stages.every(x => x instanceof Date));
+      R.charts.longest = pareto(full.map(o => { let bi = 0, bv = -1; for (let i = 0; i < o.stages.length - 1; i++) { const d = o.stages[i + 1] - o.stages[i]; if (d > bv) { bv = d; bi = i; } } return names[bi]; }));
+      R.charts.longestN = full.length;
+      st.forEach((s, i) => kpi("S" + (i + 1), "Median " + s.name, s.median, unit, s.n, "completed cases with both timestamps", "Process"));
+    }
+    // stability on mature weekly cohorts
+    const mat = quant(v, .9) || 0; const cut = asOf instanceof Date ? new Date(asOf - mat * div) : null;
+    const wk = {}; outcome.forEach(o => { if (cut && o.t > cut) return; const w = weekStart(o.t); (wk[w] = wk[w] || []).push(o.v); });
+    const weeks = Object.keys(wk).sort(); R.charts.ctrl = { kind: "I-MR of weekly cohort medians (mature cohorts)", ...imr(weeks.map(w => median(wk[w])), weeks.map(w => fmtD(new Date(w)))) , nPer: weeks.map(w => wk[w].length) };
+    R.method.push("Median with bootstrap 95% CI (seeded); P90; Kaplan-Meier median for open cases; I-MR on weekly cohort medians, rules R1–R3; cohorts younger than the P90 duration excluded from the chart (completion bias).");
+  }
+  if (ct.type === "continuous") {
+    if (!m.value) return { error: "Map the measured value first." };
+    let bad = 0; recs.forEach(r => { const x = parseNum(r[m.value]); if (Number.isNaN(x)) { bad++; return; } if (x === null) return; outcome.push({ v: x, t: timeOf(r), ...segVals(r), cat: m.category ? r[m.category] : null }); });
+    dq.invalid.value = bad; R.exclusions.push({ rule: "Non-numeric values – excluded", rows: bad });
+    const v = outcome.map(o => o.v);
+    kpi("K1", "Median " + (ct.name || "value"), median(v), unit, v.length, "measured units", "Outcome", bootMedianCI(v));
+    kpi("K2", "Mean (reference)", meanOf(v), unit, v.length, "measured units", "Outcome", null, "SD " + fmt(sdOf(v), 2));
+    R.charts.hist = v;
+    const lsl = ct.lsl === "" ? null : Number(ct.lsl), usl = ct.usl === "" ? null : Number(ct.usl);
+    if (lsl !== null || usl !== null) { const ok = v.filter(x => (lsl === null || x >= lsl) && (usl === null || x <= usl)).length; kpi("K3", "Within specification", ok / v.length * 100, "%", v.length, "measured units", "Outcome", wilson(ok, v.length), p.options.specApproved ? "Specification approved" : "Specification NOT approved – indicative only"); R.spec = { lsl, usl }; }
+    const ord = outcome.filter(o => o.t).sort((a, b) => a.t - b.t);
+    if (ord.length >= 12 && ord.length > 120) { const wk = {}; ord.forEach(o => { const w = weekStart(o.t); (wk[w] = wk[w] || []).push(o.v); }); const ws = Object.keys(wk).sort(); R.charts.ctrl = { kind: "I-MR of weekly medians", ...imr(ws.map(w => median(wk[w])), ws.map(w => fmtD(new Date(w)))), nPer: ws.map(w => wk[w].length) }; }
+    else { const src = ord.length ? ord : outcome; R.charts.ctrl = { kind: "I-MR of individual values" + (ord.length ? " (time order)" : " (file order)"), ...imr(src.map(o => o.v), src.map((o, i) => o.t ? fmtD(o.t) : "#" + (i + 1))) }; }
+    const cap = []; if (!p.options.specApproved) cap.push("specification not approved"); if (!p.options.measurementVerified) cap.push("measurement system not verified"); if (R.charts.ctrl.signals && R.charts.ctrl.signals.length) cap.push("special-cause signals present"); if (R.charts.ctrl.status) cap.push("stability not assessable");
+    const sd = sdOf(v), mu = meanOf(v); let skew = 0; if (sd) skew = v.reduce((s, x) => s + ((x - mu) / sd) ** 3, 0) / v.length; if (Math.abs(skew) > 1) cap.push(`distribution strongly skewed (${fmt(skew, 2)})`); if (lsl === null && usl === null) cap.push("no specification limit");
+    if (!cap.length) { const ppk = Math.min(usl !== null ? (usl - mu) / (3 * sd) : Infinity, lsl !== null ? (mu - lsl) / (3 * sd) : Infinity); kpi("K4", "Ppk (overall capability)", ppk, "index", v.length, "measured units", "Outcome", null, "No 1.5-sigma shift applied"); }
+    else R.capability = "Not assessed: " + cap.join("; ");
+    R.method.push("Median with bootstrap CI; empirical conformance with Wilson CI; I-MR chart (R1–R3); Ppk only when specification approved, stable, measurement verified and not strongly skewed.");
+  }
+  if (ct.type === "proportion") {
+    if (!m.flag) return { error: "Map the outcome flag first." };
+    let bad = 0; recs.forEach(r => { const f = parseFlag(r[m.flag], m.flagYes); if (Number.isNaN(f)) { bad++; return; } if (f === null) return; outcome.push({ v: f, t: timeOf(r), ...segVals(r), cat: m.category ? r[m.category] : null }); });
+    dq.invalid.flag = bad; R.exclusions.push({ rule: "Unrecognised flag values (not 1/0, yes/no) – excluded", rows: bad });
+    const k = outcome.filter(o => o.v === 1).length, n = outcome.length;
+    kpi("K1", ct.name || "Rate", n ? k / n * 100 : null, "%", n, ct.denominator || "units", "Outcome", wilson(k, n), `${k} of ${n}`);
+    const ord = outcome.filter(o => o.t); if (ord.length) { const wk = {}; ord.forEach(o => { const w = weekStart(o.t); wk[w] = wk[w] || [0, 0]; wk[w][0] += o.v; wk[w][1]++; }); const ws = Object.keys(wk).sort(); R.charts.ctrl = { kind: "p-chart by week", ...pchart(ws.map(w => wk[w][0]), ws.map(w => wk[w][1]), ws.map(w => fmtD(new Date(w)))) }; }
+    R.method.push("Proportion with Wilson 95% CI; p-chart with variable limits by week (R1–R2); chi-square test across segments with Cramér's V.");
+  }
+  if (ct.type === "rating") {
+    if (!m.rating) return { error: "Map the rating column first." };
+    const lo = Number(ct.scaleMin), hi = Number(ct.scaleMax); let bad = 0;
+    recs.forEach(r => { const x = parseNum(r[m.rating]); if (Number.isNaN(x) || (x !== null && (x < lo || x > hi || Math.round(x) !== x))) { bad++; return; } if (x === null) return; outcome.push({ v: x, t: timeOf(r), ...segVals(r), cat: m.category ? r[m.category] : null }); });
+    dq.invalid.rating = bad; R.exclusions.push({ rule: `Ratings outside ${lo}–${hi} or not whole numbers – excluded`, rows: bad });
+    const v = outcome.map(o => o.v), n = v.length, dist = []; for (let s = lo; s <= hi; s++) dist.push({ cat: String(s), n: v.filter(x => x === s).length });
+    R.charts.dist = dist;
+    const t2 = v.filter(x => x >= hi - 1).length, b2 = v.filter(x => x <= lo + 1).length;
+    if (lo === 0 && hi === 10) {
+      const pr = v.filter(x => x >= 9).length, de = v.filter(x => x <= 6).length;
+      kpi("K1", "eNPS / NPS", n ? (pr - de) / n * 100 : null, "points", n, "responses", "Outcome", null, `Promoters ${fmt(pr / n * 100)}% · Passives ${fmt((n - pr - de) / n * 100)}% · Detractors ${fmt(de / n * 100)}%`);
+      kpi("K2", "Detractors (0–6)", n ? de / n * 100 : null, "%", n, "responses", "Outcome", wilson(de, n));
+      R.nps = { pr, de, n };
+    } else {
+      kpi("K1", "Top-2-box share", n ? t2 / n * 100 : null, "%", n, "responses", "Outcome", wilson(t2, n), `Ratings ${hi - 1}–${hi}`);
+      kpi("K2", "Bottom-2-box share", n ? b2 / n * 100 : null, "%", n, "responses", "Outcome", wilson(b2, n), `Ratings ${lo}–${lo + 1}`);
+    }
+    kpi("K3", "Median rating", median(v), "score", n, "responses", "Outcome", null, "Mean " + fmt(meanOf(v), 2) + " shown for reference only (ordinal scale)");
+    const inv = parseNum(p.charter.invited); if (inv && inv > 0) kpi("K4", "Response rate", n / inv * 100, "%", inv, "people invited", "Data quality", wilson(Math.min(n, inv), inv), "Check non-response bias");
+    R.method.push("Ordinal data: full distribution, top/bottom-2-box with Wilson CI, median; eNPS reported with promoters, passives and detractors; groups below the minimum reporting size suppressed; Kruskal-Wallis across groups.");
+  }
+
+  // category Pareto
+  if (m.category) {
+    // Pareto among the units that matter: defects (proportion) or unfavourable responses (rating)
+    const low = ct.type === "rating" ? (Number(ct.scaleMin) === 0 && Number(ct.scaleMax) === 10 ? 6 : Number(ct.scaleMin) + 1) : null;
+    const rel = outcome.filter(o => ct.type === "proportion" ? o.v === 1 : ct.type === "rating" ? o.v <= low : true);
+    const cats = rel.filter(o => o.cat !== null && o.cat !== "").map(o => String(o.cat));
+    if (ct.type === "proportion" || ct.type === "rating") { const n = rel.filter(o => o.cat === null || o.cat === "").length; dq.missing[m.category] = { n, pct: rel.length ? n / rel.length * 100 : 0, scope: ct.type === "proportion" ? "among defects" : "among unfavourable responses" }; }
+    if (cats.length) { R.charts.pareto = pareto(cats); R.charts.paretoN = cats.length; R.charts.paretoScope = ct.type === "proportion" ? "defects" : ct.type === "rating" ? "unfavourable responses (" + (low === 6 ? "detractors 0–6" : "bottom two boxes") + ")" : "cases"; }
+  }
+
+  // segmentation
+  const minN = ct.type === "rating" ? (parseNum(ct.minGroup) || null) : 10;
+  segs.forEach(seg => {
+    if (ct.type === "rating" && !minN) { R.segments.push({ seg, status: "Set the minimum reporting group size (organisation policy) on the CTQ to compare groups" }); return; }
+    const g = {}; outcome.forEach(o => { (g[o[seg]] = g[o[seg]] || []).push(o.v); });
+    const kept = Object.fromEntries(Object.entries(g).filter(([, a]) => a.length >= minN)), suppressed = Object.keys(g).filter(k => !(k in kept));
+    if (Object.keys(kept).length < 2) { R.segments.push({ seg, status: "Fewer than two groups meet the minimum size", suppressed }); return; }
+    if (ct.type === "proportion") {
+      const rowsT = Object.values(kept).map(a => { const k = a.filter(x => x === 1).length; return [k, a.length - k]; }); const t = chi2test(rowsT);
+      const groups = Object.entries(kept).map(([k, a]) => ({ g: k, n: a.length, value: a.filter(x => x === 1).length / a.length * 100 }));
+      R.segments.push({ seg, method: "Chi-square test of independence", stat: `χ² = ${fmt(t.chi, 2)}, df ${t.df}`, p: t.p, effect: `Cramér's V ${fmt(t.V, 3)}`, groups, suppressed, smallExpected: t.minE < 5, unit: "%" });
+    } else {
+      const kw = kruskal(kept); const groups = Object.entries(kept).map(([k, a]) => ({ g: k, n: a.length, value: ct.type === "rating" ? (lo0(ct) === 0 && hi0(ct) === 10 ? npsOf(a) : a.filter(x => x >= hi0(ct) - 1).length / a.length * 100) : median(a) }));
+      R.segments.push({ seg, method: "Kruskal-Wallis (rank-based)", stat: `H = ${fmt(kw.H, 2)}, df ${kw.df}`, p: kw.p, effect: `ε² ${fmt(kw.eps2, 3)}`, groups, suppressed, unit: ct.type === "rating" ? (lo0(ct) === 0 && hi0(ct) === 10 ? "eNPS" : "% top-2") : unit, measure: ct.type === "rating" ? "" : "median" });
+    }
+  });
+  R.n = outcome.length;
+  buildFindings(R, p);
+  R.recs = recommend(R, p);
+  return R;
+}
+const lo0 = c => Number(c.scaleMin), hi0 = c => Number(c.scaleMax);
+const npsOf = a => (a.filter(x => x >= 9).length - a.filter(x => x <= 6).length) / a.length * 100;
+function fmtD(d) { return d.toISOString().slice(0, 10); }
+
+/* ---------------- findings: Finding -> Evidence -> Implication -> Action -> Limitation */
+function buildFindings(R, p) {
+  const ct = R.ctq, F = (finding, evidence, implication, action, limitation, label = "Calculated result", kpis = []) => R.findings.push({ id: "F-" + String(R.findings.length + 1).padStart(3, "0"), finding, evidence, implication, action, limitation, label, kpis });
+  const K = id => R.kpis.find(k => k.id === id);
+  const prac = parseNum(ct.practical);
+  if (R.n < 30) F(`Only ${R.n} usable observations — insufficient evidence for a reliable baseline.`, `${R.dq.rows} rows loaded; exclusions listed in the data-quality section.`, "Any target or comparison based on this would be unreliable.", "Extend the collection period or sample (see Data needs).", "Not a finding about the process — a finding about the data.", "Verified fact");
+  if (R.type === "duration" && K("K1") && K("K1").value !== null) {
+    const k1 = K("K1"), k2 = K("K2"), k3 = K("K3"), ratio = k2.value / k1.value;
+    F(`Median ${ct.name.toLowerCase()} is ${fmt(k1.value)} ${R.unit}${k1.ci ? ` (95% CI ${fmt(k1.ci[0])}–${fmt(k1.ci[1])})` : ""}; 1 in 10 cases takes more than ${fmt(k2.value)} ${R.unit}.`,
+      `${k1.n} completed cases, ${R.period}. Including ${R.km.censored} open cases, the Kaplan-Meier median is ${fmt(k3.value)} ${R.unit}.`,
+      ratio > 1.5 ? `The tail is ${fmt(ratio)}× the median: customers notice the slow cases most.` : "Spread around the median is moderate.",
+      "Agree the customer requirement (VOC) before setting a target; report median and P90 together.", "Timestamps not yet verified against source records unless stated.", "Calculated result", ["K1", "K2", "K3"]);
+    if (R.charts.longest && R.charts.longest.length) { const t = R.charts.longest[0]; F(`'${t.cat}' is the longest stage in ${fmt(t.pct)}% of fully-timestamped cases.`, `Longest-stage Pareto across ${R.charts.longestN} cases with every stage timestamp.`, "Improvement effort is likely to pay back most here — subject to cause validation.", "Focus Gemba and the root-cause workshop on this stage; capture delay reasons.", "Cases missing any stage timestamp are excluded from this view."); }
+  }
+  if (R.type === "continuous" && K("K1")) F(`Median ${ct.name.toLowerCase()} is ${fmt(K("K1").value, 2)} ${R.unit}; mean ${fmt(K("K2").value, 2)} (${K("K2").note}).`, `${K("K1").n} measured units, ${R.period}.`, K("K3") ? `${fmt(K("K3").value)}% of units are within the stated specification.` : "No specification limit stated — conformance not assessed.", "Confirm the specification with the customer; verify the measurement system (Gauge R&R) before capability claims.", R.capability || "Capability assessed under stated conditions.", "Calculated result", ["K1", "K2"]);
+  if (R.type === "proportion" && K("K1")) F(`${ct.name} is ${fmt(K("K1").value)}% (95% CI ${fmt(K("K1").ci[0])}–${fmt(K("K1").ci[1])}).`, `${K("K1").note} ${ct.denominator || "units"}, ${R.period}.`, ct.direction === "lower" ? "Each percentage point is a share of units failing the customer requirement." : "The gap to 100% is the improvement opportunity.", "Agree the requirement and stratify the defects by type and segment.", "Definition of the flag must be applied consistently by everyone recording it.", "Calculated result", ["K1"]);
+  if (R.type === "rating" && K("K1")) {
+    if (R.nps) F(`eNPS is ${fmt(K("K1").value, 1)}; ${fmt(R.nps.de / R.nps.n * 100)}% of respondents are detractors.`, `${R.nps.n} responses. ${K("K1").note}.`, "A positive eNPS does not mean detractors are absent; their reasons are the improvement input.", "Code the detractor comments into themes (use two coders and check agreement).", K("K4") ? `Response rate ${fmt(K("K4").value)}% — check non-response bias.` : "Response rate unknown — add the number invited on the Charter page.", "Calculated result", ["K1", "K2"]);
+    else F(`${fmt(K("K1").value)}% of responses are in the top two boxes; ${fmt(K("K2").value)}% in the bottom two.`, `${K("K1").n} responses on a ${ct.scaleMin}–${ct.scaleMax} scale.`, "The bottom-two-box group is the improvement opportunity.", "Analyse comments and segments for the bottom-two-box group.", "Ordinal scale: means are shown for reference only.", "Calculated result", ["K1", "K2"]);
+  }
+  const c = R.charts.ctrl; if (c && c.values) { const s = c.signals; F(s.length ? `${s.length} special-cause signal(s): ${s.slice(0, 3).map(x => `R${x.rule} at ${x.label}`).join("; ")}.` : "No special-cause signals under rules R1–R3.", `${c.kind}, ${c.n} points; centre ${fmt(c.cl)}, limits ${fmt(c.lcl)} to ${fmt(c.ucl)}.`, s.length ? "Explain the flagged periods before treating the baseline as stable." : "Supports, but does not prove, a stable baseline.", s.length ? "Process owner to check calendar, volume and system events for those periods." : "Confirm with process knowledge.", "Control limits are not targets or specification limits."); }
+  if (R.charts.pareto) { const pa = R.charts.pareto, top = pa.findIndex(x => x.cum >= 70); F(`${top + 1} of ${pa.length} categories account for ${fmt(pa[top] ? pa[top].cum : 100)}% of ${R.charts.paretoScope}; '${pa[0].cat}' alone is ${fmt(pa[0].pct)}%.`, `Pareto of ${R.charts.paretoN} categorised records.`, "Concentrated categories are the most efficient place to start.", `Root-cause analysis on '${pa[0].cat}' first.`, "Category coding quality not verified."); }
+  R.segments.filter(s => s.groups).forEach(s => {
+    const g = [...s.groups].sort((a, b) => b.value - a.value), hi = g[0], lo = g[g.length - 1], gap = hi.value - lo.value, det = s.p < 0.05;
+    const important = prac !== null && prac !== undefined && !Number.isNaN(prac) ? gap >= prac : null;
+    F(det ? `${R.ctq.name} differs by ${s.seg}: ${hi.g} ${fmt(hi.value)} vs ${lo.g} ${fmt(lo.value)} ${s.unit} (${fmtP(s.p)}).` : `No statistically detectable difference by ${s.seg} (largest gap ${fmt(gap)} ${s.unit}, ${fmtP(s.p)}).`,
+      `${s.method}; ${s.stat}; ${s.effect}.${s.suppressed && s.suppressed.length ? ` Groups below minimum size not shown: ${s.suppressed.length}.` : ""}`,
+      det ? (important === null ? "Practical importance not assessed — set the practical threshold on the CTQ." : important ? "Gap exceeds the agreed practical threshold — a priority for stratified analysis." : "Detectable but below the practical threshold.") : "This does not prove the groups are equal.",
+      `Stratify the root-cause work by ${s.seg}; never attribute differences to individuals.`, "Observational association only; case mix not adjusted; several comparisons increase false-positive risk.");
+  });
+  const highMiss = Object.entries(R.dq.missing).filter(([, v]) => v.pct >= 10);
+  if (R.dq.exactDup || R.dq.dupIds || R.dq.chron || highMiss.length) F(`Data quality: ${R.dq.exactDup} duplicate rows, ${R.dq.dupIds} repeated IDs, ${R.dq.chron} chronology errors${highMiss.length ? `, ${highMiss.length} field(s) ≥10% missing` : ""}.`, "Automated profile of the uploaded file. Raw file unchanged.", "Uncorrected defects distort the baseline and indicate weak entry controls.", "Data owner to correct the source; agree entry rules.", "Profile detects structural errors only; accuracy needs sample verification.", "Verified fact");
+}
+
+/* ---------------- recommendations (rule-based, traceable) */
+function recommend(R, p) {
+  const out = [], add = (pri, title, why, tools, phase) => out.push({ pri, title, why, tools, phase });
+  const ct = R.ctq, K = id => R.kpis.find(k => k.id === id);
+  if (R.n < 30) add(1, "Collect more data before drawing conclusions", `Only ${R.n} usable observations.`, "Data collection plan, precision calculator", "Measure");
+  const highMiss = Object.entries(R.dq.missing).filter(([, v]) => v.pct >= 10).map(([k, v]) => `${k} (${fmt(v.pct)}%)`);
+  const defectShare = (R.dq.chron + R.dq.dupIds) / Math.max(1, R.dq.rows);
+  if (highMiss.length || defectShare >= .01) add(1, "Fix the measurement system first", `${highMiss.length ? "High missingness: " + highMiss.join(", ") + ". " : ""}${R.dq.chron ? R.dq.chron + " chronology errors. " : ""}${R.dq.dupIds ? R.dq.dupIds + " repeated IDs." : ""}`, "Operational definitions, timestamp verification, attribute agreement", "Measure");
+  else if (R.dq.chron || R.dq.dupIds || R.dq.exactDup) add(3, "Correct the data defects found", `${R.dq.exactDup} duplicate rows, ${R.dq.dupIds} repeated IDs, ${R.dq.chron} chronology errors (under 1% of rows; excluded and logged).`, "Data owner correction, entry rules", "Measure");
+  if (!p.options.measurementVerified) add(2, "Verify a sample of records against source evidence", "Measurement accuracy is not yet confirmed.", "Measurement_Check sheet, 20–30 random records", "Measure");
+  const c = R.charts.ctrl; if (c && c.signals && c.signals.length) add(1, "Investigate special causes before setting the baseline", `${c.signals.length} signal(s) on the ${c.kind}.`, "Event log review, Five Whys on the flagged periods", "Measure");
+  if (!ct.requirement || /not/i.test(ct.targetStatus || "Not set")) add(2, "Capture VOC and get the requirement approved", "The CTQ has no approved requirement; targets must come from customers, not the baseline.", "Interviews, Kano, CTQ tree", "Define");
+  if (R.type === "duration" && K("K1") && K("K2") && K("K2").value / K("K1").value > 1.5) add(2, "Attack the long tail, not the average", `P90 is ${fmt(K("K2").value / K("K1").value)}× the median.`, "Triage rules, standard work, WIP limits, escalation trigger", "Improve");
+  if (R.charts.longest && R.charts.longest[0]) add(1, `Focus on the '${R.charts.longest[0].cat}' stage`, `Longest stage in ${fmt(R.charts.longest[0].pct)}% of cases.`, "Gemba walk, value-stream map, queue/bottleneck analysis, load balancing", "Analyze");
+  if (R.charts.pareto && R.charts.pareto[0]) add(1, `Start with '${R.charts.pareto[0].cat}'`, `Largest category: ${fmt(R.charts.pareto[0].pct)}% of records.`, "Fishbone, Five Whys, error-proofing (poka-yoke)", "Analyze");
+  R.segments.filter(s => s.groups && s.p < 0.05).forEach(s => { const g = [...s.groups].sort((a, b) => b.value - a.value); add(2, `Learn from the difference across ${s.seg}`, `${g[0].g} vs ${g[g.length - 1].g} (${fmtP(s.p)}). Hypothesis: practices differ — validate before transferring.`, "Stratified fishbone, best-practice comparison, Gemba in both groups", "Analyze"); });
+  if (R.type === "rating" && R.nps && R.nps.de / R.nps.n > .2) add(1, "Understand detractors' reasons", `${fmt(R.nps.de / R.nps.n * 100)}% detractors.`, "Comment theme coding (two coders), follow-up interviews", "Analyze");
+  if (R.type === "continuous" && R.capability) add(2, "Hold capability claims", R.capability + ".", "Gauge R&R, approved specification, stability check", "Measure");
+  if (!p.stakeholder.length) add(2, "Gather stakeholder input", "No stakeholder input recorded — causes cannot be validated from data alone.", "Silent idea generation, affinity grouping, fishbone workshop", "Analyze");
+  if (p.causes.length && !p.causes.some(c => /Supported|Validated/.test(c.status))) add(2, "Test the hypothesized causes", "All causes are still hypotheses.", "Stratification, comparison tests, Gemba, small experiments", "Analyze");
+  if (p.causes.some(c => /Validated|Supported/.test(c.status)) && !p.improvements.length) add(1, "Generate and prioritise improvement options", "At least one cause is supported.", "Brainstorm, impact/effort matrix, FMEA", "Improve");
+  return out.sort((a, b) => a.pri - b.pri);
+}
+
+/* ---------------- DMAIC checklist (next best steps) */
+function checklist(p) {
+  const R = p.results, ct = primaryCTQ(), ps = p.charter.ps, filled = v => !!(v && String(v).trim());
+  const psDone = ["process", "population", "gap", "period", "impact"].every(k => filled(ps[k]));
+  const items = [
+    ["Define", "Organisation, department and process entered", filled(p.org.organization) && filled(p.org.department) && filled(p.org.process), "setup"],
+    ["Define", "Sponsor and process owner named", filled(p.team.sponsor) && filled(p.team.owner), "setup"],
+    ["Define", "Problem statement has all five parts (process, population, gap, period, impact)", psDone, "charter"],
+    ["Define", "Problem statement contains no cause or solution", psDone && !causeWords(problemText(p)).length, "charter"],
+    ["Define", "Goal, scope and exclusions written", filled(p.charter.goal) && filled(p.charter.scope) && filled(p.charter.exclusions), "charter"],
+    ["Define", "Voice of the Customer captured", filled(p.charter.voc), "charter"],
+    ["Define", "At least one CTQ fully defined", p.ctqs.some(c => filled(c.name) && filled(c.definition) && filled(c.unit)), "ctq"],
+    ["Define", "SIPOC drafted", p.sipoc.length > 0, "causes"],
+    ["Define", "Define gate approved", p.gates.Define.status === "Approved", "governance"],
+    ["Measure", "Data requirements reviewed and collection plan written", p.datareq.length > 0, "needs"],
+    ["Measure", "Data uploaded and mapped", !!(p.fileMeta && R), "data"],
+    ["Measure", "Measurement system checked (sample verification)", p.options.measurementVerified, "data"],
+    ["Measure", "Baseline calculated with uncertainty", !!(R && R.kpis.length), "analyze"],
+    ["Measure", "Stability assessed", !!(R && R.charts.ctrl && R.charts.ctrl.values), "analyze"],
+    ["Measure", "Target approved", ct && /Approved/.test(ct.targetStatus || ""), "ctq"],
+    ["Analyze", "Segmentation / Pareto reviewed", !!(R && (R.segments.length || R.charts.pareto || R.charts.longest)), "analyze"],
+    ["Analyze", "Stakeholder input recorded", p.stakeholder.length > 0, "causes"],
+    ["Analyze", "At least one cause supported by evidence", p.causes.some(c => /Supported|Validated/.test(c.status)), "causes"],
+    ["Improve", "Improvement options linked to causes and scored", p.improvements.length > 0, "improve"],
+    ["Improve", "Pilot plan with stop rule approved", p.pilots.some(x => filled(x.stop) && /Approved/.test(x.approval || "")), "improve"],
+    ["Improve", "Benefits estimated and sent to Finance", p.benefits.length > 0, "control"],
+    ["Control", "Control plan with triggers and owners", p.controls.length > 0, "control"],
+    ["Control", "Benefits validated by Finance", p.benefits.some(b => /Approved/.test(b.finance || "")), "control"],
+    ["Control", "Control gate approved and handed over", p.gates.Control.status === "Approved", "governance"],
+  ];
+  return items.map(([phase, t, done, mod]) => ({ phase, t, done: !!done, mod }));
+}
+function problemText(p) { const s = p.charter.ps; const parts = [s.period && `Between ${s.period}`, s.process && `the ${s.process} process`, s.population && `for ${s.population}`, s.gap && s.gap, s.impact && `resulting in ${s.impact}`].filter(Boolean); return parts.length ? parts.join(", ").replace(/, ([^,]*)$/, ", $1") + "." : ""; }
+function causeWords(t) { return (t.match(/\b(because|due to|caused by|lack of|implement|introduce|install|automate|should|need to)\b/gi) || []).map(x => x.toLowerCase()); }
+
+/* ================================================================== RENDER HELPERS */
+const chip = t => { const s = String(t || "Not assessed"), l = s.toLowerCase(); const c = /approved|complete|validated|supported|done|verified|met\b|on track/.test(l) && !/pending|not |requires/.test(l) ? "ok" : /revalidation|reject|blocked|signal|high|critical|insufficient/.test(l) ? "bad" : /not assessed|not started|not set|^none/.test(l) ? "" : "warn"; return `<span class="chip ${c}">${esc(s)}</span>`; };
+const fld = (path, label, opts = {}) => { const v = getPath(S.cur, path) ?? ""; const id = "f-" + path.replace(/\W/g, "-"); const req = opts.req ? "req" : "";
+  if (opts.sel) return `<label class="f" for="${id}"><span class="${req}">${esc(label)}</span><select id="${id}" data-path="${path}"${opts.rerender ? ' data-rr="1"' : ""}>${opts.blank !== false ? '<option value="">— choose —</option>' : ""}${opts.sel.map(o => `<option ${String(o) === String(v) ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>${opts.hint ? `<span class="small muted">${esc(opts.hint)}</span>` : ""}</label>`;
+  if (opts.area) return `<label class="f" for="${id}"><span class="${req}">${esc(label)}</span><textarea id="${id}" data-path="${path}" placeholder="${esc(opts.ph || "")}"${opts.rerender ? ' data-rr="1"' : ""}>${esc(v)}</textarea>${opts.hint ? `<span class="small muted">${esc(opts.hint)}</span>` : ""}</label>`;
+  if (opts.check) return `<label class="row small" for="${id}"><input type="checkbox" id="${id}" data-path="${path}" data-rr="1" ${v ? "checked" : ""}> ${esc(label)}</label>`;
+  return `<label class="f" for="${id}"><span class="${req}">${esc(label)}</span><input id="${id}" data-path="${path}" value="${esc(v)}" placeholder="${esc(opts.ph || "")}" ${opts.type ? `type="${opts.type}"` : ""}${opts.rerender ? ' data-rr="1"' : ""}>${opts.hint ? `<span class="small muted">${esc(opts.hint)}</span>` : ""}</label>`; };
+function getPath(o, path) { return path.split(".").reduce((a, k) => a == null ? a : a[k], o); }
+function setPath(o, path, val) { const ks = path.split("."); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = val; }
+const table = (rows, cols) => !rows || !rows.length ? '<div class="empty">Nothing yet.</div>' : `<div class="tbl"><table><thead><tr>${cols.map(c => `<th class="${c.n ? "n" : ""}">${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${rows.map(r => `<tr>${cols.map(c => { const v = typeof c.k === "function" ? c.k(r) : r[c.k]; return `<td class="${c.n ? "n" : ""}">${c.raw ? v : esc(v ?? "–")}</td>`; }).join("")}</tr>`).join("")}</tbody></table></div>`;
+function editTable(key, extra) {
+  const cols = REG[key], rows = S.cur[key];
+  return `<div class="tbl"><table class="edit"><thead><tr>${cols.map(c => `<th>${esc(c[1])}</th>`).join("")}${extra ? `<th>${esc(extra.h)}</th>` : ""}<th></th></tr></thead><tbody>${rows.map((r, i) => `<tr>${cols.map(([f, h, t, o]) => { const id = `t-${key}-${i}-${f}`, path = `${key}.${i}.${f}`; return `<td>${t === "sel" ? `<select id="${id}" aria-label="${esc(h)}" data-path="${path}" data-rr="1"><option value=""></option>${o.map(x => `<option ${x === r[f] ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>` : t === "num" ? `<input id="${id}" aria-label="${esc(h)}" data-path="${path}" data-num="1" type="number" step="any" value="${esc(r[f] ?? "")}">` : `<textarea id="${id}" aria-label="${esc(h)}" data-path="${path}" rows="1">${esc(r[f] ?? "")}</textarea>`}</td>`; }).join("")}${extra ? `<td class="n">${extra.f(r)}</td>` : ""}<td><button class="ghost" data-del="${key}" data-i="${i}" aria-label="Delete row">✕</button></td></tr>`).join("")}</tbody></table></div>
+  <div class="row"><button data-add="${key}">Add row</button>${rows.length ? "" : '<span class="small muted">No rows yet.</span>'}</div>`;
+}
+/* ---- SVG charts ---- */
+const W = 680;
+function ctrlSVG(c, unit) {
+  if (!c || !c.values) return `<div class="empty">${esc(c ? c.status : "Map a date column to see stability over time.")}</div>`;
+  const H = 260, m = { l: 44, r: 92, t: 14, b: 34 }, n = c.values.length, lo = Math.min(c.lcl, ...c.values), hi = Math.max(c.ucl, ...c.values), pad = (hi - lo) * .08 || 1;
+  const y = v => m.t + (H - m.t - m.b) * (1 - (v - (lo - pad)) / ((hi + pad) - (lo - pad))), x = i => m.l + (W - m.l - m.r) * i / Math.max(1, n - 1), sig = new Set(c.signals.map(s => s.i));
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="${esc(c.kind)}">`;
+  [[c.lcl, "LCL"], [c.cl, "CL"], [c.ucl, "UCL"]].forEach(([t, l], i) => { s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--mark-soft)" ${i !== 1 ? 'stroke-dasharray="4 4"' : ""}/><text x="${W - m.r + 6}" y="${y(t) + 4}" class="lbl">${l} ${fmt(t)}</text>`; });
+  s += `<path d="${c.values.map((v, i) => (i ? "L" : "M") + x(i) + " " + y(v)).join("")}" fill="none" stroke="var(--mark)" stroke-width="2"/>`;
+  const step = Math.ceil(n / 7);
+  c.values.forEach((v, i) => { const S_ = sig.has(i); s += `<circle cx="${x(i)}" cy="${y(v)}" r="${S_ ? 6 : 3.5}" fill="${S_ ? "var(--signal)" : "var(--mark)"}" stroke="var(--surface)" stroke-width="1.5"/><rect x="${x(i) - 8}" y="${m.t}" width="16" height="${H - m.t - m.b}" fill="transparent" data-tip="${esc(c.labels[i])}: ${fmt(v)} ${esc(unit)}${c.nPer ? ` (n=${c.nPer[i]})` : c.sizes ? ` (n=${c.sizes[i]})` : ""}${S_ ? " – SIGNAL" : ""}"/>`; if (i % step === 0) s += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle">${esc(c.labels[i])}</text>`; });
+  return s + "</svg>";
+}
+function barsH(items, unit, hi = 0, max) {
+  if (!items || !items.length) return '<div class="empty">No data.</div>';
+  const BW = 560, rh = 28, H = items.length * rh + 6, m = { l: 210, r: 74 }, mx = max || Math.max(...items.map(d => d.v || 0)) || 1;
+  const cut = t => { t = String(t); return t.length > 30 ? t.slice(0, 29) + "…" : t; };
+  let s = `<svg viewBox="0 0 ${BW} ${H}" width="${BW}" role="img">`;
+  items.forEach((d, i) => { const w = (BW - m.l - m.r) * Math.max(0, d.v || 0) / mx, yy = i * rh + 3; s += `<text x="${m.l - 8}" y="${yy + 16}" text-anchor="end" class="lbl"><title>${esc(d.l)}</title>${esc(cut(d.l))}</text><rect x="${m.l}" y="${yy + 3}" width="${Math.max(w, 1)}" height="18" rx="3" fill="${i === hi ? "var(--signal)" : "var(--mark)"}" data-tip="${esc(d.l)}: ${fmt(d.v)}${unit}${d.tip ? " · " + esc(d.tip) : ""}"/><text x="${m.l + w + 6}" y="${yy + 16}">${fmt(d.v)}${unit}</text>`; });
+  return s + "</svg>";
+}
+function histSVG(v, unit, mark) {
+  if (!v || v.length < 5) return '<div class="empty">Too few values for a distribution.</div>';
+  const H = 220, m = { l: 34, r: 12, t: 12, b: 30 }, mn = Math.min(...v), mx = Math.max(...v), nb = Math.min(24, Math.max(6, Math.ceil(Math.sqrt(v.length)))), bw = (mx - mn) / nb || 1, bins = Array(nb).fill(0);
+  v.forEach(x => bins[Math.min(nb - 1, Math.floor((x - mn) / bw))]++); const top = Math.max(...bins), X = x => m.l + (W - m.l - m.r) * (x - mn) / (mx - mn || 1), Y = c => m.t + (H - m.t - m.b) * (1 - c / top);
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" role="img" aria-label="Distribution">`;
+  bins.forEach((c, i) => { const a = mn + i * bw; s += `<rect x="${X(a) + 1}" y="${Y(c)}" width="${Math.max(1, X(a + bw) - X(a) - 2)}" height="${H - m.b - Y(c)}" rx="2" fill="${mark !== undefined && a >= mark ? "var(--signal)" : "var(--mark)"}" data-tip="${fmt(a)}–${fmt(a + bw)} ${esc(unit)}: ${c}"/>`; if (i % Math.ceil(nb / 6) === 0) s += `<text x="${X(a)}" y="${H - 10}" text-anchor="middle">${fmt(a, a >= 100 ? 0 : 1)}</text>`; });
+  if (mark !== undefined) s += `<line x1="${X(mark)}" x2="${X(mark)}" y1="${m.t}" y2="${H - m.b}" stroke="var(--ink)" stroke-dasharray="3 3"/><text x="${X(mark) + 4}" y="${m.t + 10}" class="lbl">P90 ${fmt(mark)}</text>`;
+  return s + "</svg>";
+}
+function tips(el) { const t = $("#tip"); $$("[data-tip]", el).forEach(n => { n.addEventListener("mousemove", e => { t.hidden = false; t.textContent = n.dataset.tip; t.style.left = Math.min(e.clientX + 12, innerWidth - 270) + "px"; t.style.top = e.clientY + 12 + "px"; }); n.addEventListener("mouseleave", () => t.hidden = true); }); }
+
+/* ================================================================== MODULES */
+const MODS = [
+  ["home", "Overview", "Start"], ["setup", "1. Organisation & team", "Define"], ["charter", "2. Project charter", "Define"], ["ctq", "3. CTQs", "Define"],
+  ["needs", "4. Data needs", "Measure"], ["data", "5. Upload & map", "Measure"], ["analyze", "6. Analysis", "Measure / Analyze"], ["recs", "7. Recommendations & steps", "Analyze"],
+  ["causes", "8. SIPOC & root causes", "Analyze"], ["improve", "9. Improve & pilot", "Improve"], ["control", "10. Benefits & control", "Control"],
+  ["governance", "11. Governance", "All phases"], ["export", "12. PowerPoint & exports", "All phases"],
+];
+function modDone(id) { const L = checklist(S.cur); const its = L.filter(x => x.mod === id); return its.length && its.every(x => x.done); }
+function route() { const h = (location.hash || "#home").slice(1); return h === "examples" || MODS.some(m => m[0] === h) ? h : "home"; }
+function title(p) { return [p.org.organization || "Untitled organisation", p.org.process || "process not set"].join(" · ") + (p.example ? " (example)" : ""); }
+
+function renderRail() {
+  const cur = route(); let lastPh = "";
+  $("#rail").innerHTML = MODS.map(([id, l, ph]) => { const h = ph !== lastPh ? `<div class="ph eyebrow">${esc(ph)}</div>` : ""; lastPh = ph; return `${h}<a href="#${id}" ${id === cur ? 'aria-current="page"' : ""}><span>${esc(l)}</span>${id === "home" || id === "export" ? "" : `<span class="dot ${modDone(id) ? "done" : ""}" title="${modDone(id) ? "Complete" : "Open items"}"></span>`}</a>`; }).join("");
+}
+function phaseRail(p) { const cur = DMAIC.indexOf(p.org.dmaic); return `<div class="phases" role="list" aria-label="DMAIC phases">${DMAIC.map((d, i) => `<div role="listitem" class="${p.gates[d].status === "Approved" ? "ok" : i === cur ? "cur" : ""}"><b>${d}</b>${esc(p.gates[d].status)}${i === cur ? " · current" : ""}</div>`).join("")}</div>`; }
+function kpiCard(k) { return `<div class="panel kpi"><span class="eyebrow">${esc(k.kind)} · ${esc(k.id)}</span><h3>${esc(k.name)}</h3><div class="v">${k.value === null || k.value === undefined || Number.isNaN(k.value) ? '<span class="muted" style="font-size:1rem">Not assessed</span>' : fmt(k.value, k.unit === "index" ? 2 : 1) + `<small>${esc(k.unit)}</small>`}</div>${chip(k.targetStatus && /Approved/.test(k.targetStatus) ? "Target approved: " + k.target : "Baseline – no approved target")}<dl><dt>n</dt><dd><span class="num">${k.n}</span> ${esc(k.den)}</dd><dt>95% CI</dt><dd class="num">${k.ci ? fmt(k.ci[0]) + " – " + fmt(k.ci[1]) : "–"}</dd><dt>Period</dt><dd>${esc(k.period)}</dd><dt>Source</dt><dd>${esc(k.source)} · ${esc(k.refreshed)}</dd>${k.note ? `<dt>Note</dt><dd>${esc(k.note)}</dd>` : ""}</dl></div>`; }
+function findingCard(f) { return `<article class="finding"><div class="row"><span class="eyebrow">${esc(f.id)}</span>${chip(f.label)}</div><h3>${esc(f.finding)}</h3>${[["Evidence", f.evidence], ["Implication", f.implication], ["Action", f.action + " (proposed)"], ["Limitation", f.limitation]].map(([a, b]) => `<div class="r"><span>${a}</span><span>${esc(b)}</span></div>`).join("")}</article>`; }
+function stepList(items, limit) { const list = limit ? items.filter(x => !x.done).slice(0, limit) : items; if (!list.length) return '<div class="empty">All checklist items are complete.</div>'; return `<div class="steps">${list.map(x => `<div class="step ${x.done ? "done" : ""}"><span class="box" aria-hidden="true"></span><span><span class="eyebrow">${x.phase}</span><br><span class="t">${esc(x.t)}</span></span><a href="#${x.mod}" class="small">${x.done ? "Done" : "Go"}</a></div>`).join("")}</div>`; }
+
+const VIEWS = {
+home(p) {
+  const L = checklist(p), done = L.filter(x => x.done).length, R = p.results;
+  return `<div class="sechead"><span class="eyebrow">Overview</span><h2>${esc(title(p))}</h2><p class="muted">${esc(p.org.department || "Department not set")} · mode ${esc(p.org.mode)} · ${done} of ${L.length} checklist items complete</p></div>
+  ${p.example ? '<div class="banner"><b>Example project with synthetic data.</b> Explore freely. Your first edit turns it into your own saved copy. Use <b>New project</b> for a blank start.</div>' : ""}
+  ${phaseRail(p)}
+  <div class="grid g2"><div class="panel"><h3>Next best steps</h3>${stepList(L, 5)}</div>
+  <div class="panel"><h3>Top recommendations</h3>${R && R.recs && R.recs.length ? R.recs.slice(0, 4).map(r => `<div class="rec ${r.pri === 1 ? "hi" : ""}"><div class="row">${chip("Proposed – " + r.phase)}</div><b>${esc(r.title)}</b><span class="small">${esc(r.why)}</span></div>`).join("") : '<div class="empty">Recommendations appear after you upload data and run the analysis.</div>'}</div></div>
+  ${R ? `<h2>Headline measures: ${esc(R.ctq.name)}</h2><div class="grid g4">${R.kpis.slice(0, 4).map(kpiCard).join("")}</div>` : ""}
+  ${R ? `<h2>Findings</h2><div class="grid">${R.findings.slice(0, 3).map(findingCard).join("")}</div><a href="#analyze">See all findings and charts</a>` : ""}`;
+},
+setup(p) {
+  return `<div class="sechead"><span class="eyebrow">Define · Step 1</span><h2>Organisation, department and team</h2><p class="muted">Choose any department. Its metric library changes; the method stays the same.</p></div>
+  <div class="panel grid g3">${fld("org.organization", "Organisation / client", { req: 1 })}${fld("org.industry", "Industry")}${fld("org.department", "Department", { sel: DEPARTMENTS, req: 1, rerender: 1 })}
+  ${fld("org.process", "Process to improve", { req: 1, ph: "e.g. HR query resolution" })}${fld("org.site", "Site / region")}${fld("org.observationUnit", "Observation unit", { ph: "e.g. ticket, invoice, survey response" })}
+  ${fld("org.mode", "Mode", { sel: MODES, blank: false })}${fld("org.dmaic", "Current DMAIC phase", { sel: DMAIC, blank: false, rerender: 1 })}${fld("charter.platform", "Reporting platform", { sel: ["Studio (this page)", "Excel", "Power BI", "Tableau", "Other"] })}</div>
+  <div class="panel grid g3"><h3 style="grid-column:1/-1">Team</h3>${fld("team.sponsor", "Sponsor", { req: 1 })}${fld("team.owner", "Process owner", { req: 1 })}${fld("team.lead", "Project lead / Black Belt")}${fld("team.members", "Core team", { area: 1 })}${fld("team.stakeholders", "Other stakeholders (incl. Finance, IT, Legal)", { area: 1 })}${fld("charter.privacy", "Privacy, security and retention requirements", { area: 1, ph: "e.g. no personal identifiers; minimum group size 5; delete raw data after 12 months" })}</div>
+  ${p.org.mode === "BUILD TEMPLATE" ? '<div class="banner">BUILD TEMPLATE mode: use this project to design a reusable template. Avoid loading real client data.</div>' : ""}`;
+},
+charter(p) {
+  const pt = problemText(p), cw = causeWords(pt);
+  return `<div class="sechead"><span class="eyebrow">Define · Step 2</span><h2>Project charter</h2><p class="muted">Edits save automatically. Everything stays “Draft – pending approval” until the Define gate is approved under Governance.</p></div>
+  <div class="panel grid g2">${fld("charter.businessCase", "Business case", { area: 1, ph: "Why this matters now, in business terms" })}${fld("charter.voc", "Voice of the Customer", { area: 1, ph: "What customers say they need (quotes, survey results)" })}${fld("charter.vob", "Voice of the Business", { area: 1, ph: "Cost, capacity, risk or strategy drivers" })}${fld("charter.constraints", "Constraints", { area: 1 })}</div>
+  <div class="panel"><h3>Problem statement builder</h3><p class="small muted">Process + population + observed gap + period + impact. Do not include a cause or a solution.</p>
+  <div class="grid g3">${fld("charter.ps.process", "Process", { req: 1, rerender: 1 })}${fld("charter.ps.population", "Population / scope of units", { req: 1, rerender: 1 })}${fld("charter.ps.gap", "Observed gap (with numbers)", { req: 1, rerender: 1, ph: "median resolution time was 6.2 days vs a 3-day expectation" })}${fld("charter.ps.period", "Period", { req: 1, rerender: 1, ph: "Jan–Jun 2026" })}${fld("charter.ps.impact", "Business / customer impact", { req: 1, rerender: 1 })}</div>
+  <div class="panel tint"><span class="eyebrow">Generated problem statement</span><p>${esc(pt) || '<span class="muted">Fill in the five parts above.</span>'}</p>${cw.length ? `<p>${chip("Contains cause or solution words")} <span class="small">Remove: ${esc([...new Set(cw)].join(", "))}</span></p>` : pt ? chip("No cause or solution embedded") : ""}</div></div>
+  <div class="panel grid g2">${fld("charter.goal", "Goal statement (objective)", { area: 1, ph: "Reduce [CTQ] from [baseline] to [target, pending approval] by [date]" })}${fld("charter.scope", "In scope", { area: 1 })}${fld("charter.exclusions", "Out of scope", { area: 1 })}${fld("charter.milestones", "Milestones", { area: 1, ph: "Define gate: …; Measure gate: …" })}${fld("charter.deliverables", "Deliverables and audiences", { area: 1 })}${fld("charter.deadline", "Deadline", { type: "date" })}${fld("charter.invited", "Number invited / population size (for surveys)", { type: "number" })}</div>`;
+},
+ctq(p) {
+  const lib = LIB[p.org.department] || LIB.Other;
+  return `<div class="sechead"><span class="eyebrow">Define · Step 3</span><h2>Critical-to-Quality requirements</h2><p class="muted">Pick from the ${esc(p.org.department || "general")} library or create your own. The <b>primary CTQ</b> drives the data request and the analysis.</p></div>
+  <div class="panel"><h3>Suggested metrics for ${esc(p.org.department || "your department")}</h3><div class="row">${lib.map((m, i) => `<button data-lib="${i}">+ ${esc(m[0])}</button>`).join("")}<button data-addctq="1">+ Custom CTQ</button></div>${!p.org.department ? '<p class="small muted">Choose a department in Step 1 to see its library.</p>' : ""}</div>
+  ${p.ctqs.length ? p.ctqs.map((c, i) => `<div class="panel"><div class="row" style="justify-content:space-between"><h3>${esc(c.name || "New CTQ")} ${c.id === (primaryCTQ() || {}).id ? chip("Primary – drives analysis") : ""}</h3><div class="row">${c.id !== (primaryCTQ() || {}).id ? `<button data-primary="${c.id}">Make primary</button>` : ""}<button class="ghost" data-delctq="${i}">Delete</button></div></div>
+    <div class="grid g3">${fld(`ctqs.${i}.name`, "Metric name", { req: 1 })}${fld(`ctqs.${i}.type`, "Measurement type", { sel: Object.keys(CTQ_TYPES), blank: false, rerender: 1, hint: CTQ_TYPES[c.type] })}${fld(`ctqs.${i}.unit`, "Unit", { req: 1 })}
+    ${fld(`ctqs.${i}.definition`, "Operational definition", { area: 1, req: 1 })}${fld(`ctqs.${i}.population`, "Population / exclusions", { area: 1 })}${fld(`ctqs.${i}.direction`, "Direction of improvement", { sel: ["lower", "higher", "nominal"], blank: false })}
+    ${c.type === "duration" ? fld(`ctqs.${i}.start`, "Start event") + fld(`ctqs.${i}.stop`, "Stop event") : ""}
+    ${c.type === "proportion" ? fld(`ctqs.${i}.numerator`, "Numerator (what counts as 1/Yes)") + fld(`ctqs.${i}.denominator`, "Denominator") : ""}
+    ${c.type === "continuous" ? fld(`ctqs.${i}.lsl`, "Lower spec limit (approved only)", { type: "number" }) + fld(`ctqs.${i}.usl`, "Upper spec limit (approved only)", { type: "number" }) : ""}
+    ${c.type === "rating" ? fld(`ctqs.${i}.scaleMin`, "Scale minimum", { type: "number" }) + fld(`ctqs.${i}.scaleMax`, "Scale maximum", { type: "number", hint: "0–10 is treated as eNPS/NPS" }) + fld(`ctqs.${i}.minGroup`, "Minimum reporting group size", { type: "number", hint: "Set by your organisation's policy; smaller groups are suppressed" }) : ""}
+    ${fld(`ctqs.${i}.source`, "Data source / system")}${fld(`ctqs.${i}.owner`, "Metric owner")}${fld(`ctqs.${i}.practical`, "Practical-importance threshold", { type: "number", hint: "Smallest difference that matters to the business (in the CTQ unit)" })}
+    ${fld(`ctqs.${i}.requirement`, "Approved customer requirement")}${fld(`ctqs.${i}.target`, "Target")}${fld(`ctqs.${i}.targetStatus`, "Target status", { sel: ["Not set", "Proposed target", "Approved", "Requires revalidation"], blank: false })}</div></div>`).join("") : '<div class="empty">No CTQs yet. Add one from the library above.</div>'}`;
+},
+needs(p) {
+  const ct = primaryCTQ(); if (!ct) return `<div class="sechead"><span class="eyebrow">Measure · Step 4</span><h2>What data the tool needs</h2></div><div class="empty">Define a CTQ first (Step 3). The data request is built from it. <a href="#ctq">Go to CTQs</a></div>`;
+  const roles = requiredRoles(ct);
+  return `<div class="sechead"><span class="eyebrow">Measure · Step 4</span><h2>What data the tool needs for “${esc(ct.name || "your CTQ")}”</h2><p class="muted">One row per ${esc(p.org.observationUnit || "observation unit")}. Leave unknown values blank and never enter 0 for unknown. Do not include names, e-mails or national IDs.</p></div>
+  <div class="panel">${table(roles.map(r => ({ f: r[1], d: r[2], q: r[3] ? "Required" : "Optional" })), [{ h: "Field", k: "f" }, { h: "Operational definition / purpose", k: "d" }, { h: "Need", k: r => chip(r.q === "Required" ? "Required" : "Optional – not assessed if absent"), raw: 1 }])}
+  <div class="row"><button class="primary" data-act="tpl-xlsx">Download data collection template (.xlsx)</button><button data-act="tpl-csv">Download blank CSV</button></div></div>
+  <div class="grid g2"><div class="panel"><h3>How much data?</h3><p class="small">There is no universal minimum. Size the sample from the precision your decision needs.</p>
+    <div class="grid g3"><label class="f" for="pc-p">Expected proportion<input id="pc-p" type="number" step="0.01" value="0.5"></label><label class="f" for="pc-e">Margin ± (percentage points)<input id="pc-e" type="number" step="0.5" value="5"></label><div class="kpi"><span class="eyebrow">Responses / units needed</span><div class="v" id="pc-n1">–</div></div></div>
+    <div class="grid g3"><label class="f" for="pc-sd">Expected SD (CTQ unit)<input id="pc-sd" type="number" step="any" value="10"></label><label class="f" for="pc-m">Margin ± (CTQ unit)<input id="pc-m" type="number" step="any" value="2"></label><div class="kpi"><span class="eyebrow">For a mean (medians need more)</span><div class="v" id="pc-n2">–</div></div></div>
+    <p class="small muted">For control charts, 20–25 time periods is a common guide for estimating limits. For surveys, also aim for a high response rate; precision does not fix non-response bias.</p></div>
+  <div class="panel"><h3>Before you collect</h3><ul class="small"><li>Agree each operational definition with the process owner. Two people must classify the same case the same way.</li><li>Decide the period: include enough history to cover seasonality and normal workload swings.</li><li>Include open and incomplete cases with their status. Dropping them biases cycle times.</li><li>Plan a measurement check: compare 20–30 random records with source evidence.</li><li>Get data-sharing approval for any personal data, and pseudonymise IDs.</li></ul></div></div>
+  <div class="panel"><h3>Data collection plan</h3>${editTable("datareq")}<div class="row"><button data-act="plan-from-roles">Pre-fill from the fields above</button></div></div>`;
+},
+data(p) {
+  const D = S.data, ct = primaryCTQ(), fm = p.fileMeta;
+  const roles = requiredRoles(ct), cols = D ? D.cols : [];
+  const sel = (role, label, req) => `<label class="f" for="map-${role}"><span class="${req ? "req" : ""}">${esc(label)}</span><select id="map-${role}" data-path="mapping.${role}" data-rr="1"><option value="">— not mapped —</option>${cols.map(c => `<option ${p.mapping[role] === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></label>`;
+  const multi = (role, label) => `<fieldset class="panel tint" style="gap:6px"><legend class="small muted">${esc(label)}</legend><div class="row">${cols.map((c, i) => `<label class="row small" for="mm-${role}-${i}"><input type="checkbox" id="mm-${role}-${i}" data-multi="${role}" value="${esc(c)}" ${p.mapping[role].includes(c) ? "checked" : ""}> ${esc(c)}</label>`).join("")}</div></fieldset>`;
+  return `<div class="sechead"><span class="eyebrow">Measure · Step 5</span><h2>Upload and map your data</h2><p class="muted">CSV or Excel. The file stays in this browser tab and is never uploaded or saved with the project. Re-load it in a new session to re-run the analysis.</p></div>
+  <div class="panel"><label class="f" for="file-in"><span class="req">Data file (.csv, .xlsx)</span><input type="file" id="file-in" accept=".csv,.xlsx,.xls,.txt"></label>
+  ${fm ? `<p class="small">Last file: <b>${esc(fm.name)}</b> · ${fm.rows} rows · ${fm.cols.length} columns · hash ${esc(fm.hash.slice(0, 12))} · ${esc(fm.loadedAt)} ${D ? chip("Loaded in this tab") : chip("Not loaded in this tab – re-load to re-run")}</p>` : ""}
+  ${fm && fm.duplicateOfPrevious ? `<p>${chip("Duplicate of the previous file")}</p>` : ""}${fm && fm.schemaChange && (fm.schemaChange.missing.length || fm.schemaChange.added.length) ? `<p>${chip("Schema changed")} <span class="small">Missing: ${esc(fm.schemaChange.missing.join(", ") || "none")} · New: ${esc(fm.schemaChange.added.join(", ") || "none")}</span></p>` : ""}
+  ${D && D.sheets.length > 1 ? `<label class="f" for="sheet-sel">Sheet<select id="sheet-sel">${D.sheets.map(s => `<option ${s === D.sheet ? "selected" : ""}>${esc(s)}</option>`).join("")}</select></label>` : ""}</div>
+  ${!ct ? '<div class="empty">Define a primary CTQ first (Step 3). The mapping depends on its measurement type.</div>' : !D ? '<div class="empty">Load a file to map its columns.</div>' : `
+  <div class="panel"><div class="row" style="justify-content:space-between"><h3>Map columns to what “${esc(ct.name)}” needs</h3><button data-act="automap">Re-suggest mapping</button></div>
+  <div class="grid g3">${roles.filter(r => !["stages", "segments"].includes(r[0])).map(r => sel(r[0], r[1], r[3])).join("")}
+  ${ct.type === "proportion" ? fld("mapping.flagYes", "Value meaning Yes/1 (optional)", { ph: "e.g. Defect, Breached, Y", rerender: 1 }) : ""}
+  ${ct.type === "duration" ? fld("options.asOf", "Extract date (as-of, for open cases)", { type: "date", rerender: 1 }) : ""}
+  ${sel("excludeCol", "Scope exclusion: column (optional)", false)}${fld("mapping.excludeVals", "…exclude rows with these values (comma-separated)", { ph: "e.g. Cancelled, Test" })}
+  ${fld("options.dayFirst", "Dates are day-first (dd/mm/yyyy)", { check: 1 })}</div>
+  ${ct.type === "duration" ? multi("stages", "Intermediate stage timestamps (between start and end, in process order)") : ""}${multi("segments", "Segments to stratify by (choose up to 3)")}
+  <div class="row">${fld("options.measurementVerified", "A sample of records has been verified against source evidence", { check: 1 })}${ct.type === "continuous" ? fld("options.specApproved", "Specification limits are customer-approved", { check: 1 }) : ""}</div>
+  <div class="row"><button class="primary" data-act="run">Run analysis</button><span class="small muted">${D.rows.length} rows ready</span></div></div>
+  <div class="panel"><h3>Preview (first 8 rows)</h3>${table(D.rows.slice(0, 8), D.cols.map(c => ({ h: c, k: r => r[c] instanceof Date ? r[c].toISOString().slice(0, 16).replace("T", " ") : r[c] })))}</div>`}
+  ${p.results ? `<div class="panel"><h3>Data quality (last run)</h3>${dqView(p.results)}</div>` : ""}`;
+},
+analyze(p) {
+  const R = p.results; if (!R) return `<div class="sechead"><span class="eyebrow">Measure / Analyze · Step 6</span><h2>Analysis</h2></div><div class="empty">No analysis yet. Load and map data in Step 5, then choose <b>Run analysis</b>. <a href="#data">Go to Upload & map</a></div>`;
+  const K = id => R.kpis.find(k => k.id === id);
+  return `<div class="sechead"><span class="eyebrow">Measure / Analyze · Step 6</span><h2>${esc(R.ctq.name)}: baseline and analysis</h2><p class="muted">Run ${esc(R.at)} on ${esc(R.file ? R.file.name : "")} · ${R.n} usable observations · ${esc(R.period)}</p></div>
+  <div class="grid g4">${R.kpis.map(kpiCard).join("")}</div>
+  <div class="grid g2"><div class="panel"><h3>Distribution</h3>${R.charts.dist ? barsH(R.charts.dist.map(d => ({ l: d.cat, v: d.n / R.n * 100, tip: d.n + " responses" })), "%", -1) : histSVG(R.charts.hist, R.unit, R.type === "duration" && K("K2") ? K("K2").value : undefined)}</div>
+  <div class="panel"><h3>${R.charts.stages ? "Median time per stage" : R.charts.pareto ? "Pareto of " + esc(R.charts.paretoScope) : "Segments"}</h3>${R.charts.stages ? barsH(R.charts.stages.map(s => ({ l: s.name, v: s.median, tip: "n=" + s.n + ", P90 " + fmt(s.p90) })), " " + R.unit, R.charts.stages.reduce((bi, s, i, a) => s.median > a[bi].median ? i : bi, 0)) : R.charts.pareto ? barsH(R.charts.pareto.slice(0, 10).map(x => ({ l: x.cat, v: x.pct, tip: x.n + " · cum " + fmt(x.cum) + "%" })), "%", 0) : '<div class="empty">Map stage timestamps or a category column for this view.</div>'}</div></div>
+  <div class="panel"><h3>Stability: ${esc(R.charts.ctrl ? R.charts.ctrl.kind : "control chart")}</h3>${ctrlSVG(R.charts.ctrl, R.type === "proportion" ? "%" : R.unit)}<p class="small muted">Rules: R1 beyond limits; R2 8 points on one side; R3 6 trending. Control limits are not targets or specification limits. No signals does not by itself prove stability.</p></div>
+  ${R.charts.longest ? `<div class="panel"><h3>Which stage is longest per case</h3>${barsH(R.charts.longest.map(x => ({ l: x.cat, v: x.pct })), "%", 0)}</div>` : ""}
+  ${R.charts.pareto && R.charts.stages ? `<div class="panel"><h3>Pareto of categories</h3>${barsH(R.charts.pareto.slice(0, 10).map(x => ({ l: x.cat, v: x.pct, tip: "cum " + fmt(x.cum) + "%" })), "%", 0)}</div>` : ""}
+  <h2>Segmentation</h2>${R.segments.length ? `<div class="grid g2">${R.segments.map(s => `<div class="panel"><h3>By ${esc(s.seg)}</h3>${s.groups ? barsH([...s.groups].sort((a, b) => b.value - a.value).map(g => ({ l: g.g, v: g.value, tip: "n=" + g.n })), " " + s.unit, -1) + `<p class="small num">${esc(s.method)} · ${esc(s.stat)} · ${fmtP(s.p)} · ${esc(s.effect)}</p>${s.smallExpected ? `<p>${chip("Small expected counts – interpret cautiously")}</p>` : ""}${s.suppressed && s.suppressed.length ? `<p class="small muted">${s.suppressed.length} group(s) below the minimum size are suppressed.</p>` : ""}` : `<div class="empty">${esc(s.status)}</div>`}</div>`).join("")}</div>` : '<div class="empty">Choose segment columns in Step 5 to compare groups.</div>'}
+  <h2>Findings</h2><div class="grid">${R.findings.map(findingCard).join("")}</div>
+  <div class="panel"><h3>Method and data handling</h3><ul class="small">${R.method.map(m => `<li>${esc(m)}</li>`).join("")}${R.capability ? `<li>Capability: ${esc(R.capability)}</li>` : ""}</ul>${dqView(R)}</div>
+  <div class="row"><button class="primary" data-act="snapshot">Save as results version</button><a href="#recs">See recommendations →</a></div>`;
+},
+recs(p) {
+  const R = p.results, L = checklist(p);
+  return `<div class="sechead"><span class="eyebrow">Analyze · Step 7</span><h2>Recommendations and next steps</h2><p class="muted">Rule-based recommendations come from your data and project state. Each one is a proposal to validate, not a validated root cause.</p></div>
+  <div class="panel"><h3>Project recommendations</h3>${R && R.recs.length ? R.recs.map(r => `<div class="rec ${r.pri === 1 ? "hi" : ""}"><div class="row">${chip(r.pri === 1 ? "Priority – " + r.phase : "Proposed – " + r.phase)}</div><b>${esc(r.title)}</b><span class="small">Why: ${esc(r.why)}</span><span class="small muted">Suggested tools: ${esc(r.tools)}</span></div>`).join("") : '<div class="empty">Run the analysis (Step 5) to get data-driven recommendations.</div>'}</div>
+  <div class="panel" id="ai-panel" ${S.sample ? "" : "hidden"}><h3>AI coach (optional)</h3><p class="small muted">Sends your charter, CTQ, KPIs and findings to Claude. Raw data is never sent. Treat the answer as a <b>hypothesis</b> to review.</p><div class="row"><button data-act="ai">Ask Claude for coaching</button><button data-act="ai-stop" hidden id="ai-stop">Stop</button></div><div id="ai-out" class="preview" ${S.ai ? "" : "hidden"}>${esc(S.ai || "")}</div></div>
+  <div class="panel"><h3>DMAIC checklist</h3>${DMAIC.map(ph => `<h3 class="eyebrow" style="margin-top:6px">${ph}</h3>${stepList(L.filter(x => x.phase === ph))}`).join("")}</div>`;
+},
+causes(p) {
+  return `<div class="sechead"><span class="eyebrow">Define / Analyze · Step 8</span><h2>SIPOC, stakeholder input and root causes</h2><p class="muted">Record what people actually said. Every idea is a hypothesis until the evidence supports it. “Human error” is not accepted as a root cause.</p></div>
+  <div class="panel"><h3>SIPOC</h3>${editTable("sipoc")}</div>
+  <div class="panel"><h3>Stakeholder input</h3>${editTable("stakeholder")}</div>
+  <div class="panel"><h3>Cause evidence register</h3>${editTable("causes")}${p.causes.some(c => /^\s*human error\.?\s*$/i.test(c.cause || "")) ? `<p>${chip("“Human error” is not a root cause")} <span class="small">Name the system condition that allows the error.</span></p>` : ""}</div>`;
+},
+improve(p) {
+  const w = p.weights, score = r => { const v = ["impact", "evid", "cost", "effort", "risk"].map(k => parseNum(r[k])); if (v.some(x => x === null || Number.isNaN(x))) return "Incomplete"; return fmt(w.impact * v[0] + w.evid * v[1] + w.cost * v[2] + w.effort * v[3] + w.risk * v[4], 2); };
+  const sum = Object.values(w).reduce((a, b) => a + Number(b), 0);
+  return `<div class="sechead"><span class="eyebrow">Improve · Step 9</span><h2>Improvement options, pilots and actions</h2><p class="muted">Trace each option: CTQ → finding → cause → change → expected mechanism. Nothing is implemented or communicated without approval.</p></div>
+  <div class="panel"><h3>Scoring weights ${chip("Proposed – needs sponsor approval")}</h3><div class="grid g4">${Object.keys(w).map(k => fld("weights." + k, { impact: "Customer impact", evid: "Evidence strength", cost: "Cost", effort: "Effort", risk: "Risk" }[k], { type: "number", rerender: 1 })).join("")}</div>${Math.abs(sum - 1) > .001 ? `<p>${chip("Weights must sum to 1.00")} <span class="small num">now ${fmt(sum, 2)}</span></p>` : ""}</div>
+  <div class="panel"><h3>Improvement options</h3>${editTable("improvements", { h: "Weighted score", f: score })}</div>
+  <div class="panel"><h3>Pilot plan</h3>${editTable("pilots")}</div>
+  <div class="panel"><h3>Implementation, training and communication actions</h3>${editTable("actions")}</div>`;
+},
+control(p) {
+  return `<div class="sechead"><span class="eyebrow">Improve / Control · Step 10</span><h2>Benefits and control plan</h2><p class="muted">Keep forecasts, pilot estimates and realized benefits separate. Time saved is not cash saved. Every benefit needs Finance approval.</p></div>
+  <div class="panel"><h3>Benefits</h3>${editTable("benefits")}</div>
+  <div class="panel"><h3>Control plan</h3>${editTable("controls")}</div>`;
+},
+governance(p) {
+  const v = p.versions, cmp = v.length >= 2 ? compareVersions(v[v.length - 2], v[v.length - 1]) : null;
+  return `<div class="sechead"><span class="eyebrow">Governance · Step 11</span><h2>Gates, approvals, risks and versions</h2></div>
+  <div class="panel"><h3>Phase gates</h3><div class="grid g3">${DMAIC.map(g => `<div class="panel tint"><b>${g}</b>${fld(`gates.${g}.status`, "Status", { sel: GATE, blank: false, rerender: 1 })}${fld(`gates.${g}.by`, "Approved by (name)")}${fld(`gates.${g}.date`, "Date", { type: "date" })}</div>`).join("")}</div><p class="small muted">Record an approval only after the approver has actually signed off.</p></div>
+  <div class="panel"><h3>Approvals</h3>${editTable("approvals")}</div>
+  <div class="grid g2"><div class="panel"><h3>Risks and issues</h3>${editTable("risks")}</div><div class="panel"><h3>Assumptions</h3>${editTable("assumptions")}</div></div>
+  <div class="grid g2"><div class="panel"><h3>Decisions</h3>${editTable("decisions")}</div><div class="panel"><h3>Open questions</h3>${editTable("questions")}</div></div>
+  <div class="panel"><h3>Results versions</h3>${table(v, [{ h: "Version", k: "v" }, { h: "Saved", k: "at" }, { h: "File", k: r => r.file }, { h: "Status", k: r => chip(r.status), raw: 1 }])}
+  ${cmp ? `<h3>Refresh comparison ${esc(cmp.from)} → ${esc(cmp.to)}</h3>${table(cmp.rows, [{ h: "Measure", k: "name" }, { h: "Old", k: r => fmt(r.old), n: 1 }, { h: "New", k: r => fmt(r.new), n: 1 }, { h: "Rel. change", k: r => r.rel === null ? "–" : fmt(r.rel) + "%", n: 1 }, { h: "Old n", k: "on", n: 1 }, { h: "New n", k: "nn", n: 1 }, { h: "Assessment", k: r => chip(r.material ? "Requires review" : "No material change"), raw: 1 }])}<p class="small muted">Materiality rule: relative change ≥ 5% (proposed – confirm with sponsor). When a change is material, related approvals are marked “Requires revalidation”.</p>` : '<p class="small muted">Save two results versions (Step 6) to compare a refresh.</p>'}</div>
+  <div class="panel"><h3>Change log (latest 30)</h3>${table(p.log.slice(-30).reverse(), [{ h: "When", k: "at" }, { h: "What", k: "what" }])}</div>`;
+},
+export(p) {
+  return `<div class="sechead"><span class="eyebrow">Step 12</span><h2>PowerPoint and exports</h2><p class="muted">The deck is built from the same results and registers you see here, so its figures match the screen.</p></div>
+  <div class="grid g2"><div class="panel"><h3>Executive DMAIC deck</h3><p class="small">Title and document control, executive summary and decisions, charter, CTQs, SIPOC, data quality, baseline, stability, segmentation, findings, root causes, recommendations, improve and control status, governance, next steps, technical appendix. Phases you haven't reached are labelled Pending.</p><button class="primary" data-act="ppt" ${typeof PptxGenJS === "undefined" ? "disabled" : ""}>Create PowerPoint</button>${typeof PptxGenJS === "undefined" ? '<p class="small">The PowerPoint library did not load. Check your connection and reload.</p>' : ""}</div>
+  <div class="panel"><h3>Project file</h3><p class="small">Export a portable project file (no raw data) to back up, share or reload later. Importing always creates a separate project and never merges into an existing one.</p><div class="row"><button data-act="export-json">Export project (.json)</button><label class="f" for="import-in">Import project<input type="file" id="import-in" accept=".json"></label></div></div></div>
+  <div class="panel"><h3>Communication templates</h3><p class="small muted">Filled from your project. Review before sending; nothing is sent from here.</p><div class="row">${Object.keys(COMMS).map(k => `<button data-comm="${k}">${esc(k)}</button>`).join("")}</div><div id="comm-out" class="preview" hidden></div><div class="row" id="comm-actions" hidden><button data-act="comm-copy">Copy text</button><button data-act="comm-save">Download .md</button></div></div>
+  <div class="panel"><h3>Delete this project</h3><p class="small">Removes it from storage on this account or browser. This cannot be undone. Export it first if you may need it.</p><div class="row"><button data-act="del-arm">Delete project…</button><span id="del-confirm" hidden><button class="primary" data-act="del-yes">Yes, delete permanently</button> <button data-act="del-no">Cancel</button></span></div></div>`;
+},
+};
+function dqView(R) {
+  const dq = R.dq; const miss = Object.entries(dq.missing).map(([k, v]) => ({ f: k + (v.scope ? ` (${v.scope})` : ""), n: v.n, pct: v.pct }));
+  return `<div class="grid g4"><div class="kpi"><span class="eyebrow">Rows</span><div class="v">${dq.rows}</div></div><div class="kpi"><span class="eyebrow">Duplicate rows / IDs</span><div class="v">${dq.exactDup} / ${dq.dupIds}</div></div><div class="kpi"><span class="eyebrow">Chronology errors</span><div class="v">${dq.chron}</div></div><div class="kpi"><span class="eyebrow">Possible personal-data columns</span><div class="v">${dq.pii.length}</div>${dq.pii.length ? `<span class="small">${esc(dq.pii.join(", "))} – remove before sharing</span>` : ""}</div></div>
+  ${table(miss, [{ h: "Mapped field", k: "f" }, { h: "Missing (kept blank, never 0)", k: "n", n: 1 }, { h: "%", k: r => fmt(r.pct), n: 1 }])}
+  ${table([...R.transforms.map(t => ({ a: t.step, b: t.removed })), ...R.exclusions.map(e => ({ a: e.rule, b: e.rows }))], [{ h: "Transformation / exclusion (logged)", k: "a" }, { h: "Rows", k: "b", n: 1 }])}`;
+}
+function compareVersions(a, b) {
+  const rows = b.kpis.map(k => { const o = a.kpis.find(x => x.id === k.id); const rel = o && o.value ? Math.abs(k.value - o.value) / Math.abs(o.value) * 100 : null; return { name: k.name, old: o ? o.value : null, new: k.value, rel, on: o ? o.n : "–", nn: k.n, material: !o || (rel !== null && rel >= 5) }; });
+  return { from: a.v, to: b.v, rows, material: rows.some(r => r.material) };
+}
+
+/* ================================================================== COMMUNICATIONS */
+const COMMS = {
+  "Project launch": p => `# Starting an improvement review: ${p.org.process || "[process]"}\n\nDear colleagues,\n\nWe are starting a structured review of **${p.org.process || "[process]"}** in ${p.org.department || "[department]"}. The aim is to make it simpler, faster and more reliable for its customers.\n\n## Why now\n${problemText(p) || "[problem statement]"}\n\n## What we will measure first\n${p.ctqs.map(c => `- ${c.name} (${c.unit}): ${c.definition}`).join("\n") || "- [CTQs]"}\n\nTargets are not yet set. They will follow the baseline and require sponsor approval.\n\n## What we will ask of you\n- A short interview or workshop\n- Access to existing data through approved channels\n- Honest views. We are reviewing the process, not judging people.\n\nScope: ${p.charter.scope || "[scope]"}\nOut of scope: ${p.charter.exclusions || "[exclusions]"}\n\nSponsor: ${p.team.sponsor || "[sponsor]"} · Process owner: ${p.team.owner || "[owner]"}\n\n_Draft – pending approval_`,
+  "Sponsor update": p => { const R = p.results; return `# Status update: ${title(p)} (${p.org.dmaic} phase)\n\n## Decisions needed\n${p.approvals.filter(a => a.status !== "Approved").map(a => `- ${a.item} (${a.role}): ${a.status || "Pending"}`).join("\n") || "- [none recorded]"}\n\n## Key findings\n${R ? R.findings.slice(0, 3).map(f => `- **${f.finding}** Evidence: ${f.evidence} Limitation: ${f.limitation}`).join("\n") : "- Baseline not yet calculated"}\n\n## Next steps\n${checklist(p).filter(x => !x.done).slice(0, 3).map(x => "- " + x.t).join("\n")}\n\n_Benefits are forecasts until validated by Finance. Draft – pending approval._`; },
+  "Data request": p => { const ct = primaryCTQ(); return `# Data request: ${p.org.process || "[process]"}\n\nHello,\n\nTo establish a baseline for **${ct ? ct.name : "[CTQ]"}** we need an extract with one row per ${p.org.observationUnit || "[unit]"}:\n\n${requiredRoles(ct).map(r => `- **${r[1]}** (${r[3] ? "required" : "optional"}): ${r[2]}`).join("\n")}\n\n- Period: [start] to [end], time zone [ ]\n- Include open/incomplete cases with their status\n- Leave unknown values blank. Do not replace them with 0.\n- No names, e-mails or national IDs. Use pseudonymised references.\n\nPlease transfer the file through [approved secure location], not by e-mail.\n\n_Draft – pending approval_`; },
+  "Workshop invite": p => `# Root-cause workshop: ${p.org.process || "[process]"}\n\n**When:** [date/time], 90 minutes · **Where:** [room/link]\n\nWe will gather perspectives on why the process performs as it does. Ideas are treated as hypotheses and tested against data before anyone acts on them.\n\n## Agenda (facilitator)\n1. Purpose and ground rules: no blame, no names (5 min)\n2. Silent idea generation (10 min)\n3. Affinity grouping on a fishbone (20 min)\n4. Five Whys on the top clusters. "Human error" is never an end point (20 min)\n5. Agree the evidence that would confirm or reject each cause (15 min)\n6. Dot-vote and owners (20 min)\n\n_Draft – pending approval_`,
+  "Phase-gate request": p => `# Request to close the ${p.org.dmaic} gate: ${title(p)}\n\n| Criterion | Status |\n|---|---|\n${checklist(p).filter(x => x.phase === p.org.dmaic).map(x => `| ${x.t} | ${x.done ? "Met" : "Not met"} |`).join("\n")}\n\nApproving this gate confirms the evidence is enough to move on. It does not approve benefits or implementation.\n\nApprover: ${p.team.sponsor || "[sponsor]"} · Decision: Approve / Approve with conditions / Reject · Date:\n\n_Draft – pending approval_`,
+  "Pilot announcement": p => { const pl = p.pilots[0] || {}; return `# Pilot starting: ${pl.intervention || "[change]"}\n\nFrom [start] to [end] we will try **${pl.intervention || "[change]"}** with **${pl.population || "[population]"}**.\n\n- Success criteria: ${pl.success || "[criteria]"}\n- Guardrails: ${pl.guardrails || "[balancing measures]"}\n- **Stop rule:** ${pl.stop || "[condition]"}. If this happens we pause and return to the standard procedure.\n\nPilot owner: ${pl.owner || "[owner]"}\n\n_Draft – pending approval_`; },
+  "Finance validation": p => `# Benefit validation request: ${title(p)}\n\n| Benefit | Stage | Type | Formula | Net value | Currency | Horizon |\n|---|---|---|---|---|---|---|\n${p.benefits.map(b => `| ${b.desc || ""} | ${b.stage || ""} | ${b.type || ""} | ${b.formula || ""} | ${b.value || ""} | ${b.currency || ""} | ${b.horizon || ""} |`).join("\n") || "| | | | | | | |"}\n\nReleased capacity is not shown as cash unless a budget decision converts it. Please confirm: Validated / Validated with changes / Not validated.\n\n_Draft – pending approval_`,
+  "Control handover": p => `# Control plan handover: ${p.org.process || "[process]"}\n\nFrom [date], ownership of the improved process moves to **${p.team.owner || "[process owner]"}**.\n\n| Metric | Owner | Frequency | Trigger | Response | Escalation |\n|---|---|---|---|---|---|\n${p.controls.map(c => `| ${c.metric || ""} | ${c.owner || ""} | ${c.freq || ""} | ${c.trigger || ""} | ${c.response || ""} | ${c.escalation || ""} |`).join("\n") || "| | | | | | |"}\n\nChecklist: SOPs published · competence checks done · dashboard refresh owner named · benefits reviews scheduled.\n\nAcceptance: Process owner ____ Date ____ · Sponsor ____ Date ____\n\n_Draft – pending approval_`,
+};
+let currentComm = null;
+
+/* ================================================================== POWERPOINT */
+async function buildDeck() {
+  const p = S.cur, R = p.results, ct = primaryCTQ();
+  const pres = new PptxGenJS(); pres.layout = "LAYOUT_16x9"; pres.title = title(p); pres.company = "Six Sigma Studio";
+  pres.theme = { headFontFace: "Calibri", bodyFontFace: "Calibri" };
+  const INK = "2B2B2B", SOFT = "5C5852", RULE = "D9D3C7", CORAL = "E5A094", PEACH = "F5D6BC", CREAM = "F8F4E8", SAGE = "D7E6B7", DEEP = "A8584B", GREY = "8A8378", LG = "B9B1A3";
+  const footer = `${p.org.organization || ""} · ${p.org.process || ""} · ${p.id} · Draft – pending approval${p.example ? " · SYNTHETIC EXAMPLE DATA" : ""}`.replace(/&/g, "and");
+  pres.defineSlideMaster({ title: "TITLE", background: { color: CREAM }, objects: [] });
+  pres.defineSlideMaster({ title: "CONTENT", background: { color: "FFFFFF" }, objects: [{ text: { text: footer, options: { x: .5, y: 5.2, w: 8, h: .25, fontSize: 8, color: SOFT, margin: 0 } } }], slideNumber: { x: 9.1, y: 5.2, w: .4, h: .25, fontSize: 8, color: SOFT, align: "right" } });
+  const cur = DMAIC.indexOf(p.org.dmaic);
+  const chipS = (s, text, kind, x, y, w = 1.9) => s.addText(text, { shape: pres.shapes.ROUNDED_RECTANGLE, rectRadius: .08, x, y, w, h: .26, fontSize: 9, bold: true, color: INK, fill: { color: { ok: SAGE, warn: PEACH, bad: CORAL, na: CREAM }[kind] || CREAM }, line: { color: RULE, width: .5 }, align: "center", valign: "middle", margin: 0 });
+  const slide = (t, phase) => { const s = pres.addSlide({ masterName: "CONTENT" }); s.addText(t, { x: .5, y: .42, w: 9, h: .75, fontSize: 22, bold: true, color: INK, valign: "top", margin: 0, fit: "shrink" });
+    DMAIC.forEach((d, i) => s.addText(d[0], { x: 7.95 + i * .31, y: .12, w: .27, h: .22, fontSize: 8, bold: d === phase, align: "center", valign: "middle", margin: 0, color: i <= cur ? INK : LG, fill: { color: d === phase ? PEACH : "FFFFFF" }, line: { color: i <= cur ? GREY : RULE, width: .5 } })); return s; };
+  const src = (s, t) => s.addText(t, { x: .5, y: 4.92, w: 9, h: .25, fontSize: 8, italic: true, color: SOFT, margin: 0 });
+  const th = t => ({ text: t, options: { bold: true, color: INK, fill: { color: CREAM }, fontSize: 9.5 } });
+  const td = (t, o = {}) => ({ text: t === null || t === undefined || t === "" ? "–" : String(t), options: { fontSize: 9.5, color: INK, ...o } });
+  const tbl = (s, rows, o) => s.addTable(rows, { x: .5, y: 1.3, w: 9, border: { type: "solid", pt: .5, color: RULE }, valign: "middle", margin: .05, autoPage: false, ...o });
+  const stat = (s, v, u, l, x, y, w, em) => { s.addText([{ text: v, options: { fontSize: 32, bold: true, color: em ? DEEP : INK } }, { text: " " + u, options: { fontSize: 13, color: SOFT } }], { x, y, w, h: .6, margin: 0, valign: "bottom" }); s.addText(l, { x, y: y + .64, w, h: .5, fontSize: 10, color: SOFT, margin: 0, valign: "top" }); };
+  const cb = { catAxisLabelColor: SOFT, valAxisLabelColor: SOFT, catAxisLabelFontSize: 9, valAxisLabelFontSize: 9, dataLabelFontSize: 9, dataLabelColor: INK, valGridLine: { color: "EDE8DE", size: .5 }, catGridLine: { style: "none" }, showLegend: false, titleFontSize: 10, titleColor: INK, catAxisLabelFontFace: "Calibri", valAxisLabelFontFace: "Calibri", dataLabelFontFace: "Calibri", titleFontFace: "Calibri" };
+  const pending = (s, what) => { s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: .5, y: 1.4, w: 9, h: 1.2, rectRadius: .06, fill: { color: CREAM }, line: { color: CREAM } }); s.addText(what, { x: .75, y: 1.5, w: 8.5, h: 1, fontSize: 12, color: INK, margin: 0, valign: "middle" }); };
+  const K = id => R ? R.kpis.find(k => k.id === id) : null;
+
+  // 1 title
+  let s = pres.addSlide({ masterName: "TITLE" });
+  s.addText(`${p.org.process || "Process improvement"}: ${p.org.dmaic} phase review`, { x: .6, y: 1.4, w: 8.8, h: 1.3, fontSize: 30, bold: true, color: INK, valign: "bottom", margin: 0, fit: "shrink" });
+  s.addText(`${p.org.organization || "[Organisation]"} · ${p.org.department || "[Department]"}${R ? " · data " + R.period : ""}`, { x: .6, y: 2.85, w: 8.8, h: .5, fontSize: 15, color: SOFT, margin: 0 });
+  s.addTable([["Owner", p.team.lead || "[Project lead]"], ["Approver", p.team.sponsor || "[Sponsor]"], ["Version", `${p.versions.length ? p.versions[p.versions.length - 1].v : "v0"} · ${nowISO().slice(0, 10)}`], ["Status", "Draft – pending approval"], ["Review cadence", "At each phase gate"]].map(([a, b]) => [td(a, { color: SOFT, fontSize: 9 }), td(b, { fontSize: 9 })]), { x: .6, y: 3.7, w: 5.6, colW: [1.4, 4.2], border: { type: "none" }, margin: .02, rowH: .2 });
+  if (p.example) chipS(s, "SYNTHETIC EXAMPLE DATA", "warn", 7, 3.75, 2.4);
+
+  // 2 exec summary
+  const f1 = R && R.findings[0];
+  s = slide(f1 ? f1.finding : "Executive summary: baseline not yet measured", p.org.dmaic);
+  if (R) { R.kpis.slice(0, 3).forEach((k, i) => stat(s, k.value === null ? "–" : fmt(k.value, k.unit === "index" ? 2 : 1), k.unit, `${k.name}\nn = ${k.n}${k.ci ? ` · 95% CI ${fmt(k.ci[0])}–${fmt(k.ci[1])}` : ""}`, .5 + i * 2.25, 1.3, 2.15, i === 1)); }
+  else pending(s, "Upload data and run the analysis to populate the baseline.");
+  s.addText("Recommended focus", { x: 7.3, y: 1.3, w: 2.2, h: .3, fontSize: 11, bold: true, color: INK, margin: 0 });
+  const recs = R ? R.recs.slice(0, 3) : [];
+  s.addText(recs.length ? recs.map((r, i) => ({ text: r.title, options: { bullet: true, breakLine: i < recs.length - 1 } })) : [{ text: "Complete the charter and data request.", options: { bullet: true } }], { x: 7.3, y: 1.62, w: 2.2, h: 1.4, fontSize: 10, color: INK, margin: 0, valign: "top", paraSpaceAfter: 3, fit: "shrink" });
+  const dec = p.approvals.filter(a => a.status !== "Approved").slice(0, 4);
+  s.addText("Decisions requested", { x: .5, y: 3.0, w: 9, h: .3, fontSize: 12, bold: true, color: INK, margin: 0 });
+  tbl(s, [[th("Decision / approval"), th("Approver"), th("Status")], ...(dec.length ? dec.map(a => [td(a.item), td(a.role), td(a.status || "Pending", { fill: { color: /revalid|Reject/.test(a.status || "") ? CORAL : PEACH }, bold: true })]) : [[td("Approve the project charter and CTQ definitions"), td(p.team.sponsor || "Sponsor"), td("Pending", { fill: { color: PEACH }, bold: true })]])], { y: 3.32, colW: [5.4, 1.8, 1.8], rowH: .28 });
+  src(s, R ? `Source: ${R.file ? R.file.name : ""}, ${R.period}. Findings are calculated results; causes remain hypotheses until validated.` : "No data analysed yet.");
+
+  // 3 charter
+  s = slide("Project charter: the problem is defined by its measured gap", "Define");
+  const box = (t, b, x, y, w, h, st, k) => { s.addText(t, { x, y, w: w - 2, h: .3, fontSize: 12, bold: true, color: INK, margin: 0 }); chipS(s, st, k, x + w - 1.9, y + .02); s.addText(b || "Not yet defined", { x, y: y + .38, w, h: h - .4, fontSize: 10.5, color: INK, margin: 0, valign: "top", fit: "shrink" }); };
+  box("Problem statement", problemText(p), .5, 1.3, 4.3, 1.55, "Draft – pending approval", "warn");
+  box("Goal / objective", p.charter.goal, 5.2, 1.3, 4.3, 1.55, ct && /Approved/.test(ct.targetStatus) ? "Target approved" : "Target not approved", ct && /Approved/.test(ct.targetStatus) ? "ok" : "warn");
+  s.addShape(pres.shapes.LINE, { x: .5, y: 3.0, w: 9, h: 0, line: { color: RULE, width: .75 } });
+  [["Business case", p.charter.businessCase], ["In scope", p.charter.scope], ["Out of scope", p.charter.exclusions]].forEach(([a, b], i) => s.addText([{ text: a + "\n", options: { bold: true } }, { text: b || "–" }], { x: .5 + i * 3.05, y: 3.12, w: 2.9, h: 1.7, fontSize: 9.5, color: INK, margin: 0, valign: "top", fit: "shrink" }));
+  src(s, `Sponsor: ${p.team.sponsor || "–"} · Process owner: ${p.team.owner || "–"} · Lead: ${p.team.lead || "–"} · VOC: ${p.charter.voc ? "captured" : "not yet captured"}`);
+
+  // 4 CTQs
+  s = slide(`${p.ctqs.length} CTQ${p.ctqs.length === 1 ? "" : "s"} defined; ${p.ctqs.filter(c => /Approved/.test(c.targetStatus)).length} with an approved target`, "Define");
+  tbl(s, [[th("CTQ"), th("Definition"), th("Unit"), th("Direction"), th("Baseline"), th("Requirement"), th("Target status")], ...(p.ctqs.length ? p.ctqs.map(c => [td(c.name, { bold: true }), td(c.definition), td(c.unit), td(c.direction), td(R && c.id === R.ctq.id && R.kpis[0] ? `${fmt(R.kpis[0].value)} ${R.kpis[0].unit}` : "Not assessed"), td(c.requirement || "Not agreed"), td(c.targetStatus, { fill: { color: /Approved/.test(c.targetStatus) ? SAGE : CREAM } })]) : [[td("No CTQs defined"), td(""), td(""), td(""), td(""), td(""), td("")]])], { colW: [1.4, 2.9, .6, .8, 1.15, 1.15, 1.0] });
+  src(s, "Target, specification limit, control limit and historical average are kept separate.");
+
+  // 5 SIPOC
+  s = slide(p.sipoc.length ? "SIPOC: who supplies, what flows, who receives" : "SIPOC: to be completed in a workshop", "Define");
+  if (p.sipoc.length) tbl(s, [[th("Suppliers"), th("Inputs"), th("Process step"), th("Outputs"), th("Customers")], ...p.sipoc.slice(0, 8).map(r => ["s", "i", "p", "o", "c"].map(k => td(r[k])))], { colW: [1.8, 1.8, 1.8, 1.8, 1.8] }); else pending(s, "No SIPOC rows yet. Build it with the process owner and frontline team.");
+  if (R && R.charts.stages) src(s, "Measured stage medians: " + R.charts.stages.map(x => `${x.name} ${fmt(x.median)} ${R.unit}`).join(" · "));
+
+  // 6 data quality
+  if (R) {
+    const dq = R.dq; s = slide(dq.chron || dq.dupIds || dq.exactDup ? "The data supports a baseline, but defects must be corrected" : "The data passed the structural quality checks", "Measure");
+    stat(s, String(dq.rows), "rows", "Uploaded (raw file unchanged)", .5, 1.3, 2.1); stat(s, `${dq.exactDup}/${dq.dupIds}`, "dups", "Duplicate rows / repeated IDs (removed, logged)", 2.75, 1.3, 2.1); stat(s, String(dq.chron), "errors", "Chronology errors (excluded)", 5.0, 1.3, 2.1, dq.chron > 0); stat(s, String(R.n), "usable", "Observations analysed", 7.25, 1.3, 2.2);
+    const miss = Object.entries(dq.missing).filter(([, v]) => v.n > 0).slice(0, 5);
+    tbl(s, [[th("Check"), th("Result"), th("Status")], [td("Measurement verified against source"), td(p.options.measurementVerified ? "Sample verified" : "Not yet done"), td(p.options.measurementVerified ? "Done" : "Open", { fill: { color: p.options.measurementVerified ? SAGE : PEACH } })], ...miss.map(([k, v]) => [td(`Missing values: ${k}`), td(`${v.n} (${fmt(v.pct)}%), kept blank and never set to 0`), td(v.pct >= 10 ? "Review" : "Acceptable", { fill: { color: v.pct >= 10 ? PEACH : "FFFFFF" } })]), [td("Possible personal-data columns"), td(dq.pii.join(", ") || "None detected by name"), td(dq.pii.length ? "Remove" : "OK", { fill: { color: dq.pii.length ? CORAL : "FFFFFF" } })]], { y: 2.85, colW: [3.2, 4.2, 1.6], rowH: .26 });
+    src(s, "Every transformation and exclusion is listed in the technical appendix.");
+  }
+
+  // 7 baseline chart
+  if (R) {
+    const k0 = R.kpis[0]; s = slide(`Baseline: ${k0.name} ${fmt(k0.value, k0.unit === "index" ? 2 : 1)} ${k0.unit}${k0.ci ? ` (95% CI ${fmt(k0.ci[0])}–${fmt(k0.ci[1])})` : ""}, n = ${k0.n}`, "Measure");
+    if (R.charts.dist) s.addChart(pres.charts.BAR, [{ name: "Share", labels: R.charts.dist.map(d => d.cat), values: R.charts.dist.map(d => +(d.n / R.n * 100).toFixed(1)) }], { ...cb, x: .5, y: 1.3, w: 6.2, h: 3.5, barDir: "col", chartColors: [GREY], showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: '0"%"', showTitle: true, title: `Distribution of responses (n = ${R.n})` });
+    else if (R.charts.hist && R.charts.hist.length >= 5) { const v = R.charts.hist, mn = Math.min(...v), mx = Math.max(...v), nb = Math.min(20, Math.max(6, Math.ceil(Math.sqrt(v.length)))), bw = (mx - mn) / nb || 1, bins = Array(nb).fill(0); v.forEach(x => bins[Math.min(nb - 1, Math.floor((x - mn) / bw))]++); const p90 = quant(v, .9), cols = bins.map((_, i) => mn + i * bw >= p90 && R.type === "duration" ? DEEP : GREY); s.addChart(pres.charts.BAR, [{ name: "Count", labels: bins.map((_, i) => fmt(mn + i * bw, mx > 100 ? 0 : 1)), values: bins }], { ...cb, x: .5, y: 1.3, w: 6.2, h: 3.5, barDir: "col", chartColors: cols, invertedColors: cols, barGapWidthPct: 25, showTitle: true, title: `Distribution (${R.unit}, n = ${v.length})${R.type === "duration" ? "; shaded = slowest 10%" : ""}` }); }
+    else if (R.charts.ctrl && R.charts.ctrl.values) s.addText("See the stability chart.", { x: .5, y: 1.3, w: 6, h: .5, fontSize: 12, color: SOFT });
+    R.kpis.slice(0, 3).forEach((k, i) => stat(s, k.value === null ? "–" : fmt(k.value, k.unit === "index" ? 2 : 1), k.unit, k.name + (k.note ? ` · ${k.note}` : ""), 7.0, 1.3 + i * 1.15, 2.5, i === 1));
+    src(s, `Source: ${R.file ? R.file.name : ""}, ${R.period}.`);
+  }
+
+  // 8 stability
+  if (R && R.charts.ctrl && R.charts.ctrl.values) {
+    const c = R.charts.ctrl, n = c.values.length, sig = c.signals || [];
+    s = slide(sig.length ? `${sig.length} special-cause signal(s): explain them before treating the baseline as stable` : "No special-cause signals; stability still needs process confirmation", "Measure");
+    s.addChart([{ type: pres.charts.LINE, data: [{ name: c.kind, labels: c.labels, values: c.values.map(x => +x.toFixed(2)) }], options: { chartColors: [INK], lineDataSymbol: "circle", lineDataSymbolSize: 5, lineSize: 2 } }, { type: pres.charts.LINE, data: [{ name: "UCL", labels: c.labels, values: (c.uclArr || Array(n).fill(c.ucl)).map(x => +x.toFixed(2)) }, { name: "CL", labels: c.labels, values: Array(n).fill(+c.cl.toFixed(2)) }, { name: "LCL", labels: c.labels, values: (c.lclArr || Array(n).fill(c.lcl)).map(x => +x.toFixed(2)) }], options: { chartColors: [LG, GREY, LG], lineDataSymbol: "none", lineSize: 1 } }], { ...cb, x: .5, y: 1.3, w: 6.6, h: 3.5, showLegend: true, legendPos: "b", legendFontSize: 9, legendColor: SOFT, showTitle: true, title: `${c.kind} (${n} points)` });
+    s.addText([{ text: `Limits ${fmt(c.lcl)} – ${fmt(c.ucl)}`, options: { bold: true, breakLine: true } }, { text: "These are control limits, not targets or specifications.", options: { breakLine: true } }, { text: " ", options: { breakLine: true } }, { text: sig.length ? sig.slice(0, 4).map(x => `R${x.rule} at ${x.label}`).join("; ") : "No signals under R1–R3.", options: { bold: true, color: sig.length ? DEEP : INK } }], { x: 7.35, y: 1.4, w: 2.15, h: 3.2, fontSize: 10.5, color: INK, margin: 0, valign: "top" });
+    src(s, "Rules: R1 beyond limits; R2 8 points on one side; R3 6 trending.");
+  }
+
+  // 9 stages / pareto
+  if (R && (R.charts.longest || R.charts.pareto)) {
+    const it = R.charts.longest || R.charts.pareto, lab = R.charts.longest ? "Longest stage per case (% of fully-timestamped cases)" : `Pareto of ${R.charts.paretoScope} by category (%)`;
+    s = slide(`'${it[0].cat}' accounts for ${fmt(it[0].pct)}% — the first place to look`, "Analyze");
+    const top = it.slice(0, 8), cols = top.map((_, i) => i === 0 ? DEEP : GREY);
+    s.addChart(pres.charts.BAR, [{ name: "Share", labels: top.map(x => x.cat), values: top.map(x => +x.pct.toFixed(1)) }], { ...cb, x: .5, y: 1.3, w: 6.2, h: 3.5, barDir: "bar", chartColors: cols, invertedColors: cols, catAxisOrientation: "maxMin", showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: '0.0"%"', valAxisHidden: true, valGridLine: { style: "none" }, showTitle: true, title: lab });
+    s.addText("This shows where the problem concentrates, not why. Validate causes with stakeholder input and data before acting.", { x: 7.0, y: 1.4, w: 2.5, h: 2, fontSize: 10.5, color: INK, margin: 0, valign: "top" });
+    src(s, `n = ${R.charts.longestN || R.charts.paretoN}. Source: ${R.file ? R.file.name : ""}.`);
+  }
+
+  // 10 segmentation
+  const segOk = R ? R.segments.filter(x => x.groups) : [];
+  if (segOk.length) {
+    const sg = segOk.reduce((a, b) => (a.p <= b.p ? a : b)); const g = [...sg.groups].sort((a, b) => b.value - a.value).slice(0, 8), det = sg.p < .05;
+    s = slide(det ? `${R.ctq.name} differs by ${sg.seg}: ${g[0].g} ${fmt(g[0].value)} vs ${g[g.length - 1].g} ${fmt(g[g.length - 1].value)}` : `No detectable difference by ${sg.seg}`, "Analyze");
+    const cols = g.map((_, i) => i === 0 && det ? DEEP : GREY);
+    s.addChart(pres.charts.BAR, [{ name: sg.unit, labels: g.map(x => `${x.g} (n=${x.n})`), values: g.map(x => +x.value.toFixed(2)) }], { ...cb, x: .5, y: 1.3, w: 5.6, h: 3.4, barDir: "bar", chartColors: cols, invertedColors: cols, catAxisOrientation: "maxMin", catAxisLabelPos: "low", showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", valAxisHidden: true, valGridLine: { style: "none" }, showTitle: true, title: `${sg.measure ? "Median " : ""}${sg.unit} by ${sg.seg}` });
+    s.addText(segOk.map((x, i) => ({ text: `${x.seg}: ${fmtP(x.p)}, ${x.effect}`, options: { bullet: true, breakLine: i < segOk.length - 1 } })), { x: 6.4, y: 1.4, w: 3.1, h: 2.2, fontSize: 10.5, color: INK, margin: 0, valign: "top", paraSpaceAfter: 3 });
+    src(s, `${sg.method}. Association only; no case-mix adjustment; never attributed to individuals.`);
+  }
+
+  // 11 findings table
+  if (R) { s = slide("Each finding carries its evidence, a proposed action and its limitation", "Analyze"); tbl(s, [[th("Finding"), th("Implication"), th("Proposed action"), th("Limitation")], ...R.findings.slice(0, 5).map(f => [td(f.finding, { bold: true, fontSize: 8.5 }), td(f.implication, { fontSize: 8.5 }), td(f.action, { fontSize: 8.5 }), td(f.limitation, { fontSize: 8.5, color: SOFT })])], { colW: [2.9, 2.2, 2.1, 1.8] }); src(s, "Labels: findings are calculated results or verified facts; causes are hypotheses until validated."); }
+
+  // 12 root causes
+  s = slide(p.causes.some(c => /Validated|Supported/.test(c.status)) ? "Root-cause evidence: supported causes and open hypotheses" : "Root causes are not yet established", "Analyze");
+  if (p.causes.length) tbl(s, [[th("Issue"), th("Hypothesized cause"), th("Evidence required"), th("Status")], ...p.causes.slice(0, 7).map(c => [td(c.issue), td(c.cause), td(c.evidence), td(c.status || "Hypothesized", { bold: true, fill: { color: /Validated|Supported/.test(c.status) ? SAGE : /Rejected/.test(c.status) ? CREAM : PEACH } })])], { colW: [2.0, 3.0, 2.6, 1.4] }); else pending(s, "No causes recorded. Run a cross-functional workshop (silent ideation, fishbone, Five Whys) and log hypotheses with the evidence needed to test them.");
+  src(s, `${p.stakeholder.length} stakeholder input(s) recorded.`);
+
+  // 13 recommendations
+  s = slide("Recommended next steps, ranked by evidence and impact", p.org.dmaic);
+  const rr = R ? R.recs.slice(0, 6) : [];
+  if (rr.length) tbl(s, [[th("Recommendation"), th("Why (evidence)"), th("Suggested tools"), th("Phase")], ...rr.map(r => [td(r.title, { bold: true }), td(r.why), td(r.tools), td(r.phase, { fill: { color: r.pri === 1 ? PEACH : "FFFFFF" } })])], { colW: [2.6, 3.0, 2.5, .9] }); else pending(s, "Recommendations will appear once data is analysed.");
+  src(s, "Proposed. Validate before implementing. Nothing is implemented or communicated without approval.");
+
+  // 14 improve / benefits / control
+  s = slide(p.improvements.length || p.benefits.length || p.controls.length ? "Improve, benefits and control: current status" : "Improve, benefits and control stay pending until causes are validated", p.org.dmaic);
+  [["Improve and pilot", p.improvements.length ? p.improvements.slice(0, 3).map(x => `• ${x.change || ""} (${x.decision || "Pending"})`).join("\n") : "Options will be scored on impact, evidence, cost, effort and risk. Every pilot needs guardrails and a stop rule.", p.improvements.length ? "In progress" : "Not started"],
+   ["Benefits", p.benefits.length ? p.benefits.slice(0, 3).map(b => `• ${b.desc || ""}: ${b.stage || "Forecast"}, ${b.type || ""}, Finance ${b.finance || "Pending"}`).join("\n") : "Forecast, pilot estimate and realized benefits are kept separate and validated by Finance.", p.benefits.length ? "Pending Finance" : "Not started"],
+   ["Control plan", p.controls.length ? p.controls.slice(0, 3).map(c => `• ${c.metric || ""}: ${c.trigger || ""} → ${c.response || ""}`).join("\n") : "Each CTQ gets an owner, review frequency, trigger, response and escalation path.", p.controls.length ? "Drafted" : "Not started"]].forEach(([t, b, st], i) => { const x = .5 + i * 3.08; s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 1.35, w: 2.84, h: 3.3, rectRadius: .06, fill: { color: CREAM }, line: { color: CREAM } }); s.addText(t, { x: x + .18, y: 1.5, w: 2.5, h: .3, fontSize: 13, bold: true, color: INK, margin: 0 }); chipS(s, st, st === "Not started" ? "na" : "warn", x + .18, 1.87, 1.5); s.addText(b, { x: x + .18, y: 2.3, w: 2.5, h: 2.2, fontSize: 10, color: INK, margin: 0, valign: "top", fit: "shrink" }); });
+  src(s, "No before/after results are claimed until a change has been piloted and measured on comparable populations.");
+
+  // 15 governance & next steps
+  s = slide("Governance: gates, risks and the next three actions", p.org.dmaic);
+  tbl(s, [[th("Gate"), th("Status"), th("Approved by")], ...DMAIC.map(g => [td(g), td(p.gates[g].status, { fill: { color: p.gates[g].status === "Approved" ? SAGE : p.gates[g].status === "Not started" ? "FFFFFF" : PEACH } }), td(p.gates[g].by || "–")])], { w: 4.2, colW: [1.2, 1.5, 1.5], rowH: .26 });
+  const nx = checklist(p).filter(x => !x.done).slice(0, 3); const acts = p.actions.filter(a => a.status !== "Complete").slice(0, 3);
+  s.addText("Next actions", { x: 5.0, y: 1.3, w: 4.5, h: .3, fontSize: 12, bold: true, color: INK, margin: 0 });
+  s.addText((acts.length ? acts.map(a => `${a.action} (${a.owner || "owner TBC"}, ${a.due || "date TBC"})`) : nx.map(x => x.t)).map((t, i, a) => ({ text: t, options: { bullet: true, breakLine: i < a.length - 1 } })), { x: 5.0, y: 1.65, w: 4.5, h: 1.5, fontSize: 10.5, color: INK, margin: 0, valign: "top", paraSpaceAfter: 4 });
+  const rk = p.risks.slice(0, 3); if (rk.length) tbl(s, [[th("Top risks"), th("Severity"), th("Owner")], ...rk.map(r => [td(r.desc), td(r.severity, { fill: { color: /High|Critical/.test(r.severity || "") ? CORAL : "FFFFFF" } }), td(r.owner)])], { x: .5, y: 3.35, w: 9, colW: [6, 1.4, 1.6], rowH: .26 });
+  src(s, "Unsigned approvals remain Pending.");
+
+  // 16 appendix
+  if (R) { s = slide("Technical appendix: methods, data handling and reproducibility", p.org.dmaic); tbl(s, [[th("Item"), th("Detail")], [td("Primary CTQ"), td(`${R.ctq.name}: ${R.ctq.definition} (${R.ctq.unit}, ${R.ctq.type})`)], [td("Data"), td(`${R.file ? R.file.name + " · hash " + R.file.hash : ""} · ${R.dq.rows} rows · ${R.n} usable · ${R.period}`)], [td("Methods"), td(R.method.join(" "))], [td("Transformations"), td(R.transforms.map(t => `${t.step} (${t.removed})`).join("; "))], [td("Exclusions"), td(R.exclusions.map(e => `${e.rule} (${e.rows})`).join("; "))], [td("Capability"), td(R.capability || "See KPIs")], [td("Run"), td(`${R.at} · Six Sigma Studio v0.2 · bootstrap seed 20261101`)]].map(r => r.map(c => ({ ...c, options: { ...c.options, fontSize: 8.5 } }))), { colW: [1.6, 7.4] }); }
+
+  const blob = await pres.write({ outputType: "blob" });
+  await saveFile(`${(p.org.process || "project").replace(/[^\w-]+/g, "_")}_${p.org.dmaic}_review.pptx`, blob);
+  touch("Created PowerPoint deck");
+}
+
+/* ================================================================== TEMPLATES (data collection) */
+function templateWorkbook() {
+  const p = S.cur, ct = primaryCTQ(), roles = requiredRoles(ct);
+  const heads = []; roles.forEach(r => { if (r[0] === "stages") heads.push("stage_2_timestamp", "stage_3_timestamp"); else if (r[0] === "segments") heads.push("segment_1", "segment_2"); else heads.push(r[1].replace(/\s*\(.*\)/, "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/_$/, "")); });
+  heads.push("notes");
+  const wb = XLSX.utils.book_new();
+  const readme = [["Data collection template", title(p)], ["CTQ", ct ? `${ct.name}: ${ct.definition}` : ""], ["Observation unit", p.org.observationUnit || "one row per unit"], ["Blanks", "Leave unknown values blank. Never type 0 for unknown."], ["Personal data", "No names, e-mails, phone numbers or national IDs. Use pseudonymised references."], ["Dates", "YYYY-MM-DD HH:MM"], ["Status", "Draft – pending approval"]];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(readme), "README");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Field", "Operational definition", "Required?"], ...roles.map(r => [r[1], r[2], r[3] ? "Required" : "Optional"])]), "Definitions");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([heads]), "Collection_Log");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["record_id", "field", "system_value", "source_evidence_value", "match (1/0)", "verifier_role", "date", "notes"]]), "Measurement_Check");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["date", "location", "process_step", "activity_observed", "VA/NVA/BVA", "waiting_min", "rework (1/0)", "observer_role", "notes"]]), "Gemba_Observation");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([["Question", "Required field", "Operational definition", "Source", "Method", "Sampling rationale", "Owner", "Frequency", "Validation", "Completion evidence", "Status"], ...p.datareq.map(r => REG.datareq.map(c => r[c[0]] || ""))]), "Collection_Plan");
+  return { wb, heads };
+}
+
+/* ================================================================== EXAMPLES (synthetic) */
+function examples() {
+  const r = mulberry(7), pick = a => a[(r() * a.length) | 0], ln = (mu, s) => Math.exp(Math.log(mu) + s * Math.sqrt(-2 * Math.log(r() + 1e-12)) * Math.cos(2 * Math.PI * r()));
+  const d0 = new Date("2026-01-05T08:00:00");
+  return {
+    "HR query resolution (HR Operations)": () => {
+      const p = blankProject("EX-HRQ"); Object.assign(p.org, { organization: "Northwind Industries", industry: "Manufacturing", department: "HR Operations", process: "HR query resolution", site: "All sites", dmaic: "Measure", observationUnit: "HR query ticket" });
+      Object.assign(p.team, { sponsor: "[HR Director]", owner: "[HR Shared Services lead]", lead: "[Black Belt]" });
+      Object.assign(p.charter.ps, { process: "HR query resolution", population: "employee queries logged via portal, e-mail and phone", gap: "took a median of [baseline] days to resolve, with 1 in 10 over [P90] days", period: "Jan–May 2026", impact: "repeat contacts, lost working time and lower employee trust in HR" });
+      Object.assign(p.charter, { goal: "Reduce median and P90 resolution time to levels agreed with employees and managers (target pending approval).", scope: "All HR queries from employees at all sites", exclusions: "Grievances and investigations; payroll cut-off escalations", voc: "Pulse survey comments: 'I never know when I'll get an answer'." });
+      const c = newCTQ("duration"); Object.assign(c, { name: "Query resolution time", definition: "Calendar days from query logged to resolution confirmed", unit: "days", start: "Query logged", stop: "Resolution confirmed", direction: "lower", source: "HR case system", practical: "1" }); p.ctqs.push(c); p.primary = c.id;
+      const rows = []; for (let i = 0; i < 640; i++) { const cat = pick(["Payroll", "Leave", "Benefits", "Policy", "Access & systems"]), ch = pick(["Portal", "E-mail", "Phone"]), site = pick(["Plant A", "Plant B", "HQ"]); const logged = new Date(d0.getTime() + r() * 140 * 864e5); const tri = new Date(logged.getTime() + ln(ch === "E-mail" ? 1.6 : .6, .6) * 864e5); const res = new Date(tri.getTime() + ln(cat === "Benefits" ? 4.5 : cat === "Payroll" ? 2.2 : 2.8, .55) * 864e5); const open = r() < .06; rows.push({ "Ticket ID": "T" + (5000 + i), "Logged": logged, "Triaged": r() < .05 ? null : tri, "Resolved": open ? null : res, "Category": cat, "Channel": ch, "Site": site, "Reopened": r() < .12 ? "Yes" : "No" }); }
+      rows.push({ ...rows[3] }, { ...rows[10] }); rows[20].Resolved = new Date(rows[20].Logged.getTime() - 864e5);
+      p.mapping = { ...p.mapping, id: "Ticket ID", start: "Logged", end: "Resolved", stages: ["Triaged"], category: "Category", segments: ["Channel", "Site"] }; p.options.asOf = "2026-05-31";
+      return [p, rows];
+    },
+    "Onboarding experience survey (Employee Experience)": () => {
+      const p = blankProject("EX-ONB"); Object.assign(p.org, { organization: "Northwind Industries", industry: "Manufacturing", department: "Employee Experience", process: "New-joiner onboarding", dmaic: "Measure", observationUnit: "survey response (day 30)" });
+      Object.assign(p.team, { sponsor: "[CHRO]", owner: "[Onboarding process owner]", lead: "[Black Belt]" });
+      Object.assign(p.charter.ps, { process: "new-joiner onboarding", population: "employees completing the day-30 survey", gap: "gave an eNPS of [baseline] with [x]% detractors", period: "Jan–Jun 2026", impact: "slower time to productivity and early attrition risk" });
+      Object.assign(p.charter, { goal: "Raise onboarding eNPS and cut the detractor share (targets pending approval).", scope: "All permanent new joiners", exclusions: "Interns; acquisitions", invited: "600" });
+      const c = newCTQ("rating"); Object.assign(c, { name: "Onboarding eNPS", definition: "Day-30 survey: 'How likely are you to recommend joining us to a friend?' (0–10)", unit: "score", scaleMin: "0", scaleMax: "10", minGroup: "10", direction: "higher", source: "Survey tool", practical: "10" }); p.ctqs.push(c); p.primary = c.id;
+      const rows = []; for (let i = 0; i < 430; i++) { const site = pick(["Plant A", "Plant B", "HQ", "Field sales"]), fn = pick(["Operations", "Engineering", "Corporate", "Sales"]), chan = pick(["Agency", "Referral", "Direct"]); const ready = r() < (site === "Plant B" ? .55 : .8); let base = ready ? 8.2 : 5.6; base += fn === "Engineering" ? -.4 : 0; const sc = Math.max(0, Math.min(10, Math.round(base + (r() - .5) * 4))); const theme = sc <= 6 ? pick(["Equipment not ready", "Equipment not ready", "System access delays", "No buddy assigned", "Unclear role expectations"]) : sc >= 9 ? "Positive" : pick(["Positive", "Unclear role expectations", "System access delays"]); rows.push({ "Response ID": "S" + (900 + i), "Submitted": new Date(d0.getTime() + r() * 170 * 864e5), "Score": r() < .02 ? null : sc, "Site": site, "Function": fn, "Hiring channel": chan, "Comment theme": theme }); }
+      p.mapping = { ...p.mapping, id: "Response ID", time: "Submitted", rating: "Score", category: "Comment theme", segments: ["Site", "Function"] };
+      return [p, rows];
+    },
+    "Weld defect rate (Manufacturing)": () => {
+      const p = blankProject("EX-WELD"); Object.assign(p.org, { organization: "Northwind Industries", industry: "Automotive components", department: "Manufacturing", process: "Robotic welding cell", dmaic: "Measure", observationUnit: "welded assembly" });
+      Object.assign(p.team, { sponsor: "[Plant manager]", owner: "[Production lead]", lead: "[Black Belt]" });
+      Object.assign(p.charter.ps, { process: "robotic welding", population: "assemblies from lines 1–3", gap: "had a defect rate of [baseline]%", period: "Jan–Jun 2026", impact: "rework cost and late deliveries" });
+      Object.assign(p.charter, { goal: "Reduce weld defect rate (target pending approval).", scope: "Lines 1–3, all shifts", exclusions: "Prototype builds" });
+      const c = newCTQ("proportion"); Object.assign(c, { name: "Weld defect rate", definition: "Assemblies failing visual or ultrasonic weld inspection / assemblies inspected", unit: "%", numerator: "Failed inspection", denominator: "Assemblies inspected", direction: "lower", source: "QMS", practical: "1" }); p.ctqs.push(c); p.primary = c.id;
+      const rows = []; for (let i = 0; i < 2200; i++) { const line = pick(["Line 1", "Line 2", "Line 3"]), shift = pick(["Day", "Evening", "Night"]); const t = new Date(d0.getTime() + r() * 170 * 864e5); const pr = .035 + (line === "Line 3" ? .025 : 0) + (shift === "Night" ? .015 : 0); const def = r() < pr; rows.push({ "Serial": "W" + (100000 + i), "Inspected at": t, "Result": def ? "Fail" : "Pass", "Defect type": def ? pick(["Porosity", "Porosity", "Porosity", "Undercut", "Spatter", "Misalignment"]) : null, "Line": line, "Shift": shift }); }
+      p.mapping = { ...p.mapping, id: "Serial", time: "Inspected at", flag: "Result", flagYes: "Fail", category: "Defect type", segments: ["Line", "Shift"] };
+      return [p, rows];
+    },
+  };
+}
+
+/* ================================================================== RENDER + EVENTS */
+function render() {
+  const p = S.cur; if (!p) return;
+  $("#ptitle").textContent = title(p); renderRail();
+  const id = route(); $("#main").innerHTML = VIEWS[id](p); tips($("#main"));
+  if (id === "needs") calcPrecision();
+}
+function calcPrecision() { const a = $("#pc-p"), b = $("#pc-e"), c = $("#pc-sd"), d = $("#pc-m"); if (!a) return; const n1 = precisionN("prop", +a.value, +b.value), n2 = precisionN("mean", +c.value, +d.value); $("#pc-n1").textContent = Number.isFinite(n1) ? n1 : "–"; $("#pc-n2").textContent = Number.isFinite(n2) ? n2 : "–"; }
+function fillProjectSelect() {
+  const sel = $("#proj-sel"); const list = Object.values(S.projects).sort((a, b) => (b.updated || "").localeCompare(a.updated || ""));
+  sel.innerHTML = (S.cur && S.cur.example ? `<option value="__ex" selected>${esc(title(S.cur))}</option>` : "") + list.map(p => `<option value="${esc(p.id)}" ${S.cur && S.cur.id === p.id && !S.cur.example ? "selected" : ""}>${esc(title(p))}</option>`).join("") || '<option value="">No saved projects</option>';
+}
+function openProject(p, rows) { S.cur = p; S.data = null; S.ai = null; if (rows) { S.data = { rows, cols: Object.keys(rows[0]), name: "synthetic_example.xlsx", sheets: [], sheet: "" }; p.fileMeta = { name: "synthetic_example (generated in browser)", rows: rows.length, cols: S.data.cols, hash: "synthetic", loadedAt: nowISO() }; p.results = analyze(); } fillProjectSelect(); render(); $("#save-state").textContent = p.example ? "Example – not saved until you edit" : ""; }
+
+document.addEventListener("input", e => {
+  const t = e.target; if (t.id && t.id.startsWith("pc-")) { calcPrecision(); return; }
+  if (!t.dataset.path || t.type === "checkbox" || t.tagName === "SELECT") return;
+  let v = t.value; if (t.dataset.num === "1" || t.type === "number") v = v === "" ? "" : v;
+  if (t.dataset.path.startsWith("weights.")) v = Number(v) || 0;
+  setPath(S.cur, t.dataset.path, v); touch();
+});
+document.addEventListener("change", async e => {
+  const t = e.target;
+  if (t.id === "proj-sel") { if (t.value === "__ex" || !t.value) return; openProject(S.projects[t.value]); return; }
+  if (t.id === "file-in" && t.files[0]) { await loadFile(t.files[0]); render(); return; }
+  if (t.id === "sheet-sel" && S.data && S.data.wb) { setData(XLSX.utils.sheet_to_json(S.data.wb.Sheets[t.value], { defval: null, raw: true }), S.data.name, S.data.sheets, t.value, S.data.wb).then(render); return; }
+  if (t.id === "import-in" && t.files[0]) { try { const p = JSON.parse(await t.files[0].text()); if (!p.org || !p.ctqs) throw new Error("bad"); p.id = "P-" + nid().toUpperCase(); p.example = false; p.log = p.log || []; p.log.push({ at: nowISO(), what: "Imported from file " + t.files[0].name }); S.projects[p.id] = p; openProject(p); touch(); toast("Imported as a new project"); } catch (err) { toast("That file is not a Six Sigma Studio project."); } return; }
+  if (t.dataset.multi) { const role = t.dataset.multi, arr = S.cur.mapping[role]; if (t.checked) { if (role === "segments" && arr.length >= 3) { t.checked = false; toast("Choose at most 3 segments"); return; } arr.push(t.value); } else arr.splice(arr.indexOf(t.value), 1); touch("Mapping changed"); return; }
+  if (t.dataset.path) {
+    let v = t.type === "checkbox" ? t.checked : t.value;
+    if (t.dataset.path.startsWith("weights.")) v = Number(v) || 0;
+    const prev = getPath(S.cur, t.dataset.path); setPath(S.cur, t.dataset.path, v);
+    if (/^ctqs\.\d+\.type$/.test(t.dataset.path)) { const c = getPath(S.cur, t.dataset.path.replace(/\.type$/, "")); c.unit = v === "proportion" ? "%" : v === "rating" ? "score" : c.unit === "%" || c.unit === "score" ? "days" : c.unit; }
+    if (/^ctqs\./.test(t.dataset.path) && S.cur.results && prev !== v) { S.cur.approvals.forEach(a => { if (a.status === "Approved" && /ctq|baseline|result/i.test(a.item || "")) a.status = "Requires revalidation"; }); }
+    if (t.dataset.path === "org.dmaic" || t.dataset.path.startsWith("gates.")) { /* phase change */ }
+    touch(`Changed ${t.dataset.path}`); if (t.dataset.rr) render();
+  }
+});
+document.addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b) return; const p = S.cur;
+  if (b.id === "btn-new") { const np = blankProject(); S.projects[np.id] = np; openProject(np); touch("Project created"); location.hash = "#setup"; return; }
+  if (b.id === "btn-example") { if (location.hash === "#examples") render(); else location.hash = "#examples"; return; }
+  if (b.dataset.ex) { const [np, rows] = examples()[b.dataset.ex](); np.example = true; openProject(np, rows); location.hash = "#home"; render(); return; }
+  if (!p) return;
+  if (b.dataset.add) { p[b.dataset.add].push({}); touch("Added row to " + b.dataset.add); render(); return; }
+  if (b.dataset.del) { p[b.dataset.del].splice(+b.dataset.i, 1); touch("Deleted row from " + b.dataset.del); render(); return; }
+  if (b.dataset.lib !== undefined) { const m = (LIB[p.org.department] || LIB.Other)[+b.dataset.lib]; const c = newCTQ(m[1]); Object.assign(c, { name: m[0], unit: m[2], start: m[3], stop: m[4], direction: m[5], numerator: m[6] || "", denominator: m[7] || "" }); if (m[0].includes("0–10")) { c.scaleMin = "0"; c.scaleMax = "10"; } p.ctqs.push(c); if (!p.primary) p.primary = c.id; touch("Added CTQ " + m[0]); render(); return; }
+  if (b.dataset.addctq) { const c = newCTQ(); p.ctqs.push(c); if (!p.primary) p.primary = c.id; touch("Added custom CTQ"); render(); return; }
+  if (b.dataset.delctq !== undefined) { const c = p.ctqs.splice(+b.dataset.delctq, 1)[0]; if (p.primary === c.id) p.primary = p.ctqs[0] ? p.ctqs[0].id : null; touch("Deleted CTQ " + (c.name || c.id)); render(); return; }
+  if (b.dataset.primary) { p.primary = b.dataset.primary; touch("Primary CTQ changed"); render(); return; }
+  if (b.dataset.comm) { currentComm = b.dataset.comm; const out = $("#comm-out"); out.textContent = COMMS[currentComm](p); out.hidden = false; $("#comm-actions").hidden = false; return; }
+  const act = b.dataset.act; if (!act) return;
+  if (act === "run") { if (!S.data) { toast("Load a data file first"); return; } const R = analyze(); if (R && R.error) { toast(R.error); return; } p.results = R; touch(`Analysis run on ${S.data.name}`); location.hash = "#analyze"; render(); return; }
+  if (act === "automap") { autoMap(true); touch("Mapping re-suggested"); render(); return; }
+  if (act === "snapshot") { const R = p.results; const v = { v: "v" + String(p.versions.length + 1).padStart(3, "0"), at: nowISO(), file: R.file ? R.file.name : "", status: "Draft – pending review", kpis: R.kpis.map(k => ({ id: k.id, name: k.name, value: k.value, n: k.n })) }; p.versions.push(v); if (p.versions.length >= 2) { const cmp = compareVersions(p.versions[p.versions.length - 2], v); if (cmp.material) p.approvals.forEach(a => { if (a.status === "Approved") a.status = "Requires revalidation"; }); } touch("Saved results version " + v.v); toast("Saved " + v.v + " (Draft – pending review)"); render(); return; }
+  if (act === "tpl-xlsx") { if (typeof XLSX === "undefined") { toast("Spreadsheet library not loaded"); return; } const { wb } = templateWorkbook(); const out = XLSX.write(wb, { bookType: "xlsx", type: "array" }); await saveFile(`${(p.org.process || "project").replace(/[^\w-]+/g, "_")}_data_collection_template.xlsx`, new Blob([out])); return; }
+  if (act === "tpl-csv") { const { heads } = templateWorkbook(); await saveFile("data_collection_template.csv", heads.join(",") + "\n"); return; }
+  if (act === "plan-from-roles") { requiredRoles(primaryCTQ()).forEach(r => p.datareq.push({ q: `Capture ${r[1].toLowerCase()}`, field: r[1], def: r[2], sampling: "Set from required precision (see calculator)", status: "Not started" })); touch("Collection plan pre-filled"); render(); return; }
+  if (act === "ppt") { b.disabled = true; b.textContent = "Building…"; try { await buildDeck(); } catch (err) { console.error(err); toast("Could not build the deck: " + err.message); } b.disabled = false; b.textContent = "Create PowerPoint"; return; }
+  if (act === "export-json") { await saveFile(`${p.id}_${(p.org.process || "project").replace(/[^\w-]+/g, "_")}.json`, JSON.stringify(p, null, 2)); return; }
+  if (act === "comm-copy") { const t = $("#comm-out").textContent; try { await navigator.clipboard.writeText(t); toast("Copied"); } catch (err) { const r = document.createRange(); r.selectNodeContents($("#comm-out")); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Text selected – press Ctrl/Cmd+C"); } return; }
+  if (act === "comm-save") { await saveFile(currentComm.replace(/\W+/g, "_") + ".md", $("#comm-out").textContent); return; }
+  if (act === "del-arm") { $("#del-confirm").hidden = false; return; }
+  if (act === "del-no") { $("#del-confirm").hidden = true; return; }
+  if (act === "del-yes") { await Store.remove(p.id); delete S.projects[p.id]; const next = Object.values(S.projects)[0]; if (next) openProject(next); else { const [np, rows] = examples()["HR query resolution (HR Operations)"](); np.example = true; openProject(np, rows); } toast("Project deleted"); return; }
+  if (act === "ai") { askAI(b); return; }
+  if (act === "ai-stop") { if (askAI.ctl) askAI.ctl.abort(); return; }
+});
+VIEWS.examples = () => `<div class="sechead"><span class="eyebrow">Examples</span><h2>Load an example project</h2><p class="muted">Each one uses synthetic data generated in your browser, so you can see how the same method works across departments.</p></div><div class="grid g3">${Object.keys(examples()).map(k => `<div class="panel"><h3>${esc(k)}</h3><button class="primary" data-ex="${esc(k)}">Open example</button></div>`).join("")}</div>`;
+async function askAI(btn) {
+  const p = S.cur, R = p.results, out = $("#ai-out"), stop = $("#ai-stop");
+  const brief = { organisation: p.org.organization, department: p.org.department, process: p.org.process, phase: p.org.dmaic, problem: problemText(p), goal: p.charter.goal, scope: p.charter.scope, voc: p.charter.voc, ctq: primaryCTQ(), kpis: R ? R.kpis.map(k => ({ name: k.name, value: k.value, unit: k.unit, n: k.n, ci: k.ci })) : null, findings: R ? R.findings.map(f => f.finding) : null, recommendations: R ? R.recs.map(r => r.title) : null, causes: p.causes, stakeholderInputs: p.stakeholder.length, openChecklist: checklist(p).filter(x => !x.done).map(x => x.t) };
+  const prompt = `You are coaching an experienced Lean Six Sigma Black Belt. Using ONLY the project summary below, give:\n1) Three to five recommended next steps for this DMAIC project, each with: step, why (cite the evidence given), tool/method, owner role, observable completion evidence.\n2) Two or three cause hypotheses worth testing (clearly labelled Hypothesis) and the data that would confirm or reject each.\n3) The main risks to the validity of the conclusions.\nRules: do not invent data or stakeholder views; do not present hypotheses as causes; do not claim savings; flag anything needing HR, legal or privacy review. Plain text, short headings, no markdown tables.\n\nPROJECT SUMMARY (JSON):\n${JSON.stringify(brief)}`;
+  btn.disabled = true; stop.hidden = false; out.hidden = false; out.textContent = "Thinking…";
+  askAI.ctl = new AbortController();
+  try { const { text } = await S.sample(prompt, { onText: ({ text }) => { out.textContent = text; }, signal: askAI.ctl.signal, modelTier: "default" }); S.ai = "AI SUGGESTION – HYPOTHESIS, REVIEW BEFORE USE\n\n" + text; out.textContent = S.ai; }
+  catch (err) { if (err && err.code === "not_granted") { $("#ai-panel").hidden = true; } else out.textContent = (err && err.text ? err.text + "\n\n" : "") + "The AI coach is unavailable right now (" + (err && err.code || "error") + ")."; }
+  finally { btn.disabled = false; stop.hidden = true; }
+}
+addEventListener("hashchange", () => { render(); scrollTo(0, 0); });
+
+/* ================================================================== BOOT */
+(async function boot() {
+  const [np, rows] = examples()["HR query resolution (HR Operations)"](); np.example = true; openProject(np, rows);
+  await Store.init();
+  S.projects = await Store.list();
+  const list = Object.values(S.projects).sort((a, b) => (b.updated || "").localeCompare(a.updated || ""));
+  if (list.length && (!S.cur || S.cur.example) && !S.cur._touched) openProject(list[0]); else fillProjectSelect();
+  $("#save-state").textContent = { cloud: "Projects save privately to your account", local: "Projects save in this browser", memory: "No storage available – export to keep work" }[Store.mode] + (S.cur.example ? " · example not saved" : "");
+})();
+</script>

@@ -28,7 +28,7 @@ BENEFIT_TYPE = ["Hard savings", "Cost avoidance", "Released capacity", "Revenue 
 DMAIC = ["Define", "Measure", "Analyze", "Improve", "Control"]
 MODES = ["BUILD TEMPLATE", "RUN PROJECT", "REFRESH PROJECT"]
 DEPARTMENTS = [
-    "Talent Acquisition", "HR Operations", "Learning & Development", "Finance", "Procurement",
+    "Talent Acquisition", "HR Operations", "Employee Experience", "Learning & Development", "Finance", "Procurement",
     "Supply Chain", "Manufacturing", "Sales", "Marketing", "Customer Service", "IT",
     "Healthcare Operations", "Other",
 ]

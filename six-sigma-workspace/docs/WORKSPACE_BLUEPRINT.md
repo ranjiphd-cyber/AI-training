@@ -5,7 +5,7 @@
 | Title | Lean Six Sigma Project Workspace: Blueprint |
 | Owner | [Black Belt / workspace owner] |
 | Approver | [Practice lead or sponsor] |
-| Version | 0.1 |
+| Version | 0.2 |
 | Status | **Draft – pending approval** |
 | Effective date | On approval |
 | Review cadence | Each release, or quarterly |
@@ -138,11 +138,21 @@ Source schemas are kept as they are. Only the fields a project needs are mapped 
 
 **Proposed:** use the **Python engine** as the analytical core (already built and tested). Front ends: the **Excel workbook** for portable, consultant-run projects; the **static HTML dashboard** for review packs; **Streamlit** (Phase 2) for interactive upload and editing **if IT approves hosting**; and **Power BI** later as a portfolio layer reading the result bundles. Before choosing, confirm the user count, hosting, SSO, data residency and licensing.
 
+## 7a. Platform decision taken in v0.2
+
+At your request, the interactive front end is now **Six Sigma Studio**. It is a single HTML file that runs in the browser, so there is no server to host.
+- **Storage:** private per-user storage when published on claude.ai, browser storage when opened locally, plus export and import of a project file (.json).
+- **Raw data:** never stored. Only project records and result summaries are saved.
+- **Python engine:** remains the reference for reproducible and batch runs. An automated test checks that both give the same figures on the same file.
+
+**Not provided:** multi-user editing of one project, organisation-wide access control, and an audit trail stronger than the change log. Those still need Phase 2 hosting (Streamlit or an approved app on a database).
+
 ## 8. MVP and phased backlog
 
 | Phase | Scope | Status |
 |---|---|---|
-| **MVP (this release)** | Engine, 13 department packs, demo pipeline, dashboard, deck, data-collection pack, 12 communication templates, Excel workspace, acceptance tests | Tested prototype (synthetic data only) |
+| **v0.2** | Six Sigma Studio: department-agnostic charter, CTQ, data-needs, mapping, analysis, recommendations, registers and PowerPoint; Employee Experience pack; generic deck and dashboard generators | Tested prototype |
+| **MVP (v0.1)** | Engine, 13 department packs, demo pipeline, dashboard, deck, data-collection pack, 12 communication templates, Excel workspace, acceptance tests | Tested prototype (synthetic data only) |
 | Phase 2 | Streamlit app on the same engine: upload wizard, mapping editor, register forms, approval buttons, database storage | Specification |
 | Phase 3 | Analyze extensions: regression with diagnostics (residuals, influence, VIF, validation), attribute agreement and Gauge R&R, interrupted time series and pilot comparison | Specification |
 | Phase 4 | Control: automated control-chart refresh, trigger alerts to owners (after approval), benefits tracking with Finance sign-off | Specification |
@@ -150,7 +160,7 @@ Source schemas are kept as they are. Only the fields a project needs are mapped 
 
 ## 9. Acceptance tests (Part 4G)
 
-`python -m pytest -q tests` gives **15 passed** on the synthetic data.
+`python -m pytest -q tests` gives **16 passed** on the synthetic data. Test 16 drives the Studio in headless Chromium: all three examples, every module, deck export, and an upload-to-analysis run that reconciles with the engine.
 
 | Test | Result |
 |---|---|
