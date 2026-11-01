@@ -1,0 +1,107 @@
+{
+  "pack_id": "sales",
+  "label": "Sales",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Opportunity",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "created_ts",
+      "type": "datetime",
+      "description": "Opportunity created",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "closed_ts",
+      "type": "datetime",
+      "description": "Closed",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "stage",
+      "type": "category",
+      "description": "Pipeline stage",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "won",
+      "type": "boolean",
+      "description": "Closed-won",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "WIN",
+      "name": "Win rate",
+      "definition": "Won / closed opportunities (same cohort)",
+      "unit": "%",
+      "numerator": "won",
+      "denominator": "closed",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "SCL",
+      "name": "Sales cycle length",
+      "definition": "Days created to closed",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "closed opportunities",
+      "start_event": "created_ts",
+      "stop_event": "closed_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Lead",
+    "Qualify",
+    "Propose",
+    "Negotiate",
+    "Close"
+  ],
+  "balancing_measures": [
+    "Discount level",
+    "Customer churn"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

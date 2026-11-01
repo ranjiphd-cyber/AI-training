@@ -1,0 +1,106 @@
+{
+  "pack_id": "generic",
+  "label": "Generic / Other",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Transaction or case",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "start_ts",
+      "type": "datetime",
+      "description": "Process start event",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "end_ts",
+      "type": "datetime",
+      "description": "Process end event",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "outcome",
+      "type": "category",
+      "description": "Final outcome code",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "defect_flag",
+      "type": "boolean",
+      "description": "1 if the unit failed a CTQ requirement",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "CYCLE",
+      "name": "Cycle time",
+      "definition": "Elapsed time from start event to end event",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "completed units",
+      "start_event": "start_ts",
+      "stop_event": "end_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": "Open cases are censored - use survival methods, do not drop."
+    },
+    {
+      "metric_id": "DPU",
+      "name": "Defect rate",
+      "definition": "Units with >=1 defect / units inspected",
+      "unit": "%",
+      "numerator": "defective units",
+      "denominator": "units inspected",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Receive",
+    "Process",
+    "Review",
+    "Complete"
+  ],
+  "balancing_measures": [
+    "Customer satisfaction",
+    "Rework rate"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

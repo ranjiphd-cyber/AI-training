@@ -1,0 +1,122 @@
+{
+  "from": "v001",
+  "to": "v002",
+  "kpis": [
+    {
+      "kpi_id": "B1",
+      "old": null,
+      "new": null,
+      "material": false
+    },
+    {
+      "kpi_id": "B2",
+      "old": null,
+      "new": null,
+      "material": false
+    },
+    {
+      "kpi_id": "B9",
+      "old": 3.0,
+      "new": 4.0,
+      "abs_change": 1.0,
+      "rel_change_pct": 33.3,
+      "old_n": 11,
+      "new_n": 12,
+      "material": true
+    },
+    {
+      "kpi_id": "D1",
+      "old": 93.8,
+      "new": 94.1,
+      "abs_change": 0.3,
+      "rel_change_pct": 0.3,
+      "old_n": 420,
+      "new_n": 478,
+      "material": false
+    },
+    {
+      "kpi_id": "K1",
+      "old": 27.0,
+      "new": 28.25,
+      "abs_change": 1.25,
+      "rel_change_pct": 4.6,
+      "old_n": 417,
+      "new_n": 470,
+      "material": false
+    },
+    {
+      "kpi_id": "K2",
+      "old": 27.9,
+      "new": 29.3,
+      "abs_change": 1.4,
+      "rel_change_pct": 5.0,
+      "old_n": 452,
+      "new_n": 516,
+      "material": true
+    },
+    {
+      "kpi_id": "K3",
+      "old": 41.52,
+      "new": 44.06,
+      "abs_change": 2.54,
+      "rel_change_pct": 6.1,
+      "old_n": 417,
+      "new_n": 470,
+      "material": true
+    },
+    {
+      "kpi_id": "K4",
+      "old": 80.1,
+      "new": 80.1,
+      "abs_change": 0.0,
+      "rel_change_pct": 0.0,
+      "old_n": 408,
+      "new_n": 443,
+      "material": false
+    },
+    {
+      "kpi_id": "S1",
+      "old": 10.28,
+      "new": 11.2,
+      "abs_change": 0.92,
+      "rel_change_pct": 8.9,
+      "old_n": 452,
+      "new_n": 515,
+      "material": true
+    },
+    {
+      "kpi_id": "S2",
+      "old": 9.24,
+      "new": 9.31,
+      "abs_change": 0.07,
+      "rel_change_pct": 0.8,
+      "old_n": 393,
+      "new_n": 448,
+      "material": false
+    },
+    {
+      "kpi_id": "S3",
+      "old": 6.03,
+      "new": 6.07,
+      "abs_change": 0.04,
+      "rel_change_pct": 0.7,
+      "old_n": 391,
+      "new_n": 443,
+      "material": false
+    }
+  ],
+  "material_kpis": [
+    "B9",
+    "K2",
+    "K3",
+    "S1"
+  ],
+  "findings_requiring_review": [
+    "F-001",
+    "F-002"
+  ],
+  "threshold": "relative change >= 5% (proposed - confirm with sponsor)",
+  "approvals_flagged": [
+    "APR-003"
+  ]
+}

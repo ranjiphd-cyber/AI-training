@@ -1,0 +1,107 @@
+{
+  "pack_id": "supply_chain",
+  "label": "Supply Chain",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Order line",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "order_ts",
+      "type": "datetime",
+      "description": "Order received",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "ship_ts",
+      "type": "datetime",
+      "description": "Shipped",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "promised_ts",
+      "type": "datetime",
+      "description": "Promised date",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "qty",
+      "type": "number",
+      "description": "Quantity",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "OTIF",
+      "name": "On time in full",
+      "definition": "Lines delivered on time and in full / lines due",
+      "unit": "%",
+      "numerator": "OTIF lines",
+      "denominator": "lines due",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "OCT",
+      "name": "Order cycle time",
+      "definition": "Days order to ship",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "shipped lines",
+      "start_event": "order_ts",
+      "stop_event": "ship_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Order",
+    "Allocate",
+    "Pick",
+    "Ship",
+    "Deliver"
+  ],
+  "balancing_measures": [
+    "Inventory days",
+    "Expedite cost"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

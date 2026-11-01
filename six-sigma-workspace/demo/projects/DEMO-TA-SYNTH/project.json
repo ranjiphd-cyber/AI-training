@@ -1,0 +1,4977 @@
+{
+  "schema_version": 1,
+  "engine_version": "0.1.0",
+  "created_at": "2026-11-01T04:10:06+00:00",
+  "document_control": {
+    "title": "Six Sigma project workspace - DEMO-TA-SYNTH",
+    "owner": null,
+    "approver": null,
+    "version": "0.1",
+    "status": "Draft - pending approval",
+    "effective_date": null,
+    "review_cadence": null
+  },
+  "config": {
+    "project_id": "DEMO-TA-SYNTH",
+    "mode": "RUN PROJECT",
+    "client": "Synthetic Demo Co (fictitious)",
+    "industry": "Manufacturing",
+    "department": "Talent Acquisition",
+    "department_pack": "talent_acquisition",
+    "process": "Requisition-to-offer",
+    "dmaic_stage": "Measure",
+    "problem_statement": "Between Jan and Jun 2026, requisitions in the requisition-to-offer process took a median of [baseline] calendar days from approval to first offer, with 1 in 10 exceeding [P90] days, delaying start dates for hiring managers and risking loss of preferred candidates.",
+    "goal_statement": "Reduce median and P90 time to offer to a level agreed with hiring managers by [date] - target pending approval.",
+    "scope": "Approved external requisitions, all business units, opened Jan-Jun 2026",
+    "exclusions": "Cancelled requisitions (counted separately); internal transfers; executive search",
+    "constraints": null,
+    "platform": null,
+    "currency": "EUR",
+    "calendar_rule": "Calendar days",
+    "time_zone": "Europe/Stockholm",
+    "sponsor": "[Sponsor - TBC]",
+    "process_owner": "[TA process owner - TBC]",
+    "project_lead": "[Project lead]",
+    "deadline": null
+  },
+  "roles": {
+    "lead.demo": "project_lead",
+    "analyst.demo": "analyst",
+    "sponsor.demo": "sponsor"
+  },
+  "registers": {
+    "assumptions": [
+      {
+        "id": "ASM-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "statement": "Timestamps in the ATS reflect real events (pending sample verification)",
+        "label": "Assumption",
+        "owner": "Data owner",
+        "status": "Open"
+      },
+      {
+        "id": "ASM-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "statement": "Calendar days used; business-day rule not yet agreed",
+        "label": "Assumption",
+        "owner": "Process owner",
+        "status": "Open"
+      },
+      {
+        "id": "ASM-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "statement": "Practical-importance threshold of 5 days (proposed)",
+        "label": "Proposed target",
+        "owner": "Sponsor",
+        "status": "Open"
+      }
+    ],
+    "questions": [
+      {
+        "id": "Q-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "question": "What time-to-offer do hiring managers need for their critical roles? (VOC)",
+        "priority": "High",
+        "owner": "Process owner",
+        "status": "Open"
+      },
+      {
+        "id": "Q-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "question": "Is 'First Interview' captured consistently in BU-B?",
+        "priority": "High",
+        "owner": "Data owner",
+        "status": "Open"
+      },
+      {
+        "id": "Q-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "question": "Were there policy or system changes Jan-Jun 2026?",
+        "priority": "Medium",
+        "owner": "Process owner",
+        "status": "Open"
+      },
+      {
+        "id": "Q-004",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "question": "Which dashboard platform is approved for client data?",
+        "priority": "High",
+        "owner": "Sponsor / IT",
+        "status": "Open"
+      },
+      {
+        "id": "Q-005",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "question": "Is a business-day calendar required?",
+        "priority": "Medium",
+        "owner": "Sponsor",
+        "status": "Open"
+      }
+    ],
+    "risks": [
+      {
+        "id": "RSK-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "description": "Personal data exposure in candidate-level extracts",
+        "severity": "High",
+        "owner": "Project lead",
+        "mitigation": "Pseudonymised IDs only; no names; approved storage",
+        "status": "Open"
+      },
+      {
+        "id": "RSK-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "description": "Findings misread as individual recruiter performance",
+        "severity": "High",
+        "owner": "Sponsor",
+        "mitigation": "Aggregate reporting; no owner-level visuals",
+        "status": "Open"
+      },
+      {
+        "id": "RSK-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "description": "Completion bias in recent cohorts",
+        "severity": "Medium",
+        "owner": "Analyst",
+        "mitigation": "Mature-cohort rule (56 days) and Kaplan-Meier",
+        "status": "Mitigated in method"
+      }
+    ],
+    "decisions": [],
+    "approvals": [
+      {
+        "id": "APR-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "item": "Project charter",
+        "approver_role": "Sponsor",
+        "linked_id": null,
+        "status": "Pending"
+      },
+      {
+        "id": "APR-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "item": "CTQ definitions",
+        "approver_role": "Process owner",
+        "linked_id": "CTQ-001",
+        "status": "Pending"
+      },
+      {
+        "id": "APR-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "item": "Baseline results v001",
+        "approver_role": "Sponsor",
+        "linked_id": "v001",
+        "status": "Requires revalidation",
+        "approved_by": "[Demo approver - synthetic]",
+        "updated_at": "2026-11-01T04:10:06+00:00"
+      },
+      {
+        "id": "APR-004",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "item": "Measure gate",
+        "approver_role": "Sponsor",
+        "linked_id": null,
+        "status": "Pending"
+      }
+    ],
+    "artifacts": [],
+    "ctqs": [
+      {
+        "id": "CTQ-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "metric": "Time to offer",
+        "definition": "Calendar days from requisition approval to first offer extended",
+        "unit": "days",
+        "numerator": "-",
+        "denominator": "requisitions with an offer",
+        "population": "Approved external requisitions; cancelled excluded",
+        "start_event": "req_open_ts",
+        "stop_event": "offer_ts",
+        "direction": "lower",
+        "source": "ATS",
+        "owner": "[TA process owner]",
+        "approved_requirement": "Not yet agreed with hiring managers",
+        "target": null,
+        "target_status": "Not set - VOC pending",
+        "baseline": "Not assessed"
+      },
+      {
+        "id": "CTQ-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "metric": "Offer acceptance rate",
+        "definition": "Offers accepted / offers extended (offers >=14 days old)",
+        "unit": "%",
+        "numerator": "offers accepted",
+        "denominator": "offers extended",
+        "direction": "higher",
+        "source": "ATS",
+        "owner": "[TA process owner]",
+        "target_status": "Not set",
+        "baseline": "Not assessed"
+      },
+      {
+        "id": "CTQ-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "metric": "Hiring manager satisfaction",
+        "definition": "Top-2-box share on 7-point post-offer pulse",
+        "unit": "%",
+        "numerator": "top-2-box responses",
+        "denominator": "responses",
+        "direction": "higher",
+        "source": "Not yet collected",
+        "owner": "[TA process owner]",
+        "target_status": "Not set",
+        "baseline": "Not assessed"
+      }
+    ],
+    "stakeholder_inputs": [],
+    "causes": [
+      {
+        "id": "C-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "issue": "Long open-to-shortlist stage",
+        "hypothesized_cause": "Role profile not finalised at requisition approval",
+        "contributor_role": "Analyst (pattern in data - not stakeholder input)",
+        "observation": "Stage is longest in most cases",
+        "evidence_required": "Count of reqs with profile edits after approval; Gemba",
+        "validation_method": "Data pull + observation",
+        "owner": "Process owner",
+        "status": "Hypothesized"
+      }
+    ],
+    "findings": [],
+    "improvements": [],
+    "pilots": [],
+    "actions": [
+      {
+        "id": "ACT-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "action": "Confirm VOC requirement with 8-10 hiring managers",
+        "owner": "Process owner",
+        "due": "Week 2",
+        "status": "Not started"
+      },
+      {
+        "id": "ACT-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "action": "Verify 30 random timestamps against source e-mails",
+        "owner": "Data owner",
+        "due": "Week 2",
+        "status": "Not started"
+      },
+      {
+        "id": "ACT-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "lead.demo",
+        "action": "Run root-cause workshop on open-to-shortlist stage",
+        "owner": "Project lead",
+        "due": "Week 3",
+        "status": "Not started"
+      }
+    ],
+    "benefits": [],
+    "controls": [],
+    "data_requests": [
+      {
+        "id": "DR-001",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "engine",
+        "question": "Why is 'first_interview_ts' missing for 17.5% of records, and can it be captured?",
+        "required_field": "first_interview_ts",
+        "operational_definition": "TBC - agree with process owner",
+        "source": "TBC",
+        "collection_method": "TBC",
+        "sampling_rationale": "Set from required precision - not a fixed rule",
+        "owner": "Data owner",
+        "frequency": "TBC",
+        "validation": "Reconcile against system of record",
+        "completion_evidence": "Missingness below agreed tolerance",
+        "status": "Open"
+      },
+      {
+        "id": "DR-002",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "engine",
+        "question": "Why is 'offer_ts' missing for 12.6% of records, and can it be captured?",
+        "required_field": "offer_ts",
+        "operational_definition": "TBC - agree with process owner",
+        "source": "TBC",
+        "collection_method": "TBC",
+        "sampling_rationale": "Set from required precision - not a fixed rule",
+        "owner": "Data owner",
+        "frequency": "TBC",
+        "validation": "Reconcile against system of record",
+        "completion_evidence": "Missingness below agreed tolerance",
+        "status": "Open"
+      },
+      {
+        "id": "DR-003",
+        "created_at": "2026-11-01T04:10:06+00:00",
+        "created_by": "engine",
+        "question": "Why is 'offer_accept_ts' missing for 30.0% of records, and can it be captured?",
+        "required_field": "offer_accept_ts",
+        "operational_definition": "TBC - agree with process owner",
+        "source": "TBC",
+        "collection_method": "TBC",
+        "sampling_rationale": "Set from required precision - not a fixed rule",
+        "owner": "Data owner",
+        "frequency": "TBC",
+        "validation": "Reconcile against system of record",
+        "completion_evidence": "Missingness below agreed tolerance",
+        "status": "Open"
+      }
+    ]
+  },
+  "uploads": [
+    {
+      "upload_id": "UP-001",
+      "file": "UP-001_0496cea2f082_SYNTHETIC_requisitions_extract_2026-08-14.csv",
+      "original_name": "SYNTHETIC_requisitions_extract_2026-08-14.csv",
+      "sha256": "0496cea2f08216176662d6a4a8aedbf4d1316c189724d58cbd7679f96755928a",
+      "uploaded_by": "lead.demo",
+      "uploaded_at": "2026-11-01T04:10:06+00:00",
+      "description": "baseline extract (SYNTHETIC)",
+      "sheets": {
+        "csv": {
+          "rows": 486,
+          "columns": [
+            "Req ID",
+            "Business Unit",
+            "Job Family",
+            "Source",
+            "Recruiter Ref",
+            "Req Opened",
+            "First Shortlist",
+            "First Interview",
+            "Offer Date",
+            "Offer Accepted",
+            "Status"
+          ]
+        }
+      },
+      "duplicate": false
+    },
+    {
+      "upload_id": "UP-002",
+      "file": "UP-002_5001f62bd715_SYNTHETIC_requisitions_extract_2026-09-11.csv",
+      "original_name": "SYNTHETIC_requisitions_extract_2026-09-11.csv",
+      "sha256": "5001f62bd715a3317649f4c62af9296efa7bdfaffde473dccac9aab62f44738a",
+      "uploaded_by": "lead.demo",
+      "uploaded_at": "2026-11-01T04:10:06+00:00",
+      "description": "refresh extract (SYNTHETIC)",
+      "sheets": {
+        "csv": {
+          "rows": 562,
+          "columns": [
+            "Req ID",
+            "Business Unit",
+            "Job Family",
+            "Source",
+            "Recruiter Ref",
+            "Req Opened",
+            "First Shortlist",
+            "First Interview",
+            "Offer Date",
+            "Offer Accepted",
+            "Status"
+          ]
+        }
+      },
+      "duplicate": false
+    }
+  ],
+  "mappings": {
+    "UP-001": {
+      "mapping": {
+        "record_id": "Req ID",
+        "segment": "Business Unit",
+        "job_family": "Job Family",
+        "source_channel": "Source",
+        "owner_ref": "Recruiter Ref",
+        "req_open_ts": "Req Opened",
+        "first_shortlist_ts": "First Shortlist",
+        "first_interview_ts": "First Interview",
+        "offer_ts": "Offer Date",
+        "offer_accept_ts": "Offer Accepted",
+        "req_status": "Status"
+      },
+      "issues": []
+    },
+    "UP-002": {
+      "mapping": {
+        "record_id": "Req ID",
+        "segment": "Business Unit",
+        "job_family": "Job Family",
+        "source_channel": "Source",
+        "owner_ref": "Recruiter Ref",
+        "req_open_ts": "Req Opened",
+        "first_shortlist_ts": "First Shortlist",
+        "first_interview_ts": "First Interview",
+        "offer_ts": "Offer Date",
+        "offer_accept_ts": "Offer Accepted",
+        "req_status": "Status"
+      },
+      "issues": []
+    }
+  },
+  "analysis_runs": [
+    {
+      "run_id": "RUN-82b1548d",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "none",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "What is current time to offer?",
+        "outcome": "Time to offer",
+        "sample": "417 completed + 35 open",
+        "objective_or_hypothesis": "Estimate median with 95% CI; account for open cases",
+        "method": "Median + bootstrap CI; Kaplan-Meier",
+        "rationale": "Skewed time data with censoring",
+        "assumptions": "Timestamps accurate (pending verification)"
+      },
+      "result": {
+        "describe": {
+          "n": 417,
+          "n_missing": 0,
+          "mean": 28.94,
+          "sd": 9.53,
+          "median": 27.0,
+          "median_ci": [
+            25.9,
+            28.09
+          ],
+          "ci_level": 0.95,
+          "p10": 18.91,
+          "p25": 21.92,
+          "p75": 33.89,
+          "p90": 41.52,
+          "min": 10.65,
+          "max": 69.12
+        },
+        "km": {
+          "n": 452,
+          "events": 417,
+          "censored": 35,
+          "km_median": 27.940277777777776,
+          "curve": [
+            [
+              10.651388888888889,
+              0.9978
+            ],
+            [
+              13.20138888888889,
+              0.9956
+            ],
+            [
+              13.263194444444444,
+              0.9934
+            ],
+            [
+              14.11111111111111,
+              0.9912
+            ],
+            [
+              14.363888888888889,
+              0.9889
+            ],
+            [
+              14.534722222222221,
+              0.9867
+            ],
+            [
+              15.227083333333333,
+              0.9845
+            ],
+            [
+              15.325694444444444,
+              0.9823
+            ],
+            [
+              15.988888888888889,
+              0.9801
+            ],
+            [
+              16.08888888888889,
+              0.9779
+            ],
+            [
+              16.095833333333335,
+              0.9757
+            ],
+            [
+              16.20486111111111,
+              0.9735
+            ],
+            [
+              16.284027777777776,
+              0.9712
+            ],
+            [
+              16.489583333333332,
+              0.969
+            ],
+            [
+              16.56597222222222,
+              0.9668
+            ],
+            [
+              16.771527777777777,
+              0.9646
+            ],
+            [
+              16.832638888888887,
+              0.9624
+            ],
+            [
+              16.945833333333333,
+              0.9602
+            ],
+            [
+              17.100694444444443,
+              0.958
+            ],
+            [
+              17.170833333333334,
+              0.9558
+            ],
+            [
+              17.229166666666668,
+              0.9535
+            ],
+            [
+              17.238194444444446,
+              0.9513
+            ],
+            [
+              17.48402777777778,
+              0.9491
+            ],
+            [
+              17.566666666666666,
+              0.9469
+            ],
+            [
+              17.77986111111111,
+              0.9447
+            ],
+            [
+              17.818055555555556,
+              0.9425
+            ],
+            [
+              17.863888888888887,
+              0.9403
+            ],
+            [
+              17.877777777777776,
+              0.9381
+            ],
+            [
+              17.904166666666665,
+              0.9358
+            ],
+            [
+              18.03125,
+              0.9336
+            ],
+            [
+              18.124305555555555,
+              0.9314
+            ],
+            [
+              18.209027777777777,
+              0.9292
+            ],
+            [
+              18.259027777777778,
+              0.927
+            ],
+            [
+              18.50625,
+              0.9248
+            ],
+            [
+              18.54513888888889,
+              0.9226
+            ],
+            [
+              18.554861111111112,
+              0.9204
+            ],
+            [
+              18.613888888888887,
+              0.9181
+            ],
+            [
+              18.684722222222224,
+              0.9159
+            ],
+            [
+              18.705555555555556,
+              0.9137
+            ],
+            [
+              18.785416666666666,
+              0.9115
+            ],
+            [
+              18.852777777777778,
+              0.9093
+            ],
+            [
+              18.856944444444444,
+              0.9071
+            ],
+            [
+              18.946527777777778,
+              0.9049
+            ],
+            [
+              19.197916666666668,
+              0.9027
+            ],
+            [
+              19.198611111111113,
+              0.9004
+            ],
+            [
+              19.224305555555556,
+              0.8982
+            ],
+            [
+              19.228472222222223,
+              0.896
+            ],
+            [
+              19.315277777777776,
+              0.8938
+            ],
+            [
+              19.4125,
+              0.8916
+            ],
+            [
+              19.48125,
+              0.8894
+            ],
+            [
+              19.497222222222224,
+              0.8872
+            ],
+            [
+              19.551388888888887,
+              0.885
+            ],
+            [
+              19.5625,
+              0.8827
+            ],
+            [
+              19.614583333333332,
+              0.8805
+            ],
+            [
+              19.647916666666667,
+              0.8783
+            ],
+            [
+              19.69236111111111,
+              0.8761
+            ],
+            [
+              19.744444444444444,
+              0.8739
+            ],
+            [
+              19.764583333333334,
+              0.8717
+            ],
+            [
+              19.813194444444445,
+              0.8695
+            ],
+            [
+              19.841666666666665,
+              0.8673
+            ],
+            [
+              19.960416666666667,
+              0.865
+            ],
+            [
+              20.01388888888889,
+              0.8628
+            ],
+            [
+              20.040277777777778,
+              0.8606
+            ],
+            [
+              20.041666666666668,
+              0.8584
+            ],
+            [
+              20.152083333333334,
+              0.8562
+            ],
+            [
+              20.189583333333335,
+              0.854
+            ],
+            [
+              20.227083333333333,
+              0.8518
+            ],
+            [
+              20.23402777777778,
+              0.8496
+            ],
+            [
+              20.25347222222222,
+              0.8473
+            ],
+            [
+              20.266666666666666,
+              0.8451
+            ],
+            [
+              20.268055555555556,
+              0.8429
+            ],
+            [
+              20.291666666666668,
+              0.8407
+            ],
+            [
+              20.324305555555554,
+              0.8385
+            ],
+            [
+              20.464583333333334,
+              0.8363
+            ],
+            [
+              20.58125,
+              0.8341
+            ],
+            [
+              20.635416666666668,
+              0.8319
+            ],
+            [
+              20.655555555555555,
+              0.8296
+            ],
+            [
+              20.681944444444444,
+              0.8274
+            ],
+            [
+              20.800694444444446,
+              0.8252
+            ],
+            [
+              20.808333333333334,
+              0.823
+            ],
+            [
+              20.84722222222222,
+              0.8208
+            ],
+            [
+              20.86875,
+              0.8186
+            ],
+            [
+              21.0125,
+              0.8164
+            ],
+            [
+              21.024305555555557,
+              0.8142
+            ],
+            [
+              21.03125,
+              0.8119
+            ],
+            [
+              21.085416666666667,
+              0.8097
+            ],
+            [
+              21.14375,
+              0.8075
+            ],
+            [
+              21.25486111111111,
+              0.8053
+            ],
+            [
+              21.364583333333332,
+              0.8031
+            ],
+            [
+              21.37361111111111,
+              0.8009
+            ],
+            [
+              21.446527777777778,
+              0.7987
+            ],
+            [
+              21.448611111111113,
+              0.7965
+            ],
+            [
+              21.46388888888889,
+              0.7942
+            ],
+            [
+              21.5125,
+              0.792
+            ],
+            [
+              21.525694444444444,
+              0.7898
+            ],
+            [
+              21.680555555555557,
+              0.7876
+            ],
+            [
+              21.69375,
+              0.7854
+            ],
+            [
+              21.695833333333333,
+              0.7832
+            ],
+            [
+              21.70138888888889,
+              0.781
+            ],
+            [
+              21.73611111111111,
+              0.7788
+            ],
+            [
+              21.803472222222222,
+              0.7765
+            ],
+            [
+              21.836111111111112,
+              0.7743
+            ],
+            [
+              21.872916666666665,
+              0.7721
+            ],
+            [
+              21.891666666666666,
+              0.7699
+            ],
+            [
+              21.916666666666668,
+              0.7677
+            ],
+            [
+              21.959027777777777,
+              0.7655
+            ],
+            [
+              21.96875,
+              0.7633
+            ],
+            [
+              21.969444444444445,
+              0.7611
+            ],
+            [
+              22.153472222222224,
+              0.7588
+            ],
+            [
+              22.249305555555555,
+              0.7566
+            ],
+            [
+              22.256944444444443,
+              0.7544
+            ],
+            [
+              22.27777777777778,
+              0.7522
+            ],
+            [
+              22.327083333333334,
+              0.75
+            ],
+            [
+              22.341666666666665,
+              0.7478
+            ],
+            [
+              22.39097222222222,
+              0.7456
+            ],
+            [
+              22.40277777777778,
+              0.7434
+            ],
+            [
+              22.436805555555555,
+              0.7412
+            ],
+            [
+              22.51388888888889,
+              0.7389
+            ],
+            [
+              22.53472222222222,
+              0.7367
+            ],
+            [
+              22.545833333333334,
+              0.7345
+            ],
+            [
+              22.636805555555554,
+              0.7323
+            ],
+            [
+              22.76875,
+              0.7301
+            ],
+            [
+              22.820138888888888,
+              0.7279
+            ],
+            [
+              22.822222222222223,
+              0.7257
+            ],
+            [
+              22.847916666666666,
+              0.7235
+            ],
+            [
+              22.850694444444443,
+              0.7212
+            ],
+            [
+              22.865972222222222,
+              0.719
+            ],
+            [
+              22.916666666666668,
+              0.7168
+            ],
+            [
+              22.948611111111113,
+              0.7146
+            ],
+            [
+              23.031944444444445,
+              0.7124
+            ],
+            [
+              23.079166666666666,
+              0.7102
+            ],
+            [
+              23.09722222222222,
+              0.708
+            ],
+            [
+              23.103472222222223,
+              0.7058
+            ],
+            [
+              23.15486111111111,
+              0.7035
+            ],
+            [
+              23.25347222222222,
+              0.7013
+            ],
+            [
+              23.255555555555556,
+              0.6991
+            ],
+            [
+              23.27986111111111,
+              0.6969
+            ],
+            [
+              23.425,
+              0.6947
+            ],
+            [
+              23.658333333333335,
+              0.6925
+            ],
+            [
+              23.666666666666668,
+              0.6903
+            ],
+            [
+              23.75625,
+              0.6881
+            ],
+            [
+              23.775,
+              0.6858
+            ],
+            [
+              23.832638888888887,
+              0.6836
+            ],
+            [
+              23.853472222222223,
+              0.6814
+            ],
+            [
+              23.952083333333334,
+              0.6792
+            ],
+            [
+              23.994444444444444,
+              0.677
+            ],
+            [
+              24.05763888888889,
+              0.6748
+            ],
+            [
+              24.15763888888889,
+              0.6726
+            ],
+            [
+              24.23472222222222,
+              0.6704
+            ],
+            [
+              24.25,
+              0.6681
+            ],
+            [
+              24.424305555555556,
+              0.6659
+            ],
+            [
+              24.48125,
+              0.6637
+            ],
+            [
+              24.524305555555557,
+              0.6615
+            ],
+            [
+              24.56111111111111,
+              0.6593
+            ],
+            [
+              24.56875,
+              0.6571
+            ],
+            [
+              24.57986111111111,
+              0.6549
+            ],
+            [
+              24.679861111111112,
+              0.6527
+            ],
+            [
+              24.691666666666666,
+              0.6504
+            ],
+            [
+              24.730555555555554,
+              0.6482
+            ],
+            [
+              24.738888888888887,
+              0.646
+            ],
+            [
+              24.755555555555556,
+              0.6438
+            ],
+            [
+              24.757638888888888,
+              0.6416
+            ],
+            [
+              24.880555555555556,
+              0.6394
+            ],
+            [
+              24.96875,
+              0.6372
+            ],
+            [
+              25.014583333333334,
+              0.635
+            ],
+            [
+              25.03472222222222,
+              0.6327
+            ],
+            [
+              25.07777777777778,
+              0.6305
+            ],
+            [
+              25.100694444444443,
+              0.6283
+            ],
+            [
+              25.11875,
+              0.6261
+            ],
+            [
+              25.211805555555557,
+              0.6239
+            ],
+            [
+              25.226388888888888,
+              0.6217
+            ],
+            [
+              25.238194444444446,
+              0.6195
+            ],
+            [
+              25.291666666666668,
+              0.6173
+            ],
+            [
+              25.34375,
+              0.615
+            ],
+            [
+              25.400694444444444,
+              0.6128
+            ],
+            [
+              25.418055555555554,
+              0.6106
+            ],
+            [
+              25.426388888888887,
+              0.6084
+            ],
+            [
+              25.47361111111111,
+              0.6062
+            ],
+            [
+              25.475,
+              0.604
+            ],
+            [
+              25.507638888888888,
+              0.6018
+            ],
+            [
+              25.511805555555554,
+              0.5996
+            ],
+            [
+              25.600694444444443,
+              0.5973
+            ],
+            [
+              25.627083333333335,
+              0.5951
+            ],
+            [
+              25.65277777777778,
+              0.5929
+            ],
+            [
+              25.664583333333333,
+              0.5907
+            ],
+            [
+              25.785416666666666,
+              0.5885
+            ],
+            [
+              25.856944444444444,
+              0.5863
+            ],
+            [
+              25.877777777777776,
+              0.5841
+            ],
+            [
+              25.884027777777778,
+              0.5819
+            ],
+            [
+              25.904166666666665,
+              0.5796
+            ],
+            [
+              25.9125,
+              0.5774
+            ],
+            [
+              25.96527777777778,
+              0.5752
+            ],
+            [
+              26.15138888888889,
+              0.573
+            ],
+            [
+              26.184722222222224,
+              0.5708
+            ],
+            [
+              26.259027777777778,
+              0.5686
+            ],
+            [
+              26.26388888888889,
+              0.5664
+            ],
+            [
+              26.26597222222222,
+              0.5642
+            ],
+            [
+              26.323611111111113,
+              0.5619
+            ],
+            [
+              26.375,
+              0.5597
+            ],
+            [
+              26.395833333333332,
+              0.5575
+            ],
+            [
+              26.580555555555556,
+              0.5553
+            ],
+            [
+              26.677777777777777,
+              0.5531
+            ],
+            [
+              26.680555555555557,
+              0.5509
+            ],
+            [
+              26.73611111111111,
+              0.5487
+            ],
+            [
+              26.77986111111111,
+              0.5465
+            ],
+            [
+              26.886805555555554,
+              0.5442
+            ],
+            [
+              26.92361111111111,
+              0.542
+            ],
+            [
+              26.927777777777777,
+              0.5398
+            ],
+            [
+              26.99513888888889,
+              0.5376
+            ],
+            [
+              27.031944444444445,
+              0.5354
+            ],
+            [
+              27.086805555555557,
+              0.5332
+            ],
+            [
+              27.14097222222222,
+              0.531
+            ],
+            [
+              27.177083333333332,
+              0.5288
+            ],
+            [
+              27.179166666666667,
+              0.5265
+            ],
+            [
+              27.186805555555555,
+              0.5243
+            ],
+            [
+              27.200694444444444,
+              0.5221
+            ],
+            [
+              27.2125,
+              0.5199
+            ],
+            [
+              27.260416666666668,
+              0.5177
+            ],
+            [
+              27.379166666666666,
+              0.5155
+            ],
+            [
+              27.416666666666668,
+              0.5133
+            ],
+            [
+              27.533333333333335,
+              0.5111
+            ],
+            [
+              27.55,
+              0.5088
+            ],
+            [
+              27.710416666666667,
+              0.5066
+            ],
+            [
+              27.721527777777776,
+              0.5044
+            ],
+            [
+              27.744444444444444,
+              0.5022
+            ],
+            [
+              27.747222222222224,
+              0.5
+            ],
+            [
+              27.940277777777776,
+              0.4978
+            ],
+            [
+              28.086111111111112,
+              0.4956
+            ],
+            [
+              28.09027777777778,
+              0.4934
+            ],
+            [
+              28.200694444444444,
+              0.4912
+            ],
+            [
+              28.21875,
+              0.4889
+            ],
+            [
+              28.250694444444445,
+              0.4867
+            ],
+            [
+              28.279166666666665,
+              0.4845
+            ],
+            [
+              28.415277777777778,
+              0.4823
+            ],
+            [
+              28.438194444444445,
+              0.4801
+            ],
+            [
+              28.522222222222222,
+              0.4779
+            ],
+            [
+              28.535416666666666,
+              0.4757
+            ],
+            [
+              28.565277777777776,
+              0.4735
+            ],
+            [
+              28.622916666666665,
+              0.4712
+            ],
+            [
+              28.669444444444444,
+              0.469
+            ],
+            [
+              28.77777777777778,
+              0.4668
+            ],
+            [
+              28.933333333333334,
+              0.4646
+            ],
+            [
+              28.974305555555556,
+              0.4624
+            ],
+            [
+              28.99652777777778,
+              0.4602
+            ],
+            [
+              29.006944444444443,
+              0.458
+            ],
+            [
+              29.1125,
+              0.4558
+            ],
+            [
+              29.125,
+              0.4535
+            ],
+            [
+              29.144444444444446,
+              0.4513
+            ],
+            [
+              29.218055555555555,
+              0.4491
+            ],
+            [
+              29.25138888888889,
+              0.4469
+            ],
+            [
+              29.261805555555554,
+              0.4447
+            ],
+            [
+              29.34375,
+              0.4425
+            ],
+            [
+              29.37638888888889,
+              0.4403
+            ],
+            [
+              29.441666666666666,
+              0.4381
+            ],
+            [
+              29.492361111111112,
+              0.4358
+            ],
+            [
+              29.584027777777777,
+              0.4336
+            ],
+            [
+              29.62986111111111,
+              0.4314
+            ],
+            [
+              29.693055555555556,
+              0.4292
+            ],
+            [
+              29.70138888888889,
+              0.427
+            ],
+            [
+              29.770833333333332,
+              0.4248
+            ],
+            [
+              30.0,
+              0.4226
+            ],
+            [
+              30.01388888888889,
+              0.4204
+            ],
+            [
+              30.077083333333334,
+              0.4181
+            ],
+            [
+              30.10972222222222,
+              0.4159
+            ],
+            [
+              30.23472222222222,
+              0.4137
+            ],
+            [
+              30.275694444444444,
+              0.4115
+            ],
+            [
+              30.278472222222224,
+              0.4093
+            ],
+            [
+              30.45,
+              0.4071
+            ],
+            [
+              30.47013888888889,
+              0.4049
+            ],
+            [
+              30.584027777777777,
+              0.4027
+            ],
+            [
+              30.591666666666665,
+              0.4004
+            ],
+            [
+              30.597916666666666,
+              0.3982
+            ],
+            [
+              30.627777777777776,
+              0.396
+            ],
+            [
+              30.64097222222222,
+              0.3938
+            ],
+            [
+              30.69097222222222,
+              0.3916
+            ],
+            [
+              30.70138888888889,
+              0.3894
+            ],
+            [
+              30.781944444444445,
+              0.3872
+            ],
+            [
+              30.816666666666666,
+              0.385
+            ],
+            [
+              30.82777777777778,
+              0.3827
+            ],
+            [
+              30.927777777777777,
+              0.3805
+            ],
+            [
+              30.929861111111112,
+              0.3783
+            ],
+            [
+              31.020833333333332,
+              0.3761
+            ],
+            [
+              31.05,
+              0.3739
+            ],
+            [
+              31.065277777777776,
+              0.3717
+            ],
+            [
+              31.12638888888889,
+              0.3673
+            ],
+            [
+              31.243055555555557,
+              0.365
+            ],
+            [
+              31.28263888888889,
+              0.3628
+            ],
+            [
+              31.4,
+              0.3606
+            ],
+            [
+              31.50347222222222,
+              0.3584
+            ],
+            [
+              31.556944444444444,
+              0.3562
+            ],
+            [
+              31.75,
+              0.354
+            ],
+            [
+              31.75347222222222,
+              0.3518
+            ],
+            [
+              31.919444444444444,
+              0.3496
+            ],
+            [
+              31.94097222222222,
+              0.3473
+            ],
+            [
+              31.94375,
+              0.3451
+            ],
+            [
+              32.079861111111114,
+              0.3429
+            ],
+            [
+              32.18402777777778,
+              0.3407
+            ],
+            [
+              32.43541666666667,
+              0.3385
+            ],
+            [
+              32.670833333333334,
+              0.3363
+            ],
+            [
+              32.71041666666667,
+              0.3341
+            ],
+            [
+              32.80416666666667,
+              0.3319
+            ],
+            [
+              32.90416666666667,
+              0.3296
+            ],
+            [
+              32.989583333333336,
+              0.3274
+            ],
+            [
+              33.111805555555556,
+              0.3252
+            ],
+            [
+              33.178472222222226,
+              0.323
+            ],
+            [
+              33.3,
+              0.3208
+            ],
+            [
+              33.31527777777778,
+              0.3186
+            ],
+            [
+              33.54097222222222,
+              0.3164
+            ],
+            [
+              33.72430555555555,
+              0.3142
+            ],
+            [
+              33.75972222222222,
+              0.3119
+            ],
+            [
+              33.828472222222224,
+              0.3097
+            ],
+            [
+              33.888194444444444,
+              0.3075
+            ],
+            [
+              34.24722222222222,
+              0.3053
+            ],
+            [
+              34.290277777777774,
+              0.3031
+            ],
+            [
+              34.394444444444446,
+              0.3009
+            ],
+            [
+              34.49722222222222,
+              0.2987
+            ],
+            [
+              34.540277777777774,
+              0.2965
+            ],
+            [
+              34.59583333333333,
+              0.2942
+            ],
+            [
+              34.63194444444444,
+              0.292
+            ],
+            [
+              34.88055555555555,
+              0.2898
+            ],
+            [
+              34.988194444444446,
+              0.2876
+            ],
+            [
+              35.04097222222222,
+              0.2854
+            ],
+            [
+              35.10208333333333,
+              0.2832
+            ],
+            [
+              35.297916666666666,
+              0.281
+            ],
+            [
+              35.4125,
+              0.2788
+            ],
+            [
+              35.43402777777778,
+              0.2765
+            ],
+            [
+              35.520833333333336,
+              0.2743
+            ],
+            [
+              35.53819444444444,
+              0.2721
+            ],
+            [
+              35.545833333333334,
+              0.2699
+            ],
+            [
+              35.59583333333333,
+              0.2677
+            ],
+            [
+              35.61527777777778,
+              0.2655
+            ],
+            [
+              35.65486111111111,
+              0.2633
+            ],
+            [
+              35.66458333333333,
+              0.2611
+            ],
+            [
+              35.97430555555555,
+              0.2588
+            ],
+            [
+              36.230555555555554,
+              0.2566
+            ],
+            [
+              36.545833333333334,
+              0.2544
+            ],
+            [
+              36.58125,
+              0.2522
+            ],
+            [
+              36.71597222222222,
+              0.25
+            ],
+            [
+              36.916666666666664,
+              0.2478
+            ],
+            [
+              37.06180555555556,
+              0.2456
+            ],
+            [
+              37.113194444444446,
+              0.2434
+            ],
+            [
+              37.25347222222222,
+              0.2412
+            ],
+            [
+              37.297222222222224,
+              0.2389
+            ],
+            [
+              37.5125,
+              0.2367
+            ],
+            [
+              37.572916666666664,
+              0.2345
+            ],
+            [
+              37.65277777777778,
+              0.2323
+            ],
+            [
+              37.860416666666666,
+              0.2301
+            ],
+            [
+              38.00694444444444,
+              0.2279
+            ],
+            [
+              38.27361111111111,
+              0.2257
+            ],
+            [
+              38.361805555555556,
+              0.2235
+            ],
+            [
+              38.41458333333333,
+              0.2212
+            ],
+            [
+              38.47638888888889,
+              0.219
+            ],
+            [
+              38.545138888888886,
+              0.2168
+            ],
+            [
+              38.790277777777774,
+              0.2146
+            ],
+            [
+              38.97083333333333,
+              0.2124
+            ],
+            [
+              39.13194444444444,
+              0.2102
+            ],
+            [
+              39.1375,
+              0.2079
+            ],
+            [
+              39.165277777777774,
+              0.2057
+            ],
+            [
+              39.18819444444444,
+              0.2034
+            ],
+            [
+              39.67916666666667,
+              0.2012
+            ],
+            [
+              39.88055555555555,
+              0.199
+            ],
+            [
+              39.979166666666664,
+              0.1967
+            ],
+            [
+              40.05138888888889,
+              0.1945
+            ],
+            [
+              40.57083333333333,
+              0.1923
+            ],
+            [
+              40.670138888888886,
+              0.19
+            ],
+            [
+              40.704166666666666,
+              0.1878
+            ],
+            [
+              40.75,
+              0.1856
+            ],
+            [
+              40.8125,
+              0.1833
+            ],
+            [
+              40.89861111111111,
+              0.1811
+            ],
+            [
+              41.30138888888889,
+              0.1789
+            ],
+            [
+              41.34166666666667,
+              0.1766
+            ],
+            [
+              41.35,
+              0.1744
+            ],
+            [
+              41.375,
+              0.1721
+            ],
+            [
+              41.43541666666667,
+              0.1699
+            ],
+            [
+              41.639583333333334,
+              0.1677
+            ],
+            [
+              41.66388888888889,
+              0.1654
+            ],
+            [
+              41.66736111111111,
+              0.1632
+            ],
+            [
+              41.72430555555555,
+              0.161
+            ],
+            [
+              41.75347222222222,
+              0.1587
+            ],
+            [
+              41.75416666666667,
+              0.1565
+            ],
+            [
+              42.142361111111114,
+              0.1543
+            ],
+            [
+              42.36666666666667,
+              0.152
+            ],
+            [
+              42.37708333333333,
+              0.1498
+            ],
+            [
+              42.50486111111111,
+              0.1476
+            ],
+            [
+              42.60625,
+              0.1453
+            ],
+            [
+              43.75277777777778,
+              0.1431
+            ],
+            [
+              44.65,
+              0.1408
+            ],
+            [
+              45.0125,
+              0.1386
+            ],
+            [
+              45.09236111111111,
+              0.1364
+            ],
+            [
+              45.15555555555556,
+              0.1341
+            ],
+            [
+              46.357638888888886,
+              0.1319
+            ],
+            [
+              46.59236111111111,
+              0.1297
+            ],
+            [
+              46.84930555555555,
+              0.1274
+            ],
+            [
+              46.946527777777774,
+              0.1252
+            ],
+            [
+              47.56597222222222,
+              0.1229
+            ],
+            [
+              47.78194444444444,
+              0.1206
+            ],
+            [
+              48.364583333333336,
+              0.1183
+            ],
+            [
+              48.90138888888889,
+              0.116
+            ],
+            [
+              49.96736111111111,
+              0.1137
+            ],
+            [
+              51.09722222222222,
+              0.1114
+            ],
+            [
+              51.290277777777774,
+              0.109
+            ],
+            [
+              51.375,
+              0.1067
+            ],
+            [
+              51.38194444444444,
+              0.1044
+            ],
+            [
+              51.772222222222226,
+              0.1021
+            ],
+            [
+              52.30555555555556,
+              0.0998
+            ],
+            [
+              52.53263888888889,
+              0.0974
+            ],
+            [
+              53.16111111111111,
+              0.0951
+            ],
+            [
+              54.30277777777778,
+              0.0927
+            ],
+            [
+              55.19027777777778,
+              0.0903
+            ],
+            [
+              56.204861111111114,
+              0.0879
+            ],
+            [
+              56.482638888888886,
+              0.0856
+            ],
+            [
+              57.66319444444444,
+              0.0832
+            ],
+            [
+              58.65694444444444,
+              0.0808
+            ],
+            [
+              63.928472222222226,
+              0.0784
+            ],
+            [
+              66.69027777777778,
+              0.076
+            ],
+            [
+              69.12013888888889,
+              0.0735
+            ]
+          ],
+          "note": "Kaplan-Meier: open cases contribute until censoring instead of being dropped"
+        }
+      },
+      "dataset_version": "UP-001",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-bee792c9",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "none",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Is the process stable over time?",
+        "outcome": "Weekly cohort median",
+        "sample": "24 mature weekly cohorts",
+        "objective_or_hypothesis": "Detect special-cause signals",
+        "method": "I-MR chart, rules R1-R3",
+        "rationale": "Time-ordered individual values",
+        "assumptions": "Cohorts comparable week to week"
+      },
+      "result": {
+        "n": 24,
+        "center": 27.32,
+        "ucl": 34.57,
+        "lcl": 20.08,
+        "mr_bar": 2.72,
+        "values": [
+          28.38,
+          25.5,
+          35.55,
+          25.47,
+          27.51,
+          29.11,
+          25.4,
+          24.97,
+          28.57,
+          29.78,
+          27.2,
+          26.93,
+          24.23,
+          24.47,
+          30.45,
+          26.78,
+          29.2,
+          24.99,
+          26.18,
+          27.06,
+          27.38,
+          26.26,
+          26.59,
+          27.74
+        ],
+        "labels": [
+          "05 Jan",
+          "12 Jan",
+          "19 Jan",
+          "26 Jan",
+          "02 Feb",
+          "09 Feb",
+          "16 Feb",
+          "23 Feb",
+          "02 Mar",
+          "09 Mar",
+          "16 Mar",
+          "23 Mar",
+          "30 Mar",
+          "06 Apr",
+          "13 Apr",
+          "20 Apr",
+          "27 Apr",
+          "04 May",
+          "11 May",
+          "18 May",
+          "25 May",
+          "01 Jun",
+          "08 Jun",
+          "15 Jun"
+        ],
+        "signals": [
+          {
+            "rule": 1,
+            "index": 2,
+            "label": "19 Jan",
+            "detail": "beyond 3-sigma limit"
+          }
+        ],
+        "rules": "R1 beyond limits; R2 8 one side; R3 6 trending",
+        "interpretation": "Signals present - investigate special causes before using limits as a baseline",
+        "n_per_point": [
+          14,
+          16,
+          17,
+          13,
+          18,
+          16,
+          17,
+          19,
+          19,
+          24,
+          17,
+          14,
+          16,
+          16,
+          9,
+          6,
+          16,
+          24,
+          23,
+          14,
+          16,
+          15,
+          14,
+          9
+        ],
+        "pct_complete": [
+          100.0,
+          88.9,
+          100.0,
+          86.7,
+          94.7,
+          94.1,
+          100.0,
+          95.0,
+          95.0,
+          92.3,
+          100.0,
+          87.5,
+          88.9,
+          80.0,
+          90.0,
+          100.0,
+          84.2,
+          92.3,
+          85.2,
+          87.5,
+          94.1,
+          88.2,
+          93.3,
+          100.0
+        ]
+      },
+      "dataset_version": "UP-001",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-f129fe78",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "segment",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Does time to offer differ by segment?",
+        "outcome": "Time to offer",
+        "sample": "completed cases",
+        "objective_or_hypothesis": "H0: same distribution across segment",
+        "method": "Kruskal-Wallis + epsilon-squared",
+        "rationale": "Skewed, independent groups",
+        "assumptions": "Independent observations; similar shapes"
+      },
+      "result": {
+        "groups": {
+          "BU-A": {
+            "n": 120,
+            "median": 26.64
+          },
+          "BU-B": {
+            "n": 123,
+            "median": 25.43
+          },
+          "BU-C": {
+            "n": 116,
+            "median": 27.83
+          },
+          "BU-D": {
+            "n": 58,
+            "median": 27.63
+          }
+        },
+        "excluded_small_groups": [],
+        "H": 5.64,
+        "p": 0.13028255243946835,
+        "p_text": "p = 0.130",
+        "epsilon_squared": 0.006,
+        "method": "Kruskal-Wallis (rank-based; skewed time data)",
+        "multiple_comparisons": "Pairwise follow-up requires Holm or similar adjustment"
+      },
+      "dataset_version": "UP-001",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-6ab37e82",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "job_family",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Does time to offer differ by job_family?",
+        "outcome": "Time to offer",
+        "sample": "completed cases",
+        "objective_or_hypothesis": "H0: same distribution across job_family",
+        "method": "Kruskal-Wallis + epsilon-squared",
+        "rationale": "Skewed, independent groups",
+        "assumptions": "Independent observations; similar shapes"
+      },
+      "result": {
+        "groups": {
+          "Corporate": {
+            "n": 73,
+            "median": 25.01
+          },
+          "Engineering": {
+            "n": 163,
+            "median": 31.13
+          },
+          "Operations": {
+            "n": 120,
+            "median": 22.9
+          },
+          "Sales": {
+            "n": 61,
+            "median": 25.65
+          }
+        },
+        "excluded_small_groups": [],
+        "H": 64.43,
+        "p": 6.6564282244139e-14,
+        "p_text": "p < 0.001",
+        "epsilon_squared": 0.149,
+        "method": "Kruskal-Wallis (rank-based; skewed time data)",
+        "multiple_comparisons": "Pairwise follow-up requires Holm or similar adjustment"
+      },
+      "dataset_version": "UP-001",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-631df830",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "none",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "What is current time to offer?",
+        "outcome": "Time to offer",
+        "sample": "470 completed + 46 open",
+        "objective_or_hypothesis": "Estimate median with 95% CI; account for open cases",
+        "method": "Median + bootstrap CI; Kaplan-Meier",
+        "rationale": "Skewed time data with censoring",
+        "assumptions": "Timestamps accurate (pending verification)"
+      },
+      "result": {
+        "describe": {
+          "n": 470,
+          "n_missing": 0,
+          "mean": 30.25,
+          "sd": 9.96,
+          "median": 28.25,
+          "median_ci": [
+            27.19,
+            29.2
+          ],
+          "ci_level": 0.95,
+          "p10": 19.31,
+          "p25": 22.54,
+          "p75": 36.57,
+          "p90": 44.06,
+          "min": 10.65,
+          "max": 69.12
+        },
+        "km": {
+          "n": 516,
+          "events": 470,
+          "censored": 46,
+          "km_median": 29.261805555555554,
+          "curve": [
+            [
+              10.651388888888889,
+              0.9981
+            ],
+            [
+              13.20138888888889,
+              0.9961
+            ],
+            [
+              13.263194444444444,
+              0.9942
+            ],
+            [
+              14.11111111111111,
+              0.9922
+            ],
+            [
+              14.363888888888889,
+              0.9903
+            ],
+            [
+              14.534722222222221,
+              0.9884
+            ],
+            [
+              15.227083333333333,
+              0.9864
+            ],
+            [
+              15.325694444444444,
+              0.9845
+            ],
+            [
+              15.988888888888889,
+              0.9826
+            ],
+            [
+              16.08888888888889,
+              0.9806
+            ],
+            [
+              16.095833333333335,
+              0.9787
+            ],
+            [
+              16.20486111111111,
+              0.9767
+            ],
+            [
+              16.284027777777776,
+              0.9748
+            ],
+            [
+              16.489583333333332,
+              0.9729
+            ],
+            [
+              16.56597222222222,
+              0.9709
+            ],
+            [
+              16.771527777777777,
+              0.969
+            ],
+            [
+              16.832638888888887,
+              0.9671
+            ],
+            [
+              16.945833333333333,
+              0.9651
+            ],
+            [
+              17.100694444444443,
+              0.9632
+            ],
+            [
+              17.170833333333334,
+              0.9612
+            ],
+            [
+              17.229166666666668,
+              0.9593
+            ],
+            [
+              17.238194444444446,
+              0.9574
+            ],
+            [
+              17.48402777777778,
+              0.9554
+            ],
+            [
+              17.566666666666666,
+              0.9535
+            ],
+            [
+              17.77986111111111,
+              0.9516
+            ],
+            [
+              17.818055555555556,
+              0.9496
+            ],
+            [
+              17.863888888888887,
+              0.9477
+            ],
+            [
+              17.877777777777776,
+              0.9457
+            ],
+            [
+              17.904166666666665,
+              0.9438
+            ],
+            [
+              18.03125,
+              0.9419
+            ],
+            [
+              18.124305555555555,
+              0.9399
+            ],
+            [
+              18.209027777777777,
+              0.938
+            ],
+            [
+              18.259027777777778,
+              0.936
+            ],
+            [
+              18.50625,
+              0.9341
+            ],
+            [
+              18.54513888888889,
+              0.9322
+            ],
+            [
+              18.554861111111112,
+              0.9302
+            ],
+            [
+              18.613888888888887,
+              0.9283
+            ],
+            [
+              18.684722222222224,
+              0.9264
+            ],
+            [
+              18.705555555555556,
+              0.9244
+            ],
+            [
+              18.785416666666666,
+              0.9225
+            ],
+            [
+              18.852777777777778,
+              0.9205
+            ],
+            [
+              18.856944444444444,
+              0.9186
+            ],
+            [
+              18.946527777777778,
+              0.9167
+            ],
+            [
+              19.197916666666668,
+              0.9147
+            ],
+            [
+              19.198611111111113,
+              0.9128
+            ],
+            [
+              19.224305555555556,
+              0.9109
+            ],
+            [
+              19.228472222222223,
+              0.9089
+            ],
+            [
+              19.315277777777776,
+              0.907
+            ],
+            [
+              19.4125,
+              0.905
+            ],
+            [
+              19.48125,
+              0.9031
+            ],
+            [
+              19.497222222222224,
+              0.9012
+            ],
+            [
+              19.551388888888887,
+              0.8992
+            ],
+            [
+              19.614583333333332,
+              0.8973
+            ],
+            [
+              19.647916666666667,
+              0.8953
+            ],
+            [
+              19.69236111111111,
+              0.8934
+            ],
+            [
+              19.744444444444444,
+              0.8915
+            ],
+            [
+              19.764583333333334,
+              0.8895
+            ],
+            [
+              19.813194444444445,
+              0.8876
+            ],
+            [
+              19.841666666666665,
+              0.8857
+            ],
+            [
+              19.960416666666667,
+              0.8837
+            ],
+            [
+              20.01388888888889,
+              0.8818
+            ],
+            [
+              20.040277777777778,
+              0.8798
+            ],
+            [
+              20.041666666666668,
+              0.8779
+            ],
+            [
+              20.152083333333334,
+              0.876
+            ],
+            [
+              20.189583333333335,
+              0.874
+            ],
+            [
+              20.227083333333333,
+              0.8721
+            ],
+            [
+              20.23402777777778,
+              0.8702
+            ],
+            [
+              20.25347222222222,
+              0.8682
+            ],
+            [
+              20.266666666666666,
+              0.8663
+            ],
+            [
+              20.268055555555556,
+              0.8643
+            ],
+            [
+              20.291666666666668,
+              0.8624
+            ],
+            [
+              20.324305555555554,
+              0.8605
+            ],
+            [
+              20.464583333333334,
+              0.8585
+            ],
+            [
+              20.58125,
+              0.8566
+            ],
+            [
+              20.635416666666668,
+              0.8547
+            ],
+            [
+              20.655555555555555,
+              0.8527
+            ],
+            [
+              20.681944444444444,
+              0.8508
+            ],
+            [
+              20.800694444444446,
+              0.8488
+            ],
+            [
+              20.808333333333334,
+              0.8469
+            ],
+            [
+              20.84722222222222,
+              0.845
+            ],
+            [
+              20.86875,
+              0.843
+            ],
+            [
+              21.0125,
+              0.8411
+            ],
+            [
+              21.024305555555557,
+              0.8391
+            ],
+            [
+              21.03125,
+              0.8372
+            ],
+            [
+              21.085416666666667,
+              0.8353
+            ],
+            [
+              21.14375,
+              0.8333
+            ],
+            [
+              21.25486111111111,
+              0.8314
+            ],
+            [
+              21.364583333333332,
+              0.8295
+            ],
+            [
+              21.37361111111111,
+              0.8275
+            ],
+            [
+              21.446527777777778,
+              0.8256
+            ],
+            [
+              21.448611111111113,
+              0.8236
+            ],
+            [
+              21.46388888888889,
+              0.8217
+            ],
+            [
+              21.5125,
+              0.8198
+            ],
+            [
+              21.525694444444444,
+              0.8178
+            ],
+            [
+              21.680555555555557,
+              0.8159
+            ],
+            [
+              21.69375,
+              0.814
+            ],
+            [
+              21.695833333333333,
+              0.812
+            ],
+            [
+              21.70138888888889,
+              0.8101
+            ],
+            [
+              21.73611111111111,
+              0.8081
+            ],
+            [
+              21.803472222222222,
+              0.8062
+            ],
+            [
+              21.836111111111112,
+              0.8043
+            ],
+            [
+              21.872916666666665,
+              0.8023
+            ],
+            [
+              21.891666666666666,
+              0.8004
+            ],
+            [
+              21.916666666666668,
+              0.7984
+            ],
+            [
+              21.959027777777777,
+              0.7965
+            ],
+            [
+              21.96875,
+              0.7946
+            ],
+            [
+              21.969444444444445,
+              0.7926
+            ],
+            [
+              22.153472222222224,
+              0.7907
+            ],
+            [
+              22.249305555555555,
+              0.7888
+            ],
+            [
+              22.256944444444443,
+              0.7868
+            ],
+            [
+              22.27777777777778,
+              0.7849
+            ],
+            [
+              22.327083333333334,
+              0.7829
+            ],
+            [
+              22.341666666666665,
+              0.781
+            ],
+            [
+              22.39097222222222,
+              0.7791
+            ],
+            [
+              22.40277777777778,
+              0.7771
+            ],
+            [
+              22.436805555555555,
+              0.7752
+            ],
+            [
+              22.51388888888889,
+              0.7733
+            ],
+            [
+              22.53472222222222,
+              0.7713
+            ],
+            [
+              22.545833333333334,
+              0.7694
+            ],
+            [
+              22.6125,
+              0.7674
+            ],
+            [
+              22.636805555555554,
+              0.7655
+            ],
+            [
+              22.76875,
+              0.7636
+            ],
+            [
+              22.820138888888888,
+              0.7616
+            ],
+            [
+              22.822222222222223,
+              0.7597
+            ],
+            [
+              22.847916666666666,
+              0.7578
+            ],
+            [
+              22.850694444444443,
+              0.7558
+            ],
+            [
+              22.865972222222222,
+              0.7539
+            ],
+            [
+              22.916666666666668,
+              0.7519
+            ],
+            [
+              22.948611111111113,
+              0.75
+            ],
+            [
+              23.031944444444445,
+              0.7481
+            ],
+            [
+              23.079166666666666,
+              0.7461
+            ],
+            [
+              23.09722222222222,
+              0.7442
+            ],
+            [
+              23.103472222222223,
+              0.7422
+            ],
+            [
+              23.15486111111111,
+              0.7403
+            ],
+            [
+              23.25347222222222,
+              0.7384
+            ],
+            [
+              23.255555555555556,
+              0.7364
+            ],
+            [
+              23.27986111111111,
+              0.7345
+            ],
+            [
+              23.425,
+              0.7326
+            ],
+            [
+              23.658333333333335,
+              0.7306
+            ],
+            [
+              23.666666666666668,
+              0.7287
+            ],
+            [
+              23.75625,
+              0.7267
+            ],
+            [
+              23.775,
+              0.7248
+            ],
+            [
+              23.832638888888887,
+              0.7229
+            ],
+            [
+              23.853472222222223,
+              0.7209
+            ],
+            [
+              23.952083333333334,
+              0.719
+            ],
+            [
+              23.994444444444444,
+              0.7171
+            ],
+            [
+              24.05763888888889,
+              0.7151
+            ],
+            [
+              24.15763888888889,
+              0.7132
+            ],
+            [
+              24.23472222222222,
+              0.7112
+            ],
+            [
+              24.25,
+              0.7093
+            ],
+            [
+              24.424305555555556,
+              0.7074
+            ],
+            [
+              24.48125,
+              0.7054
+            ],
+            [
+              24.524305555555557,
+              0.7035
+            ],
+            [
+              24.56111111111111,
+              0.7016
+            ],
+            [
+              24.56875,
+              0.6996
+            ],
+            [
+              24.57986111111111,
+              0.6977
+            ],
+            [
+              24.679861111111112,
+              0.6957
+            ],
+            [
+              24.730555555555554,
+              0.6938
+            ],
+            [
+              24.738888888888887,
+              0.6919
+            ],
+            [
+              24.755555555555556,
+              0.6899
+            ],
+            [
+              24.757638888888888,
+              0.688
+            ],
+            [
+              24.880555555555556,
+              0.686
+            ],
+            [
+              24.96875,
+              0.6841
+            ],
+            [
+              25.014583333333334,
+              0.6822
+            ],
+            [
+              25.03472222222222,
+              0.6802
+            ],
+            [
+              25.07777777777778,
+              0.6783
+            ],
+            [
+              25.100694444444443,
+              0.6764
+            ],
+            [
+              25.11875,
+              0.6744
+            ],
+            [
+              25.211805555555557,
+              0.6725
+            ],
+            [
+              25.226388888888888,
+              0.6705
+            ],
+            [
+              25.238194444444446,
+              0.6686
+            ],
+            [
+              25.291666666666668,
+              0.6667
+            ],
+            [
+              25.34375,
+              0.6647
+            ],
+            [
+              25.400694444444444,
+              0.6628
+            ],
+            [
+              25.418055555555554,
+              0.6609
+            ],
+            [
+              25.426388888888887,
+              0.6589
+            ],
+            [
+              25.47361111111111,
+              0.657
+            ],
+            [
+              25.475,
+              0.655
+            ],
+            [
+              25.507638888888888,
+              0.6531
+            ],
+            [
+              25.511805555555554,
+              0.6512
+            ],
+            [
+              25.600694444444443,
+              0.6492
+            ],
+            [
+              25.627083333333335,
+              0.6473
+            ],
+            [
+              25.65277777777778,
+              0.6453
+            ],
+            [
+              25.664583333333333,
+              0.6434
+            ],
+            [
+              25.785416666666666,
+              0.6415
+            ],
+            [
+              25.856944444444444,
+              0.6395
+            ],
+            [
+              25.877777777777776,
+              0.6376
+            ],
+            [
+              25.884027777777778,
+              0.6357
+            ],
+            [
+              25.904166666666665,
+              0.6337
+            ],
+            [
+              25.9125,
+              0.6318
+            ],
+            [
+              25.96527777777778,
+              0.6298
+            ],
+            [
+              26.15138888888889,
+              0.6279
+            ],
+            [
+              26.184722222222224,
+              0.626
+            ],
+            [
+              26.259027777777778,
+              0.624
+            ],
+            [
+              26.26388888888889,
+              0.6221
+            ],
+            [
+              26.26597222222222,
+              0.6202
+            ],
+            [
+              26.323611111111113,
+              0.6182
+            ],
+            [
+              26.375,
+              0.6163
+            ],
+            [
+              26.395833333333332,
+              0.6143
+            ],
+            [
+              26.580555555555556,
+              0.6124
+            ],
+            [
+              26.677777777777777,
+              0.6105
+            ],
+            [
+              26.680555555555557,
+              0.6085
+            ],
+            [
+              26.73611111111111,
+              0.6066
+            ],
+            [
+              26.77986111111111,
+              0.6047
+            ],
+            [
+              26.886805555555554,
+              0.6027
+            ],
+            [
+              26.92361111111111,
+              0.6008
+            ],
+            [
+              26.927777777777777,
+              0.5988
+            ],
+            [
+              26.99513888888889,
+              0.5969
+            ],
+            [
+              27.031944444444445,
+              0.595
+            ],
+            [
+              27.086805555555557,
+              0.593
+            ],
+            [
+              27.14097222222222,
+              0.5911
+            ],
+            [
+              27.177083333333332,
+              0.5891
+            ],
+            [
+              27.179166666666667,
+              0.5872
+            ],
+            [
+              27.186805555555555,
+              0.5853
+            ],
+            [
+              27.200694444444444,
+              0.5833
+            ],
+            [
+              27.2125,
+              0.5814
+            ],
+            [
+              27.236805555555556,
+              0.5795
+            ],
+            [
+              27.260416666666668,
+              0.5775
+            ],
+            [
+              27.32847222222222,
+              0.5756
+            ],
+            [
+              27.370833333333334,
+              0.5736
+            ],
+            [
+              27.379166666666666,
+              0.5717
+            ],
+            [
+              27.416666666666668,
+              0.5698
+            ],
+            [
+              27.425,
+              0.5678
+            ],
+            [
+              27.533333333333335,
+              0.5659
+            ],
+            [
+              27.55,
+              0.564
+            ],
+            [
+              27.710416666666667,
+              0.562
+            ],
+            [
+              27.721527777777776,
+              0.5601
+            ],
+            [
+              27.744444444444444,
+              0.5581
+            ],
+            [
+              27.747222222222224,
+              0.5562
+            ],
+            [
+              27.940277777777776,
+              0.5543
+            ],
+            [
+              28.09027777777778,
+              0.5523
+            ],
+            [
+              28.15486111111111,
+              0.5504
+            ],
+            [
+              28.200694444444444,
+              0.5484
+            ],
+            [
+              28.21875,
+              0.5465
+            ],
+            [
+              28.250694444444445,
+              0.5446
+            ],
+            [
+              28.25486111111111,
+              0.5426
+            ],
+            [
+              28.279166666666665,
+              0.5407
+            ],
+            [
+              28.415277777777778,
+              0.5388
+            ],
+            [
+              28.438194444444445,
+              0.5368
+            ],
+            [
+              28.514583333333334,
+              0.5349
+            ],
+            [
+              28.522222222222222,
+              0.5329
+            ],
+            [
+              28.535416666666666,
+              0.531
+            ],
+            [
+              28.565277777777776,
+              0.5291
+            ],
+            [
+              28.622916666666665,
+              0.5271
+            ],
+            [
+              28.669444444444444,
+              0.5252
+            ],
+            [
+              28.77777777777778,
+              0.5233
+            ],
+            [
+              28.933333333333334,
+              0.5213
+            ],
+            [
+              28.96388888888889,
+              0.5194
+            ],
+            [
+              28.974305555555556,
+              0.5174
+            ],
+            [
+              28.99652777777778,
+              0.5155
+            ],
+            [
+              29.002083333333335,
+              0.5136
+            ],
+            [
+              29.006944444444443,
+              0.5116
+            ],
+            [
+              29.1125,
+              0.5097
+            ],
+            [
+              29.125,
+              0.5078
+            ],
+            [
+              29.144444444444446,
+              0.5058
+            ],
+            [
+              29.218055555555555,
+              0.5039
+            ],
+            [
+              29.25138888888889,
+              0.5019
+            ],
+            [
+              29.261805555555554,
+              0.5
+            ],
+            [
+              29.34375,
+              0.4981
+            ],
+            [
+              29.37638888888889,
+              0.4961
+            ],
+            [
+              29.441666666666666,
+              0.4942
+            ],
+            [
+              29.492361111111112,
+              0.4922
+            ],
+            [
+              29.584027777777777,
+              0.4903
+            ],
+            [
+              29.62986111111111,
+              0.4884
+            ],
+            [
+              29.693055555555556,
+              0.4864
+            ],
+            [
+              29.70138888888889,
+              0.4845
+            ],
+            [
+              29.770833333333332,
+              0.4826
+            ],
+            [
+              30.0,
+              0.4806
+            ],
+            [
+              30.01388888888889,
+              0.4787
+            ],
+            [
+              30.077083333333334,
+              0.4767
+            ],
+            [
+              30.10972222222222,
+              0.4748
+            ],
+            [
+              30.23472222222222,
+              0.4729
+            ],
+            [
+              30.275694444444444,
+              0.4709
+            ],
+            [
+              30.278472222222224,
+              0.469
+            ],
+            [
+              30.45,
+              0.4671
+            ],
+            [
+              30.47013888888889,
+              0.4651
+            ],
+            [
+              30.584027777777777,
+              0.4632
+            ],
+            [
+              30.591666666666665,
+              0.4612
+            ],
+            [
+              30.597916666666666,
+              0.4593
+            ],
+            [
+              30.627777777777776,
+              0.4574
+            ],
+            [
+              30.64097222222222,
+              0.4554
+            ],
+            [
+              30.70138888888889,
+              0.4535
+            ],
+            [
+              30.781944444444445,
+              0.4516
+            ],
+            [
+              30.816666666666666,
+              0.4496
+            ],
+            [
+              30.82777777777778,
+              0.4477
+            ],
+            [
+              30.927777777777777,
+              0.4457
+            ],
+            [
+              30.929861111111112,
+              0.4438
+            ],
+            [
+              31.020833333333332,
+              0.4419
+            ],
+            [
+              31.05,
+              0.4399
+            ],
+            [
+              31.065277777777776,
+              0.438
+            ],
+            [
+              31.12638888888889,
+              0.4341
+            ],
+            [
+              31.165277777777778,
+              0.4322
+            ],
+            [
+              31.243055555555557,
+              0.4302
+            ],
+            [
+              31.28263888888889,
+              0.4283
+            ],
+            [
+              31.4,
+              0.4264
+            ],
+            [
+              31.50347222222222,
+              0.4244
+            ],
+            [
+              31.556944444444444,
+              0.4225
+            ],
+            [
+              31.75,
+              0.4205
+            ],
+            [
+              31.75347222222222,
+              0.4186
+            ],
+            [
+              31.919444444444444,
+              0.4167
+            ],
+            [
+              31.94097222222222,
+              0.4147
+            ],
+            [
+              31.94375,
+              0.4128
+            ],
+            [
+              32.079861111111114,
+              0.4109
+            ],
+            [
+              32.18402777777778,
+              0.4089
+            ],
+            [
+              32.33402777777778,
+              0.407
+            ],
+            [
+              32.43541666666667,
+              0.405
+            ],
+            [
+              32.670833333333334,
+              0.4031
+            ],
+            [
+              32.71041666666667,
+              0.4012
+            ],
+            [
+              32.80416666666667,
+              0.3992
+            ],
+            [
+              32.90416666666667,
+              0.3973
+            ],
+            [
+              32.989583333333336,
+              0.3953
+            ],
+            [
+              33.111805555555556,
+              0.3934
+            ],
+            [
+              33.178472222222226,
+              0.3915
+            ],
+            [
+              33.3,
+              0.3895
+            ],
+            [
+              33.31527777777778,
+              0.3876
+            ],
+            [
+              33.54097222222222,
+              0.3857
+            ],
+            [
+              33.571527777777774,
+              0.3837
+            ],
+            [
+              33.68541666666667,
+              0.3818
+            ],
+            [
+              33.69722222222222,
+              0.3798
+            ],
+            [
+              33.72430555555555,
+              0.3779
+            ],
+            [
+              33.75972222222222,
+              0.376
+            ],
+            [
+              33.81736111111111,
+              0.374
+            ],
+            [
+              33.828472222222224,
+              0.3721
+            ],
+            [
+              33.888194444444444,
+              0.3702
+            ],
+            [
+              34.048611111111114,
+              0.3682
+            ],
+            [
+              34.24722222222222,
+              0.3663
+            ],
+            [
+              34.290277777777774,
+              0.3643
+            ],
+            [
+              34.394444444444446,
+              0.3624
+            ],
+            [
+              34.49722222222222,
+              0.3605
+            ],
+            [
+              34.540277777777774,
+              0.3585
+            ],
+            [
+              34.59583333333333,
+              0.3566
+            ],
+            [
+              34.63194444444444,
+              0.3547
+            ],
+            [
+              34.735416666666666,
+              0.3527
+            ],
+            [
+              34.88055555555555,
+              0.3508
+            ],
+            [
+              34.988194444444446,
+              0.3488
+            ],
+            [
+              35.04097222222222,
+              0.3469
+            ],
+            [
+              35.10208333333333,
+              0.345
+            ],
+            [
+              35.297916666666666,
+              0.343
+            ],
+            [
+              35.37291666666667,
+              0.3411
+            ],
+            [
+              35.4125,
+              0.3391
+            ],
+            [
+              35.43402777777778,
+              0.3372
+            ],
+            [
+              35.520833333333336,
+              0.3353
+            ],
+            [
+              35.53819444444444,
+              0.3333
+            ],
+            [
+              35.545833333333334,
+              0.3314
+            ],
+            [
+              35.59583333333333,
+              0.3295
+            ],
+            [
+              35.61527777777778,
+              0.3275
+            ],
+            [
+              35.65486111111111,
+              0.3256
+            ],
+            [
+              35.66458333333333,
+              0.3236
+            ],
+            [
+              35.97430555555555,
+              0.3217
+            ],
+            [
+              36.230555555555554,
+              0.3198
+            ],
+            [
+              36.545833333333334,
+              0.3178
+            ],
+            [
+              36.58125,
+              0.3159
+            ],
+            [
+              36.71597222222222,
+              0.314
+            ],
+            [
+              36.790277777777774,
+              0.312
+            ],
+            [
+              36.83958333333333,
+              0.3101
+            ],
+            [
+              36.84236111111111,
+              0.3081
+            ],
+            [
+              36.916666666666664,
+              0.3062
+            ],
+            [
+              37.06180555555556,
+              0.3043
+            ],
+            [
+              37.113194444444446,
+              0.3023
+            ],
+            [
+              37.25347222222222,
+              0.3004
+            ],
+            [
+              37.297222222222224,
+              0.2984
+            ],
+            [
+              37.45902777777778,
+              0.2965
+            ],
+            [
+              37.5125,
+              0.2946
+            ],
+            [
+              37.572916666666664,
+              0.2926
+            ],
+            [
+              37.65277777777778,
+              0.2907
+            ],
+            [
+              37.860416666666666,
+              0.2888
+            ],
+            [
+              38.00694444444444,
+              0.2868
+            ],
+            [
+              38.27361111111111,
+              0.2849
+            ],
+            [
+              38.361805555555556,
+              0.2829
+            ],
+            [
+              38.41458333333333,
+              0.281
+            ],
+            [
+              38.47638888888889,
+              0.2791
+            ],
+            [
+              38.545138888888886,
+              0.2771
+            ],
+            [
+              38.790277777777774,
+              0.2752
+            ],
+            [
+              38.91388888888889,
+              0.2733
+            ],
+            [
+              38.96805555555556,
+              0.2713
+            ],
+            [
+              38.97083333333333,
+              0.2694
+            ],
+            [
+              39.13194444444444,
+              0.2674
+            ],
+            [
+              39.1375,
+              0.2655
+            ],
+            [
+              39.165277777777774,
+              0.2636
+            ],
+            [
+              39.18819444444444,
+              0.2616
+            ],
+            [
+              39.67916666666667,
+              0.2597
+            ],
+            [
+              39.81111111111111,
+              0.2577
+            ],
+            [
+              39.88055555555555,
+              0.2558
+            ],
+            [
+              39.979166666666664,
+              0.2538
+            ],
+            [
+              39.99583333333333,
+              0.2518
+            ],
+            [
+              40.05138888888889,
+              0.2499
+            ],
+            [
+              40.18055555555556,
+              0.2479
+            ],
+            [
+              40.200694444444444,
+              0.2459
+            ],
+            [
+              40.57083333333333,
+              0.244
+            ],
+            [
+              40.670138888888886,
+              0.242
+            ],
+            [
+              40.704166666666666,
+              0.24
+            ],
+            [
+              40.75,
+              0.2381
+            ],
+            [
+              40.8125,
+              0.2361
+            ],
+            [
+              40.89861111111111,
+              0.2341
+            ],
+            [
+              41.30138888888889,
+              0.2322
+            ],
+            [
+              41.33263888888889,
+              0.2302
+            ],
+            [
+              41.34166666666667,
+              0.2282
+            ],
+            [
+              41.35,
+              0.2263
+            ],
+            [
+              41.375,
+              0.2243
+            ],
+            [
+              41.43541666666667,
+              0.2223
+            ],
+            [
+              41.639583333333334,
+              0.2204
+            ],
+            [
+              41.66388888888889,
+              0.2184
+            ],
+            [
+              41.66736111111111,
+              0.2164
+            ],
+            [
+              41.670138888888886,
+              0.2145
+            ],
+            [
+              41.72430555555555,
+              0.2125
+            ],
+            [
+              41.74791666666667,
+              0.2105
+            ],
+            [
+              41.75347222222222,
+              0.2086
+            ],
+            [
+              41.75416666666667,
+              0.2066
+            ],
+            [
+              42.142361111111114,
+              0.2046
+            ],
+            [
+              42.236111111111114,
+              0.2027
+            ],
+            [
+              42.358333333333334,
+              0.2007
+            ],
+            [
+              42.36666666666667,
+              0.1987
+            ],
+            [
+              42.37708333333333,
+              0.1968
+            ],
+            [
+              42.50486111111111,
+              0.1948
+            ],
+            [
+              42.60625,
+              0.1928
+            ],
+            [
+              42.69583333333333,
+              0.1909
+            ],
+            [
+              42.71666666666667,
+              0.1889
+            ],
+            [
+              42.97638888888889,
+              0.1869
+            ],
+            [
+              43.204166666666666,
+              0.185
+            ],
+            [
+              43.674305555555556,
+              0.183
+            ],
+            [
+              43.75277777777778,
+              0.181
+            ],
+            [
+              44.05972222222222,
+              0.179
+            ],
+            [
+              44.075,
+              0.1771
+            ],
+            [
+              44.27291666666667,
+              0.1751
+            ],
+            [
+              44.65,
+              0.1731
+            ],
+            [
+              45.0125,
+              0.1711
+            ],
+            [
+              45.09236111111111,
+              0.1691
+            ],
+            [
+              45.15555555555556,
+              0.1672
+            ],
+            [
+              45.230555555555554,
+              0.1652
+            ],
+            [
+              45.260416666666664,
+              0.1632
+            ],
+            [
+              45.31805555555555,
+              0.1612
+            ],
+            [
+              45.986805555555556,
+              0.1592
+            ],
+            [
+              46.357638888888886,
+              0.1572
+            ],
+            [
+              46.49236111111111,
+              0.1551
+            ],
+            [
+              46.59236111111111,
+              0.1531
+            ],
+            [
+              46.83958333333333,
+              0.1511
+            ],
+            [
+              46.84930555555555,
+              0.1491
+            ],
+            [
+              46.946527777777774,
+              0.1471
+            ],
+            [
+              47.34027777777778,
+              0.145
+            ],
+            [
+              47.56597222222222,
+              0.1429
+            ],
+            [
+              47.78194444444444,
+              0.1408
+            ],
+            [
+              48.136805555555554,
+              0.1388
+            ],
+            [
+              48.25972222222222,
+              0.1367
+            ],
+            [
+              48.364583333333336,
+              0.1346
+            ],
+            [
+              48.46041666666667,
+              0.1325
+            ],
+            [
+              48.90138888888889,
+              0.1304
+            ],
+            [
+              49.860416666666666,
+              0.1282
+            ],
+            [
+              49.96736111111111,
+              0.1261
+            ],
+            [
+              50.35347222222222,
+              0.1239
+            ],
+            [
+              51.09722222222222,
+              0.1218
+            ],
+            [
+              51.290277777777774,
+              0.1196
+            ],
+            [
+              51.375,
+              0.1174
+            ],
+            [
+              51.38194444444444,
+              0.1152
+            ],
+            [
+              51.772222222222226,
+              0.1131
+            ],
+            [
+              52.15902777777778,
+              0.1109
+            ],
+            [
+              52.30555555555556,
+              0.1086
+            ],
+            [
+              52.53263888888889,
+              0.1064
+            ],
+            [
+              53.16111111111111,
+              0.1042
+            ],
+            [
+              53.65277777777778,
+              0.102
+            ],
+            [
+              54.30277777777778,
+              0.0998
+            ],
+            [
+              54.88125,
+              0.0976
+            ],
+            [
+              55.19027777777778,
+              0.0953
+            ],
+            [
+              56.204861111111114,
+              0.0931
+            ],
+            [
+              56.482638888888886,
+              0.0909
+            ],
+            [
+              57.66319444444444,
+              0.0887
+            ],
+            [
+              58.65694444444444,
+              0.0864
+            ],
+            [
+              63.928472222222226,
+              0.084
+            ],
+            [
+              66.69027777777778,
+              0.0816
+            ],
+            [
+              69.12013888888889,
+              0.0792
+            ]
+          ],
+          "note": "Kaplan-Meier: open cases contribute until censoring instead of being dropped"
+        }
+      },
+      "dataset_version": "UP-002",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-5aaf0026",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "none",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Is the process stable over time?",
+        "outcome": "Weekly cohort median",
+        "sample": "28 mature weekly cohorts",
+        "objective_or_hypothesis": "Detect special-cause signals",
+        "method": "I-MR chart, rules R1-R3",
+        "rationale": "Time-ordered individual values",
+        "assumptions": "Cohorts comparable week to week"
+      },
+      "result": {
+        "n": 28,
+        "center": 28.16,
+        "ucl": 36.71,
+        "lcl": 19.61,
+        "mr_bar": 3.21,
+        "values": [
+          29.58,
+          25.5,
+          35.55,
+          25.47,
+          27.37,
+          29.11,
+          25.4,
+          24.97,
+          28.57,
+          29.78,
+          27.2,
+          26.93,
+          23.03,
+          24.52,
+          32.0,
+          26.78,
+          29.2,
+          24.99,
+          26.18,
+          27.06,
+          26.68,
+          26.26,
+          26.59,
+          26.24,
+          24.84,
+          24.76,
+          41.75,
+          42.18
+        ],
+        "labels": [
+          "05 Jan",
+          "12 Jan",
+          "19 Jan",
+          "26 Jan",
+          "02 Feb",
+          "09 Feb",
+          "16 Feb",
+          "23 Feb",
+          "02 Mar",
+          "09 Mar",
+          "16 Mar",
+          "23 Mar",
+          "30 Mar",
+          "06 Apr",
+          "13 Apr",
+          "20 Apr",
+          "27 Apr",
+          "04 May",
+          "11 May",
+          "18 May",
+          "25 May",
+          "01 Jun",
+          "08 Jun",
+          "15 Jun",
+          "22 Jun",
+          "29 Jun",
+          "06 Jul",
+          "13 Jul"
+        ],
+        "signals": [
+          {
+            "rule": 1,
+            "index": 26,
+            "label": "06 Jul",
+            "detail": "beyond 3-sigma limit"
+          },
+          {
+            "rule": 1,
+            "index": 27,
+            "label": "13 Jul",
+            "detail": "beyond 3-sigma limit"
+          },
+          {
+            "rule": 2,
+            "index": 24,
+            "label": "22 Jun",
+            "detail": "8 points one side of centre"
+          }
+        ],
+        "rules": "R1 beyond limits; R2 8 one side; R3 6 trending",
+        "interpretation": "Signals present - investigate special causes before using limits as a baseline",
+        "n_per_point": [
+          13,
+          16,
+          17,
+          13,
+          19,
+          16,
+          17,
+          19,
+          19,
+          24,
+          17,
+          14,
+          17,
+          15,
+          10,
+          6,
+          16,
+          24,
+          23,
+          14,
+          15,
+          15,
+          14,
+          12,
+          14,
+          19,
+          11,
+          12
+        ],
+        "pct_complete": [
+          92.9,
+          88.9,
+          100.0,
+          86.7,
+          100.0,
+          94.1,
+          100.0,
+          95.0,
+          95.0,
+          92.3,
+          100.0,
+          87.5,
+          94.4,
+          75.0,
+          100.0,
+          100.0,
+          84.2,
+          92.3,
+          85.2,
+          87.5,
+          88.2,
+          88.2,
+          93.3,
+          92.3,
+          87.5,
+          100.0,
+          84.6,
+          92.3
+        ]
+      },
+      "dataset_version": "UP-002",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-ae34d579",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "segment",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Does time to offer differ by segment?",
+        "outcome": "Time to offer",
+        "sample": "completed cases",
+        "objective_or_hypothesis": "H0: same distribution across segment",
+        "method": "Kruskal-Wallis + epsilon-squared",
+        "rationale": "Skewed, independent groups",
+        "assumptions": "Independent observations; similar shapes"
+      },
+      "result": {
+        "groups": {
+          "BU-A": {
+            "n": 134,
+            "median": 27.31
+          },
+          "BU-B": {
+            "n": 140,
+            "median": 27.75
+          },
+          "BU-C": {
+            "n": 132,
+            "median": 29.2
+          },
+          "BU-D": {
+            "n": 64,
+            "median": 28.32
+          }
+        },
+        "excluded_small_groups": [],
+        "H": 6.82,
+        "p": 0.07770142269527013,
+        "p_text": "p = 0.078",
+        "epsilon_squared": 0.008,
+        "method": "Kruskal-Wallis (rank-based; skewed time data)",
+        "multiple_comparisons": "Pairwise follow-up requires Holm or similar adjustment"
+      },
+      "dataset_version": "UP-002",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    },
+    {
+      "run_id": "RUN-87155deb",
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "plan": {
+        "observation_unit": "Requisition",
+        "confidence_level": "95%",
+        "bias_confounding_risks": "Completion bias for recent cohorts; case mix (job family, unit) differs; observational data",
+        "diagnostics": "Distribution inspected (right-skewed); outliers retained",
+        "predictors": "job_family",
+        "practical_importance": "Difference >= 5 days in median (proposed - confirm with sponsor)",
+        "business_question": "Does time to offer differ by job_family?",
+        "outcome": "Time to offer",
+        "sample": "completed cases",
+        "objective_or_hypothesis": "H0: same distribution across job_family",
+        "method": "Kruskal-Wallis + epsilon-squared",
+        "rationale": "Skewed, independent groups",
+        "assumptions": "Independent observations; similar shapes"
+      },
+      "result": {
+        "groups": {
+          "Corporate": {
+            "n": 82,
+            "median": 26.42
+          },
+          "Engineering": {
+            "n": 180,
+            "median": 32.52
+          },
+          "Operations": {
+            "n": 138,
+            "median": 24.92
+          },
+          "Sales": {
+            "n": 70,
+            "median": 27.09
+          }
+        },
+        "excluded_small_groups": [],
+        "H": 55.09,
+        "p": 6.563742373841307e-12,
+        "p_text": "p < 0.001",
+        "epsilon_squared": 0.112,
+        "method": "Kruskal-Wallis (rank-based; skewed time data)",
+        "multiple_comparisons": "Pairwise follow-up requires Holm or similar adjustment"
+      },
+      "dataset_version": "UP-002",
+      "ctq_ids": [
+        "CTQ-001"
+      ],
+      "environment": {
+        "python": "3.13.18",
+        "numpy": "2.5.3",
+        "pandas": "3.0.5",
+        "scipy": "1.18.1",
+        "seed": 20261101
+      },
+      "status": "Current"
+    }
+  ],
+  "versions": [
+    {
+      "version": "v001",
+      "created_at": "2026-11-01T04:10:06+00:00",
+      "status": "Approved by [Demo approver - synthetic]",
+      "content_hash": "32a6c66a45bec85d",
+      "note": "baseline - SYNTHETIC",
+      "approved_at": "2026-11-01T04:10:06+00:00"
+    },
+    {
+      "version": "v002",
+      "created_at": "2026-11-01T04:10:06+00:00",
+      "status": "Draft - pending review",
+      "content_hash": "531c502dc84df624",
+      "note": "refresh - SYNTHETIC"
+    }
+  ],
+  "approved_version": "v001",
+  "gates": {
+    "Define": {
+      "status": "Not started",
+      "approved_by": null,
+      "approved_at": null
+    },
+    "Measure": {
+      "status": "Not started",
+      "approved_by": null,
+      "approved_at": null
+    },
+    "Analyze": {
+      "status": "Not started",
+      "approved_by": null,
+      "approved_at": null
+    },
+    "Improve": {
+      "status": "Not started",
+      "approved_by": null,
+      "approved_at": null
+    },
+    "Control": {
+      "status": "Not started",
+      "approved_by": null,
+      "approved_at": null
+    }
+  },
+  "change_log": [
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "create_project",
+      "detail": "Project created in mode RUN PROJECT"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:ctqs",
+      "detail": "CTQ-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:ctqs",
+      "detail": "CTQ-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:ctqs",
+      "detail": "CTQ-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:assumptions",
+      "detail": "ASM-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:assumptions",
+      "detail": "ASM-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:assumptions",
+      "detail": "ASM-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:questions",
+      "detail": "Q-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:questions",
+      "detail": "Q-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:questions",
+      "detail": "Q-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:questions",
+      "detail": "Q-004"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:questions",
+      "detail": "Q-005"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:risks",
+      "detail": "RSK-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:risks",
+      "detail": "RSK-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:risks",
+      "detail": "RSK-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:approvals",
+      "detail": "APR-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:approvals",
+      "detail": "APR-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:approvals",
+      "detail": "APR-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:approvals",
+      "detail": "APR-004"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:causes",
+      "detail": "C-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:actions",
+      "detail": "ACT-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:actions",
+      "detail": "ACT-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "add:actions",
+      "detail": "ACT-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "upload",
+      "detail": "UP-001 SYNTHETIC_requisitions_extract_2026-08-14.csv"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "duplicate_upload",
+      "detail": "SYNTHETIC_requisitions_extract_2026-08-14.csv == UP-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "engine",
+      "action": "add:data_requests",
+      "detail": "DR-001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "engine",
+      "action": "add:data_requests",
+      "detail": "DR-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "engine",
+      "action": "add:data_requests",
+      "detail": "DR-003"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-82b1548d"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-bee792c9"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-f129fe78"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-6ab37e82"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "create_version",
+      "detail": "v001"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "upload",
+      "detail": "UP-002 SYNTHETIC_requisitions_extract_2026-09-11.csv"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "duplicate_upload",
+      "detail": "SYNTHETIC_requisitions_extract_2026-09-11.csv == UP-002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-631df830"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-5aaf0026"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-ae34d579"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "analysis_run",
+      "detail": "RUN-87155deb"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "analyst.demo",
+      "action": "create_version",
+      "detail": "v002"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "promote",
+      "detail": "v001 approved by [Demo approver - synthetic]"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "update:approvals",
+      "detail": "APR-003: {\"status\": [\"Pending\", \"Approved\"], \"approved_by\": [null, \"[Demo approver - synthetic]\"]}"
+    },
+    {
+      "at": "2026-11-01T04:10:06+00:00",
+      "actor": "lead.demo",
+      "action": "flag_revalidation",
+      "detail": "[\"APR-003\"]"
+    }
+  ]
+}

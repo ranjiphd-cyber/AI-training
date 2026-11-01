@@ -1,0 +1,332 @@
+<title>Six Sigma Project Workspace</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: project header + phase rail, sticky module tabs, one module visible at a time; summary first, detail below. */
+:root{
+  --coral:#E5A094; --peach:#F5D6BC; --cream:#F8F4E8; --sage:#D7E6B7;          /* supplied brand palette */
+  --bg:#FFFFFF; --surface:#FFFFFF; --tint:#F8F4E8; --ink:#2B2B2B; --ink-soft:#5C5852; --rule:#E2DCD0;
+  --mark:#3F3B35; --mark-soft:#B9B1A3; --signal:#A8584B;
+  --st-bad:#E5A094; --st-warn:#F5D6BC; --st-ok:#D7E6B7; --st-na:#F1ECE0;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Sans 3","Segoe UI",Calibri,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#1B1A17; --surface:#23211D; --tint:#2B2823; --ink:#EEE9DF; --ink-soft:#B8B0A2; --rule:#3A362F;
+  --mark:#DDD5C7; --mark-soft:#6E675C; --signal:#E5A094;
+  --st-bad:#6E3A33; --st-warn:#5C4530; --st-ok:#3E4A2B; --st-na:#2E2B25; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#1B1A17; --surface:#23211D; --tint:#2B2823; --ink:#EEE9DF; --ink-soft:#B8B0A2; --rule:#3A362F;
+  --mark:#DDD5C7; --mark-soft:#6E675C; --signal:#E5A094;
+  --st-bad:#6E3A33; --st-warn:#5C4530; --st-ok:#3E4A2B; --st-na:#2E2B25; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:1.6rem;font-weight:700} h2{font-size:1.2rem;font-weight:600} h3{font-size:.95rem;font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.muted{color:var(--ink-soft)} .num{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+header.top{padding-block:20px 12px;display:grid;gap:12px}
+.idrow{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.banner{background:var(--st-warn);border-radius:6px;padding:8px 12px;font-size:.88rem}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.rail div{padding:6px 8px;border-radius:4px;background:var(--st-na);font-size:.78rem;min-width:0}
+.rail b{display:block;font-family:var(--display);font-size:.85rem}
+.rail .cur{background:var(--st-warn);outline:2px solid var(--ink);outline-offset:-2px}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--rule)}
+nav.tabs .wrap{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+nav.tabs a{flex:none;padding:10px 10px;color:var(--ink-soft);text-decoration:none;font-size:.85rem;border-bottom:2px solid transparent;white-space:nowrap}
+nav.tabs a[aria-current="page"]{color:var(--ink);border-color:var(--ink);font-weight:600}
+nav.tabs a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+main{padding-block:20px 48px}
+section.mod{display:grid;gap:20px}
+.sechead{display:grid;gap:4px}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:16px;min-width:0;display:grid;gap:10px;align-content:start}
+.kpi{display:grid;gap:4px}
+.kpi .v{font-family:var(--display);font-size:1.9rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .v small{font-size:.9rem;font-weight:500;color:var(--ink-soft);margin-left:4px}
+.kpi dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:4px 0 0;font-size:.78rem}
+.kpi dt{color:var(--ink-soft)} .kpi dd{margin:0;min-width:0}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;padding:2px 8px;border-radius:999px;background:var(--st-na);white-space:nowrap;font-weight:600}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;border:1.5px solid var(--ink);background:transparent}
+.chip.ok{background:var(--st-ok)} .chip.ok::before{background:var(--ink)}
+.chip.warn{background:var(--st-warn)} .chip.warn::before{border-style:dashed}
+.chip.bad{background:var(--st-bad)} .chip.bad::before{border-radius:1px;background:var(--ink)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;color:var(--ink-soft);font-size:.75rem;text-transform:uppercase;letter-spacing:.04em;background:var(--tint)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.finding{display:grid;gap:6px;padding:14px 16px;border:1px solid var(--rule);border-radius:8px}
+.finding .row{display:grid;grid-template-columns:120px 1fr;gap:8px;font-size:.88rem}
+.finding .row span:first-child{color:var(--ink-soft);font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:12px 16px;background:var(--tint);border-radius:8px}
+.filters label{display:grid;gap:2px;font-size:.75rem;color:var(--ink-soft)}
+select,input,button{font:inherit;font-size:.88rem;padding:6px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink)}
+button{cursor:pointer;font-weight:600}
+svg{display:block}
+svg text{fill:var(--ink-soft);font-family:var(--mono);font-size:11px}
+svg .lbl{fill:var(--ink)}
+.empty{padding:20px;border:1.5px dashed var(--rule);border-radius:8px;color:var(--ink-soft);display:grid;gap:6px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.flow .step{flex:1 1 140px;padding:10px 12px;border:1px solid var(--rule);border-radius:6px;display:grid;gap:2px;min-width:0}
+.flow .step.hot{background:var(--st-warn)}
+.tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);font-size:.78rem;padding:6px 8px;border-radius:4px;z-index:20;max-width:260px}
+ul.clean{margin:0;padding-left:18px} ul.clean li{margin-block:3px}
+@media (max-width:640px){.rail{grid-template-columns:repeat(5,minmax(56px,1fr));overflow-x:auto}.finding .row{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<header class="top wrap" id="hdr"></header>
+<nav class="tabs" aria-label="Modules"><div class="wrap" id="tabs"></div></nav>
+<main class="wrap" id="main"></main>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+const B = /*__BUNDLE__*/null;
+const $ = (s, el=document) => el.querySelector(s);
+const esc = v => v === null || v === undefined || v === "" ? "" : String(v).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const show = v => v === null || v === undefined || v === "" ? '<span class="muted">Not assessed</span>' : esc(v);
+const fmt = (v, d=1) => v === null || v === undefined ? "–" : Number(v).toFixed(d);
+const chip = (txt) => {
+  const t = String(txt||"Not assessed"); const l = t.toLowerCase();
+  const cls = /approved|complete|met\b|verified/.test(l) && !/pending|not|requires/.test(l) ? "ok"
+    : /revalidation|signal|off|breach|blocked|high|requires review/.test(l) ? "bad"
+    : /not assessed|not started|not set/.test(l) ? "" : "warn";
+  return `<span class="chip ${cls}">${esc(t)}</span>`;
+};
+const table = (rows, cols) => !rows || !rows.length ? '<div class="empty">No records yet.</div>' :
+  `<div class="tbl"><table><thead><tr>${cols.map(c=>`<th class="${c.n?'n':''}">${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${
+   rows.map(r=>`<tr>${cols.map(c=>{const v=typeof c.k==="function"?c.k(r):r[c.k];return `<td class="${c.n?'n':''}">${c.raw?v:show(v)}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
+const pending = (title, body) => `<div class="empty"><b>${esc(title)}</b><span>${body}</span></div>`;
+
+/* ---------- statistics identical to the engine (numpy 'linear' percentile) ---------- */
+function pct(arr, p){ if(!arr.length) return null; const a=[...arr].sort((x,y)=>x-y); const h=(a.length-1)*p/100, lo=Math.floor(h), hi=Math.ceil(h); return a[lo]+(a[hi]-a[lo])*(h-lo); }
+const median = a => pct(a,50);
+
+/* ---------- SVG charts ---------- */
+const W = 640;
+function tipOn(el){
+  const tip=$("#tip");
+  el.querySelectorAll("[data-tip]").forEach(n=>{
+    n.addEventListener("mousemove",e=>{tip.hidden=false;tip.textContent=n.dataset.tip;tip.style.left=Math.min(e.clientX+12,innerWidth-270)+"px";tip.style.top=(e.clientY+12)+"px"});
+    n.addEventListener("mouseleave",()=>tip.hidden=true);
+  });
+}
+function imrSVG(c){
+  if(!c || !c.values) return pending("Control chart not available", esc(c && c.status || "Insufficient data"));
+  const H=280, m={l:20,r:96,t:14,b:34}, n=c.values.length;
+  const lo=Math.min(c.lcl,...c.values), hi=Math.max(c.ucl,...c.values), pad=(hi-lo)*.08;
+  const y=v=>m.t+(H-m.t-m.b)*(1-(v-(lo-pad))/((hi+pad)-(lo-pad))), x=i=>m.l+(W-m.l-m.r)*i/(n-1);
+  const sig=new Set(c.signals.map(s=>s.index));
+  const ticks=[c.lcl,c.center,c.ucl];
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:100%;height:auto" role="img" aria-label="Individuals chart of weekly cohort medians">`;
+  ticks.forEach((t,i)=>{s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(t)}" y2="${y(t)}" stroke="var(--mark-soft)" stroke-width="1" ${i!==1?'stroke-dasharray="4 4"':''}/>
+    <text x="${W-m.r+6}" y="${y(t)+4}" class="lbl">${["LCL","CL","UCL"][i]} ${fmt(t)}</text>`});
+  s+=`<path d="${c.values.map((v,i)=>(i?"L":"M")+x(i)+" "+y(v)).join("")}" fill="none" stroke="var(--mark)" stroke-width="2"/>`;
+  c.values.forEach((v,i)=>{const isS=sig.has(i);
+    s+=`<circle cx="${x(i)}" cy="${y(v)}" r="${isS?6:4}" fill="${isS?'var(--signal)':'var(--mark)'}" stroke="var(--surface)" stroke-width="2"/>
+    <rect x="${x(i)-10}" y="${m.t}" width="20" height="${H-m.t-m.b}" fill="transparent" data-tip="Week of ${c.labels[i]}: median ${fmt(v)} ${B.unit} (n=${c.n_per_point?c.n_per_point[i]:'?'}, ${c.pct_complete?c.pct_complete[i]:'?'}% of cohort complete)${isS?' – SIGNAL':''}"/>`;
+    if(i%4===0) s+=`<text x="${x(i)}" y="${H-12}" text-anchor="middle">${c.labels[i]}</text>`});
+  return s+`</svg>`;
+}
+function barsH(items, valKey, labelKey, unit, hiIdx){
+  const rowH=30, H=items.length*rowH+8, m={l:170,r:70}, max=Math.max(...items.map(d=>d[valKey]||0))||1;
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:100%;height:auto" role="img">`;
+  items.forEach((d,i)=>{const w=(W-m.l-m.r)*(d[valKey]||0)/max, yy=i*rowH+4;
+    s+=`<text x="${m.l-8}" y="${yy+17}" text-anchor="end" class="lbl">${esc(d[labelKey])}</text>
+    <rect x="${m.l}" y="${yy+4}" width="${Math.max(w,1)}" height="18" rx="3" fill="${i===hiIdx?'var(--signal)':'var(--mark)'}" data-tip="${esc(d[labelKey])}: ${fmt(d[valKey])}${unit}${d.tip?' – '+d.tip:''}"/>
+    <text x="${m.l+w+6}" y="${yy+17}">${fmt(d[valKey])}${unit}</text>`});
+  return s+`</svg>`;
+}
+function histSVG(vals, p90){
+  if(vals.length<5) return pending("Too few cases for a distribution", `n = ${vals.length}`);
+  const H=220,m={l:40,r:16,t:10,b:30}, bw=5, mx=Math.ceil(Math.max(...vals)/bw)*bw, nb=mx/bw, bins=Array(nb).fill(0);
+  vals.forEach(v=>bins[Math.min(nb-1,Math.floor(v/bw))]++); const top=Math.max(...bins);
+  const x=v=>m.l+(W-m.l-m.r)*v/mx, y=c=>m.t+(H-m.t-m.b)*(1-c/top);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" style="max-width:100%;height:auto" role="img" aria-label="Distribution of completed cases">`;
+  bins.forEach((c,i)=>{s+=`<rect x="${x(i*bw)+1}" y="${y(c)}" width="${x(bw)-x(0)-2}" height="${H-m.b-y(c)}" rx="2" fill="${i*bw>=p90?'var(--signal)':'var(--mark)'}" data-tip="${i*bw}–${(i+1)*bw} ${B.unit}: ${c} cases"/>`;
+    if(i%2===0) s+=`<text x="${x(i*bw)}" y="${H-10}" text-anchor="middle">${i*bw}</text>`});
+  s+=`<text x="${x(p90)+4}" y="${m.t+10}" class="lbl">P90 ${fmt(p90)}</text><line x1="${x(p90)}" x2="${x(p90)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--ink)" stroke-dasharray="3 3"/>`;
+  return s+`</svg>`;
+}
+
+/* ---------- modules ---------- */
+const K = Object.fromEntries(B.kpis.map(k=>[k.kpi_id,k]));
+function kpiCard(k){
+  return `<div class="panel kpi"><span class="eyebrow">${esc(k.kind)} · ${esc(k.kpi_id)}</span><h3>${esc(k.name)}</h3>
+  <div class="v">${k.current===null||k.current===undefined?'<span class="muted" style="font-size:1rem">Not assessed</span>':fmt(k.current)+`<small>${esc(k.unit)}</small>`}</div>
+  ${chip(k.status_label)}
+  <dl><dt>Definition</dt><dd>${esc(k.definition)}</dd><dt>n / denominator</dt><dd class="num">${k.n} · ${show(k.denominator)}</dd>
+  <dt>95% CI</dt><dd class="num">${k.ci95?k.ci95.join(" – "):"–"}</dd><dt>Baseline</dt><dd class="num">${typeof k.baseline==="number"?fmt(k.baseline,k.unit==="cases"?0:1):show(k.baseline)}</dd>
+  <dt>Target</dt><dd>${show(k.target)} · ${esc(k.target_status)}</dd><dt>Period</dt><dd>${esc(k.period)}</dd>
+  <dt>Source</dt><dd>${esc(k.source)} · refreshed ${esc(k.refresh_date)}</dd>${k.note?`<dt>Note</dt><dd>${esc(k.note)}</dd>`:""}</dl></div>`;
+}
+function findingCard(f){
+  return `<article class="finding"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="eyebrow">${esc(f.id)}</span>${chip(f.label)}<span class="eyebrow">run ${esc(f.analysis_run_id)}</span></div>
+   <h3>${esc(f.finding)}</h3>
+   ${[["Evidence",f.evidence],["Implication",f.implication],["Action",f.action+" (proposed)"],["Limitation",f.limitation]].map(([a,b])=>`<div class="row"><span>${a}</span><span>${esc(b)}</span></div>`).join("")}</article>`;
+}
+const R = B.registers;
+const decisionsNeeded = (R.approvals||[]).filter(a=>a.status!=="Approved");
+const MODULES = [
+ ["home","Home", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 1 · Status and decisions</span><h2>Where the project stands</h2>
+   <p class="muted">${esc(B.config.process)} · ${esc(B.config.department)} · phase: ${esc(B.config.dmaic_stage)} · results ${esc(B.version)} (${esc(B.status)})</p></div>
+   <div class="grid g2"><div class="panel"><h3>Decisions and approvals needed</h3>${table(decisionsNeeded,[{h:"ID",k:"id"},{h:"Item",k:"item"},{h:"Approver",k:"approver_role"},{h:"Status",k:r=>chip(r.status),raw:1}])}</div>
+   <div class="panel"><h3>Next actions</h3>${table(R.actions,[{h:"Action",k:"action"},{h:"Owner",k:"owner"},{h:"Due",k:"due"},{h:"Status",k:r=>chip(r.status),raw:1}])}</div></div>
+   <h2>Headline measures</h2><div class="grid g4">${["K1","K3","K4","D1"].filter(k=>K[k]).map(k=>kpiCard(K[k])).join("")}</div>
+   <h2>Findings to date</h2><div class="grid">${B.findings.map(findingCard).join("")}</div>`],
+ ["config","Configuration", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 2</span><h2>Client, department and process</h2></div>
+   <div class="panel">${table(Object.entries({"Project":B.config.project_id,"Mode":B.config.mode,"Client":B.config.client,"Industry":B.config.industry,"Department":B.config.department,"Department pack":B.pack&&B.pack.label,"Process":B.config.process,"DMAIC stage":B.config.dmaic_stage,"Sponsor":B.config.sponsor,"Process owner":B.config.process_owner,"Project lead":B.config.project_lead,"Time zone":B.config.time_zone,"Calendar rule":B.config.calendar_rule,"Currency":B.config.currency}).map(([a,b])=>({a,b})),[{h:"Field",k:"a"},{h:"Value",k:"b"}])}</div>
+   <div class="panel"><h3>Sensitivity rules for this department pack</h3><p>${esc(B.pack&&B.pack.sensitivity_notes)}</p></div>`],
+ ["define","Define", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 3 · Problem, charter, VOC/VOB, CTQs</span><h2>Problem and goal</h2></div>
+   <div class="grid g2"><div class="panel"><h3>Problem statement ${chip("Draft – pending approval")}</h3><p>${show(B.config.problem_statement)}</p>
+   <p class="muted">Format: process + population + gap + period + impact. Contains no cause or solution.</p></div>
+   <div class="panel"><h3>Goal statement ${chip("Proposed target – not approved")}</h3><p>${show(B.config.goal_statement)}</p>
+   <h3>Scope</h3><p>${show(B.config.scope)}</p><h3>Exclusions</h3><p>${show(B.config.exclusions)}</p></div></div>
+   <div class="panel"><h3>Critical-to-Quality requirements</h3>${table(R.ctqs,[{h:"ID",k:"id"},{h:"Metric",k:"metric"},{h:"Definition",k:"definition"},{h:"Unit",k:"unit"},{h:"Numerator",k:"numerator"},{h:"Denominator",k:"denominator"},{h:"Direction",k:"direction"},{h:"Owner",k:"owner"},{h:"Baseline",k:r=>r.id==="CTQ-001"&&K.K1?fmt(K.K1.current)+" "+B.unit+" (median)":r.id==="CTQ-002"&&K.K4?fmt(K.K4.current)+" %":"Not assessed"},{h:"Requirement",k:"approved_requirement"},{h:"Target status",k:r=>chip(r.target_status),raw:1}])}</div>
+   <div class="panel"><h3>Voice of the Customer / Voice of the Business</h3>${pending("Not yet captured","Use the stakeholder survey and interview templates in the communication pack. VOC requirements must come from customers, not from the baseline.")}</div>`],
+ ["sipoc","SIPOC & map", ()=>{
+   const st=B.charts.stage_stats, names=B.process_stages, worst=B.charts.pareto_longest_stage[0]&&B.charts.pareto_longest_stage[0].category;
+   return `<div class="sechead"><span class="eyebrow">Module 4</span><h2>SIPOC and AS-IS process map</h2></div>
+   <div class="panel"><h3>Measured AS-IS flow (median days per stage)</h3><div class="flow">${names.map(n=>`<div class="step ${n===worst?'hot':''}"><span class="eyebrow">${n===worst?'Longest stage most often':'Stage'}</span><b>${esc(n)}</b><span class="num">${fmt(st[n].median)} ${B.unit} median · n=${st[n].n}</span><span class="num muted">P90 ${fmt(st[n].p90)}</span></div>`).join("")}</div>
+   <p class="muted">Stage times come from timestamps. Steps without timestamps (approvals, scheduling) need a Gemba walk to map.</p></div>
+   <div class="panel"><h3>SIPOC ${chip("To be completed in workshop")}</h3>${table([{s:"",i:"",p:(B.pack.process_stages||[]).join(" → "),o:"",c:""}],[{h:"Suppliers",k:"s"},{h:"Inputs",k:"i"},{h:"Process (pack default)",k:"p"},{h:"Outputs",k:"o"},{h:"Customers",k:"c"}])}</div>`}],
+ ["data","Data & quality", ()=>{
+   const dq=B.data_quality, rp=dq.raw_profile;
+   const miss=Object.entries(rp.missing).filter(([k,v])=>v.n>0).map(([k,v])=>({f:k,pct:v.pct,n:v.n}));
+   return `<div class="sechead"><span class="eyebrow">Module 5 · Upload, mapping, dictionary, quality</span><h2>What the data can and cannot support</h2></div>
+   <div class="panel"><h3>Uploads (raw files kept read-only; duplicates detected by hash)</h3>${table(B.uploads,[{h:"ID",k:"upload_id"},{h:"File",k:"original_name"},{h:"SHA-256",k:r=>r.sha256.slice(0,12)+"…"},{h:"Uploaded",k:"uploaded_at"},{h:"Description",k:"description"}])}</div>
+   <div class="grid g4">
+     <div class="panel kpi"><span class="eyebrow">Rows in extract</span><div class="v">${rp.rows}</div></div>
+     <div class="panel kpi"><span class="eyebrow">Exact duplicate rows</span><div class="v">${rp.exact_duplicate_rows}</div>${chip(rp.exact_duplicate_rows?"Removed – logged":"None")}</div>
+     <div class="panel kpi"><span class="eyebrow">Chronology errors</span><div class="v">${Object.values(rp.chronology_violations).reduce((a,b)=>a+b,0)}</div>${chip("Excluded from durations – sent for correction")}</div>
+     <div class="panel kpi"><span class="eyebrow">Personal-data columns</span><div class="v">${rp.pii_columns.length}</div>${chip(rp.pii_columns.length?"Review required":"None detected by name")}</div></div>
+   <div class="grid g2"><div class="panel"><h3>Missing values by field (left blank, never set to 0)</h3>${miss.length?barsH(miss,"pct","f","%"):'<p>No missing values.</p>'}</div>
+   <div class="panel"><h3>Source-to-standard mapping</h3>${table(Object.entries(B.mapping||{}).map(([a,b])=>({a,b})),[{h:"Standard field",k:"a"},{h:"Source column",k:"b"}])}
+   <h3>Mapping issues</h3>${table(B.mapping_issues,[{h:"Field",k:"field"},{h:"Issue",k:"issue"},{h:"Count",k:"count",n:1}])}</div></div>
+   <div class="grid g2"><div class="panel"><h3>Transformations (logged)</h3>${table(dq.transformations,[{h:"Step",k:"step"},{h:"Rows removed",k:"rows_removed",n:1}])}</div>
+   <div class="panel"><h3>Exclusions</h3>${table(dq.exclusions,[{h:"Rule",k:"rule"},{h:"Rows",k:"rows",n:1}])}</div></div>
+   <div class="panel"><h3>Data collection plan</h3>${table(R.data_requests,[{h:"Question",k:"question"},{h:"Field",k:"required_field"},{h:"Owner",k:"owner"},{h:"Sampling rationale",k:"sampling_rationale"},{h:"Status",k:r=>chip(r.status),raw:1}])}</div>`}],
+ ["baseline","Baseline", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 6 · Baseline and segmentation</span><h2>${esc(B.outcome_label)}: baseline</h2>
+   <p class="muted">Filters recompute the measures below from the analysis records, using the same rules as the engine. The control chart and Kaplan-Meier figures are not filtered.</p></div>
+   <form class="filters" id="flt" onsubmit="event.preventDefault()">
+     <label for="f-seg">Business unit<select id="f-seg"></select></label>
+     <label for="f-jf">Job family<select id="f-jf"></select></label>
+     <label for="f-from">Cohort from<input type="date" id="f-from"></label>
+     <label for="f-to">Cohort to<input type="date" id="f-to"></label>
+     <button type="button" id="f-reset">Reset filters</button></form>
+   <div class="grid g4" id="fk"></div>
+   <div class="grid g2"><div class="panel"><h3>Distribution of completed cases</h3><div id="hist"></div></div>
+   <div class="panel"><h3>Median stage time (filtered)</h3><div id="stg"></div></div></div>
+   <div class="panel"><h3>Stability: weekly cohort medians (I-MR, mature cohorts only)</h3>${imrSVG(B.charts.imr)}
+   <p>${chip(B.charts.imr.signals&&B.charts.imr.signals.length?"Special-cause signal":"No signals")} <span class="muted">${esc(B.charts.imr.interpretation)}. Rules: ${esc(B.charts.imr.rules)}. Limits are control limits, not targets or specification limits.</span></p></div>
+   <div class="grid g2"><div class="panel"><h3>Funnel: one mature cohort</h3>${table(B.charts.funnel,[{h:"Stage",k:"stage"},{h:"Reached",k:"n",n:1},{h:"% of cohort",k:"pct_of_cohort",n:1},{h:"From previous %",k:r=>r.conversion_from_prev??"–",n:1},{h:"Timestamp missing",k:"timestamp_missing_but_reached",n:1}])}
+   <p class="muted">A missing timestamp is not treated as a drop-out when a later stage is recorded.</p></div>
+   <div class="panel"><h3>Pareto: which stage is longest per case</h3>${barsH(B.charts.pareto_longest_stage,"pct","category","%",0)}
+   <p class="muted">Share of fully-timestamped cases where each stage took the most time.</p></div></div>`],
+ ["analyze","Analysis", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 7 · Statistical analysis workbench</span><h2>Analysis runs and their plans</h2>
+   <p class="muted">Every test is run against a written plan, a fixed seed and recorded package versions.</p></div>
+   ${B.analysis_runs.map(r=>`<div class="panel"><div style="display:flex;gap:8px;flex-wrap:wrap"><span class="eyebrow">${esc(r.run_id)}</span><span class="eyebrow">dataset ${esc(r.dataset_version)}</span></div><h3>${esc(r.plan.business_question)}</h3>
+   ${table(Object.entries(r.plan).map(([a,b])=>({a:a.replace(/_/g," "),b})),[{h:"Plan field",k:"a"},{h:"Entry",k:"b"}])}
+   ${r.name.startsWith("seg_")&&B.charts.segments[r.name.slice(4)].groups?table(Object.entries(B.charts.segments[r.name.slice(4)].groups).map(([g,v])=>({g,...v})),[{h:"Group",k:"g"},{h:"n",k:"n",n:1},{h:"Median",k:"median",n:1}])+`<p class="num">H = ${B.charts.segments[r.name.slice(4)].H}, ${esc(B.charts.segments[r.name.slice(4)].p_text)}, ε² = ${B.charts.segments[r.name.slice(4)].epsilon_squared}</p>`:""}
+   <p class="muted num">Python ${r.environment.python} · numpy ${r.environment.numpy} · pandas ${r.environment.pandas} · scipy ${r.environment.scipy} · seed ${r.environment.seed}</p></div>`).join("")}`],
+ ["causes","Root causes", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 8 · Brainstorming and root-cause evidence</span><h2>Causes: hypotheses until validated</h2></div>
+   <div class="panel">${table(R.causes,[{h:"ID",k:"id"},{h:"Issue",k:"issue"},{h:"Hypothesized cause",k:"hypothesized_cause"},{h:"Raised by",k:"contributor_role"},{h:"Evidence required",k:"evidence_required"},{h:"Validation",k:"validation_method"},{h:"Owner",k:"owner"},{h:"Status",k:r=>chip(r.status),raw:1}])}</div>
+   <div class="panel"><h3>Stakeholder input</h3>${pending("No stakeholder input captured yet","Run the workshop using template 05 and record inputs in the Stakeholder_Input sheet. Inputs are labelled Stakeholder opinion until data supports them.")}</div>`],
+ ["improve","Improve & pilot", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 9</span><h2>Improvement prioritisation and pilot tracker</h2></div>
+   ${pending("Not started: the Analyze gate is open","Improvements open once causes reach at least “Supported”. Each one is traced as CTQ → finding → cause → change → expected mechanism. Proposed scoring criteria: customer impact, evidence strength, cost, effort, control, time to benefit, dependencies, risk. Weights need sponsor approval.")}`],
+ ["benefits","Results & benefits", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 10</span><h2>Before/after results and benefits</h2></div>
+   ${pending("Not assessed: no change has been implemented","Benefits will be shown as Forecast, Pilot estimate, Realized or Annualized, and typed as Hard savings, Cost avoidance, Released capacity, Revenue opportunity or Intangible. Each needs Finance approval. Time saved is not shown as cash.")}`],
+ ["control","Control", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 11</span><h2>Control plan and sustenance</h2></div>
+   ${pending("Not started","Each control row will have: metric, definition, source, owner, review frequency, approved requirement, monitoring method, trigger, response, response time, escalation, evidence location.")}`],
+ ["governance","Governance", ()=>{const rc=B.refresh_comparison; return `
+   <div class="sechead"><span class="eyebrow">Module 12 · Approvals, risks, decisions, change log</span><h2>Governance</h2></div>
+   <div class="grid g2"><div class="panel"><h3>Approvals</h3>${table(R.approvals,[{h:"ID",k:"id"},{h:"Item",k:"item"},{h:"Approver",k:"approver_role"},{h:"Linked",k:"linked_id"},{h:"Status",k:r=>chip(r.status),raw:1}])}</div>
+   <div class="panel"><h3>Risks</h3>${table(R.risks,[{h:"ID",k:"id"},{h:"Risk",k:"description"},{h:"Severity",k:r=>chip(r.severity),raw:1},{h:"Mitigation",k:"mitigation"}])}</div></div>
+   <div class="grid g2"><div class="panel"><h3>Assumptions</h3>${table(R.assumptions,[{h:"ID",k:"id"},{h:"Statement",k:"statement"},{h:"Label",k:r=>chip(r.label),raw:1},{h:"Owner",k:"owner"}])}</div>
+   <div class="panel"><h3>Open questions</h3>${table(R.questions,[{h:"ID",k:"id"},{h:"Question",k:"question"},{h:"Priority",k:"priority"},{h:"Owner",k:"owner"}])}</div></div>
+   <div class="panel"><h3>Version history</h3>${table(B.version_history,[{h:"Version",k:"version"},{h:"Created",k:"created_at"},{h:"Status",k:r=>chip(r.status),raw:1},{h:"Hash",k:"content_hash"},{h:"Note",k:"note"}])}</div>
+   ${rc?`<div class="panel"><h3>Refresh preview: ${esc(rc.from)} → ${esc(rc.to)} ${chip("Draft – pending review")}</h3><p class="muted">${esc(rc.threshold)}</p>
+   ${table(rc.kpis,[{h:"KPI",k:r=>(K[r.kpi_id]||{}).name||r.kpi_id},{h:"Old",k:"old",n:1},{h:"New",k:"new",n:1},{h:"Change",k:"abs_change",n:1},{h:"Rel. %",k:"rel_change_pct",n:1},{h:"Old n",k:"old_n",n:1},{h:"New n",k:"new_n",n:1},{h:"Material",k:r=>chip(r.material?"Requires review":"No material change"),raw:1}])}
+   <p>Findings requiring review: <b>${esc(rc.findings_requiring_review.join(", ")||"none")}</b>. Approvals marked for revalidation: <b>${esc(rc.approvals_flagged.join(", ")||"none")}</b>.</p></div>`:""}`}],
+ ["export","Export", ()=>`
+   <div class="sechead"><span class="eyebrow">Module 13 · Presentation and report export</span><h2>Exports and reconciliation</h2></div>
+   <div class="panel"><h3>Reconciliation check</h3><div id="recon"></div></div>
+   <div class="panel"><h3>Generated from this results version</h3><ul class="clean">
+   <li>Executive deck (.pptx): <code>generators/build_deck.js</code></li><li>Data collection pack (.xlsx), one per project</li>
+   <li>Communication pack (.md + .docx), filled from project configuration</li><li>Portable project state (.zip): <code>project.export_state()</code></li></ul>
+   <p class="muted">Results ${esc(B.version)} · content hash ${esc(B.content_hash)} · dataset ${esc(B.dataset_version)}</p></div>`],
+];
+
+/* ---------- baseline filtering ---------- */
+const REC = B.records;
+function opts(id, vals){ $(id).innerHTML = `<option value="">All</option>`+vals.map(v=>`<option>${esc(v)}</option>`).join(""); }
+function compute(f){
+  const rs = REC.filter(r=>(!f.seg||r.segment===f.seg)&&(!f.jf||r.job_family===f.jf)&&(!f.from||r.week>=f.from)&&(!f.to||r.week<=f.to));
+  const done = rs.filter(r=>r.outcome_days!==null).map(r=>r.outcome_days);
+  const stages = B.process_stages.map(s=>{const v=rs.filter(r=>r[s]!==null).map(r=>r[s]); return {s, median:median(v), n:v.length}});
+  return {rs, done, med:median(done), p90:pct(done,90), stages};
+}
+function renderBaseline(){
+  const f={seg:$("#f-seg").value, jf:$("#f-jf").value, from:$("#f-from").value, to:$("#f-to").value};
+  const c=compute(f), filtered=Object.values(f).some(Boolean);
+  const card=(t,v,u,sub)=>`<div class="panel kpi"><span class="eyebrow">${filtered?"Filtered":"All cases"}</span><h3>${t}</h3><div class="v">${v===null?'<span class="muted" style="font-size:1rem">Insufficient data</span>':fmt(v,u==="cases"?0:1)+`<small>${u}</small>`}</div><span class="muted num">${sub}</span></div>`;
+  $("#fk").innerHTML = card("Median "+B.outcome_label.toLowerCase(), c.done.length>=10?c.med:null, B.unit, `n = ${c.done.length} completed of ${c.rs.length} in scope`)
+    + card("P90 "+B.outcome_label.toLowerCase(), c.done.length>=10?c.p90:null, B.unit, `n = ${c.done.length}`)
+    + card("Still open", c.rs.length-c.done.length, "cases", `denominator ${c.rs.length} (excludes cancelled)`)
+    + card("Completion share", c.rs.length?100*c.done.length/c.rs.length:null, "%", "completed / in scope");
+  $("#hist").innerHTML = histSVG(c.done, c.p90||0);
+  $("#stg").innerHTML = barsH(c.stages.map(s=>({...s, tip:"n="+s.n})), "median", "s", " d", c.stages.reduce((bi,s,i,a)=>s.median>(a[bi].median||0)?i:bi,0));
+  tipOn($("#main"));
+}
+function initBaseline(){
+  opts("#f-seg",[...new Set(REC.map(r=>r.segment))].sort()); opts("#f-jf",[...new Set(REC.map(r=>r.job_family))].sort());
+  ["#f-seg","#f-jf","#f-from","#f-to"].forEach(s=>$(s).addEventListener("change",renderBaseline));
+  $("#f-reset").addEventListener("click",()=>{["#f-seg","#f-jf","#f-from","#f-to"].forEach(s=>$(s).value="");renderBaseline()});
+  renderBaseline();
+}
+function reconcile(){
+  const c=compute({}); const rows=[
+    {m:"Median (K1)", d:+c.med.toFixed(2), b:K.K1.current, n1:c.done.length, n2:K.K1.n},
+    {m:"P90 (K3)", d:+c.p90.toFixed(2), b:K.K3.current, n1:c.done.length, n2:K.K3.n}];
+  rows.forEach(r=>r.ok=Math.abs(r.d-r.b)<0.01&&r.n1===r.n2);
+  window.__RECON__=rows.every(r=>r.ok);
+  return table(rows,[{h:"Measure",k:"m"},{h:"Dashboard",k:"d",n:1},{h:"Results bundle",k:"b",n:1},{h:"n dash",k:"n1",n:1},{h:"n bundle",k:"n2",n:1},{h:"Result",k:r=>chip(r.ok?"Reconciled – approved method":"Requires review: mismatch"),raw:1}]);
+}
+
+/* ---------- shell ---------- */
+function header(){
+  const stages=["Define","Measure","Analyze","Improve","Control"], cur=stages.indexOf(B.config.dmaic_stage);
+  $("#hdr").innerHTML = `${B.synthetic?'<div class="banner"><b>Synthetic demonstration data.</b> The organisation and all figures are fictitious. They exist only to show how the workspace works.</div>':""}
+  <div class="idrow"><div><span class="eyebrow">${esc(B.config.project_id)} · ${esc(B.config.client)}</span><h1>${esc(B.config.process)}: ${esc(B.outcome_label)}</h1></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${chip(B.status)}<span class="eyebrow">results ${esc(B.version)} · data to ${esc(B.extract_date)}</span></div></div>
+  <div class="rail" role="list" aria-label="DMAIC phases">${stages.map((s,i)=>`<div role="listitem" class="${i===cur?'cur':''}"><b>${s}</b>${i<cur?'Evidence gathered – gate approval pending':i===cur?'Current phase':'Pending'}</div>`).join("")}</div>`;
+}
+function route(){
+  const id=(location.hash||"#home").slice(1), mod=MODULES.find(m=>m[0]===id)||MODULES[0];
+  $("#tabs").innerHTML = MODULES.map(([k,l],i)=>`<a href="#${k}" ${k===mod[0]?'aria-current="page"':''}>${i+1}. ${l}</a>`).join("");
+  $("#main").innerHTML = `<section class="mod">${mod[2]()}</section>`;
+  if(mod[0]==="baseline") initBaseline();
+  if(mod[0]==="export") $("#recon").innerHTML=reconcile();
+  tipOn($("#main"));
+}
+header(); route(); addEventListener("hashchange",()=>{route();scrollTo(0,0)});
+reconcile();
+</script>

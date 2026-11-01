@@ -1,0 +1,107 @@
+{
+  "pack_id": "procurement",
+  "label": "Procurement",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Purchase requisition / PO",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "pr_ts",
+      "type": "datetime",
+      "description": "Requisition raised",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "po_ts",
+      "type": "datetime",
+      "description": "PO issued",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "category",
+      "type": "category",
+      "description": "Spend category",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "maverick_flag",
+      "type": "boolean",
+      "description": "Off-contract purchase",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "PRPO",
+      "name": "PR-to-PO cycle time",
+      "definition": "Days from requisition to PO",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "POs issued",
+      "start_event": "pr_ts",
+      "stop_event": "po_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "COMP",
+      "name": "Contract compliance",
+      "definition": "On-contract spend / total spend",
+      "unit": "%",
+      "numerator": "on-contract spend",
+      "denominator": "total spend",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Request",
+    "Approve",
+    "Source",
+    "Order",
+    "Receive"
+  ],
+  "balancing_measures": [
+    "Price variance",
+    "Supplier lead time"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

@@ -1,0 +1,115 @@
+{
+  "pack_id": "manufacturing",
+  "label": "Manufacturing",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Unit / batch",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "start_ts",
+      "type": "datetime",
+      "description": "Operation start",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "end_ts",
+      "type": "datetime",
+      "description": "Operation end",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "measurement",
+      "type": "number",
+      "description": "CTQ measurement",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "defect_type",
+      "type": "category",
+      "description": "Defect type",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "line",
+      "type": "category",
+      "description": "Production line",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "FPY",
+      "name": "First pass yield",
+      "definition": "Units passing first time / units started",
+      "unit": "%",
+      "numerator": "first-pass units",
+      "denominator": "units started",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "DIM",
+      "name": "CTQ dimension",
+      "definition": "Measured characteristic vs approved specification",
+      "unit": "unit of measure",
+      "numerator": "-",
+      "denominator": "units measured",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "nominal",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Material in",
+    "Machine",
+    "Inspect",
+    "Pack",
+    "Ship"
+  ],
+  "balancing_measures": [
+    "Scrap cost",
+    "Safety incidents",
+    "OEE"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

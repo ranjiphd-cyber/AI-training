@@ -1,0 +1,94 @@
+{
+  "pack_id": "marketing",
+  "label": "Marketing",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Campaign / lead",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "lead_ts",
+      "type": "datetime",
+      "description": "Lead captured",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "mql_ts",
+      "type": "datetime",
+      "description": "Marketing-qualified",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "channel",
+      "type": "category",
+      "description": "Channel",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "cost",
+      "type": "number",
+      "description": "Cost",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "CONV",
+      "name": "Lead-to-MQL conversion",
+      "definition": "MQLs / leads (same cohort)",
+      "unit": "%",
+      "numerator": "MQLs",
+      "denominator": "leads",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Plan",
+    "Launch",
+    "Capture",
+    "Qualify",
+    "Hand-off"
+  ],
+  "balancing_measures": [
+    "Unsubscribe rate",
+    "Brand sentiment"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

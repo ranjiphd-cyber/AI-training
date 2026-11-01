@@ -1,0 +1,27 @@
+{
+  "_doc": "Brand palette supplied by the user (swatch image). Pastel fills are used ONLY to signal status or highlight; text and data marks use the neutral ink tones so contrast stays readable. Status is never conveyed by colour alone - every status also carries a text label.",
+  "brand": {
+    "coral":  "#E5A094",
+    "peach":  "#F5D6BC",
+    "cream":  "#F8F4E8",
+    "sage":   "#D7E6B7"
+  },
+  "neutral": {
+    "ink":        "#2B2B2B",
+    "ink_soft":   "#5C5852",
+    "rule":       "#D9D3C7",
+    "paper":      "#FFFFFF"
+  },
+  "derived_for_contrast": {
+    "_doc": "Darker tints of the brand hues, derived so that lines and text meet contrast needs on white/cream. Not part of the supplied swatch.",
+    "coral_deep": "#A8584B",
+    "sage_deep":  "#5E7A34",
+    "peach_deep": "#9A6A3F"
+  },
+  "status_map": {
+    "Off target / signal":      {"fill": "#E5A094", "text": "#2B2B2B", "label_required": true},
+    "Attention / pending":      {"fill": "#F5D6BC", "text": "#2B2B2B", "label_required": true},
+    "On target / approved":     {"fill": "#D7E6B7", "text": "#2B2B2B", "label_required": true},
+    "Not assessed":             {"fill": "#F8F4E8", "text": "#5C5852", "label_required": true}
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "pack_id": "healthcare_operations",
+  "label": "Healthcare Operations",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Patient episode (de-identified)",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "arrival_ts",
+      "type": "datetime",
+      "description": "Arrival",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "seen_ts",
+      "type": "datetime",
+      "description": "Seen by clinician",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "discharge_ts",
+      "type": "datetime",
+      "description": "Discharge",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "acuity",
+      "type": "category",
+      "description": "Triage acuity",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "patient_identifier",
+      "type": "text",
+      "description": "DO NOT LOAD - use de-identified episode IDs only",
+      "required": false,
+      "pii": true
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "DTS",
+      "name": "Door-to-clinician time",
+      "definition": "Minutes arrival to seen",
+      "unit": "minutes",
+      "numerator": "-",
+      "denominator": "patients seen",
+      "start_event": "arrival_ts",
+      "stop_event": "seen_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "LOS",
+      "name": "Length of stay",
+      "definition": "Hours arrival to discharge",
+      "unit": "hours",
+      "numerator": "-",
+      "denominator": "discharged episodes",
+      "start_event": "arrival_ts",
+      "stop_event": "discharge_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Arrive",
+    "Triage",
+    "Assess",
+    "Treat",
+    "Discharge"
+  ],
+  "balancing_measures": [
+    "Readmission",
+    "Patient safety events",
+    "Staff overtime"
+  ],
+  "sensitivity_notes": "Minimise individual-level data. Pseudonymise owners. Any fairness, legal or regulatory question requires qualified review."
+}

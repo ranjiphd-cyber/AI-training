@@ -1,0 +1,114 @@
+{
+  "pack_id": "finance",
+  "label": "Finance",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Invoice / journal / close task",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "received_ts",
+      "type": "datetime",
+      "description": "Invoice received",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "approved_ts",
+      "type": "datetime",
+      "description": "Invoice approved",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "paid_ts",
+      "type": "datetime",
+      "description": "Invoice paid",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "exception_code",
+      "type": "category",
+      "description": "Exception reason",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "amount",
+      "type": "number",
+      "description": "Value (state currency)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "IPT",
+      "name": "Invoice processing time",
+      "definition": "Days from receipt to payment",
+      "unit": "days",
+      "numerator": "-",
+      "denominator": "paid invoices",
+      "start_event": "received_ts",
+      "stop_event": "paid_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "FTM",
+      "name": "First-time match rate",
+      "definition": "Invoices matched without exception / invoices processed",
+      "unit": "%",
+      "numerator": "clean matches",
+      "denominator": "invoices processed",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Receive",
+    "Match",
+    "Approve",
+    "Pay",
+    "Reconcile"
+  ],
+  "balancing_measures": [
+    "Late-payment penalties",
+    "Supplier satisfaction"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

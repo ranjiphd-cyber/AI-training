@@ -1,0 +1,114 @@
+{
+  "pack_id": "hr_operations",
+  "label": "HR Operations",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "HR service ticket",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "ticket_open_ts",
+      "type": "datetime",
+      "description": "Ticket logged",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "ticket_close_ts",
+      "type": "datetime",
+      "description": "Ticket resolved",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "category",
+      "type": "category",
+      "description": "Query category",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "reopened",
+      "type": "boolean",
+      "description": "Reopened after closure",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "channel",
+      "type": "category",
+      "description": "Contact channel",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "TRT",
+      "name": "Ticket resolution time",
+      "definition": "Hours from log to resolution",
+      "unit": "hours",
+      "numerator": "-",
+      "denominator": "resolved tickets",
+      "start_event": "ticket_open_ts",
+      "stop_event": "ticket_close_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "FCR",
+      "name": "First contact resolution",
+      "definition": "Tickets resolved without reopening / resolved tickets",
+      "unit": "%",
+      "numerator": "not reopened",
+      "denominator": "resolved tickets",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Log",
+    "Triage",
+    "Resolve",
+    "Confirm",
+    "Close"
+  ],
+  "balancing_measures": [
+    "Employee satisfaction",
+    "Payroll accuracy"
+  ],
+  "sensitivity_notes": "Minimise individual-level data. Pseudonymise owners. Any fairness, legal or regulatory question requires qualified review."
+}

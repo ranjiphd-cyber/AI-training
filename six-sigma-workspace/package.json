@@ -1,0 +1,8 @@
+{
+  "name": "six-sigma-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reusable Lean Six Sigma project workspace - deck generator dependencies",
+  "scripts": { "deck": "node generators/build_deck.js" },
+  "dependencies": { "pptxgenjs": "3.12.0" }
+}

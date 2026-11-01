@@ -1,0 +1,113 @@
+{
+  "pack_id": "it",
+  "label": "IT",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Incident / change / request",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "open_ts",
+      "type": "datetime",
+      "description": "Logged",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "resolve_ts",
+      "type": "datetime",
+      "description": "Resolved",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "priority",
+      "type": "category",
+      "description": "Priority",
+      "required": false,
+      "pii": false,
+      "allowed_values": [
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ]
+    },
+    {
+      "field": "sla_breach",
+      "type": "boolean",
+      "description": "SLA breached",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "MTTR",
+      "name": "Mean time to restore",
+      "definition": "Hours from log to restore (report median too)",
+      "unit": "hours",
+      "numerator": "-",
+      "denominator": "resolved incidents",
+      "start_event": "open_ts",
+      "stop_event": "resolve_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "SLA",
+      "name": "SLA attainment",
+      "definition": "Incidents within SLA / incidents closed",
+      "unit": "%",
+      "numerator": "within SLA",
+      "denominator": "closed",
+      "start_event": null,
+      "stop_event": null,
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    }
+  ],
+  "process_stages": [
+    "Detect",
+    "Log",
+    "Diagnose",
+    "Resolve",
+    "Close"
+  ],
+  "balancing_measures": [
+    "Change failure rate",
+    "User satisfaction"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}

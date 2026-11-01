@@ -1,0 +1,106 @@
+{
+  "pack_id": "customer_service",
+  "label": "Customer Service",
+  "version": "0.1-draft",
+  "status": "Draft - pending approval",
+  "observation_unit_default": "Contact / case",
+  "core_fields": [
+    {
+      "field": "record_id",
+      "type": "id",
+      "description": "Stable identifier of one observation unit",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "segment",
+      "type": "category",
+      "description": "Configurable segment (business unit, product, region...)",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "site",
+      "type": "category",
+      "description": "Site/location",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "owner_ref",
+      "type": "category",
+      "description": "Pseudonymised owner/handler reference (never a name)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "standard_fields": [
+    {
+      "field": "open_ts",
+      "type": "datetime",
+      "description": "Case opened",
+      "required": true,
+      "pii": false
+    },
+    {
+      "field": "close_ts",
+      "type": "datetime",
+      "description": "Case closed",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "reason",
+      "type": "category",
+      "description": "Contact reason",
+      "required": false,
+      "pii": false
+    },
+    {
+      "field": "csat",
+      "type": "number",
+      "description": "CSAT response (ordinal)",
+      "required": false,
+      "pii": false
+    }
+  ],
+  "metric_library": [
+    {
+      "metric_id": "AHT",
+      "name": "Resolution time",
+      "definition": "Hours open to close",
+      "unit": "hours",
+      "numerator": "-",
+      "denominator": "closed cases",
+      "start_event": "open_ts",
+      "stop_event": "close_ts",
+      "direction_of_improvement": "lower",
+      "target_status": "Not set - requires approval",
+      "notes": ""
+    },
+    {
+      "metric_id": "CSAT",
+      "name": "Customer satisfaction",
+      "definition": "Share of top-2-box responses",
+      "unit": "%",
+      "numerator": "top-2-box responses",
+      "denominator": "responses",
+      "start_event": "",
+      "stop_event": "",
+      "direction_of_improvement": "higher",
+      "target_status": "Not set - requires approval",
+      "notes": "Ordinal scale; non-response bias"
+    }
+  ],
+  "process_stages": [
+    "Contact",
+    "Triage",
+    "Resolve",
+    "Follow-up"
+  ],
+  "balancing_measures": [
+    "Repeat contacts",
+    "Agent attrition"
+  ],
+  "sensitivity_notes": "Mask commercially sensitive values where not needed for analysis."
+}
