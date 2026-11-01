@@ -1,0 +1,300 @@
+<title>Lateral Hiring Cycle Time IMR</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one working column — controls strip, I chart, MR chart, then stats + signal log side by side */
+:root{
+  --bg:#f5f7fa; --surface:#ffffff; --fg:#17202b; --muted:#5b6878; --line:#d9e0e8; --grid:#e8edf2;
+  --accent:#1f5b99; --accent-soft:#dce8f5; --limit:#b0352b; --center:#2b7a4b; --warn:#a86a00; --warn-soft:#fbefd9; --bad-soft:#f8e1de;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151c; --surface:#18202a; --fg:#e4eaf1; --muted:#97a4b4; --line:#2c3846; --grid:#222c38;
+  --accent:#7fb2e8; --accent-soft:#1e3249; --limit:#ef8a7f; --center:#72c795; --warn:#e5b45c; --warn-soft:#3a2e17; --bad-soft:#3e2220; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#10151c; --surface:#18202a; --fg:#e4eaf1; --muted:#97a4b4; --line:#2c3846; --grid:#222c38;
+  --accent:#7fb2e8; --accent-soft:#1e3249; --limit:#ef8a7f; --center:#72c795; --warn:#e5b45c; --warn-soft:#3a2e17; --bad-soft:#3e2220; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-size:clamp(22px,3.4vw,30px);font-weight:600;margin:0;text-wrap:balance}
+h2{font-size:15px;font-weight:600;margin:0}
+.sub{color:var(--muted);margin:0;max-width:70ch}
+.banner{display:flex;gap:10px;align-items:flex-start;background:var(--warn-soft);border:1px solid var(--warn);color:var(--fg);border-radius:6px;padding:10px 14px;font-size:14px}
+.banner b{color:var(--warn)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px 18px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end}
+.field{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+select,input[type=text]{font:inherit;font-size:14px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px 8px}
+button{font:inherit;font-size:14px;font-weight:500;border-radius:5px;padding:7px 12px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--surface)}
+button.ghost{background:transparent;color:var(--accent)}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{width:100%;box-sizing:border-box;min-height:120px;font-family:var(--mono);font-size:12px;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:8px}
+details summary{cursor:pointer;font-weight:500;color:var(--accent)}
+details .inner{display:grid;gap:10px;margin-top:12px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+code{font-family:var(--mono);font-size:12.5px;background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+.chart-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 16px;align-items:baseline;margin-bottom:6px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:5px}
+.chart{overflow-x:auto}
+svg{display:block;width:100%;height:auto;font-family:var(--mono)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:20px}
+@media (max-width:760px){.grid2{grid-template-columns:minmax(0,1fr)}}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--grid);text-align:left}
+td.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+th{font-weight:500;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+.pill{display:inline-block;font-family:var(--mono);font-size:11.5px;padding:1px 7px;border-radius:10px;white-space:nowrap}
+.pill.r1{background:var(--bad-soft);color:var(--limit)}
+.pill.r2,.pill.r3,.pill.r4{background:var(--warn-soft);color:var(--warn)}
+.pill.ok{background:var(--accent-soft);color:var(--accent)}
+.siglist{max-height:320px;overflow:auto}
+.verdict{font-size:14px;margin:0 0 10px}
+.tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12px;font-family:var(--mono);padding:6px 8px;border-radius:4px;white-space:pre;z-index:5}
+.status{font-size:13px;color:var(--muted)}
+.status.err{color:var(--limit)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Talent Acquisition · Six Sigma · Control chart</div>
+    <h1>Lateral hiring cycle time — I-MR chart</h1>
+    <p class="sub">Individuals and Moving Range chart of days from requisition approval to offer acceptance, one point per hire in order of acceptance. Conversions (intern, contractor, consultant, temp-to-perm) are excluded.</p>
+  </header>
+
+  <div class="banner" id="banner"><span><b>Example data.</b> These points are illustrative, not Volvo Group figures. Load your ATS export below to chart real lateral hires.</span></div>
+
+  <section class="panel controls" aria-label="Chart settings">
+    <label class="field" for="period">Period
+      <select id="period">
+        <option value="all">All loaded hires</option>
+        <option value="12">Last 12 months</option>
+        <option value="6">Last 6 months</option>
+      </select>
+    </label>
+    <label class="field" for="baseline">Control limits from
+      <select id="baseline">
+        <option value="all">All points shown</option>
+        <option value="20">First 20 points (baseline)</option>
+        <option value="25">First 25 points (baseline)</option>
+      </select>
+    </label>
+    <label class="field" for="excl">Exclude hire types matching
+      <input type="text" id="excl" value="conversion, intern, contractor, consultant, temp, internal">
+    </label>
+    <span class="status" id="status"></span>
+  </section>
+
+  <section class="panel">
+    <details id="loader">
+      <summary>Load your data (CSV paste or file)</summary>
+      <div class="inner">
+        <p class="hint">One row per hire. Needs a <b>hire type</b> column plus either a <b>cycle time (days)</b> column or two dates: <b>requisition approved</b> and <b>offer accepted</b>. Header names are matched loosely; dates as <code>YYYY-MM-DD</code> or <code>DD/MM/YYYY</code>. Data stays in your browser.</p>
+        <pre class="hint" style="margin:0"><code>Req ID,Hire Type,Req Approved,Offer Accepted
+R-1042,Lateral,2026-01-05,2026-02-24
+R-1047,Intern Conversion,2026-01-09,2026-01-21</code></pre>
+        <textarea id="csv" aria-label="CSV data" placeholder="Paste CSV here…"></textarea>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
+          <button id="apply">Chart this data</button>
+          <label class="field" style="display:flex;gap:8px;align-items:center" for="file">or choose a .csv file <input type="file" id="file" accept=".csv,text/csv"></label>
+          <button class="ghost" id="sample">Reload example data</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel">
+    <div class="chart-head">
+      <h2>Individuals (I) chart · cycle time, days</h2>
+      <div class="legend"><span><i style="border-color:var(--center)"></i>X̄</span><span><i style="border-color:var(--limit);border-top-style:dashed"></i>UCL / LCL (±3σ)</span><span><i style="border-color:var(--muted);border-top-style:dotted"></i>±2σ</span></div>
+    </div>
+    <div class="chart" id="ichart"></div>
+  </section>
+
+  <section class="panel">
+    <div class="chart-head">
+      <h2>Moving Range (MR) chart · |Xᵢ − Xᵢ₋₁|, days</h2>
+      <div class="legend"><span><i style="border-color:var(--center)"></i>MR̄</span><span><i style="border-color:var(--limit);border-top-style:dashed"></i>UCL = 3.267·MR̄</span></div>
+    </div>
+    <div class="chart" id="mrchart"></div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel">
+      <h2 style="margin-bottom:8px">Process statistics</h2>
+      <table id="stats"></table>
+      <p class="hint" style="margin-top:10px">σ̂ = MR̄ / d₂ (1.128). I-chart limits = X̄ ± 2.66·MR̄. LCL is floored at 0 days.</p>
+    </section>
+    <section class="panel">
+      <h2 style="margin-bottom:8px">Out-of-control signals (Western Electric)</h2>
+      <p class="verdict" id="verdict"></p>
+      <div class="siglist"><table id="signals"></table></div>
+      <p class="hint" style="margin-top:10px">R1 beyond 3σ · R2 2 of 3 beyond 2σ, same side · R3 8 in a row on one side of X̄ · R4 6 in a row rising or falling · MR beyond MR UCL.</p>
+    </section>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+let RAW=[], usingSample=true;
+
+/* ---------- example data (deterministic, illustrative only) ---------- */
+function makeSample(){
+  let s=20261101; const rnd=()=>{s=(s*1664525+1013904223)%4294967296;return s/4294967296;};
+  const norm=()=>{let u=0,v=0;while(!u)u=rnd();while(!v)v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+  const rows=[]; const start=new Date(Date.UTC(2025,10,3));
+  for(let i=0;i<52;i++){
+    const acc=new Date(start.getTime()+i*5.8*864e5+Math.round(rnd()*2)*864e5);
+    let ct=Math.round(54+norm()*8.5);
+    if(i===17) ct=96;                     // one long search
+    if(i>=38&&i<=45) ct=Math.round(44+norm()*4); // recent improvement run
+    const appr=new Date(acc.getTime()-ct*864e5);
+    rows.push({id:'R-'+(1040+i*3),type:'Lateral',start:appr,end:acc,ct});
+    if(i%5===2){const c=Math.round(16+rnd()*10);rows.push({id:'C-'+(500+i),type:(i%2?'Intern conversion':'Contractor conversion'),start:new Date(acc.getTime()-c*864e5),end:acc,ct:c});}
+  }
+  return rows;
+}
+
+/* ---------- CSV parsing ---------- */
+function parseCSV(text){
+  const out=[];let row=[],f='',q=false;
+  const sep=(text.split('\n')[0].match(/;/g)||[]).length>(text.split('\n')[0].match(/,/g)||[]).length?';':(text.indexOf('\t')>-1&&text.split('\n')[0].indexOf(',')<0?'\t':',');
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true; else if(c===sep){row.push(f);f='';}
+    else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(f);f='';if(row.some(x=>x.trim()!==''))out.push(row);row=[];}
+    else f+=c;}
+  row.push(f);if(row.some(x=>x.trim()!==''))out.push(row);
+  return out;
+}
+function parseDate(v){
+  v=(v||'').trim(); if(!v) return null; let m;
+  if(m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)) return new Date(Date.UTC(+m[1],m[2]-1,+m[3]));
+  if(m=v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/)) return new Date(Date.UTC(+m[3],m[2]-1,+m[1]));
+  const d=new Date(v); return isNaN(d)?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+}
+function rowsFromCSV(text){
+  const t=parseCSV(text.trim()); if(t.length<2) throw new Error('Need a header row and at least one data row.');
+  const h=t[0].map(x=>x.trim().toLowerCase()); const used=new Set();
+  const find=(re,not)=>{const i=h.findIndex((x,k)=>!used.has(k)&&re.test(x)&&!(not&&not.test(x)));if(i>-1)used.add(i);return i;};
+  const iType=find(/type|category|hire source|source/);
+  const iCt=find(/cycle|days|time to (hire|fill|accept)|tth|ttf/);
+  const iStart=find(/approv|open|start|created|posted|raised/);
+  const iEnd=find(/accept|offer|close|filled|hire date|end/);
+  const iId=find(/req|id|number|no\b/);
+  if(iType<0) throw new Error('No hire-type column found. Add a column such as "Hire Type".');
+  if(iCt<0&&(iStart<0||iEnd<0)) throw new Error('Need a cycle-time column, or both a requisition-approved date and an offer-accepted date.');
+  const rows=[];let bad=0;
+  t.slice(1).forEach((r,k)=>{
+    const s=iStart>-1?parseDate(r[iStart]):null, e=iEnd>-1?parseDate(r[iEnd]):null;
+    let ct=iCt>-1?parseFloat((r[iCt]||'').replace(',','.')):NaN;
+    if(isNaN(ct)&&s&&e) ct=Math.round((e-s)/864e5);
+    if(isNaN(ct)||ct<0){bad++;return;}
+    rows.push({id:iId>-1?r[iId]:('row '+(k+2)),type:(r[iType]||'').trim(),start:s,end:e,ct,ord:k});
+  });
+  if(!rows.length) throw new Error('No rows had a usable cycle time.');
+  return {rows,bad};
+}
+
+/* ---------- SPC maths ---------- */
+function analyse(pts,baseN){
+  const x=pts.map(p=>p.ct), n=x.length;
+  const mr=x.map((v,i)=>i?Math.abs(v-x[i-1]):null);
+  const bN=Math.min(baseN||n,n);
+  const xb=x.slice(0,bN).reduce((a,b)=>a+b,0)/bN;
+  const mrs=mr.slice(1,bN); const mrb=mrs.length?mrs.reduce((a,b)=>a+b,0)/mrs.length:0;
+  const sig=mrb/1.128;
+  const L={xb,mrb,sig,ucl:xb+3*sig,lcl:Math.max(0,xb-3*sig),u2:xb+2*sig,l2:xb-2*sig,mrucl:3.267*mrb,bN};
+  const flags=x.map(()=>[]); const sigs=[];
+  const add=(i,r,txt)=>{if(!flags[i].includes(r)){flags[i].push(r);} sigs.push({i,r,txt});};
+  x.forEach((v,i)=>{ if(v>L.ucl) add(i,'R1','Above UCL ('+v+' > '+L.ucl.toFixed(1)+')'); else if(v<L.lcl) add(i,'R1','Below LCL'); });
+  for(let i=2;i<n;i++){ for(const side of [1,-1]){ const w=[i-2,i-1,i].filter(k=>side>0?x[k]>L.u2:x[k]<L.l2); if(w.length>=2&&w.includes(i)&&!flags[i].includes('R2')) add(i,'R2','2 of 3 '+(side>0?'above +2σ':'below −2σ')); } }
+  let run=0,rs=0; for(let i=0;i<n;i++){const s=Math.sign(x[i]-xb); if(s&&s===rs)run++; else {rs=s;run=s?1:0;} if(run===8) add(i,'R3','8 in a row '+(s>0?'above':'below')+' X̄ (from #'+(i-6)+')'); else if(run>8) add(i,'R3','Run continues '+(s>0?'above':'below')+' X̄'); }
+  let tr=1,td=0; for(let i=1;i<n;i++){const d=Math.sign(x[i]-x[i-1]); if(d&&d===td)tr++; else {td=d;tr=d?2:1;} if(tr===6) add(i,'R4','6 in a row '+(d>0?'rising':'falling')); }
+  const mrflags=mr.map(v=>v!=null&&v>L.mrucl);
+  mr.forEach((v,i)=>{ if(v!=null&&v>L.mrucl) sigs.push({i,r:'MR',txt:'Moving range '+v+' > '+L.mrucl.toFixed(1)}); });
+  sigs.sort((a,b)=>a.i-b.i);
+  return {x,mr,L,flags,mrflags,sigs};
+}
+
+/* ---------- SVG chart ---------- */
+const fmtD=d=>d?d.toISOString().slice(0,10):'—';
+const mon=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function niceTicks(lo,hi,count){const span=hi-lo||1;const step0=span/count;const mag=Math.pow(10,Math.floor(Math.log10(step0)));const step=[1,2,5,10].map(m=>m*mag).find(s=>s>=step0);const t=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-9;v+=step)t.push(+v.toFixed(6));return t;}
+function draw(el,pts,vals,lines,flagFn,kind){
+  const W=1060,H=kind==='I'?320:220,m={l:46,r:92,t:14,b:kind==='I'?40:30};
+  const n=vals.length, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const real=vals.filter(v=>v!=null);
+  let lo=Math.min(...real,...lines.map(l=>l.v)), hi=Math.max(...real,...lines.map(l=>l.v));
+  const pad=(hi-lo)*0.08||5; lo=Math.max(0,lo-pad); hi=hi+pad;
+  const X=i=>m.l+(n>1?i*iw/(n-1):iw/2), Y=v=>m.t+ih-(v-lo)/(hi-lo)*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${kind==='I'?'Individuals':'Moving range'} chart" style="min-width:560px">`;
+  niceTicks(lo,hi,5).forEach(t=>{s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="var(--grid)" stroke-width="1"/><text x="${m.l-8}" y="${Y(t)+4}" text-anchor="end" font-size="11" fill="var(--muted)">${t}</text>`;});
+  if(kind==='I'){ let last=-1; pts.forEach((p,i)=>{ if(!p.end) return; const k=p.end.getUTCFullYear()*12+p.end.getUTCMonth(); if(k!==last){ last=k; s+=`<line x1="${X(i)}" x2="${X(i)}" y1="${m.t+ih}" y2="${m.t+ih+5}" stroke="var(--muted)"/><text x="${X(i)}" y="${m.t+ih+18}" font-size="11" fill="var(--muted)" text-anchor="middle">${mon[p.end.getUTCMonth()]}</text>${p.end.getUTCMonth()===0||i===0?`<text x="${X(i)}" y="${m.t+ih+32}" font-size="10" fill="var(--muted)" text-anchor="middle">${p.end.getUTCFullYear()}</text>`:''}`; } }); }
+  else { [0,Math.floor((n-1)/2),n-1].forEach(i=>{s+=`<text x="${X(i)}" y="${m.t+ih+18}" font-size="11" fill="var(--muted)" text-anchor="middle">#${i+1}</text>`;}); }
+  if(lines.baseEnd&&lines.baseEnd<n){ s+=`<line x1="${X(lines.baseEnd-0.5)}" x2="${X(lines.baseEnd-0.5)}" y1="${m.t}" y2="${m.t+ih}" stroke="var(--accent)" stroke-dasharray="2 4" stroke-width="1"/><text x="${X(lines.baseEnd-0.5)+4}" y="${m.t+11}" font-size="10" fill="var(--accent)">baseline ends</text>`; }
+  lines.forEach(l=>{ s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(l.v)}" y2="${Y(l.v)}" stroke="var(${l.c})" stroke-width="${l.w||1.5}" ${l.d?`stroke-dasharray="${l.d}"`:''}/><text x="${W-m.r+6}" y="${Y(l.v)+4}" font-size="11" fill="var(${l.c})">${l.lab} ${l.v.toFixed(1)}</text>`; });
+  let path=''; vals.forEach((v,i)=>{ if(v==null) return; path+=(path?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1); });
+  s+=`<path d="${path}" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linejoin="round"/>`;
+  vals.forEach((v,i)=>{ if(v==null) return; const f=flagFn(i); const col=f==='R1'||f==='MR'?'var(--limit)':f?'var(--warn)':'var(--accent)'; const r=f?5:3.2;
+    s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="${r}" fill="${f?col:'var(--surface)'}" stroke="${col}" stroke-width="1.6" data-i="${i}" data-k="${kind}"/>`;
+    s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="10" fill="transparent" stroke="none" data-i="${i}" data-k="${kind}" class="hit"/>`; });
+  s+='</svg>'; el.innerHTML=s;
+}
+
+/* ---------- render ---------- */
+let LAST=null;
+function render(){
+  const ex=$('excl').value.split(',').map(t=>t.trim().toLowerCase()).filter(Boolean);
+  let rows=RAW.slice();
+  const total=rows.length;
+  const isConv=r=>ex.some(t=>r.type.toLowerCase().includes(t));
+  const conv=rows.filter(isConv).length;
+  rows=rows.filter(r=>!isConv(r));
+  rows.sort((a,b)=>(a.end&&b.end)?(a.end-b.end):((a.ord||0)-(b.ord||0)));
+  const per=$('period').value;
+  if(per!=='all'&&rows.length&&rows[rows.length-1].end){ const lastD=rows[rows.length-1].end; const cut=new Date(Date.UTC(lastD.getUTCFullYear(),lastD.getUTCMonth()-(+per),lastD.getUTCDate())); rows=rows.filter(r=>!r.end||r.end>cut); }
+  const st=$('status'); st.classList.remove('err');
+  if(rows.length<3){ st.textContent='Fewer than 3 lateral hires after filtering; nothing to chart.'; st.classList.add('err'); $('ichart').innerHTML='';$('mrchart').innerHTML='';$('stats').innerHTML='';$('signals').innerHTML='';$('verdict').textContent='';return; }
+  st.textContent=`${rows.length} lateral hires charted · ${conv} conversion${conv===1?'':'s'} excluded of ${total} rows`;
+  const bsel=$('baseline').value; const baseN=bsel==='all'?null:+bsel;
+  const A=analyse(rows,baseN); LAST={rows,A};
+  const L=A.L;
+  const il=[{v:L.ucl,c:'--limit',lab:'UCL',d:'6 4'},{v:L.xb,c:'--center',lab:'X̄',w:2},{v:L.lcl,c:'--limit',lab:'LCL',d:'6 4'},{v:L.u2,c:'--muted',lab:'+2σ',d:'1 4',w:1}];
+  if(L.l2>0) il.push({v:L.l2,c:'--muted',lab:'−2σ',d:'1 4',w:1});
+  il.baseEnd=baseN&&baseN<rows.length?baseN:null;
+  draw($('ichart'),rows,A.x,il,i=>A.flags[i].includes('R1')?'R1':(A.flags[i][0]||null),'I');
+  const ml=[{v:L.mrucl,c:'--limit',lab:'UCL',d:'6 4'},{v:L.mrb,c:'--center',lab:'MR̄',w:2}]; ml.baseEnd=il.baseEnd;
+  draw($('mrchart'),rows,A.mr,ml,i=>A.mrflags[i]?'MR':null,'MR');
+  const sorted=A.x.slice().sort((a,b)=>a-b); const med=sorted.length%2?sorted[(sorted.length-1)/2]:(sorted[sorted.length/2-1]+sorted[sorted.length/2])/2;
+  const tr=(k,v)=>`<tr><td>${k}</td><td class="n">${v}</td></tr>`;
+  $('stats').innerHTML=tr('Lateral hires (n)',rows.length)+tr('Limits based on',L.bN===rows.length?'all '+L.bN+' points':'first '+L.bN+' points')+tr('Mean cycle time X̄',L.xb.toFixed(1)+' d')+tr('Median',med.toFixed(1)+' d')+tr('Range (min – max)',sorted[0]+' – '+sorted[sorted.length-1]+' d')+tr('Average moving range MR̄',L.mrb.toFixed(1)+' d')+tr('Estimated σ̂ (within)',L.sig.toFixed(1)+' d')+tr('I chart UCL / LCL',L.ucl.toFixed(1)+' / '+L.lcl.toFixed(1)+' d')+tr('MR chart UCL',L.mrucl.toFixed(1)+' d');
+  const cnt=A.sigs.length;
+  $('verdict').innerHTML=cnt?`<span class="pill r1">${new Set(A.sigs.map(s=>s.i)).size} points flagged</span> Special-cause variation present; investigate these hires before reading the limits as capability.`:`<span class="pill ok">In control</span> No special-cause signals. Variation is common-cause; improvement needs a process change.`;
+  $('signals').innerHTML=cnt?'<tr><th>#</th><th>Req</th><th>Accepted</th><th class="n">Days</th><th>Rule</th></tr>'+A.sigs.map(g=>`<tr><td>${g.i+1}</td><td>${esc(rows[g.i].id)}</td><td>${fmtD(rows[g.i].end)}</td><td class="n">${rows[g.i].ct}</td><td><span class="pill ${g.r==='MR'?'r1':g.r.toLowerCase()}">${g.r}</span> ${esc(g.txt)}</td></tr>`).join(''):'';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* tooltip */
+const tip=$('tip');
+document.addEventListener('mousemove',e=>{const t=e.target; if(!(t instanceof SVGElement)||!t.dataset||t.dataset.i==null||!LAST){tip.hidden=true;return;}
+  const i=+t.dataset.i,r=LAST.rows[i],A=LAST.A;
+  tip.textContent=`#${i+1}  ${r.id}\nType: ${r.type}\nApproved: ${fmtD(r.start)}\nAccepted: ${fmtD(r.end)}\nCycle time: ${r.ct} d`+(i?`\nMoving range: ${A.mr[i]} d`:'')+(A.flags[i].length?`\nSignals: ${A.flags[i].join(', ')}`:'');
+  tip.hidden=false; const x=Math.min(e.clientX+14,window.innerWidth-tip.offsetWidth-8); tip.style.left=x+'px'; tip.style.top=(e.clientY+14)+'px';});
+
+function load(text){ const st=$('status'); try{ const {rows,bad}=rowsFromCSV(text); RAW=rows; usingSample=false; $('banner').hidden=true; render(); if(bad) st.textContent+=` · ${bad} row${bad>1?'s':''} skipped (no usable dates)`; $('loader').open=false; }catch(err){ st.textContent=err.message; st.classList.add('err'); } }
+$('apply').addEventListener('click',()=>load($('csv').value));
+$('file').addEventListener('change',e=>{const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{$('csv').value=fr.result; load(fr.result);}; fr.readAsText(f);});
+$('sample').addEventListener('click',()=>{RAW=makeSample();usingSample=true;$('banner').hidden=false;render();});
+['period','baseline'].forEach(id=>$(id).addEventListener('change',render));
+$('excl').addEventListener('input',render);
+RAW=makeSample(); render();
+})();
+</script>
