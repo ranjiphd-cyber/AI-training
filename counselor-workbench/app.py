@@ -19,6 +19,7 @@ from engine.parser import empty_profile, extract_text, parse_report, riasec_from
 from engine.prompts import ADVISORY_SYSTEM_PROMPT, build_case_payload, build_user_message, run_synthesis
 from engine.questions import SECTIONS, SIGNALS, answer_effects, build_questions, candidate_guidance, generic_questions
 from engine.completeness import AREAS, checklist, score
+from engine.documents import DOC_TYPES, SHEET_TYPES, extract_any, parse_resume, resume_summary_md
 from engine.dossier import question_sheet_html
 from engine.excel_io import build_workbook, read_workbook
 from engine.scoring import friction_points, further_careers, pick_tiers, rank_pathways
@@ -86,14 +87,17 @@ with st.sidebar:
     st.divider()
 
     st.markdown("**1 · Load assessment**")
-    up = st.file_uploader("Candidate psychometric report (PDF)", type=["pdf"], key=k("upload"))
+    up = st.file_uploader("Psychometric report (PDF, Word or text)", type=DOC_TYPES, key=k("upload"))
     if up is not None and st.button("Extract report data", type="primary", width="stretch"):
-        text = extract_text(up.getvalue())
-        if not text.strip():
-            st.error("No text found in this PDF (it may be a scanned image). Enter scores manually in the Candidate Matrix.")
+        try:
+            text = extract_any(up.name, up.getvalue())
+        except ValueError as exc:
+            st.error(f"{exc} You can also enter the scores manually in the Candidate Matrix.")
         else:
             prof, rep = parse_report(text)
-            load_case(prof)
+            for f in ("name", "phone", "email", "age"):  # keep details already entered if the report lacks them
+                prof[f] = prof.get(f) or P.get(f, "")
+            load_case(prof, I, ss.answers, ss.overrides, ss.narrative, ss.summary)
             ss.raw_text, ss.parse_report = text, rep
             st.rerun()
     c1, c2 = st.columns(2)
@@ -107,9 +111,51 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    st.markdown("**2 · Excel intake form**")
+    st.markdown("**2 · Candidate documents**")
+    cv = st.file_uploader("Resume / CV (PDF, Word or text)", type=DOC_TYPES, key=k("cv"))
+    if cv is not None and st.button("Read resume", type="primary", width="stretch"):
+        try:
+            text = extract_any(cv.name, cv.getvalue())
+        except ValueError as exc:
+            st.error(str(exc))
+        else:
+            parsed = parse_resume(text)
+            prof = copy.deepcopy(P)
+            for f, v in parsed["contact"].items():
+                if not prof.get(f):
+                    prof[f] = v
+            intv = {**I, "resume_file": cv.name, "resume_text": text[:30000], "resume": parsed}
+            load_case(prof, intv, ss.answers, ss.overrides, ss.narrative, ss.summary)
+            ss.import_msg = f"Resume read: {cv.name}. See ③ Interview Workbench → Intake & baseline."
+            st.rerun()
+    docs = st.file_uploader("Other documents — marksheets, certificates, earlier reports (PDF, Word, Excel, text)",
+                            type=DOC_TYPES + SHEET_TYPES, accept_multiple_files=True, key=k("docs"))
+    if docs and st.button("Add documents", width="stretch"):
+        added, errors = list(I.get("documents", [])), []
+        for f in docs:
+            try:
+                added = [d for d in added if d["name"] != f.name] + [{"name": f.name, "text": extract_any(f.name, f.getvalue())[:20000]}]
+            except ValueError as exc:
+                errors.append(str(exc))
+        ss.doc_errors = errors
+        if len(added) != len(I.get("documents", [])) or not errors:
+            load_case(P, {**I, "documents": added}, ss.answers, ss.overrides, ss.narrative, ss.summary)
+            ss.import_msg = f"{len(added)} document(s) attached."
+            st.rerun()
+    for err in ss.pop("doc_errors", []):
+        st.error(err)
+    attached = ([I["resume_file"]] if I.get("resume_file") else []) + [d["name"] for d in I.get("documents", [])]
+    if attached:
+        st.caption("Attached: " + ", ".join(attached))
+        if st.button("Remove all documents", width="stretch"):
+            intv = {key: v for key, v in I.items() if key not in ("resume_file", "resume_text", "resume", "documents")}
+            load_case(P, intv, ss.answers, ss.overrides, ss.narrative, ss.summary)
+            st.rerun()
+
+    st.divider()
+    st.markdown("**3 · Excel intake form**")
     excel_slot = st.empty()  # filled once this candidate's questions are known
-    xl = st.file_uploader("Import a filled Excel workbook (.xlsx)", type=["xlsx"], key=k("xlsx"))
+    xl = st.file_uploader("Import a filled Excel workbook (.xlsx)", type=["xlsx", "xlsm"], key=k("xlsx"))
     if xl is not None and st.button("Import Excel data", type="primary", width="stretch"):
         try:
             prof_u, intv_u, ans_u, n = read_workbook(xl.getvalue())
@@ -134,7 +180,7 @@ with st.sidebar:
         st.success(ss.pop("import_msg"))
 
     st.divider()
-    st.markdown("**3 · Save / resume session**")
+    st.markdown("**4 · Save / resume session**")
     case = {"profile": P, "interview": I, "answers": ss.answers, "overrides": ss.overrides,
             "narrative": ss.narrative, "summary": ss.summary}
     fname = (P.get("name") or "candidate").strip().replace(" ", "_")
@@ -151,7 +197,7 @@ with st.sidebar:
             st.error(f"Could not read that session file: {exc}")
 
     st.divider()
-    st.markdown("**4 · AI synthesis (optional)**")
+    st.markdown("**5 · AI synthesis (optional)**")
     default_key = os.environ.get("ANTHROPIC_API_KEY", "")
     try:
         default_key = default_key or st.secrets.get("ANTHROPIC_API_KEY", "")
@@ -450,6 +496,18 @@ with tabs[2]:
         I["observations"] = st.text_area("Counselor's clinical observations", I.get("observations", ""), height=100,
                                          placeholder="Body language, confidence, decision style, consistency with the report…", key=k("obs"))
         I["confirmed_direction"] = st.text_area("Confirmed direction / decisions agreed in session", I.get("confirmed_direction", ""), height=70, key=k("dir"))
+
+        st.markdown("##### Resume & documents")
+        if I.get("resume"):
+            st.markdown(f"**Resume:** {I.get('resume_file', '')}")
+            st.markdown(resume_summary_md(I["resume"]) or "_No sections recognised — see the full text below._")
+            with st.expander("Full resume text"):
+                st.text(I.get("resume_text", ""))
+        for d in I.get("documents", []):
+            with st.expander(f"📄 {d['name']}"):
+                st.text(d["text"][:5000])
+        if not I.get("resume") and not I.get("documents"):
+            st.caption("Upload a resume or other documents in the sidebar (section 2). Their content feeds the questions, career suggestions and report.")
 
     with sub[0]:
         plan = checklist(P, I, ss.answers, questions)

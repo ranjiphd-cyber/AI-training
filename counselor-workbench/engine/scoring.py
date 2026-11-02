@@ -189,7 +189,8 @@ def score_pathway(p, profile, interview, effects):
 
 def rank_pathways(profile, interview, effects=None):
     effects = dict(effects or {})
-    notes = " ".join(str(interview.get(k, "")) for k in ("trait_notes", "observations", "confirmed_direction", "parent_notes", "constraints"))
+    notes = " ".join(str(interview.get(k, "")) for k in ("trait_notes", "observations", "confirmed_direction", "parent_notes", "constraints", "resume_text"))
+    notes += " " + " ".join(d.get("text", "")[:5000] for d in interview.get("documents", []))
     effects["keywords"] = text_signals(notes + "\n" + effects.get("text", ""))
     results = [score_pathway(p, profile, interview, effects) for p in PATHWAYS]
     return sorted(results, key=lambda r: r["score"], reverse=True)

@@ -248,6 +248,13 @@ def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="",
             val = ", ".join(val)
         if val:
             obs.append(f"<p><b>{label}:</b> {e(val)}</p>")
+    background = ""
+    if interview.get("resume"):
+        from .documents import resume_summary_md
+        summary_md = resume_summary_md(interview["resume"], max_lines=3).replace("<", "&lt;")
+        background = f"<h4>Background from resume ({e(interview.get('resume_file', ''))})</h4>" + md.markdown(summary_md)
+    if interview.get("documents"):
+        background += "<p><b>Documents reviewed:</b> " + e(", ".join(d["name"] for d in interview["documents"])) + "</p>"
     discoveries = [i for i in insights if i["response"]]
     disc_rows = "".join(
         f"<tr><td>{e(_short(i['question']))}</td><td>{e(i['response'])}</td><td>{e(i['signal'])}</td></tr>" for i in discoveries
@@ -338,6 +345,7 @@ def render_dossier(profile, interview, ranked, tiers, insights, narrative_md="",
 
 <h2>2. Counselor Clinical Observations</h2>
 {''.join(obs) or "<p class='muted'>No interview notes recorded.</p>"}
+{background}
 {disc_html}
 
 <h2>3. Strategic Synthesis</h2>

@@ -22,6 +22,17 @@ You can set `ANTHROPIC_API_KEY` in the environment or in `.streamlit/secrets.tom
 | **⑤ Career Avenues** | The 10 further careers in detail, plus the Direct, Interdisciplinary Hybrid and Emerging Frontier trajectories, each with reasons, roles, a typical week, institutions in three bands (Bangalore/Karnataka, All-India, Global), entrance exams with official links, employers and indicative pay. You can override any pick. |
 | **⑥ Dossier & Export** | AI or pasted synthesis narrative (editable), a print-ready A4 HTML dossier (open it, then Print → Save as PDF), and the case data as JSON. |
 
+## Uploading documents
+
+| Sidebar section | Accepts | What happens |
+|---|---|---|
+| 1 · Psychometric report | PDF, Word (.docx), text | Scores, motivators, Holland code and archetype are extracted. Details already entered are kept. |
+| 2 · Resume / CV | PDF, Word (.docx), text, RTF | Name and contact details fill any empty fields. The resume is split into sections (education, projects, skills, achievements and more), shown under Intake & baseline, added to the report, used to generate resume-based interview questions, and read for career keywords. |
+| 2 · Other documents | PDF, Word, Excel (.xlsx), CSV, text — several at once | Marksheets, certificates or earlier reports are attached, their text informs the career suggestions and AI write-up, and the report lists them as reviewed. |
+| 3 · Excel intake form | .xlsx / .xlsm | See below. |
+
+Old Word `.doc` files and scanned (image-only) PDFs can't be read; the app explains how to re-save them.
+
 ## Excel intake form
 
 `templates/Candidate_Intake_Template.xlsx` is a blank workbook. In the portal sidebar, **Download Excel intake form** gives the same workbook; when a candidate is loaded, it comes pre-filled and its interview questions are tailored to that candidate's report.

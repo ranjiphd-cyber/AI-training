@@ -20,10 +20,10 @@ AREAS = [
 ]
 
 # Questions whose answers the dossier needs, by id prefix or exact id.
-MUST_ASK_PREFIXES = ("apt_", "fric_", "riasec_", "path_", "ready_", "kw_", "fu_")
+MUST_ASK_PREFIXES = ("apt_", "fric_", "riasec_", "path_", "ready_", "kw_", "fu_", "cv_")
 MUST_ASK_IDS = {"open_flow", "mot_tradeoff", "arch_check", "fam_hopes", "fam_free", "fam_gap", "close_choice", "close_action"}
 QUESTION_AREA = {
-    "apt_": AREAS[5], "fric_": AREAS[5], "riasec_": AREAS[2], "path_": AREAS[6], "ready_": AREAS[6], "kw_": AREAS[6],
+    "cv_education": AREAS[1], "cv_": AREAS[5], "apt_": AREAS[5], "fric_": AREAS[5], "riasec_": AREAS[2], "path_": AREAS[6], "ready_": AREAS[6], "kw_": AREAS[6],
     "open_": AREAS[2], "mot_": AREAS[4], "arch_": AREAS[5], "fam_": AREAS[4], "close_": AREAS[7],
 }
 

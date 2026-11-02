@@ -5,6 +5,8 @@ tailored. Each recorded answer carries a counselor *signal* (Confirms / Partly
 / Contradicts). Signals feed back into scoring and surface follow-up probes.
 """
 
+import re
+
 from .knowledge import APTITUDES, LIFE_STAGES, MOTIVATORS, PATHWAY_BY_ID, PATHWAYS, RIASEC, RIASEC_ORDER, TRAITS
 from .scoring import friction_points, text_signals
 
@@ -115,6 +117,8 @@ def build_questions(profile, interview, tier_ids, answers=None):
     stage = interview.get("stage") or LIFE_STAGES[1]
     qs.append(_q("open_stage", s[0], STAGE_OPENERS.get(stage, STAGE_OPENERS[LIFE_STAGES[1]]),
                  "Grounds the discussion in the candidate's actual situation.", "Concrete evidence: marks, mock scores, projects, feedback."))
+
+    qs += _resume_questions((interview.get("resume") or {}).get("sections", {}), s)
 
     ranked_apts = sorted(apt.items(), key=lambda kv: kv[1], reverse=True)
     for key, value in ranked_apts[:2]:
@@ -244,6 +248,42 @@ def build_questions(profile, interview, tier_ids, answers=None):
     qs.append(_q("close_action", s[8], "What is one action you will take in the next 7 days?",
                  "Converts discussion into commitment.", "Specific, owned, time-bound."))
     return _with_followups(qs, answers)
+
+
+def _clip(text, n=90):
+    text = text.strip().rstrip(".;,")
+    return text if len(text) <= n else text[:n].rsplit(" ", 1)[0] + "…"
+
+
+def _resume_questions(sec, s):
+    """Questions grounded in the candidate's resume, so the report can cite real evidence."""
+    qs = []
+    work = sec.get("projects") or sec.get("experience")
+    if work:
+        qs.append(_q("cv_work", s[1],
+                     f"Your resume mentions '{_clip(work[0])}'. What exactly was your role, what did you enjoy most, and what was hardest?",
+                     "Turns a resume line into evidence of strengths and interests the report can quote.",
+                     "Ownership vs. participation, which tasks energised them, which aptitudes it used."))
+    skills = sec.get("skills")
+    if skills:
+        listed = [t.strip() for t in re.split(r"[,|;/]", " ".join(skills)) if 1 < len(t.strip()) < 30][:4]
+        if listed:
+            qs.append(_q("cv_skills", s[1],
+                         f"Your resume lists {', '.join(listed)}. Which of these do you actually use most, and which would you like to get better at?",
+                         "Separates real skills from listed ones and shows the direction they want to grow in.",
+                         "Concrete use cases; skills they light up about versus ones added to fill space."))
+    wins = sec.get("achievements") or sec.get("activities")
+    if wins:
+        qs.append(_q("cv_achieve", s[1],
+                     f"Tell me about '{_clip(wins[0])}'. What did it take, and what does it say about you?",
+                     "Achievements and activities reveal motivators and work style outside the classroom.",
+                     "Persistence, leadership, teamwork, and whether they chose it themselves."))
+    edu = sec.get("education")
+    if edu:
+        qs.append(_q("cv_education", s[0],
+                     f"Looking at your education ('{_clip(edu[0], 70)}'), which subjects or courses went best and worst for you, and why?",
+                     "Grounds the academic baseline in the resume rather than memory.", "Marks, favourite and weakest subjects."))
+    return qs
 
 
 PREREQS = [

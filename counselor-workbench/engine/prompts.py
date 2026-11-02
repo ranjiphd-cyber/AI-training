@@ -33,6 +33,7 @@ Turn one candidate's psychometric results and the counselor's live-interview not
 ## Inputs you receive (JSON)
 - `psychometrics`: aptitudes rated 1–10 (Acuteness/Precision, Verbal, Critical Dissection, Spatial, Numerical), motivators in priority order, Holland RIASEC code and theme scores, behavioural archetype with traits, plus points and blind spots, and the report's top career clusters.
 - `interview`: life stage, academic/work baseline, liked and disliked fields, geography and budget, candidate and parental aspirations, constraints, free-text observations, and the counselor's question-by-question log with a signal for each answer (Confirms / Partly / Contradicts).
+- `resume` and `other_documents`: the candidate's CV split into sections, and text from marksheets, certificates or earlier reports. Use them as evidence (projects, grades, achievements), and quote specifics.
 - `engine_shortlist`: the workbench's rule-based ranking and its Direct / Hybrid / Frontier picks with reasons. Treat these as a strong starting hypothesis, not a verdict. If the evidence (especially interview contradictions) points elsewhere, say so and explain why.
 
 ## How to reason
@@ -83,7 +84,9 @@ def build_case_payload(profile, interview, ranked, tiers, insights, further=None
             "plus_points": profile.get("plus_points", []),
             "blind_spots": profile.get("blind_spots", []),
         },
-        "interview": {k: v for k, v in interview.items() if k != "answers"},
+        "interview": {k: v for k, v in interview.items() if k not in ("answers", "resume_text", "resume", "documents", "resume_file")},
+        "resume": (interview.get("resume") or {}).get("sections", {}),
+        "other_documents": [{"file": d["name"], "text": d["text"][:6000]} for d in interview.get("documents", [])],
         "interview_log": log,
         "engine_shortlist": {
             "ranked": shortlist, "tier_picks": picks,
