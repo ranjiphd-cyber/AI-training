@@ -17,7 +17,7 @@ You can set `ANTHROPIC_API_KEY` in the environment or in `.streamlit/secrets.tom
 |---|---|
 | **① Candidate Matrix** | Upload the report PDF in the sidebar. The app extracts the name, contact details, top 3 career clusters, the five aptitudes (1–10), motivators, the Holland code and scores, and the archetype, traits, plus points and blind spots. Check and correct every field. **Sample case** loads Muhammed Saad. |
 | **② Diagnostics** | Aptitude radar chart, Holland RIASEC bars, friction points (gaps of 3 or more points from the peak score), and a live ranking of 24 career pathways by fit. |
-| **③ Interview Workbench** | *Questions to ask:* about 25–30 questions built from this candidate's psychometric report, with why to ask each one and what to listen for. Type the candidate's response and mark a signal (Confirms / Partly / Contradicts). A printable question sheet can be downloaded. *Intake:* academic and work baseline, fields the candidate likes and resists, geography and budget, the candidate's and the parents' aspirations, constraints, and your clinical notes. *Live insights:* contradictions to resolve, confirmed evidence, and how the answers changed the scores. *Career suggestions:* the three main avenues plus **10 more suitable careers**, each with a suitability level, updated as you type. |
+| **③ Interview Workbench** | *Questions to ask* opens with a **report-completeness meter** and the **exact questions still needed to complete the report**, grouped by report section, each with a box to record the answer. Answering a question can add a follow-up probe. Other generated questions: about 25–30 questions built from this candidate's psychometric report, with why to ask each one and what to listen for. Type the candidate's response and mark a signal (Confirms / Partly / Contradicts). A printable question sheet can be downloaded. *Intake:* academic and work baseline, fields the candidate likes and resists, geography and budget, the candidate's and the parents' aspirations, constraints, and your clinical notes. *Live insights:* contradictions to resolve, confirmed evidence, and how the answers changed the scores. *Career suggestions:* the three main avenues plus **10 more suitable careers**, each with a suitability level, updated as you type. |
 | **④ Guidance for Candidate** | Talking points to share during the session: strengths to affirm, how to reframe the stretch areas, advice for each motivator, work-style habits, the three avenues, and next-7-day actions. Also a personal mentor's note for the dossier. |
 | **⑤ Career Avenues** | The 10 further careers in detail, plus the Direct, Interdisciplinary Hybrid and Emerging Frontier trajectories, each with reasons, roles, a typical week, institutions in three bands (Bangalore/Karnataka, All-India, Global), entrance exams with official links, employers and indicative pay. You can override any pick. |
 | **⑥ Dossier & Export** | AI or pasted synthesis narrative (editable), a print-ready A4 HTML dossier (open it, then Print → Save as PDF), and the case data as JSON. |
@@ -36,6 +36,25 @@ You can set `ANTHROPIC_API_KEY` in the environment or in `.streamlit/secrets.tom
 Type only in the yellow cells; dropdowns show the allowed values. Then use **Import a filled Excel workbook** in the sidebar: every answered field loads into the portal, and the recommendations update. Column A holds the field IDs the import relies on, so don't edit it. Run `python make_template.py` to rebuild the blank template after changing the knowledge base.
 
 Use **Download session file** in the sidebar to save the whole session, and upload it later to resume.
+
+## Report completeness
+
+The checklist (`engine/completeness.py`) covers what a complete, professional report needs:
+- report data: scores, Holland code, motivators, archetype, career clusters, contact details
+- academic baseline: stream, marks, degree or job
+- interests, study location, budget, constraints
+- the candidate's and family's aspirations
+- validation of top aptitudes, weak areas and Holland themes
+- a reality check and an entry-route check for each recommended avenue
+- the family conversation, the candidate's chosen first avenue and 7-day action
+- the counsellor's observations and agreed direction
+
+Each gap is phrased as an exact question to ask the candidate or parent, or as a data-entry task. The meter reaches 100% when everything is in, and the full report can be downloaded from the same tab or from ⑥.
+
+Dynamic questions:
+- **Follow-up probes** (`fu_*`) appear when an answer is marked Partly or Contradicts (or Confirms on a blind spot).
+- **"You mentioned…" questions** (`kw_*`) appear when the candidate's own words point to a career that is not among the three avenues.
+- **Entry-route checks** (`ready_*`) ask whether the candidate has the subjects and preparation each avenue needs.
 
 ## How the answers change the recommendations
 

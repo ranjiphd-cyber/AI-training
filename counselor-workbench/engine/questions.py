@@ -6,7 +6,7 @@ tailored. Each recorded answer carries a counselor *signal* (Confirms / Partly
 """
 
 from .knowledge import APTITUDES, LIFE_STAGES, MOTIVATORS, PATHWAY_BY_ID, PATHWAYS, RIASEC, RIASEC_ORDER, TRAITS
-from .scoring import friction_points
+from .scoring import friction_points, text_signals
 
 SIGNALS = ["Not asked", "Confirms", "Partly", "Contradicts"]
 
@@ -96,8 +96,14 @@ def _q(qid, section, question, why, listen, effect=None, followups=None):
     }
 
 
-def build_questions(profile, interview, tier_ids):
-    """Return the tailored question list for this candidate."""
+def build_questions(profile, interview, tier_ids, answers=None):
+    """Return the tailored question list for this candidate.
+
+    ``answers`` adds follow-up probes for answers already marked Partly or
+    Contradicts (or Confirms on a blind spot), so the list grows as the
+    interview reveals more.
+    """
+    answers = answers or {}
     apt = profile["aptitudes"]
     qs = []
     s = SECTIONS
@@ -193,6 +199,21 @@ def build_questions(profile, interview, tier_ids):
                          "Confirms": f"Shadow or interview one {p['roles'][0]} within 30 days; shortlist the entrance route ({', '.join(p['exams'][:3])}).",
                          "Contradicts": "Fit score lowered. Ask what specifically put them off — the work, the environment or the study route — and check the next-ranked pathway.",
                      }))
+    for tier, pid in tier_ids.items():
+        if pid:
+            qs.append(_readiness_question(PATHWAY_BY_ID[pid], stage, tier))
+    chosen = set(tier_ids.values())
+    notes = " ".join(str(interview.get(f, "")) for f in ("trait_notes", "observations", "parent_notes", "constraints"))
+    notes += " " + " ".join(a.get("response", "") for a in answers.values())
+    mentions = [(pid, pos) for pid, (pos, _neg) in text_signals(notes).items() if pos and pid not in chosen]
+    for pid, words in sorted(mentions, key=lambda m: -len(m[1]))[:3]:
+        p = PATHWAY_BY_ID[pid]
+        qs.append(_q(f"kw_{pid}", s[6],
+                     f"You mentioned '{words[0]}'. Is that a hobby, or could you see yourself working in {p['title']} — for example as a {p['roles'][0]}?",
+                     "The candidate raised this themselves; it is not yet among the three recommended avenues.",
+                     "Depth of engagement: has the candidate already done something about it (projects, reading, courses)?",
+                     effect={"type": "pathway", "key": pid, "Confirms": 6, "Partly": 2, "Contradicts": -6},
+                     followups={"Confirms": "Consider this as an override for one of the three trajectories (Career Avenues tab)."}))
     qs.append(_q("path_contact", s[6], "Have you spoken to anyone actually working in any of these fields? What did you learn?",
                  "Exposes second-hand assumptions.", "Names, roles and specifics; plan informational interviews if none."))
 
@@ -212,11 +233,93 @@ def build_questions(profile, interview, tier_ids):
         qs.append(_q("work_floor", s[7], "What is the minimum monthly income you need during a transition, and for how long can you sustain it?",
                      "Sets the risk envelope for a pivot.", "A number and a runway in months."))
 
+    titles = [PATHWAY_BY_ID[pid]["title"] for pid in tier_ids.values() if pid]
+    if titles:
+        qs.append(_q("close_choice", s[8],
+                     f"We have discussed {', '.join(titles[:-1])} and {titles[-1]}. Which one will you explore first, and why?" if len(titles) > 1 else
+                     f"Will you explore {titles[0]} first? Why or why not?",
+                     "Records the candidate's own priority for the action plan.", "The reason given — interest, family, practicality."))
     qs.append(_q("close_clarity", s[8], "On a scale of 1–10, how clear do you feel about your next step? What would move it up by two points?",
                  "Measures session impact and remaining uncertainty.", "The missing piece becomes the follow-up action."))
     qs.append(_q("close_action", s[8], "What is one action you will take in the next 7 days?",
                  "Converts discussion into commitment.", "Specific, owned, time-bound."))
-    return qs
+    return _with_followups(qs, answers)
+
+
+PREREQS = [
+    ("NEET-UG", "Physics, Chemistry and Biology in Class 11–12"),
+    ("JEE Main", "Physics, Chemistry and Mathematics in Class 11–12"),
+    ("KCET", "Physics, Chemistry and Mathematics (or Biology for agriculture) in Class 11–12"),
+    ("UCEED", "a design portfolio and regular sketching practice"),
+    ("NID DAT", "a design portfolio and regular sketching practice"),
+    ("NATA", "Mathematics in Class 12 and drawing practice"),
+    ("CLAT", "strong reading, reasoning and current-affairs practice"),
+    ("IPMAT", "Mathematics and verbal-ability practice"),
+    ("CA Foundation", "Commerce or Mathematics in Class 11–12"),
+    ("IISER Aptitude Test (IAT)", "Physics, Chemistry, Mathematics and Biology in Class 11–12"),
+    ("UPSC CSE", "a bachelor's degree in any subject and daily newspaper reading"),
+    ("CUET-UG", "the Class 12 subjects required by the chosen degree"),
+]
+PG_EXAMS = ("GATE", "CAT", "GMAT / GRE", "CEED", "GAT-B", "CSIR-NET / JGEEBILS", "UPSC CSE")
+
+
+def _readiness_question(p, stage, tier):
+    if stage in LIFE_STAGES[:2]:
+        exams = [x for x in p["exams"] if x not in PG_EXAMS][:2] or p["exams"][:2]
+        prereq = next((need for exam, need in PREREQS if exam in exams), "the subjects the degree requires")
+        text = (f"The usual route into {p['title']} is {p['degrees'][0]} through {' or '.join(exams)}, which needs {prereq}. "
+                "Are you on track for this — subjects, preparation, recent scores?")
+    else:
+        exams = [x for x in p["exams"] if x in PG_EXAMS][:2]
+        route = f"{p['degrees'][-1]}" + (f" through {' or '.join(exams)}" if exams else "")
+        text = (f"For someone at your stage, the route into {p['title']} is usually {route}, or certifications such as "
+                f"{p['certs'][0]}. What have you done towards this so far, and what would make it hard?")
+    return _q(f"ready_{p['id']}", SECTIONS[6], text,
+              f"Checks eligibility and preparation for the {tier.title()} pathway, so the roadmap in the report is realistic.",
+              "Missing prerequisite subjects, unrealistic timelines, or preparation already under way.",
+              effect={"type": "pathway", "key": p["id"], "Confirms": 3, "Partly": 0, "Contradicts": -6},
+              followups={"Contradicts": "Eligibility gap — check whether a bridge (change of subjects, a different entry exam or a lateral route) exists before keeping this pathway."})
+
+
+def _probe(q, signal):
+    """Exact follow-up wording for an answer that needs digging into."""
+    qid = q["id"]
+    if qid.startswith("apt_"):
+        return {"Contradicts": "Where might this ability be hiding — in a hobby, a game or something you do outside school? Tell me about one time it helped you, even in a small way.",
+                "Partly": "In which situations does this come easily to you, and in which does it not?"}.get(signal)
+    if qid.startswith("fric_"):
+        return {"Confirms": "If a course you liked needed this skill as a tool, would you practise it for 15 minutes a day? What support would help?",
+                "Contradicts": "What are your marks in the related subjects? Did anything affect you on the day of the test?"}.get(signal)
+    if qid.startswith("riasec_"):
+        return {"Contradicts": "If not this, what kind of activity would you rather spend a free Saturday on?",
+                "Partly": "Which part of that do you enjoy, and which part bores you?"}.get(signal)
+    if qid.startswith("mot_") and qid != "mot_tradeoff":
+        return {"Contradicts": "If that doesn't drive you, what matters most to you in a job — and why?"}.get(signal)
+    if qid.startswith("trait_"):
+        return {"Confirms": "When did this last cost you something — a mark, a friendship, a deadline? What would you do differently next time?"}.get(signal)
+    if qid.startswith(("path_", "kw_")) and qid != "path_contact":
+        return {"Contradicts": "What exactly put you off — the daily work, the study route, the work environment or the pay?",
+                "Partly": "What would need to be different for this to excite you?",
+                "Confirms": "What would your first concrete step be — a course, an exam, a conversation, a project?"}.get(signal)
+    if qid.startswith("ready_"):
+        return {"Contradicts": "If this route is closed for now, would you consider an alternative entry — a different degree, exam or a later switch?"}.get(signal)
+    if qid in ("fam_hopes", "fam_gap"):
+        return {"Partly": "How have you discussed this with your parents so far? What would help them feel comfortable with your choice?",
+                "Contradicts": "How have you discussed this with your parents so far? What would help them feel comfortable with your choice?"}.get(signal)
+    return None
+
+
+def _with_followups(qs, answers):
+    out = []
+    for q in qs:
+        out.append(q)
+        signal = (answers.get(q["id"]) or {}).get("signal", "Not asked")
+        text = _probe(q, signal) if signal != "Not asked" else None
+        if text:
+            out.append(_q(f"fu_{q['id']}", q["section"], f"↳ Follow-up: {text}",
+                          f"The previous answer was marked '{signal}'; this probe makes the finding usable in the report.",
+                          "A concrete example or a clear reason."))
+    return out
 
 
 def answer_effects(questions, answers):

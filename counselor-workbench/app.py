@@ -18,6 +18,7 @@ from engine.knowledge import (
 from engine.parser import empty_profile, extract_text, parse_report, riasec_from_code, sample_profile
 from engine.prompts import ADVISORY_SYSTEM_PROMPT, build_case_payload, build_user_message, run_synthesis
 from engine.questions import SECTIONS, SIGNALS, answer_effects, build_questions, candidate_guidance, generic_questions
+from engine.completeness import AREAS, checklist, score
 from engine.dossier import question_sheet_html
 from engine.excel_io import build_workbook, read_workbook
 from engine.scoring import friction_points, further_careers, pick_tiers, rank_pathways
@@ -269,12 +270,16 @@ def sync_interview_widgets():
 
 sync_interview_widgets()
 tiers_guess = pick_tiers(rank_pathways(P, I), ss.overrides)
-questions = build_questions(P, I, tiers_guess)
+questions = build_questions(P, I, tiers_guess, ss.answers)
 effects, insights = answer_effects(questions, ss.answers)
 ranked = rank_pathways(P, I, effects)
 tiers = pick_tiers(ranked, ss.overrides)
 ranked_by_id = {r["id"]: r for r in ranked}
 further = further_careers(ranked, tiers, 10)
+for _key, _attr in (("narr", "narrative"), ("summary", "summary")):
+    if k(_key) in ss:
+        ss[_attr] = ss[k(_key)]
+html_doc = render_dossier(P, I, ranked, tiers, insights, ss.narrative, ss.summary, further)
 excel_slot.download_button(
     "⬇ Download Excel intake form" + (" (pre-filled)" if P.get("name") else ""),
     build_workbook(P, I, ss.answers, questions if (P.get("name") or P.get("riasec_code")) else generic_questions()), file_name=f"{fname}_Intake_Form.xlsx",
@@ -373,6 +378,44 @@ with tabs[1]:
 # ----------------------------------------------------------------------------- ③ interview
 with tabs[2]:
     sub = st.tabs(["❓ Questions to ask", "Intake & baseline", "Live insights", "🎯 Career suggestions"])
+
+    def render_question(q, must=False):
+        a = ss.answers.setdefault(q["id"], {"response": "", "signal": "Not asked"})
+        st.markdown(f"{'🔴 ' if must else ''}**{q['question']}**")
+        st.markdown(f"<div class='pr-why'>🎯 <b>Why:</b> {q['why']}<br>👂 <b>Listen for:</b> {q['listen']}</div>", unsafe_allow_html=True)
+        c = st.columns([3, 2])
+        a["response"] = c[0].text_area("Candidate's response", a.get("response", ""), height=68, key=k(f"resp_{q['id']}"),
+                                       label_visibility="collapsed", placeholder="Type the candidate's answer here")
+        a["signal"] = c[1].radio("Signal", SIGNALS, index=SIGNALS.index(a.get("signal", "Not asked")), horizontal=True,
+                                 key=k(f"sig_{q['id']}"), label_visibility="collapsed")
+        follow = q["followups"].get(a["signal"])
+        if follow:
+            (st.error if a["signal"] == "Contradicts" else st.info)(f"↳ {follow}")
+        st.divider()
+
+    def set_field(field, key):
+        I[field] = ss[key]
+        ss.ver += 1  # re-initialise the intake widgets with the new value
+
+    def render_field(it):
+        f, key = it["field"], k(f"plan_{it['field']}")
+        st.markdown(f"🔴 **{it['question']}**")
+        st.caption(f"Ask: {it['who']} · completes '{it['area']}' in the report")
+        if it["widget"] == "likes":
+            c = st.columns(2)
+            c[0].multiselect("Enjoys", it["options"], I.get("likes", []), key=k("plan_likes"), on_change=set_field, args=("likes", k("plan_likes")))
+            c[1].multiselect("Avoids", it["options"], I.get("dislikes", []), key=k("plan_dislikes"), on_change=set_field, args=("dislikes", k("plan_dislikes")))
+        elif it["widget"] == "multi":
+            st.multiselect("Answer", it["options"], I.get(f, []), key=key, on_change=set_field, args=(f, key), label_visibility="collapsed")
+        elif it["widget"] == "select":
+            opts = [""] + it["options"]
+            st.selectbox("Answer", opts, index=opts.index(I.get(f) or ""), key=key, on_change=set_field, args=(f, key), label_visibility="collapsed")
+        elif it["widget"] == "area":
+            st.text_area("Answer", I.get(f, ""), key=key, on_change=set_field, args=(f, key), label_visibility="collapsed", height=80)
+        else:
+            st.text_input("Answer", I.get(f, ""), key=key, on_change=set_field, args=(f, key), label_visibility="collapsed",
+                          placeholder="Type the answer and press Enter")
+        st.divider()
     with sub[1]:
         c = st.columns(3)
         I["stage"] = c[0].selectbox("Life stage", LIFE_STAGES, index=LIFE_STAGES.index(I.get("stage") or LIFE_STAGES[1]), key=k("stage"))
@@ -409,32 +452,49 @@ with tabs[2]:
         I["confirmed_direction"] = st.text_area("Confirmed direction / decisions agreed in session", I.get("confirmed_direction", ""), height=70, key=k("dir"))
 
     with sub[0]:
-        asked = sum(1 for q in questions if ss.answers.get(q["id"], {}).get("signal", "Not asked") != "Not asked")
-        st.progress(asked / max(1, len(questions)), text=f"{asked} of {len(questions)} questions covered")
-        st.caption("Questions are generated from this candidate's psychometric report, intake and current top pathways. "
-                   "Type what the candidate says and mark the signal — the career suggestions, follow-ups and dossier update instantly. "
-                   "Words they use (e.g. 'drones', 'hate coding', 'want to teach') are also read and factored into the suggestions.")
-        st.download_button("⬇ Printable question sheet", question_sheet_html(P, questions), file_name=f"{fname}_Question_Sheet.html",
-                           mime="text/html")
+        plan = checklist(P, I, ss.answers, questions)
+        done, total, pct = score(plan)
+        st.progress(pct / 100, text=f"Report completeness: {pct}% — {total - done} of {total} items still needed")
+        c = st.columns([1, 1, 2])
+        c[0].download_button("⬇ Printable question sheet", question_sheet_html(P, questions), file_name=f"{fname}_Question_Sheet.html",
+                             mime="text/html", width="stretch")
+        c[1].download_button("⬇ Download report", html_doc, file_name=f"{fname}_Career_Dossier.html", mime="text/html",
+                             type="primary" if pct == 100 else "secondary", width="stretch",
+                             help="Complete professional dossier. Open it and use Print → Save as PDF.")
+        c[2].caption("Ask the questions below in order. Type the candidate's answer and mark the signal (Confirms / Partly / Contradicts). "
+                     "Each answered item moves down to 'Answered & optional questions', and follow-up questions appear when an answer needs probing.")
+        pending = [i for i in plan if not i["done"]]
+        data_todo = [i["label"] for i in pending if i["kind"] == "data"]
+        if data_todo:
+            st.warning("**Enter from the psychometric report (tab ① Candidate Matrix):** " + ", ".join(data_todo))
+        shown = set()
+        if any(i["kind"] != "data" for i in pending):
+            st.markdown("### Next questions to complete the report")
+        for area in AREAS:
+            group = [i for i in pending if i["area"] == area and i["kind"] != "data"]
+            if not group:
+                continue
+            with st.container(border=True):
+                st.markdown(f"<span style='color:{GOLD};font-weight:700;letter-spacing:.06em'>{area.upper()}</span>", unsafe_allow_html=True)
+                for it in group:
+                    if it["kind"] == "question":
+                        render_question(it["q"], must=True)
+                        shown.add(it["id"])
+                    else:
+                        render_field(it)
+        if not pending:
+            st.success("✅ Every item the report needs is complete. Download the report above, or review it in ⑥ Dossier & Export.")
+
+        st.markdown("### Answered & optional questions")
+        st.caption("Optional questions deepen the report; answered ones can still be edited here.")
         for section in SECTIONS:
-            qs = [q for q in questions if q["section"] == section]
+            qs = [q for q in questions if q["section"] == section and q["id"] not in shown]
             if not qs:
                 continue
-            done = sum(1 for q in qs if ss.answers.get(q["id"], {}).get("signal", "Not asked") != "Not asked")
-            with st.expander(f"{section}  ·  {done}/{len(qs)}", expanded=(section == SECTIONS[0])):
+            answered = sum(1 for q in qs if ss.answers.get(q["id"], {}).get("signal", "Not asked") != "Not asked")
+            with st.expander(f"{section}  ·  {answered}/{len(qs)} answered"):
                 for q in qs:
-                    a = ss.answers.setdefault(q["id"], {"response": "", "signal": "Not asked"})
-                    st.markdown(f"**{q['question']}**")
-                    st.markdown(f"<div class='pr-why'>🎯 <b>Why:</b> {q['why']}<br>👂 <b>Listen for:</b> {q['listen']}</div>", unsafe_allow_html=True)
-                    c = st.columns([3, 2])
-                    a["response"] = c[0].text_area("Candidate's response", a.get("response", ""), height=68, key=k(f"resp_{q['id']}"), label_visibility="collapsed",
-                                                   placeholder="Candidate's response / key quote")
-                    a["signal"] = c[1].radio("Signal", SIGNALS, index=SIGNALS.index(a.get("signal", "Not asked")), horizontal=True, key=k(f"sig_{q['id']}"),
-                                             label_visibility="collapsed")
-                    follow = q["followups"].get(a["signal"])
-                    if follow:
-                        (st.error if a["signal"] == "Contradicts" else st.info)(f"↳ {follow}")
-                    st.divider()
+                    render_question(q)
 
     with sub[3]:
         st.caption("Live recommendations from the psychometric report plus everything entered in this interview.")
@@ -557,7 +617,9 @@ with tabs[5]:
     ss.narrative = st.text_area("Synthesis narrative (markdown, editable)", ss.narrative, height=260, key=k("narr"),
                                 placeholder="Leave empty to use the built-in rule-based synthesis.")
 
-    html_doc = render_dossier(P, I, ranked, tiers, insights, ss.narrative, ss.summary, further)
+    _done, _total, _pct = score(checklist(P, I, ss.answers, questions))
+    if _pct < 100:
+        st.warning(f"The report is {_pct}% complete — {_total - _done} items still needed. See ③ Interview Workbench → ❓ Questions to ask.")
     c = st.columns(3)
     c[0].download_button("⬇ Download dossier (HTML · print to PDF)", html_doc, file_name=f"{fname}_Career_Dossier.html",
                          mime="text/html", type="primary", width="stretch")
