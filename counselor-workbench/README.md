@@ -22,6 +22,19 @@ You can set `ANTHROPIC_API_KEY` in the environment or in `.streamlit/secrets.tom
 | **⑤ Career Avenues** | The 10 further careers in detail, plus the Direct, Interdisciplinary Hybrid and Emerging Frontier trajectories, each with reasons, roles, a typical week, institutions in three bands (Bangalore/Karnataka, All-India, Global), entrance exams with official links, employers and indicative pay. You can override any pick. |
 | **⑥ Dossier & Export** | AI or pasted synthesis narrative (editable), a print-ready A4 HTML dossier (open it, then Print → Save as PDF), and the case data as JSON. |
 
+## Excel intake form
+
+`templates/Candidate_Intake_Template.xlsx` is a blank workbook. In the portal sidebar, **Download Excel intake form** gives the same workbook; when a candidate is loaded, it comes pre-filled and its interview questions are tailored to that candidate's report.
+
+| Sheet | Filled by | Contents |
+|---|---|---|
+| Start Here | — | Instructions, colour guide and a completion tracker |
+| Candidate Form | Student (Section F by a parent) | Personal and academic details, how they feel about 20 subject/activity areas, open questions about themselves, location and budget, aspirations, parents' hopes and constraints |
+| Psychometric Report | Counsellor | Career clusters, five aptitudes (1–10), motivators, Holland code and theme scores, archetype, traits, plus points, blind spots |
+| Interview Questions | Counsellor | Questions to ask, the candidate's responses, a signal for each answer, and the counsellor's summary |
+
+Type only in the yellow cells; dropdowns show the allowed values. Then use **Import a filled Excel workbook** in the sidebar: every answered field loads into the portal, and the recommendations update. Column A holds the field IDs the import relies on, so don't edit it. Run `python make_template.py` to rebuild the blank template after changing the knowledge base.
+
 Use **Download session file** in the sidebar to save the whole session, and upload it later to resume.
 
 ## How the answers change the recommendations

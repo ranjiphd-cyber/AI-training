@@ -17,8 +17,9 @@ from engine.knowledge import (
 )
 from engine.parser import empty_profile, extract_text, parse_report, riasec_from_code, sample_profile
 from engine.prompts import ADVISORY_SYSTEM_PROMPT, build_case_payload, build_user_message, run_synthesis
-from engine.questions import SECTIONS, SIGNALS, answer_effects, build_questions, candidate_guidance
+from engine.questions import SECTIONS, SIGNALS, answer_effects, build_questions, candidate_guidance, generic_questions
 from engine.dossier import question_sheet_html
+from engine.excel_io import build_workbook, read_workbook
 from engine.scoring import friction_points, further_careers, pick_tiers, rank_pathways
 
 NAVY, GOLD, MUTED = "#1F3A5F", "#A8742A", "#B9C4D3"
@@ -105,7 +106,34 @@ with st.sidebar:
         st.rerun()
 
     st.divider()
-    st.markdown("**2 · Save / resume session**")
+    st.markdown("**2 · Excel intake form**")
+    excel_slot = st.empty()  # filled once this candidate's questions are known
+    xl = st.file_uploader("Import a filled Excel workbook (.xlsx)", type=["xlsx"], key=k("xlsx"))
+    if xl is not None and st.button("Import Excel data", type="primary", width="stretch"):
+        try:
+            prof_u, intv_u, ans_u, n = read_workbook(xl.getvalue())
+        except Exception as exc:  # malformed or unrelated workbook
+            st.error(f"Could not read that workbook: {exc}")
+        else:
+            if not n:
+                st.warning("No answers found. Use the workbook downloaded from this portal and type in the yellow cells.")
+            else:
+                prof = copy.deepcopy(P)
+                if "aptitudes" in prof_u:
+                    prof["aptitudes"].update(prof_u.pop("aptitudes"))
+                prof.update(prof_u)
+                answers = copy.deepcopy(ss.answers)
+                for qid, a in ans_u.items():
+                    answers[qid] = {**answers.get(qid, {"response": "", "signal": "Not asked"}),
+                                    **{key: v for key, v in a.items() if v and v != "Not asked"}}
+                load_case(prof, {**I, **intv_u}, answers, ss.overrides, ss.narrative, ss.summary)
+                ss.import_msg = f"Imported {n} fields from {xl.name}."
+                st.rerun()
+    if ss.get("import_msg"):
+        st.success(ss.pop("import_msg"))
+
+    st.divider()
+    st.markdown("**3 · Save / resume session**")
     case = {"profile": P, "interview": I, "answers": ss.answers, "overrides": ss.overrides,
             "narrative": ss.narrative, "summary": ss.summary}
     fname = (P.get("name") or "candidate").strip().replace(" ", "_")
@@ -122,7 +150,7 @@ with st.sidebar:
             st.error(f"Could not read that session file: {exc}")
 
     st.divider()
-    st.markdown("**3 · AI synthesis (optional)**")
+    st.markdown("**4 · AI synthesis (optional)**")
     default_key = os.environ.get("ANTHROPIC_API_KEY", "")
     try:
         default_key = default_key or st.secrets.get("ANTHROPIC_API_KEY", "")
@@ -247,6 +275,11 @@ ranked = rank_pathways(P, I, effects)
 tiers = pick_tiers(ranked, ss.overrides)
 ranked_by_id = {r["id"]: r for r in ranked}
 further = further_careers(ranked, tiers, 10)
+excel_slot.download_button(
+    "⬇ Download Excel intake form" + (" (pre-filled)" if P.get("name") else ""),
+    build_workbook(P, I, ss.answers, questions if (P.get("name") or P.get("riasec_code")) else generic_questions()), file_name=f"{fname}_Intake_Form.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", width="stretch",
+    help="Candidate fills the Candidate Form, counsellor the report scores and interview answers; then import it back here.")
 LEVEL_ICON = {"Very high": "🟢", "High": "🟢", "Moderate": "🟡", "Possible with effort": "🟠", "Low": "🔴"}
 
 

@@ -5,7 +5,7 @@ tailored. Each recorded answer carries a counselor *signal* (Confirms / Partly
 / Contradicts). Signals feed back into scoring and surface follow-up probes.
 """
 
-from .knowledge import APTITUDES, LIFE_STAGES, MOTIVATORS, PATHWAY_BY_ID, PATHWAYS, RIASEC, TRAITS
+from .knowledge import APTITUDES, LIFE_STAGES, MOTIVATORS, PATHWAY_BY_ID, PATHWAYS, RIASEC, RIASEC_ORDER, TRAITS
 from .scoring import friction_points
 
 SIGNALS = ["Not asked", "Confirms", "Partly", "Contradicts"]
@@ -305,3 +305,30 @@ def mitigation_protocols(profile):
                 "measure": "Self-review every Sunday; mentor check-in monthly.",
             })
     return rows
+
+
+def generic_questions():
+    """Report-independent question set for the blank Excel template.
+
+    Uses the same question IDs as ``build_questions`` so answers recorded on
+    paper import straight into the matching tailored questions.
+    """
+    s = SECTIONS
+    stable = {q["id"]: q for q in build_questions(
+        {"aptitudes": {k: 5 for k in APTITUDES}, "riasec": {k: 5 for k in RIASEC}, "riasec_code": "", "motivators": [], "traits": []},
+        {"stage": LIFE_STAGES[1]}, {})}
+    qs = [stable[i] for i in ("open_agenda", "open_flow", "open_stage")]
+    for key, meta in APTITUDES.items():
+        qs.append(_q(f"apt_{key}", s[1], f"[{meta['label']}] {APTITUDE_PROBES[key]}",
+                     "Ask for the candidate's top two aptitudes, and for any score well below their best.",
+                     "A specific, recent example; emotional tone for weaker areas."))
+    for letter in RIASEC_ORDER:
+        qs.append(_q(f"riasec_{letter}", s[3], f"[{RIASEC[letter]['name']}] {RIASEC_PROBES[letter]}",
+                     "Ask for the three letters of the Holland code.", "Lived examples and energy in the voice."))
+    for m in ("Interest", "Challenge", "Freedom", "Money", "Respect", "Stability", "Service", "Creativity"):
+        qs.append(_q(f"mot_{m}", s[4], f"[{m}] {MOTIVATOR_PROBES[m]}",
+                     "Ask for the motivators listed in the report.", "Does this motivator show up in past decisions?"))
+    for t, text in TRAIT_PROBES.items():
+        qs.append(_q(f"trait_{t}", s[5], f"[{t}] {text}", "Ask for the four traits in the report.", "Concrete incidents."))
+    qs += [stable[i] for i in ("path_contact", "fam_hopes", "fam_free", "fam_constraints", "close_clarity", "close_action")]
+    return qs
