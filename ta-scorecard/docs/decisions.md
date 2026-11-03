@@ -1,24 +1,32 @@
-# Clarification & Decision Register
+# Decision Register
 
-| ID | Question / conflict | Impact | Options | Owner | Status | Approved decision | Effective version |
-|---|---|---|---|---|---|---|---|
-| D-SPEC-01 | Spec "TA Performance Scorecard App (Multi-Year)" is unavailable | Blocks all scoring, bands, matrix, report contents, acceptance values | Upload to repo / share Drive link | Head of TA | **Open — blocking** | — | — |
-| D-UX-01 | Approved colour palette is unavailable | Provisional theme only | Supply palette / approve the provisional theme | Head of TA / Brand | Open | — | — |
-| D-ARCH-01 | Hosting environment | Deployment, backups, residency | Volvo Azure / AWS / on-prem / local prototype | IT | Open | — | — |
-| D-ARCH-02 | Identity provider | AuthN integration | Entra ID OIDC / SAML / local accounts for prototype | IT | Open | — | — |
-| D-SEC-01 | Role-visibility matrix (see permissions.md) | Who sees assessments | Approve draft / amend | Head of TA + HR | Open | — | — |
-| D-SEC-02 | Data residency & retention | Storage, purge jobs | e.g. India/EU region; N-year retention | HR / Legal | Open | — | — |
-| D-SEC-03 | Can recruiters see their own scores and feedback? | Self-service scope | Yes / partial / no | Head of TA | Open | — | — |
-| D-SEC-04 | Does name masking apply to exports by default? | Export behaviour | Default on / follow screen toggle | Head of TA | Open | — | — |
-| D-AI-01 | AI provider and governance basis | AI module | Keep disabled / approved enterprise provider | IT / Legal | Open (default: disabled) | — | — |
-| D-IMP-01 | Is the "TA & Employee Performance Tracker" workbook the approved import layout? | Import mappings | Yes / no / provide other | Head of TA | Open | — | — |
-| D-IMP-02 | Deduplication key for offers and requisitions | Repeated-import protection | Req ID + candidate ID / offer ID / composite | TA Ops | Open | — | — |
-| D-IMP-03 | Recruiter alias-matching rules | Attribution | Employee ID only / name aliases with approval | TA Ops | Open | — | — |
-| D-CONF-01 | Workbook holds aggregated metrics (Avg offer days, Vendor %); prompt needs record-level data for reproducible scoring | Traceability | Record-level imports / accept aggregates with lower traceability | Head of TA | Open | — | — |
-| D-CONF-02 | Growth scale: 1–10 (prompt) vs. 1–5 competency (workbook) | Growth model | 1–10 / 1–5 / both, kept separate | Head of TA | Open | — | — |
-| D-DATA-01 | Offer counting: multiple offers per req, cancelled or revoked offers, re-issues | Offer points | Per spec | Head of TA | Open (check SPEC first) | — | — |
-| D-DATA-04 | Joiner/leaver target pro-rating | Targets | Per spec | Head of TA | Open (check SPEC first) | — | — |
-| D-DATA-05 | Cycle-time day basis: calendar vs. working days, holiday calendar, inclusive or exclusive boundaries | Cycle-time score | Per spec | Head of TA | Open (check SPEC first) | — | — |
-| D-GOV-01 | Review ownership, calibration panel and approver | Review workflow | Per spec | Head of TA | Open | — | — |
-| D-GOV-02 | Prior-year rating carry-forward rule | Multi-year | Per spec | Head of TA | Open | — | — |
-| D-GOV-03 | Can a closed year be reopened, and by whom? | Year lifecycle | Never / admin + audited approval | Head of TA | Open | — | — |
+People's names are never written here.
+
+## Approved (TA Head)
+
+| ID | Decision | Source | Effective |
+|---|---|---|---|
+| D-20 | Standalone app, not tied to any company; organisation name is a setting | 3 Nov 2026 | v0.1 |
+| D-21 | Single user; sign-in email ranjiphd@gmail.com; data stored on the local computer only | 3 Nov 2026 | v0.1 |
+| D-22 | Retention: 3 years | 3 Nov 2026 | v0.1 |
+| D-23 | Recruiters have no access; they receive PowerPoint packs that the TA Head downloads and sends | 3 Nov 2026 | v0.1 |
+| D-24 | Growth ratings use a 1–10 scale | 3 Nov 2026 | v0.1 |
+| D-25 | Palette: green #ACC686, cream #EBDEBD, orange #E89E4A, brown #9F653C | 3 Nov 2026 | v0.1 |
+| D-26 | Delivery maxima 80 / 15 / 5 = 100. This replaces the earlier 40 / 15 joining / 10 / 5 split in the annual template | 3 Nov 2026 master prompt | v0.1 |
+| D-10 | Points table, women bonus +0.5, decline −0.25, cadence-based target with 254 working days, leads on average of own and team, bands 130 / 110 / 95 / 85, SG = JL + 2, IJP included, internships 1 point | 18–26 Oct 2026 | rule v1 |
+| D-11 | Scope for quality measures: lateral (including campus intern conversions), FTC and conversions to employment; programmes excluded | 26 Oct 2026 | rule v1 |
+| D-12 | Leavers are excluded from rankings and shown separately | 26 Oct 2026 | v0.1 |
+| D-13 | Missing data is never filled in; it is shown as blank or "—" | standing rule | v0.1 |
+
+## Open
+
+| ID | Question | Impact | Proposed default in app |
+|---|---|---|---|
+| D-27 | Offers & complexity formula on the 80-point scale | 100-point score | 80 × min(attainment, 1). Not active until you tick "Confirm" |
+| D-28 | Cycle-time points per band on the 15-point scale (thresholds < 45 / ≤ 55 / > 55 days) | 100-point score | Blank (blocked) |
+| D-29 | Growth weights; matrix thresholds and cell labels | Growth score, matrix | Blank (blocked) |
+| D-30 | Pro-rating for mid-year joiners and leavers: by each person's own working days employed | Targets | Applied as described. Change if not intended |
+| D-31 | Revoked offers: currently score points like other released offers (as in the monthly script) | Points | As script. Confirm or exclude |
+| D-32 | Duplicate key for imports: Req ID + candidate ref (offers), Req ID (requisitions), employee ID (people) | Repeated-import protection | Flagged and skipped by default; can be included |
+| D-33 | Reopening a closed year | Year lifecycle | Not supported |
+| D-34 | AI assistance | — | Not included (no provider approved) |

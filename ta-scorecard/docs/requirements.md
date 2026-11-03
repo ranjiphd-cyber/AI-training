@@ -1,5 +1,7 @@
 # Requirements Traceability Matrix
 
+> Updated 2026-11-03: implementation evidence is in `app/src` and docs/test-results.md. Rows marked Confirmed below are implemented and tested unless noted in known-limitations.md. Business-rule rows R-DEL-02..07 are now implemented from the TA Head's 18–26 Oct rules (docs/scoring-rules.md). R-GRW-02 and R-MAT-01 are implemented but blocked pending values (D-29). R-SEC-01 and R-AI-01 changed to single-user and no AI (D-21, D-34).
+
 Source codes: **MP §n** = master prompt section; **SPEC** = authoritative spec (not yet available).
 Status: Confirmed · Needs clarification · Proposed enhancement · Deferred.
 

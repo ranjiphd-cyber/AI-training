@@ -1,3 +1,11 @@
+# Architecture (as built, v0.1)
+
+Single-file offline web app (React + TypeScript, built with Vite into one HTML file). No server. Data is held in IndexedDB for this file, encrypted with AES-256-GCM using a key from PBKDF2-SHA256 (310k iterations) over email + passphrase. Scoring is a pure TypeScript module (`app/src/engine/scoring.ts`) used by every screen, review snapshot and export. Exports are generated in the browser (PptxGenJS for editable PPTX, SheetJS for XLSX, print CSS for PDF).
+
+The earlier proposal (server + PostgreSQL + enterprise SSO) below was superseded by decisions D-20..D-23.
+
+---
+
 # Proposed Architecture (subject to D-ARCH-01/02)
 
 ```

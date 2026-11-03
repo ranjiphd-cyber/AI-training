@@ -1,15 +1,7 @@
-# Draft Permission Matrix — FOR APPROVAL (D-SEC-01). Nothing below is assumed approved.
+# Access
 
-Legend: R read · W write · A approve · — none · ? decision needed
+Single user (D-21): the TA Head signs in with email and passphrase. There are no other roles.
 
-| Capability | Head of TA | TA Lead | Recruiter | HRBP | System Admin |
-|---|---|---|---|---|---|
-| Team dashboard | R (all) | R (own team) | ? | ? | — |
-| Individual delivery score | R | R (own team) | ? own (D-SEC-03) | ? | — |
-| Growth & feedback detail | R/W | ? | ? own | ? | — |
-| Calibrated final rating | W/A | ? propose | ? view own when final | ? | — |
-| Imports | A | ? stage | — | — | stage |
-| Settings / rule versions | A | — | — | — | W (draft) |
-| Year open/close | A | — | — | — | W (execute) |
-| Audit log | R | — | — | ? | R |
-| Exports | R | R (own team) | — | ? | — |
+- **Recruiters:** no access (D-23). They receive individual PPTX packs, which the TA Head downloads and sends.
+- **Show names off:** masks names on screens and in exports. This is a presentation control only.
+- **Protection:** comes from encryption at rest and the passphrase.

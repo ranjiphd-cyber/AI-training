@@ -1,5 +1,7 @@
 # Discovery Response — TA Performance Intelligence Platform
 
+> **Update 3 Nov 2026:** The spec file in Drive ("TA Performance Scorecard App (Multi-Year).xlsx") contains only an empty sheet. Rules were therefore taken from the TA Head's latest scoring chats (18–26 Oct) and this request; see scoring-rules.md and decisions.md. The palette was supplied. Decisions D-20..D-26 supersede the open questions below.
+
 *Prepared 2026-11-03. Version 0.1. Status: awaiting decisions.*
 
 ## 1. Business problem (as understood)
