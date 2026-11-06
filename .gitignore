@@ -1,0 +1,6 @@
+# Never commit source workbooks or restricted builds
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+*restricted*.html

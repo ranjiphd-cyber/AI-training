@@ -1,0 +1,665 @@
+<title>Volvo Group India TA MIS</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: deep-slate rail + cream working canvas; top status bar, shared filter bar, 8-pt grid of evidence cards.
+   Palette (user-supplied): slate #9A9CA6, light grey #C1C1C3, cream #EDE9DE, blush #D4B8AD; deep slate #2F3240 derived for text. */
+:root {
+  --rail: #2F3240; --rail-active: #4B4E5E; --rail-text: #EDE9DE; --rail-muted: #A9ABB4;
+  --bg: #EDE9DE; --surface: #FFFFFF; --surface-2: #F7F5EF;
+  --text: #2F3240; --text-2: #5D606E; --border: #C1C1C3;
+  --accent: #9A9CA6; --accent-ink: #4B4E5E; --grey: #C1C1C3; --blush: #D4B8AD; --focus: #4B4E5E;
+  --info-bg: #E6E7EC; --info-fg: #3F4250; --neutral-bg: #EFEFF0; --neutral-fg: #4A4C57;
+  --hi-bg: #F4E9E4; --hi-fg: #5E4037;
+  --warn-bg: #FFF1D2; --warn-fg: #7A4F00; --crit-bg: #FCE4E1; --crit-fg: #9B1C12;
+  --ok-bg: #E3F0E7; --ok-fg: #1E6A3E; --hatch: rgba(154, 156, 166, 0.13);
+  --shadow: 0 1px 2px rgba(47, 50, 64, 0.06);
+  --font: "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, system-ui, sans-serif;
+  --mono: "Cascadia Mono", "Consolas", "SFMono-Regular", Menlo, monospace;
+  --s1: 4px; --s2: 8px; --s3: 16px; --s4: 24px; --s5: 32px; --s6: 48px;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --rail: #1B1D24; --rail-active: #3F4250; --rail-text: #EDE9DE; --rail-muted: #9A9CA6;
+    --bg: #22242C; --surface: #2B2E38; --surface-2: #323541;
+    --text: #EDE9DE; --text-2: #BDBDC4; --border: #474A57;
+    --accent: #9A9CA6; --accent-ink: #CFD0D8; --grey: #6E707C; --blush: #D4B8AD; --focus: #D4B8AD;
+    --info-bg: #3A3D4A; --info-fg: #DCDDE4; --neutral-bg: #363944; --neutral-fg: #CFD0D6;
+    --hi-bg: #4A3A35; --hi-fg: #EED6CC;
+    --warn-bg: #3A2D10; --warn-fg: #F2C76E; --crit-bg: #3D1C1A; --crit-fg: #F4A59D;
+    --ok-bg: #173826; --ok-fg: #9FD9B4; --hatch: rgba(154, 156, 166, 0.10);
+    --shadow: none; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+    --rail: #1B1D24; --rail-active: #3F4250; --rail-text: #EDE9DE; --rail-muted: #9A9CA6;
+    --bg: #22242C; --surface: #2B2E38; --surface-2: #323541;
+    --text: #EDE9DE; --text-2: #BDBDC4; --border: #474A57;
+    --accent: #9A9CA6; --accent-ink: #CFD0D8; --grey: #6E707C; --blush: #D4B8AD; --focus: #D4B8AD;
+    --info-bg: #3A3D4A; --info-fg: #DCDDE4; --neutral-bg: #363944; --neutral-fg: #CFD0D6;
+    --hi-bg: #4A3A35; --hi-fg: #EED6CC;
+    --warn-bg: #3A2D10; --warn-fg: #F2C76E; --crit-bg: #3D1C1A; --crit-fg: #F4A59D;
+    --ok-bg: #173826; --ok-fg: #9FD9B4; --hatch: rgba(154, 156, 166, 0.10);
+    --shadow: none; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 14px; line-height: 1.45; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 30; background: var(--rail); }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100%; }
+
+/* ---------- Rail ---------- */
+.rail { background: var(--rail); color: var(--rail-text); padding-block: var(--s3); padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: 12px; position: sticky; top: env(safe-area-inset-top, 0px); height: 100vh; overflow-y: auto; display: flex; flex-direction: column; gap: var(--s3); }
+.brand { padding: 0 var(--s2) var(--s2); border-bottom: 1px solid rgba(255,255,255,0.12); }
+.brand b { display: block; font-size: 15px; letter-spacing: 0.01em; }
+.brand span { font-size: 12px; color: var(--rail-muted); }
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--rail-muted); padding: 0 var(--s2) var(--s1); }
+.nav a { display: flex; align-items: center; justify-content: space-between; gap: var(--s2); padding: 7px var(--s2); border-radius: var(--r); color: var(--rail-text); text-decoration: none; font-size: 13.5px; }
+.nav a:hover { background: rgba(255,255,255,0.07); }
+.nav a[aria-current="page"] { background: var(--rail-active); font-weight: 600; }
+.nav a small { font-size: 10.5px; color: var(--rail-muted); border: 1px solid rgba(255,255,255,0.2); border-radius: 3px; padding: 0 4px; }
+.nav a[aria-current="page"] small { color: var(--rail-text); }
+.rail-foot { margin-top: auto; font-size: 11.5px; color: var(--rail-muted); padding: var(--s2); border-top: 1px solid rgba(255,255,255,0.12); }
+
+/* ---------- Main ---------- */
+.main { min-width: 0; display: flex; flex-direction: column; }
+.banner { background: var(--hi-bg); color: var(--hi-fg); font-size: 12.5px; padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; border-bottom: 1px solid var(--border); }
+.banner b { font-weight: 700; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding-block: 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; }
+.topbar .apptitle { font-weight: 700; font-size: 15px; margin-right: auto; display: flex; align-items: center; gap: var(--s2); }
+.menu-btn { display: none; background: none; border: 1px solid var(--border); border-radius: var(--r); padding: 4px 10px; cursor: pointer; }
+.meta { order: 3; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: var(--s2) var(--s5); margin: 0; padding-top: var(--s2); border-top: 1px solid var(--border); }
+.meta div { display: flex; flex-direction: column; min-width: 0; }
+.meta dt { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.meta dd { margin: 0; font-size: 12.5px; font-weight: 600; }
+.user { display: flex; align-items: center; gap: var(--s2); font-size: 12.5px; }
+.avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--neutral-bg); color: var(--neutral-fg); display: grid; place-items: center; font-size: 11px; font-weight: 700; }
+.theme-btn { background: none; border: 1px solid var(--border); border-radius: var(--r); padding: 3px 8px; cursor: pointer; font-size: 12px; color: var(--text-2); }
+
+.content { padding-block: var(--s4) var(--s6); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: var(--s3); max-width: 1440px; width: 100%; }
+@media (min-width: 1100px) { .content { padding-left: max(32px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); } }
+
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--s2) var(--s3); }
+.page-head h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.005em; }
+.page-head p { color: var(--text-2); margin-top: 2px; max-width: 72ch; }
+.head-chips { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s2); }
+
+/* ---------- Pills ---------- */
+.pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent; }
+.pill::before { font-size: 10px; line-height: 1; }
+.st-validation { background: var(--info-bg); color: var(--info-fg); } .st-validation::before { content: "◷"; }
+.st-unavailable { background: var(--neutral-bg); color: var(--neutral-fg); } .st-unavailable::before { content: "∅"; }
+.st-norecords { background: var(--neutral-bg); color: var(--neutral-fg); } .st-norecords::before { content: "○"; }
+.st-denied { background: var(--crit-bg); color: var(--crit-fg); } .st-denied::before { content: "⊘"; }
+.st-failed { background: var(--warn-bg); color: var(--warn-fg); } .st-failed::before { content: "!"; font-weight: 800; }
+.st-pending { background: var(--warn-bg); color: var(--warn-fg); } .st-pending::before { content: "◇"; }
+.st-concept { background: var(--info-bg); color: var(--info-fg); } .st-concept::before { content: "◌"; }
+.st-blocked { background: var(--crit-bg); color: var(--crit-fg); } .st-blocked::before { content: "■"; }
+.st-notstarted { background: var(--neutral-bg); color: var(--neutral-fg); } .st-notstarted::before { content: "–"; }
+.st-notrun { background: var(--neutral-bg); color: var(--neutral-fg); } .st-notrun::before { content: "–"; }
+.st-done { background: var(--ok-bg); color: var(--ok-fg); } .st-done::before { content: "✓"; }
+.tag { font-size: 11.5px; color: var(--text-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; background: var(--surface); white-space: nowrap; }
+
+/* ---------- Filters ---------- */
+.filters { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); }
+.filter-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s2) var(--s3); }
+.filter-row label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--text-2); font-weight: 600; }
+.filter-row select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 5px 8px; font-size: 13px; color: var(--text); min-width: 0; }
+.filter-foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); justify-content: space-between; font-size: 12px; color: var(--text-2); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s1); align-items: center; }
+.chip { display: inline-flex; gap: 4px; align-items: center; background: var(--hi-bg); color: var(--hi-fg); border-radius: 999px; padding: 1px 4px 1px 10px; font-size: 12px; font-weight: 600; }
+.chip button { border: 0; background: none; cursor: pointer; color: inherit; padding: 0 5px; font-size: 13px; }
+.btn { border: 1px solid var(--border); background: var(--surface); border-radius: 4px; padding: 5px 12px; cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text); }
+.btn:hover { border-color: var(--accent-ink); }
+.btn[disabled] { cursor: not-allowed; color: var(--text-2); background: var(--surface-2); }
+.btn-primary { background: var(--accent); color: #2F3240; border-color: var(--accent); }
+
+/* ---------- KPI cards ---------- */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s3); }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; min-height: 148px; box-shadow: var(--shadow); }
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); }
+.kpi-name { font-size: 12.5px; font-weight: 650; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; }
+.kpi-value { font-size: 28px; font-weight: 700; line-height: 1.1; color: var(--text-2); }
+.kpi-value span { font-size: 13px; font-weight: 600; margin-left: 4px; }
+.kpi-basis { font-size: 12px; color: var(--text-2); }
+.info-btn { width: 22px; height: 22px; flex: none; border-radius: 50%; border: 1px solid var(--border); background: var(--surface-2); cursor: pointer; font-size: 12px; font-weight: 700; color: var(--accent-ink); line-height: 1; }
+.defn { font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: var(--s2); color: var(--text); }
+.defn dt { font-weight: 700; color: var(--text-2); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+.defn dd { margin: 0; }
+
+/* ---------- Panels ---------- */
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s3); }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: flex; flex-direction: column; gap: var(--s2); min-width: 0; box-shadow: var(--shadow); }
+.panel-head { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); flex-wrap: wrap; }
+.panel h2 { font-size: 15px; font-weight: 650; }
+.panel h3 { font-size: 13px; font-weight: 650; }
+.panel .sub { font-size: 12px; color: var(--text-2); }
+.placeholder { position: relative; min-height: 196px; border: 1px dashed var(--border); border-radius: 4px; background: repeating-linear-gradient(135deg, var(--hatch) 0 8px, transparent 8px 16px); display: grid; place-items: center; padding: var(--s3); text-align: center; }
+.placeholder .ph-inner { display: flex; flex-direction: column; gap: 6px; align-items: center; max-width: 46ch; }
+.placeholder .ph-type { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.placeholder p { font-size: 12.5px; color: var(--text-2); }
+.spec { display: grid; grid-template-columns: max-content 1fr; gap: 2px var(--s3); font-size: 12px; }
+.spec dt { color: var(--text-2); }
+.spec dd { margin: 0; }
+.panel-foot { display: flex; flex-wrap: wrap; gap: var(--s1); }
+
+.notes { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); }
+.notes h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); margin-bottom: var(--s2); }
+.notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+
+/* ---------- Tables ---------- */
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 4px; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { background: var(--surface-2); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-2); font-weight: 700; white-space: nowrap; }
+th button { all: unset; cursor: pointer; display: inline-flex; gap: 4px; }
+th button:focus-visible { outline: 2px solid var(--focus); }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr.sel { background: var(--hi-bg); }
+tbody tr.clickable { cursor: pointer; }
+tbody tr.clickable:hover { background: var(--surface-2); }
+td.muted, .muted { color: var(--text-2); }
+.empty-row td { text-align: center; color: var(--text-2); padding: var(--s4); }
+.pager { display: flex; justify-content: space-between; align-items: center; gap: var(--s2); font-size: 12px; color: var(--text-2); flex-wrap: wrap; }
+
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.tabs button { border: 0; background: none; padding: 8px 14px; cursor: pointer; font-weight: 600; color: var(--text-2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--accent-ink); border-bottom-color: var(--accent-ink); }
+
+/* ---------- Stepper ---------- */
+.stepper { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: var(--s2); counter-reset: st; }
+.step { border: 1px solid var(--border); border-radius: var(--r); padding: var(--s2) var(--s3); background: var(--surface-2); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.step b { font-size: 13px; }
+.step b::before { counter-increment: st; content: counter(st) ". "; color: var(--text-2); }
+.step span { font-size: 11.5px; color: var(--text-2); }
+
+/* ---------- Design system ---------- */
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: var(--s2); }
+.sw { border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; background: var(--surface); font-size: 12px; }
+.sw i { display: block; height: 44px; }
+.sw div { padding: 6px 8px; }
+.sw code { font-family: var(--mono); font-size: 11px; color: var(--text-2); }
+.states { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s2); }
+.state-card { border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+.state-card p { font-size: 12.5px; color: var(--text-2); }
+
+.callout { border: 1px solid var(--border); border-left: 3px solid var(--accent-ink); background: var(--surface); border-radius: var(--r); padding: var(--s3); font-size: 13px; display: grid; gap: 6px; }
+.callout.warn { border-left-color: var(--warn-fg); }
+.qlist { margin: 0; padding-left: 20px; display: grid; gap: var(--s2); font-size: 13.5px; }
+.qlist li b { display: block; }
+.qlist li span { color: var(--text-2); font-size: 12.5px; }
+.cols3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s3); }
+ul.tight { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) { .stepper { grid-template-columns: repeat(3, minmax(0, 1fr)); } .cols3 { grid-template-columns: 1fr; } }
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+  .rail { position: fixed; z-index: 40; left: 0; top: 0; bottom: 0; width: 264px; height: auto; padding-top: calc(var(--s3) + env(safe-area-inset-top, 0px)); transform: translateX(-100%); transition: transform 0.18s ease; }
+  .rail.open { transform: none; }
+  .menu-btn { display: inline-block; }
+  .grid2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) { .stepper { grid-template-columns: minmax(0, 1fr); } .meta { gap: var(--s2); } .kpi-value { font-size: 24px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="app">
+  <nav class="rail" id="rail" aria-label="Primary">
+    <div class="brand"><b>TA Management Information</b><span>Volvo Group India · People &amp; Culture</span></div>
+    <div class="nav-group nav" id="nav-dash"><div class="nav-label">Dashboards</div></div>
+    <div class="nav-group nav" id="nav-gov"><div class="nav-label">Governance &amp; delivery</div></div>
+    <div class="rail-foot">Design specification v0.1 · 6 Nov 2026<br>Proposed tokens, not official Volvo brand standards.</div>
+  </nav>
+
+  <div class="main">
+    <div class="banner" role="status" id="banner"><b>Design preview.</b> No Volvo data is loaded. Every value below is a labelled placeholder.</div>
+    <header class="topbar">
+      <div class="apptitle"><button class="menu-btn" id="menuBtn" aria-controls="rail" aria-expanded="false">Menu</button>Talent Acquisition MIS</div>
+      <dl class="meta">
+        <div><dt>Reporting period</dt><dd>Not set</dd></div>
+        <div><dt>Authorised scope</dt><dd>Not authenticated</dd></div>
+        <div><dt>Source as of</dt><dd>Source date not verified</dd></div>
+        <div><dt>Last publication</dt><dd>No dataset published</dd></div>
+        <div><dt>Data quality</dt><dd><span class="pill st-unavailable">Not assessed</span></dd></div>
+      </dl>
+      <div class="user">
+        <span class="avatar" aria-hidden="true">—</span>
+        <span>Not signed in<br><span class="muted" style="font-size:11px">Enterprise sign-in not connected</span></span>
+        <button class="theme-btn" id="themeBtn" aria-label="Switch colour theme">Theme</button>
+      </div>
+    </header>
+    <main class="content" id="content" tabindex="-1"></main>
+  </div>
+</div>
+
+<script>
+(function () {
+"use strict";
+
+/* ---------------- State vocabulary ---------------- */
+var STATES = {
+  validation: { label: "Not yet validated", text: "A definition is proposed but has not been approved or reconciled against the source." },
+  unavailable: { label: "Metric unavailable", text: "The source does not hold the fields this metric needs, or no dataset is published." },
+  norecords: { label: "No records in this selection", text: "The query ran inside your scope and returned nothing. This is a true zero only for the stated population." },
+  denied: { label: "Insufficient permission", text: "Your approved scope or capability does not include this view. No totals are shown or hinted." },
+  failed: { label: "Source refresh failed", text: "The latest import did not publish. The last approved dataset stays in place, with its own as-of date." },
+  pending: { label: "Rule pending approval", text: "A threshold, owner or due date has not been approved, so no alert is raised." }
+};
+function pill(state, label) { return '<span class="pill st-' + state + '">' + esc(label || (STATES[state] && STATES[state].label) || state) + '</span>'; }
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+/* ---------------- Proposed KPI catalogue (pending approval) ---------------- */
+var KPIS = [
+  { id: "offers", name: "Offers released", unit: "offers", entity: "Offer event", basis: "Offer release date", num: "Distinct offer events in period", den: "—", sheet: "MT (expected, not observed)", open: "Is there an offer ID? An offer date alone may not identify one event; revised offers may repeat a candidate.", purpose: "Volume of hiring commitments made." },
+  { id: "joiners", name: "Joiners", unit: "people", entity: "Joining event (person)", basis: "Actual joining date", num: "Distinct confirmed joining events in period", den: "—", sheet: "MT, NATS, Campus (expected)", open: "Which field confirms a completed joining? A joining date alone does not. How are people present on several sheets reconciled?", purpose: "Hiring delivered into the organisation." },
+  { id: "declines", name: "Offer declines", unit: "offers", entity: "Offer outcome", basis: "Decline recorded date (if present) else offer date, to be approved", num: "Offers with approved decline status", den: "—", sheet: "MT (expected)", open: "Which status values mean declined? Is a decline date recorded?", purpose: "Lost offers and their reasons." },
+  { id: "declinerate", name: "Offer decline rate", unit: "%", entity: "Offer cohort", basis: "Offer release date (cohort)", num: "Declined offers in cohort", den: "Offers in cohort with a known outcome", sheet: "MT (expected)", open: "Cohort basis needed. Open offers must be excluded from the denominator, not counted as accepted.", purpose: "Offer competitiveness." },
+  { id: "a2o", name: "Approval to offer", unit: "calendar days", entity: "Offer event linked to requisition", basis: "Offer release date", num: "Median of (offer date − requisition approval date)", den: "Offers with both dates valid (n shown)", sheet: "MT (expected)", open: "Calendar or working days? How are negative and missing intervals treated?", purpose: "Speed of sourcing and selection." },
+  { id: "o2j", name: "Offer to joining", unit: "calendar days", entity: "Joining event linked to offer", basis: "Actual joining date", num: "Median of (joining date − offer date)", den: "Joiners with both dates valid (n shown)", sheet: "MT (expected)", open: "Same rules as above. Notice-period buy-outs may need a separate view.", purpose: "Time lost between commitment and start." },
+  { id: "a2j", name: "Approval to joining", unit: "calendar days", entity: "Joining event linked to requisition", basis: "Actual joining date", num: "Median of (joining date − approval date)", den: "Joiners with both dates valid (n shown)", sheet: "MT (expected)", open: "Requires a reliable requisition identifier on candidate rows.", purpose: "End-to-end hiring cycle." },
+  { id: "ageing", name: "Open-offer ageing", unit: "calendar days", entity: "Offer not yet joined or declined", basis: "As-of date of the snapshot", num: "Days from offer date to as-of date, banded", den: "Open offers at as-of date", sheet: "MT (expected)", open: "Needs a defined open population and a verified source as-of date. Not the same as completed cycle time.", purpose: "Pipeline at risk of not joining." },
+  { id: "gender", name: "Gender mix of joiners", unit: "% of joiners", entity: "Joining event (person)", basis: "Actual joining date", num: "Joiners per recorded gender value", den: "All joiners in scope, Unknown / Not recorded shown as its own group", sheet: "MT, NATS, Campus (expected)", open: "Gender must never be inferred from names. Small groups may need suppression to protect individuals.", purpose: "Diversity of hiring outcomes." },
+  { id: "source", name: "Hiring source mix", unit: "% of joiners", entity: "Joining event (person)", basis: "Actual joining date", num: "Joiners per approved source class", den: "All joiners in scope, Unknown shown", sheet: "MT (expected)", open: "Raw source labels need an approved classification before reporting referral, vendor or direct share.", purpose: "Effectiveness of sourcing channels." },
+  { id: "nats", name: "NATS joiners", unit: "trainees", entity: "NATS joining event", basis: "Joining date", num: "Distinct NATS trainees joined in period", den: "—", sheet: "NATS (expected)", open: "How do NATS rows relate to the Active & Inactive sheet?", purpose: "Apprenticeship intake." },
+  { id: "natsactive", name: "NATS active trainees", unit: "trainees", entity: "Status snapshot", basis: "Snapshot as-of date", num: "Trainees with Active status at as-of date", den: "—", sheet: "NATS Active & Inactive (expected)", open: "Is the snapshot dated? Inactive is not attrition. No trend from a single snapshot.", purpose: "Current programme strength." },
+  { id: "campus", name: "Campus intake", unit: "graduates", entity: "Campus joining event", basis: "Joining date, by batch", num: "Distinct campus joiners by GET / PGET and college", den: "—", sheet: "Campus (expected)", open: "Are batch and programme fields consistent? Are colleges named consistently?", purpose: "Early-career pipeline." },
+  { id: "dq", name: "Record completeness", unit: "% of rows", entity: "Source row", basis: "Import version", num: "Rows passing all mandatory-field checks", den: "Rows received in the import", sheet: "All sheets", open: "Which fields are mandatory per sheet?", purpose: "Trust in every other metric." }
+];
+KPIS.forEach(function (k) { if (!k.feas) k.feas = "To investigate"; });
+function feasState(f) { return /^Feasible with/.test(f) ? "done" : /^To investigate/.test(f) ? "notstarted" : "pending"; }
+var CATALOGUE_FIELDS = ["Name and business purpose", "Source sheet and exact columns", "Counting entity", "Inclusion and exclusion rules", "Deduplication and cross-sheet reconciliation", "Numerator and denominator", "Date basis", "Aggregation method", "Applicable filters", "Missing-data treatment", "Required data-quality conditions", "Authorised audience", "Definition version and approval status", "Validation cases and reconciliation evidence"];
+var AUDIT = window.TAMIS_AUDIT || null;
+if (AUDIT && AUDIT.kpi) KPIS.forEach(function (k) { var o = AUDIT.kpi[k.id]; if (o) for (var f in o) k[f] = o[f]; });
+function kpi(id) { for (var i = 0; i < KPIS.length; i++) if (KPIS[i].id === id) return KPIS[i]; }
+
+/* ---------------- Dashboard page definitions ---------------- */
+var PAGES = {
+  executive: {
+    nav: "Executive Overview", group: "dash",
+    purpose: "Hiring delivery, business distribution and trends, with management observations only where evidence supports them.",
+    kpis: ["offers", "joiners", "declines", "a2o", "o2j"],
+    panels: [
+      { t: "Monthly hiring activity", type: "Clustered column, by month", measure: "Offers and joiners", basis: "Each counted on its own event month; joiners are not conversions of same-month offers", drill: "Month → Business → Department", state: "validation" },
+      { t: "Hiring by business", type: "Horizontal bar, sorted", measure: "Joiners", basis: "Actual joining date", drill: "Business → Department", state: "validation", note: "Shows only businesses inside your authorised scope." },
+      { t: "Job level and employment mix", type: "100% stacked bar", measure: "Share of joiners", basis: "Actual joining date", denom: "All joiners in scope, Unknown shown", state: "validation" },
+      { t: "Gender and sourcing distribution", type: "Two small bar charts", measure: "Share of joiners", basis: "Actual joining date", denom: "All joiners in scope, Unknown / Not recorded shown", state: "validation" },
+      { t: "Evidence-backed observations", type: "Structured list", measure: "Observation · evidence · threshold · question", basis: "Approved KPIs only", state: "unavailable", note: "Generated only from validated metrics. No causes or forecasts." },
+      { t: "Management attention", type: "Top items from the attention register", measure: "Open items by priority", basis: "Approved rules", state: "pending", link: "attention" }
+    ],
+    rules: ["Prior-period comparison appears only where comparable history exists for the same definition.", "Targets appear only when approved target data with a matching definition exists.", "Offers and joiners are counted on different dates; the chart legend says so."]
+  },
+  business: {
+    nav: "Business Performance", group: "dash",
+    purpose: "Business-level outcomes and cycle times, with drill-down from business to department to approved analytical detail.",
+    kpis: ["offers", "joiners", "declines", "a2j"],
+    panels: [
+      { t: "Outcomes by business", type: "Table with inline bars", measure: "Offers, joiners, declines", basis: "Each on its own event date", drill: "Business → Department → Sub-department", state: "validation" },
+      { t: "Cycle time by business", type: "Dot plot: median with interquartile range", measure: "Approval to joining", basis: "Actual joining date", denom: "n with valid dates shown per row", state: "validation" },
+      { t: "Hiring type, employment type and job level", type: "Small multiples", measure: "Joiners", basis: "Actual joining date", state: "validation" },
+      { t: "Recruiter and hiring-manager view", type: "Sortable table", measure: "Volume and cycle time per recruiter", basis: "Actual joining date", state: "denied", note: "Requires a separately approved capability." }
+    ],
+    rules: ["Candidate identity is not shown by default at any drill level.", "Business comparisons include only businesses you are authorised to see."]
+  },
+  lifecycle: {
+    nav: "Recruitment Lifecycle", group: "dash",
+    purpose: "Recorded milestones, offer outcomes, joining activity and decline reasons, plus records with missing or inconsistent lifecycle data.",
+    kpis: ["offers", "declines", "declinerate", "joiners"],
+    panels: [
+      { t: "Recorded milestones", type: "Milestone table (not a funnel)", measure: "Records reaching each recorded date", basis: "Per milestone date", state: "validation", note: "A conversion funnel appears only after stage populations and cohort links are validated." },
+      { t: "Offer outcomes", type: "Stacked bar by offer month", measure: "Joined, declined, open, unknown", basis: "Offer release date (cohort)", state: "validation" },
+      { t: "Decline reasons", type: "Horizontal bar", measure: "Declined offers by recorded reason", basis: "Decline date", denom: "All declines, Not recorded shown", state: "validation" },
+      { t: "Lifecycle exceptions", type: "Exception table", measure: "Missing dates, out-of-order dates, status–date conflicts", basis: "Import version", state: "unavailable", link: "attention" }
+    ],
+    rules: ["Open requisitions, vacancies and demand closure are not reported from candidate records alone."]
+  },
+  efficiency: {
+    nav: "Efficiency & Ageing", group: "dash",
+    purpose: "Completed cycle times and ongoing ageing, kept apart and recalculated from validated dates.",
+    kpis: ["a2o", "o2j", "a2j", "ageing"],
+    panels: [
+      { t: "Cycle-time distribution", type: "Histogram, 15-day bands", measure: "Approval to offer", basis: "Offer release date", denom: "Offers with valid dates (n shown)", state: "validation" },
+      { t: "Cycle time by job level and hiring stream", type: "Dot plot: median with IQR", measure: "Approval to joining", basis: "Actual joining date", denom: "n per group; groups under 5 suppressed", state: "validation" },
+      { t: "Open-offer ageing", type: "Banded bar: 0–30, 31–60, 61–90, 90+ days", measure: "Open offers", basis: "Verified source as-of date", state: "unavailable", note: "Needs a verified as-of date and a defined open population." },
+      { t: "Date exceptions", type: "Exception count with drill to rows", measure: "Missing and negative intervals", basis: "Import version", state: "validation", link: "attention" }
+    ],
+    rules: ["Calendar-day or working-day rule must be approved before publication.", "Medians are shown with n. Means are not used for skewed intervals.", "Recruiter analysis needs a separately approved capability."]
+  },
+  diversity: {
+    nav: "Diversity & Sourcing", group: "dash",
+    purpose: "Gender, hiring source, hiring type and employment type, with every percentage tied to a stated population and denominator.",
+    kpis: ["gender", "source"],
+    panels: [
+      { t: "Gender distribution of joiners", type: "Bar with Unknown / Not recorded as its own bar", measure: "Share of joiners", basis: "Actual joining date", denom: "All joiners in scope", state: "validation" },
+      { t: "Gender trend", type: "Line by quarter", measure: "Share of joiners recorded as women", basis: "Actual joining date", denom: "All joiners in quarter, including Unknown", state: "validation" },
+      { t: "Hiring source distribution", type: "Horizontal bar", measure: "Joiners by approved source class", basis: "Actual joining date", denom: "All joiners, Unknown shown", state: "pending", note: "Source labels need an approved classification first." },
+      { t: "Specific source detail", type: "Sortable table", measure: "Joiners by raw source label", basis: "Actual joining date", state: "denied", note: "Vendor-level detail requires authorisation." }
+    ],
+    rules: ["Missing attributes are never silently excluded and demographics are never inferred.", "Small groups may be suppressed to protect individuals; the threshold needs approval."]
+  },
+  attention: { nav: "Management Attention", group: "dash", custom: renderAttention },
+  programmes: { nav: "NATS & Campus", group: "dash", custom: renderProgrammes },
+  admin: { nav: "Administration", group: "dash", badge: "Admin", custom: renderAdmin },
+  audit: { nav: "Workbook audit", group: "gov", custom: renderAudit },
+  "kpi-catalogue": { nav: "KPI catalogue", group: "gov", custom: renderCatalogue },
+  access: { nav: "Access & security", group: "gov", custom: renderAccess },
+  technology: { nav: "Technology options", group: "gov", custom: renderTech },
+  "design-system": { nav: "Design system", group: "gov", custom: renderDesign },
+  register: { nav: "Delivery register", group: "gov", custom: renderRegister }
+};
+var ORDER_DASH = ["executive", "business", "lifecycle", "efficiency", "diversity", "programmes", "attention", "admin"];
+var ORDER_GOV = ["audit", "kpi-catalogue", "access", "technology", "design-system", "register"];
+
+/* ---------------- Filters (shared across dashboard pages) ---------------- */
+var FILTERS = [
+  { id: "f-period", label: "Reporting period", opts: ["Not set", "Jan–Dec 2026 (calendar)", "Apr 2026–Mar 2027 (fiscal)"] },
+  { id: "f-business", label: "Business", opts: ["All authorised businesses"] },
+  { id: "f-dept", label: "Department", opts: ["All in scope"] },
+  { id: "f-stream", label: "Hiring stream / type", opts: ["All", "Lateral (MT)", "NATS", "Campus"] },
+  { id: "f-emp", label: "Employment type", opts: ["All in scope"] },
+  { id: "f-level", label: "Job level", opts: ["All in scope"] }
+];
+var filterState = {};
+function renderFilters() {
+  var h = '<section class="filters" aria-label="Filters"><div class="filter-row">';
+  FILTERS.forEach(function (f) {
+    h += '<label for="' + f.id + '">' + esc(f.label) + '<select id="' + f.id + '" data-f="' + f.id + '">';
+    f.opts.forEach(function (o, i) { h += '<option value="' + i + '"' + ((filterState[f.id] || 0) == i ? " selected" : "") + ">" + esc(o) + "</option>"; });
+    h += "</select></label>";
+  });
+  h += '</div><div class="filter-foot"><div class="chips" id="chips"></div><button class="btn" id="resetFilters">Reset filters</button></div>';
+  h += '<p class="muted" style="font-size:12px">Business, department, employment type and job level list only values inside your authorised scope. They stay empty until sign-in and an approved dataset are connected.</p></section>';
+  return h;
+}
+function paintChips() {
+  var el = document.getElementById("chips"); if (!el) return;
+  var parts = [];
+  FILTERS.forEach(function (f) { var v = +(filterState[f.id] || 0); if (v > 0) parts.push('<span class="chip">' + esc(f.label) + ": " + esc(f.opts[v]) + ' <button data-clear="' + f.id + '" aria-label="Remove ' + esc(f.label) + ' filter">×</button></span>'); });
+  el.innerHTML = parts.length ? parts.join("") : '<span>No filters applied</span>';
+}
+
+/* ---------------- Renderers ---------------- */
+function head(title, purpose, chips) {
+  return '<div class="page-head"><div><h1>' + esc(title) + "</h1>" + (purpose ? "<p>" + esc(purpose) + "</p>" : "") + '</div><div class="head-chips">' + (chips || '<span class="tag">Period: not set</span><span class="tag">Scope: not authenticated</span><span class="tag">Source date not verified</span>') + "</div></div>";
+}
+function kpiCard(k, state) {
+  state = state || "validation";
+  var did = "def-" + k.id + "-" + Math.random().toString(36).slice(2, 7);
+  return '<article class="kpi" aria-label="' + esc(k.name) + '">' +
+    '<div class="kpi-top"><span class="kpi-name">' + esc(k.name) + '</span><button class="info-btn" aria-expanded="false" aria-controls="' + did + '" data-def="' + did + '" title="Show definition">i</button></div>' +
+    '<div class="kpi-value num" aria-label="No value: ' + esc(STATES[state].label) + '">—<span>' + esc(k.unit) + "</span></div>" +
+    '<div class="kpi-basis">Date basis: ' + esc(k.basis) + "<br>Counts: " + esc(k.entity) + "</div>" +
+    "<div>" + pill(state) + "</div>" +
+    '<dl class="defn" id="' + did + '" hidden><dt>Purpose</dt><dd>' + esc(k.purpose) + "</dd><dt>Numerator</dt><dd>" + esc(k.num) + "</dd><dt>Denominator</dt><dd>" + esc(k.den) + "</dd><dt>Open question</dt><dd>" + esc(k.open) + "</dd><dt>Status</dt><dd>Proposed v0.1, pending approval</dd></dl>" +
+    "</article>";
+}
+function panel(p) {
+  var spec = '<dl class="spec"><dt>Measure</dt><dd>' + esc(p.measure) + "</dd><dt>Date basis</dt><dd>" + esc(p.basis) + "</dd>" + (p.denom ? "<dt>Denominator</dt><dd>" + esc(p.denom) + "</dd>" : "") + (p.drill ? "<dt>Drill-down</dt><dd>" + esc(p.drill) + "</dd>" : "") + "</dl>";
+  return '<section class="panel"><div class="panel-head"><div><h2>' + esc(p.t) + '</h2><div class="sub">' + esc(p.type) + "</div></div>" + pill(p.state) + "</div>" +
+    '<div class="placeholder" role="img" aria-label="Placeholder for ' + esc(p.t) + '"><div class="ph-inner"><span class="ph-type">Placeholder · ' + esc(p.type) + "</span><p>" + esc(STATES[p.state].text) + "</p>" + (p.note ? "<p><b>" + esc(p.note) + "</b></p>" : "") + (p.link ? '<a class="btn" href="#' + p.link + '">Open ' + esc(PAGES[p.link].nav) + "</a>" : "") + "</div></div>" + spec + "</section>";
+}
+function notes(rules) { return '<section class="notes"><h2>Rules applied on this page</h2><ul>' + rules.map(function (r) { return "<li>" + esc(r) + "</li>"; }).join("") + "</ul></section>"; }
+
+function renderDash(key) {
+  var p = PAGES[key], h = head(p.nav, p.purpose) + renderFilters();
+  h += '<div class="kpis">' + p.kpis.map(function (id) { return kpiCard(kpi(id)); }).join("") + "</div>";
+  h += '<div class="grid2">' + p.panels.map(panel).join("") + "</div>";
+  if (p.rules) h += notes(p.rules);
+  return h;
+}
+
+var progTab = "nats";
+function renderProgrammes() {
+  var tabs = [["nats", "NATS Hiring"], ["natsstatus", "NATS Active / Inactive"], ["campus", "Campus Hiring"]];
+  var h = head("NATS & Campus", "Apprenticeship and early-career programmes. Each tab reads its own sheet; totals are combined only after cross-sheet identities are reconciled.") + renderFilters();
+  h += '<div class="tabs" role="tablist">' + tabs.map(function (t) { return '<button role="tab" id="tab-' + t[0] + '" aria-selected="' + (progTab === t[0]) + '" data-tab="' + t[0] + '">' + t[1] + "</button>"; }).join("") + "</div>";
+  var body;
+  if (progTab === "nats") body = { k: ["nats"], p: [
+    { t: "NATS joining by month", type: "Column by month", measure: "Trainees joined", basis: "Joining date", state: "validation" },
+    { t: "NATS by business", type: "Horizontal bar", measure: "Trainees joined", basis: "Joining date", state: "validation" },
+    { t: "NATS by batch", type: "Table", measure: "Trainees per batch", basis: "Batch start", state: "validation" },
+    { t: "Gender of NATS joiners", type: "Bar with Unknown shown", measure: "Share of trainees", basis: "Joining date", denom: "All NATS joiners in scope", state: "validation" }],
+    r: ["NATS rows are matched to the Active & Inactive sheet before any combined total is shown."] };
+  else if (progTab === "natsstatus") body = { k: ["natsactive"], p: [
+    { t: "Status snapshot", type: "Bar: Active, Inactive, Unknown", measure: "Trainees", basis: "Snapshot as-of date", state: "unavailable", note: "The snapshot date must be verified first." },
+    { t: "Inactive by recorded reason", type: "Horizontal bar", measure: "Inactive trainees", basis: "Snapshot as-of date", denom: "All inactive, Not recorded shown", state: "validation" }],
+    r: ["Inactive status is not reported as attrition.", "No workforce trend is drawn from a single undated snapshot."] };
+  else body = { k: ["campus"], p: [
+    { t: "GET / PGET split", type: "Two-bar comparison", measure: "Campus joiners", basis: "Joining date", state: "validation" },
+    { t: "College-wise intake", type: "Sortable table", measure: "Joiners per college", basis: "Joining date, by batch", state: "validation", note: "College names need a cleaned reference list." },
+    { t: "Programme trend", type: "Column by batch year", measure: "Joiners", basis: "Batch year", state: "validation" },
+    { t: "Campus by business", type: "Horizontal bar", measure: "Joiners", basis: "Joining date", state: "validation" }],
+    r: ["Campus joiners who also appear in the MT sheet are counted once after reconciliation."] };
+  h += '<div class="kpis">' + body.k.map(function (id) { return kpiCard(kpi(id)); }).join("") + "</div>";
+  h += '<div class="grid2" role="tabpanel" aria-labelledby="tab-' + progTab + '">' + body.p.map(panel).join("") + "</div>" + notes(body.r);
+  return h;
+}
+
+function renderAttention() {
+  var cols = ["Issue", "Business", "Evidence", "Rule", "Priority", "Owner", "Due date", "Status"];
+  function table(caption, rows) {
+    var h = '<div class="tbl-wrap"><table><caption class="sr-only" style="position:absolute;left:-9999px">' + esc(caption) + "</caption><thead><tr>" + cols.map(function (c) { return '<th scope="col">' + c + "</th>"; }).join("") + "</tr></thead><tbody>";
+    h += rows.length ? rows.join("") : '<tr class="empty-row"><td colspan="8">No items. Items are raised only by approved rules on validated data.</td></tr>';
+    return h + "</tbody></table></div>";
+  }
+  var template = '<tr><td>Offer-to-joining interval above threshold</td><td class="muted">Authorised business</td><td class="muted">Median, n and comparison period from the approved KPI</td><td>' + pill("pending") + '</td><td class="muted">Not assigned</td><td class="muted">Not assigned</td><td class="muted">Not assigned</td><td>' + pill("unavailable", "Template") + "</td></tr>";
+  var dqTemplate = '<tr><td>Joining date earlier than offer date</td><td class="muted">Authorised business</td><td class="muted">Count of rows and import version, with drill to quarantined rows</td><td>Interval must be ≥ 0 days</td><td class="muted">Not assigned</td><td class="muted">Data steward (to be named)</td><td class="muted">Not assigned</td><td>' + pill("unavailable", "Template") + "</td></tr>";
+  var h = head("Management Attention", "An evidence-led register. Data-quality exceptions are kept separate from hiring-performance alerts.");
+  h += '<section class="panel"><div class="panel-head"><div><h2>Hiring-performance alerts</h2><div class="sub">Row shown is a layout template with illustrative wording. It is not an observation.</div></div>' + pill("pending") + "</div>" + table("Hiring-performance alerts", [template]) + "</section>";
+  h += '<section class="panel"><div class="panel-head"><div><h2>Data-quality exceptions</h2><div class="sub">Raised by import validation. Row shown is a layout template.</div></div>' + pill("unavailable") + "</div>" + table("Data-quality exceptions", [dqTemplate]) + "</section>";
+  h += '<section class="panel"><h2>How each observation is written</h2><div class="cols3">' +
+    '<div class="callout"><b>Observation</b><span class="muted">What the validated metric shows, with its period, scope and n.</span></div>' +
+    '<div class="callout"><b>Evidence and threshold</b><span class="muted">The KPI version, the import it came from, and the approved threshold if one applies.</span></div>' +
+    '<div class="callout"><b>Management question</b><span class="muted">A question for the owner to answer. Causes and forecasts are never invented.</span></div></div></section>';
+  return h;
+}
+
+function renderAdmin() {
+  var h = head("Administration", "Controlled imports and publication. Visible only to administrators with the matching capability; this role does not grant access to HR records.", '<span class="pill st-denied">Restricted capability</span>');
+  h += '<div class="callout warn"><b>Shown here for design review only.</b><span>In production this page is hidden unless the server confirms the administration capability. Upload is disabled in this preview and no file leaves your device.</span></div>';
+  h += '<section class="panel"><h2>Import workflow</h2><div class="stepper">' +
+    [["Upload", "Store the file as an immutable import version"], ["Validate", "Sheets, headers, IDs, dates, formulas, links"], ["Quarantine", "Hold failing rows. Nothing is deleted or silently corrected"], ["Review", "Steward resolves or accepts each exception"], ["Approve", "Named approver signs off the reconciliation"], ["Publish", "Atomic switch. Last approved dataset kept on failure"]]
+      .map(function (s) { return '<div class="step"><b>' + s[0] + "</b><span>" + s[1] + "</span></div>"; }).join("") + "</div>" +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" disabled>Upload workbook</button><button class="btn" disabled>Publish approved import</button><span class="muted" style="font-size:12px;align-self:center">Disabled in design preview</span></div></section>';
+  var checks = ["Expected worksheets and headers", "Identifier formats and blanks", "Dates and impossible sequences", "Formula errors and external links", "Duplicate and overlapping records", "Status and classification values", "Business mappings", "Referential integrity", "Source reporting date"];
+  h += '<div class="grid2"><section class="panel"><h2>Validation checks</h2><div class="tbl-wrap"><table><thead><tr><th scope="col">Check</th><th scope="col">Result</th></tr></thead><tbody>' + checks.map(function (c) { return "<tr><td>" + c + "</td><td>" + pill("notrun", "Not run") + "</td></tr>"; }).join("") + "</tbody></table></div><p class=\"muted\" style=\"font-size:12px\">Macros are never executed. External links are reported, never resolved.</p></section>";
+  h += '<section class="panel"><h2>Row reconciliation</h2><div class="tbl-wrap"><table><thead><tr><th scope="col">Sheet</th><th scope="col">Received</th><th scope="col">Accepted</th><th scope="col">Quarantined</th></tr></thead><tbody>' + ["MT", "NATS", "NATS Active & Inactive", "Campus", "User Access"].map(function (s) { return "<tr><td>" + s + ' <span class="muted">(expected)</span></td><td class="muted">—</td><td class="muted">—</td><td class="muted">—</td></tr>'; }).join("") + '</tbody></table></div><p class="muted" style="font-size:12px">Received must equal accepted plus quarantined for every sheet before approval.</p>' +
+    '<h3 style="margin-top:8px">Publication history</h3><div class="tbl-wrap"><table><thead><tr><th>Version</th><th>Source as of</th><th>Uploaded</th><th>Published</th><th>Approver</th></tr></thead><tbody><tr class="empty-row"><td colspan="5">No imports yet</td></tr></tbody></table></div></section></div>';
+  return h;
+}
+
+function renderAudit() {
+  if (AUDIT) return renderAuditObserved();
+  var h = head("Workbook audit", "Milestone 1. Inventory of TA Dashboard-2026 - (1).xlsx.", pill("concept", "Audit held in restricted copy"));
+  h += '<div class="callout warn"><b>Findings are not included in this shareable preview.</b><span>The workbook was received on 6 Nov 2026 and inspected read-only, with macros never run and external links never resolved. It carries a sensitivity label, so the data dictionary and findings are kept in a restricted copy of this application that is not published or committed.</span></div>';
+  var rows = ["MT", "NATS", "NATS Active & Inactive", "Campus", "User Access"];
+  h += '<section class="panel"><h2>Worksheets</h2><div class="tbl-wrap"><table><thead><tr><th>Sheet</th><th>Rows</th><th>Columns</th><th>Formulas</th><th>Hidden structures</th><th>External links</th><th>Status</th></tr></thead><tbody>' +
+    rows.map(function (r) { return "<tr><td>" + r + '</td><td class="muted">Restricted</td><td class="muted">Restricted</td><td class="muted">Restricted</td><td class="muted">Restricted</td><td class="muted">Restricted</td><td>' + pill("concept", "In restricted copy") + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  var outputs = ["Exact sheet and column inventory", "Data types and completeness by column", "Formula and date-quality findings", "Candidate, employee, requisition and event identifier assessment", "Duplicate and cross-sheet overlap assessment", "Business naming and hierarchy conflicts", "KPI feasibility against the proposed catalogue", "Access-mapping issues in the User Access sheet", "Decisions requiring approval"];
+  h += '<section class="panel"><h2>What the audit covers</h2><ul class="tight">' + outputs.map(function (o) { return "<li>" + o + "</li>"; }).join("") + '</ul><p class="muted" style="font-size:12px">Method: open read-only with macros disabled, enumerate every sheet including hidden and very-hidden ones, profile every populated column, list every formula and external reference, and keep the profile outside any public repository.</p></section>';
+  return h;
+}
+
+var dictSheet = null;
+function renderAuditObserved() {
+  var A = AUDIT, sheets = Object.keys(A.dict); if (!dictSheet) dictSheet = sheets[0];
+  var h = head("Workbook audit", "Milestone 1. Observed inventory of " + A.file + ". " + A.inspected, pill("done", "Observed") + " " + pill("denied", "Restricted"));
+  h += '<div class="callout warn"><b>Restricted content.</b><span>Schema and data-quality metadata only. No names, contact details, compensation or hiring outcome totals are reproduced. The repository is public, so this copy is never committed.</span></div>';
+  h += '<section class="panel"><h2>Sheet inventory</h2><div class="tbl-wrap"><table><thead><tr><th>Sheet</th><th>Visibility</th><th>Data rows</th><th>Columns</th><th>Formula cells</th><th>Saved state</th><th>Grain observed</th></tr></thead><tbody>' +
+    A.sheets.map(function (r) { return "<tr>" + r.map(function (c, i) { return "<td" + (i >= 2 && i <= 4 ? ' class="num"' : "") + ">" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" +
+    '<dl class="spec">' + A.fileFacts.map(function (f) { return "<dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1]) + "</dd>"; }).join("") + "</dl></section>";
+  var sev = { Critical: "denied", High: "failed", Medium: "pending", Low: "notstarted" };
+  h += '<section class="panel"><div class="panel-head"><h2>Findings</h2><span class="sub">' + A.findings.length + ' findings, most severe first</span></div><div class="tbl-wrap"><table><thead><tr><th>Severity</th><th>Area</th><th>Finding</th><th>Evidence</th><th>Proposed treatment</th></tr></thead><tbody>' +
+    A.findings.map(function (f) { return "<tr><td>" + pill(sev[f[0]], f[0]) + "</td><td>" + esc(f[1]) + "</td><td>" + esc(f[2]) + '</td><td class="muted">' + esc(f[3]) + "</td><td>" + esc(f[4]) + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  h += '<section class="panel"><h2>Identifiers and cross-sheet overlap</h2><div class="tbl-wrap"><table><thead><tr><th>Comparison</th><th>Key</th><th>Result</th><th>Implication</th></tr></thead><tbody>' +
+    A.overlap.map(function (r) { return "<tr>" + r.map(function (c) { return "<td>" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div></section>";
+  h += '<section class="panel"><div class="panel-head"><h2>Data dictionary</h2><span class="sub">Populated counts use each sheet’s data rows. Restricted columns stay out of default analytical views.</span></div>';
+  h += '<div class="tabs" role="tablist">' + sheets.map(function (s) { return '<button role="tab" data-dict="' + esc(s) + '" aria-selected="' + (s === dictSheet) + '">' + esc(s) + "</button>"; }).join("") + "</div>";
+  var clsState = { "Restricted personal": "denied", Identifier: "validation", Date: "concept", Derived: "pending", Attribute: "notstarted" };
+  h += '<div class="tbl-wrap"><table><thead><tr><th>Col</th><th>Header</th><th>Type</th><th>Populated</th><th>Formulas</th><th>Distinct</th><th>Class</th><th>Note</th></tr></thead><tbody>' +
+    A.dict[dictSheet].map(function (c) { var pct = c[4] ? Math.round(100 * c[3] / c[4]) : 0; var note = (A.notes[dictSheet + "|" + c[1]] || "");
+      return '<tr><td class="num">' + c[0] + "</td><td><b>" + esc(c[1]) + "</b></td><td>" + esc(c[2]) + '</td><td class="num">' + c[3] + " / " + c[4] + ' <span class="muted">(' + pct + '%)</span></td><td class="num">' + (c[5] ? c[5] + (c[6] ? ' <span class="muted">(' + c[6] + " external)</span>" : "") : '<span class="muted">—</span>') + '</td><td class="num">' + c[8] + "</td><td>" + pill(clsState[c[7]], c[7]) + "</td><td>" + esc(note) + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  h += '<section class="panel"><h2>Decisions requiring approval</h2><ol class="qlist">' + A.decisions.map(function (d) { return "<li><b>" + esc(d[0]) + "</b><span>" + esc(d[1]) + "</span></li>"; }).join("") + "</ol></section>";
+  return h;
+}
+
+var selKpi = "offers", sortKey = null, sortDir = 1;
+function renderCatalogue() {
+  var h = head("KPI catalogue", "Proposed definitions to investigate. None is certified; all are pending approval and reconciliation against the workbook.", pill("validation", "14 proposed · 0 approved"));
+  var list = KPIS.slice();
+  if (sortKey) list.sort(function (a, b) { return a[sortKey].localeCompare(b[sortKey]) * sortDir; });
+  function th(k, l) { return '<th scope="col" aria-sort="' + (sortKey === k ? (sortDir > 0 ? "ascending" : "descending") : "none") + '"><button data-sort="' + k + '">' + l + (sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : "") + "</button></th>"; }
+  h += '<section class="panel"><div class="tbl-wrap"><table><thead><tr>' + th("name", "KPI") + th("entity", "Counting entity") + th("basis", "Date basis") + th("sheet", AUDIT ? "Observed source columns" : "Expected source") + th("feas", "Feasibility") + '<th scope="col">Status</th></tr></thead><tbody>' +
+    list.map(function (k) { return '<tr class="clickable' + (k.id === selKpi ? " sel" : "") + '" data-kpi="' + k.id + '" tabindex="0"><td><b>' + esc(k.name) + "</b></td><td>" + esc(k.entity) + "</td><td>" + esc(k.basis) + '</td><td class="muted">' + esc(k.sheet) + "</td><td>" + pill(feasState(k.feas), k.feas) + "</td><td>" + pill("validation", "Pending approval") + "</td></tr>"; }).join("") + "</tbody></table></div><p class=\"muted\" style=\"font-size:12px\">Select a row to see its definition record.</p></section>";
+  var k = kpi(selKpi);
+  var known = { "Name and business purpose": k.name + ": " + k.purpose, "Counting entity": k.entity, "Numerator and denominator": k.num + " / " + k.den, "Date basis": k.basis, "Source sheet and exact columns": k.sheet + (AUDIT ? "" : "; exact columns after audit"), "Definition version and approval status": "v0.1 proposed, pending approval" };
+  h += '<section class="panel"><div class="panel-head"><h2>Definition record: ' + esc(k.name) + "</h2>" + pill("validation") + '</div><div class="callout warn"><b>Open question</b><span>' + esc(k.open) + '</span></div><div class="tbl-wrap"><table><tbody>' +
+    CATALOGUE_FIELDS.map(function (f) { return '<tr><th scope="row" style="width:34%;text-transform:none;letter-spacing:0;font-size:12.5px">' + f + "</th><td" + (known[f] ? "" : ' class="muted"') + ">" + esc(known[f] || "To be confirmed after workbook inspection") + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  h += notes(["One row is not assumed to be one hire.", "One requisition is not assumed to be one candidate.", "An offer date is not assumed to identify a unique offer event.", "A joining date alone does not confirm a completed joining.", "Missing values are never treated as zero."]);
+  return h;
+}
+
+function renderAccess() {
+  var h = head("Access & security", "Proposed access matrix and enforcement design. Deny by default; every check runs on the server.", pill("concept", "Proposed design"));
+  var cap = ["Data scope", "Dashboards", "Candidate-level detail", "Sensitive fields", "Exports", "Import & publish", "Manage access"];
+  var roles = [
+    ["HR Head", "All approved India scopes", "Yes", "Approved views only", "By documented approval", "Yes, logged", "No", "No"],
+    ["TA Head", "All approved India scopes", "Yes", "Yes, for operational review", "By documented approval", "Yes, logged", "Separately approved", "No"],
+    ["P&C Director", "Explicitly assigned scopes only", "Yes, within scope", "No (default)", "No", "Aggregates within scope", "No", "No"],
+    ["Administrator", "None by default", "No (default)", "No", "No", "No", "If assigned", "If assigned, dual approval"],
+    ["Recruiter (to confirm)", "Own requisitions", "Own work only", "Own candidates", "No", "No", "No", "No"]
+  ];
+  h += '<section class="panel"><h2>Proposed role matrix</h2><div class="tbl-wrap"><table><thead><tr><th scope="col">Role</th>' + cap.map(function (c) { return '<th scope="col">' + c + "</th>"; }).join("") + "</tr></thead><tbody>" +
+    roles.map(function (r) { return '<tr><th scope="row" style="text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--text)">' + r[0] + "</th>" + r.slice(1).map(function (c) { return "<td" + (/^No/.test(c) ? ' class="muted"' : "") + ">" + c + "</td>"; }).join("") + "</tr>"; }).join("") +
+    '</tbody></table></div><p class="muted" style="font-size:12px">Administration never implies access to HR records. The User Access sheet is treated as proposed assignments for review, not as permission evidence.</p></section>';
+  h += '<div class="grid2"><section class="panel"><h2>Where permission is enforced</h2><ul class="tight">' +
+    ["Queries and APIs (row-level filter applied server-side)", "Charts, totals and drill-downs", "Search and filter suggestions", "Detail records", "Exports and scheduled reports", "Cached results (cache key includes the user's scope)", "Generated summaries and observations"].map(function (x) { return "<li>" + x + "</li>"; }).join("") +
+    '</ul></section><section class="panel"><h2>Security controls</h2><ul class="tight">' +
+    ["Enterprise sign-in (OIDC or SAML) with verified identities", "No role-selection control that grants privileges", "Tampered business IDs, URLs and API parameters rejected", "Revocation takes effect on the next request; caches purged", "Permission changes and sensitive access written to an audit log", "Contact details, DOB, personal IDs, compensation and BGV data kept out of analytical views"].map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></section></div>";
+  h += '<section class="panel"><h2>Mapping questions to resolve</h2><div class="tbl-wrap"><table><thead><tr><th>Label seen in brief</th><th>Possible match</th><th>Treatment</th></tr></thead><tbody>' +
+    '<tr><td>DTO</td><td>D&amp;IT</td><td>Not inferred. Needs an approved effective-dated mapping.</td></tr><tr><td>TTI</td><td>GTT</td><td>Not inferred. Needs an approved effective-dated mapping.</td></tr><tr><td>Multi-business assignments</td><td>—</td><td>Each scope granted explicitly; union, never wildcard.</td></tr></tbody></table></div></section>';
+  if (AUDIT && AUDIT.access) h += '<section class="panel"><div class="panel-head"><h2>Observed in the User Access sheet</h2>' + pill("validation", "Restricted finding") + '</div><ul class="tight">' + AUDIT.access.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></section>";
+  return h;
+}
+
+function renderTech() {
+  var h = head("Technology options", "A comparison to support a decision. No Volvo licensing, cloud approval or SAP SuccessFactors access is assumed.", pill("concept", "Proposal"));
+  var opts = ["Enterprise BI with row-level security", "Microsoft apps + reporting", "Custom web app (React/TS, PostgreSQL, OIDC)", "Existing approved platform"];
+  var crit = [
+    ["Enterprise identity", "Strong, built in", "Strong, built in", "Must be built and reviewed", "Depends on platform"],
+    ["Row- and field-level control", "Row-level strong; field-level varies", "Good with careful design", "Full control, full responsibility", "Unknown"],
+    ["Import and approval workflow", "Weak; needs a separate flow", "Good with flow tooling", "Fully tailored", "Unknown"],
+    ["User experience", "Good, constrained by tool", "Moderate", "Highest", "Varies"],
+    ["Hosting and data residency", "Tenant settings decide", "Tenant settings decide", "Chosen by Volvo IT", "Already approved"],
+    ["Licensing and running cost", "Per-user licences", "Per-user licences", "Hosting plus engineering time", "Often lowest"],
+    ["Maintenance", "Low", "Moderate", "Highest; needs a team", "Low to moderate"],
+    ["Export governance", "Tenant policy", "Tenant policy", "Fully custom", "Platform policy"],
+    ["Future integration", "Good with connectors", "Good", "Open", "Platform-bound"]
+  ];
+  h += '<section class="panel"><div class="tbl-wrap"><table><thead><tr><th>Criterion</th>' + opts.map(function (o) { return "<th>" + o + "</th>"; }).join("") + "</tr></thead><tbody>" + crit.map(function (r) { return '<th scope="row" style="text-transform:none;letter-spacing:0;font-size:12.5px;color:var(--text)">' + r[0] + "</th>" + r.slice(1).map(function (c) { return "<td>" + c + "</td>"; }).join(""); }).map(function (r) { return "<tr>" + r + "</tr>"; }).join("") + "</tbody></table></div></section>";
+  h += '<div class="callout"><b>Provisional recommendation</b><span>If Volvo India already has a governed BI tenant with row-level security and approved data residency, use it for the dashboards and add a small controlled import and approval step in front of it. Build a custom application only if that combination cannot meet the field-level, export and approval requirements. This choice needs IT and information-security approval.</span></div>';
+  return h;
+}
+
+function renderDesign() {
+  var h = head("Design system", "Tokens from the supplied palette, plus a derived deep slate for readable text. These are not official Volvo brand standards.", pill("concept", "Design concept"));
+  var sw = [["Slate · accent, series 1", "--accent", "#9A9CA6"], ["Light grey · borders, series 2", "--grey", "#C1C1C3"], ["Cream · page background", "--bg", "#EDE9DE"], ["Blush · highlights", "--blush", "#D4B8AD"], ["Deep slate · text, navigation", "--rail", "#2F3240"], ["Slate ink · secondary text", "--text-2", "#5D606E"], ["Surface", "--surface", "#FFFFFF"]];
+  h += '<section class="panel"><h2>Colour palette (light theme values)</h2><div class="swatches">' + sw.map(function (s) { return '<div class="sw"><i style="background:var(' + s[1] + ')"></i><div><b>' + s[0] + "</b><br><code>" + s[1] + " · " + s[2] + "</code></div></div>"; }).join("") + '</div><p class="muted" style="font-size:12px">Amber and red stay outside the palette and appear only on labelled exceptions or approved alerts, always with a text label and a symbol so meaning never relies on colour.</p></section>';
+  h += '<section class="panel"><h2>Display states</h2><p class="muted" style="font-size:12.5px">Unavailable values are never shown as zero. Each state has its own label, symbol and explanation.</p><div class="states">' + Object.keys(STATES).map(function (k) { return '<div class="state-card">' + pill(k) + "<p>" + esc(STATES[k].text) + "</p></div>"; }).join("") + "</div></section>";
+  h += '<div class="grid2"><section class="panel"><h2>Type and spacing</h2><ul class="tight"><li>Enterprise sans-serif stack: Segoe UI, then Noto Sans, then Arial</li><li>Scale: 22 page title · 15 panel title · 14 body · 12 supporting · 28 KPI value</li><li>Tabular figures in every number and table column</li><li>8-point spacing: 4, 8, 16, 24, 32, 48</li><li>1px borders, a single faint shadow, 6px radius</li></ul></section>' +
+    '<section class="panel"><h2>Chart rules</h2><ul class="tight"><li>Bars, columns, lines and dot plots only. No gauges or 3D.</li><li>Slate for the main series, light grey for a comparison series, blush only to highlight one selected mark. No rainbow palettes.</li><li>Direct labels where possible; every axis names its unit.</li><li>Cycle-time charts show median with n and IQR.</li><li>Unknown / Not recorded always drawn as its own category.</li></ul></section></div>';
+  return h;
+}
+
+function renderRegister() {
+  var h = head("Delivery register", "Completed work, evidence, open decisions and the next approval. Concept, implemented, validated and production-ready are kept distinct.", "");
+  var ms = [
+    ["1", "Workbook audit and data dictionary", AUDIT ? "done" : "concept", AUDIT ? "Observed: inspection complete" : "Inspected; held in restricted copy", AUDIT ? "Workbook audit page (restricted)" : "Restricted copy, not in this preview"],
+    ["2", "KPI catalogue and reconciliation decisions", "concept", "Proposed (14 KPIs)", "This page, KPI catalogue"],
+    ["3", "Wireframes and design system", "concept", "Design concept", "This interactive specification"],
+    ["4", "Access matrix and security architecture", "concept", "Proposed", "Access & security page"],
+    ["5", "Technology recommendation", "concept", "Provisional", "Technology options page"],
+    ["6", "Approved working prototype", "notstarted", "Not started", "Needs milestones 1–5 approved"],
+    ["7", "Import validation and test evidence", "notstarted", "Not started", "—"],
+    ["8", "Deployment checklist and guidance", "notstarted", "Not started", "—"]
+  ];
+  h += '<section class="panel"><h2>Milestones</h2><div class="tbl-wrap"><table><thead><tr><th>#</th><th>Deliverable</th><th>Status</th><th>Evidence</th></tr></thead><tbody>' + ms.map(function (m) { return '<tr><td class="num">' + m[0] + "</td><td>" + m[1] + "</td><td>" + pill(m[2], m[3]) + '</td><td class="muted">' + m[4] + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  var tests = ["KPI calculations and counting rules", "Duplicate and overlapping records", "Missing values and invalid dates", "Business mapping and historical treatment", "Multi-business assignments", "Cross-business isolation", "Tampered URLs, filters and API requests", "Sensitive-field restrictions", "Export and cache isolation", "Invalid authentication and revoked permissions", "Large imports and failed publication", "Historical reporting consistency"];
+  h += '<div class="grid2"><section class="panel"><h2>Automated tests</h2><div class="tbl-wrap"><table><thead><tr><th>Test area</th><th>Result</th></tr></thead><tbody>' + tests.map(function (t) { return "<tr><td>" + t + "</td><td>" + pill("notrun", "Not run") + "</td></tr>"; }).join("") + '</tbody></table></div><p class="muted" style="font-size:12px">No backend or data exists yet, so no test has been executed.</p></section>';
+  h += '<section class="panel"><h2>Approvals needed for milestone 2</h2><ol class="qlist">' +
+    "<li><b>Approve the counting decisions raised by the audit.</b><span>Which rows count as candidates, offers and confirmed joiners, and how repeated people are counted once.</span></li>" +
+    "<li><b>Confirm the approved India business hierarchy.</b><span>The official list of businesses and departments, and any effective-dated renames.</span></li>" +
+    "<li><b>Name the verified people and scopes.</b><span>HR Head, TA Head, each P&amp;C Director and their businesses, and administrators.</span></li>" +
+    "<li><b>Confirm the counting rules for offers, joiners and declines.</b><span>Which field confirms a joining, and whether a candidate can hold more than one offer.</span></li>" +
+    "<li><b>Name the permitted development environment.</b><span>Where real data may be processed during build and testing.</span></li>" +
+    "<li><b>Decide on synthetic demonstration data.</b><span>Only with your approval, and labelled “Synthetic demonstration data, not Volvo results”.</span></li>" +
+    '</ol></section></div><section class="panel"><h2>Risks and blockers</h2><ul class="tight"><li><b>Blocker:</b> no KPI can be validated until the counting decisions from the audit are approved.</li><li><b>Risk:</b> candidate rows may lack a requisition or offer identifier, which would limit cycle-time and cohort metrics.</li><li><b>Risk:</b> the User Access sheet may not reflect verified identities.</li><li><b>Risk:</b> NATS and Campus people may also appear in MT, causing double counting until reconciled.</li></ul></section>';
+  return h;
+}
+
+/* ---------------- Shell ---------------- */
+function buildNav() {
+  function link(k) { var p = PAGES[k]; return '<a href="#' + k + '" data-route="' + k + '"><span>' + esc(p.nav) + "</span>" + (p.badge ? "<small>" + p.badge + "</small>" : "") + "</a>"; }
+  document.getElementById("nav-dash").insertAdjacentHTML("beforeend", ORDER_DASH.map(link).join(""));
+  document.getElementById("nav-gov").insertAdjacentHTML("beforeend", ORDER_GOV.map(link).join(""));
+}
+function current() { var k = (location.hash || "").slice(1); return PAGES[k] ? k : "executive"; }
+function render() {
+  var k = current(), p = PAGES[k], c = document.getElementById("content");
+  c.innerHTML = p.custom ? p.custom() : renderDash(k);
+  document.querySelectorAll(".nav a").forEach(function (a) { if (a.getAttribute("data-route") === k) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  document.title = "Volvo Group India TA MIS";
+  paintChips();
+  try { localStorage.setItem("tamis-route", k); } catch (e) {}
+}
+
+document.addEventListener("change", function (e) {
+  var f = e.target.getAttribute && e.target.getAttribute("data-f");
+  if (f) { filterState[f] = e.target.value; paintChips(); }
+});
+document.addEventListener("click", function (e) {
+  var t = e.target;
+  var def = t.closest && t.closest("[data-def]");
+  if (def) { var d = document.getElementById(def.getAttribute("data-def")); d.hidden = !d.hidden; def.setAttribute("aria-expanded", String(!d.hidden)); return; }
+  if (t.id === "resetFilters") { filterState = {}; document.querySelectorAll("[data-f]").forEach(function (s) { s.value = "0"; }); paintChips(); return; }
+  var clr = t.getAttribute && t.getAttribute("data-clear");
+  if (clr) { filterState[clr] = 0; var s = document.getElementById(clr); if (s) s.value = "0"; paintChips(); return; }
+  var dsh = t.getAttribute && t.getAttribute("data-dict");
+  if (dsh) { dictSheet = dsh; render(); var db = document.querySelector('[data-dict="' + dsh.replace(/"/g, '\\"') + '"]'); if (db) db.focus(); return; }
+  var tab = t.getAttribute && t.getAttribute("data-tab");
+  if (tab) { progTab = tab; render(); var b = document.getElementById("tab-" + tab); if (b) b.focus(); return; }
+  var sk = t.closest && t.closest("[data-sort]");
+  if (sk) { var key = sk.getAttribute("data-sort"); if (sortKey === key) sortDir = -sortDir; else { sortKey = key; sortDir = 1; } render(); return; }
+  var row = t.closest && t.closest("[data-kpi]");
+  if (row) { selKpi = row.getAttribute("data-kpi"); render(); return; }
+  if (t.closest && t.closest(".nav a") && window.innerWidth <= 900) toggleMenu(false);
+});
+document.addEventListener("keydown", function (e) {
+  var row = e.target.closest && e.target.closest("[data-kpi]");
+  if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selKpi = row.getAttribute("data-kpi"); render(); }
+  if (e.key === "Escape") toggleMenu(false);
+});
+function toggleMenu(open) { var r = document.getElementById("rail"), b = document.getElementById("menuBtn"); r.classList.toggle("open", open); b.setAttribute("aria-expanded", String(open)); }
+document.getElementById("menuBtn").addEventListener("click", function () { toggleMenu(!document.getElementById("rail").classList.contains("open")); });
+document.getElementById("themeBtn").addEventListener("click", function () {
+  var root = document.documentElement, cur = root.getAttribute("data-theme");
+  var dark = cur ? cur === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  root.setAttribute("data-theme", dark ? "light" : "dark");
+});
+window.addEventListener("hashchange", function () { render(); var c = document.getElementById("content"); c.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+
+if (AUDIT) { var bn = document.getElementById("banner"); bn.innerHTML = "<b>Restricted copy.</b> Contains schema and data-quality findings from a sensitivity-labelled workbook. Dashboard values stay placeholders. Do not publish, upload or commit this file."; }
+buildNav();
+if (!location.hash) { try { var saved = localStorage.getItem("tamis-route"); if (saved && PAGES[saved]) location.hash = saved; } catch (e) {} }
+render();
+})();
+</script>
