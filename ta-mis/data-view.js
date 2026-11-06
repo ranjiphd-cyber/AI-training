@@ -136,7 +136,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
   function executive() {
     var R = scoped(D.recs), m = M(R), h = head("Executive Overview", "Hiring delivery across " + POP) + T.renderFilters();
     h += '<div class="kpis">' +
-      card("offers", nf(m.offers.length), "offers", "By offer date in period") +
+      card("offers", nf(m.offers.length), "offers", "By offer date in period · excludes NATS (no offer dates)") +
       card("joiners", nf(m.joiners.length), "people", "By joining date · " + ["MT", "Campus", "NATS"].map(function (x) { return x + " " + nf(m.joiners.filter(function (r) { return r.s === x; }).length); }).join(" · ")) +
       card("yettojoin", nf(m.ytj.length), "people", "Status Offered at report date; not period-filtered") +
       card("declines", nf(m.declines.length), "offers", "By offer date · decline rate " + pct(m.drate.num, m.drate.den) + " of " + nf(m.drate.den) + " offers with an outcome") +
@@ -145,7 +145,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
     var I = bizOnly(D.internal), ij = I.filter(function (r) { return r.o === "Joined"; }).length, io = I.filter(function (r) { return r.o === "Offered"; }).length;
     h += '<section class="separate" aria-label="Reported separately"><div><h2>Reported separately</h2><p>Internal-posting fills, counted with or without a joining date and excluded from every other figure on this site. Business filter applies; other filters do not.</p></div><div class="kpis">' +
       card("internal", nf(ij), "people", "Cumulative at report date · joining date not recorded") +
-      '<article class="kpi"><div class="kpi-top"><span class="kpi-name">Internal offered</span></div><div class="kpi-value num live">' + nf(io) + '<span>positions</span></div><div class="kpi-basis">Internal-posting rows with status Offered and no candidate</div><div>' + pill("pending", "Treatment awaiting decision") + "</div></article></div></section>";
+      '<article class="kpi"><div class="kpi-top"><span class="kpi-name">Offered – internal</span></div><div class="kpi-value num live">' + nf(io) + '<span>positions</span></div><div class="kpi-basis">Internal-posting rows with status Offered. For information only; not counted in any total.</div><div>' + pill("unavailable", "Not counted") + "</div></article></div></section>";
     var p = period(), ms = monthsBetween(p[1] || "2025-10-01", p[2] && p[2] < D.asof ? p[2] : D.asof.slice(0, 7) + "-01");
     var cats = ms.map(function (k) { return { key: k, label: mlabel(k) }; });
     var off = ms.map(function (k) { return m.offers.filter(function (r) { return r.od.slice(0, 7) === k; }).length; });
@@ -246,7 +246,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
       var progs = count(N.filter(function (r) { return r.prog; }), "prog");
       h += '<div class="kpis">' + card("nats", nf(J.length), "trainees", "Status Joined, by joining date in period") + '<article class="kpi"><div class="kpi-top"><span class="kpi-name">NATS declined</span></div><div class="kpi-value num live">' + nf(Dd.length) + '<span>candidates</span></div><div class="kpi-basis">Status Declined; no offer date recorded, so not included in executive declines</div><div>' + pill(PROV) + "</div></article></div>";
       h += '<div class="grid2">' + panel("NATS joining by month", "Trainees joined, by joining month", cols(ms.map(function (k) { return { label: mlabel(k) }; }), [{ name: "Joined", values: ms.map(function (k) { return J.filter(function (r) { return r.dj.slice(0, 7) === k; }).length; }) }], { label: "NATS joiners by month" })) +
-        panel("NATS joiners by business area", "Share of " + nf(J.length) + " · programme rows show as Not recorded", hbars(count(J, "b"), J.length, { drill: "f-business" }), PROV, progs.length ? "Programmes without a business area: " + progs.map(function (p) { return esc(p.label) + " (" + p.value + ")"; }).join(", ") + ". Owning business awaits decision." : "") +
+        panel("NATS joiners by business area", "Share of " + nf(J.length) + " joiners", hbars(count(J, "b"), J.length, { drill: "f-business" }), PROV, progs.length ? "Programme labels mapped (approved): PTI-Emob and SO&T under TTI; CSR as CSR Trust. Rows in scope: " + progs.map(function (p) { return esc(p.label) + " " + p.value; }).join(", ") + "." : "") +
         panel("NATS joiners by batch", "Share of " + nf(J.length), hbars(count(J, "batch"), J.length)) +
         panel("Gender of NATS joiners", "Share of " + nf(J.length), hbars(count(J, "g"), J.length)) + "</div>";
       h += T.notes([D.notIncluded.natsOpen + " NATS rows are open positions with no candidate and are not counted.", "NATS joiners are included in the executive joiner total and also shown here separately."]);
