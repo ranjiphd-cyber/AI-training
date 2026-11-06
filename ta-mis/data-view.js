@@ -15,7 +15,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
     ["Q1 2026", "2026-01-01", "2026-03-31"], ["Q2 2026", "2026-04-01", "2026-06-30"], ["Q3 2026", "2026-07-01", "2026-09-30"], ["Q4 2026", "2026-10-01", "2026-12-31"]];
   var BUS = uniq(D.recs.map(function (r) { return r.b; }).concat(D.nats.map(function (r) { return r.b; }), D.ai.map(function (r) { return r.b; }), D.internal.map(function (r) { return r.b; })));
   var DEPTS = uniq(D.recs.map(function (r) { return r.d; }));
-  var STREAMS = ["Lateral", "Fresher (non-campus)", "Campus GET", "Campus PGET", "NATS"];
+  var STREAMS = ["Lateral", "Fresher (non-campus)", "Campus GET", "Campus PGET"];
   var ETS = uniq(D.recs.map(function (r) { return r.et; }));
   var JLS = uniq(D.recs.map(function (r) { return r.jl; }));
   var filters = [
@@ -130,20 +130,22 @@ window.TAMIS_VIEW_FACTORY = function (T) {
     var p = period(), chips = '<span class="tag">' + esc(p[0]) + '</span><span class="tag">' + esc(fv("f-business") || "All business areas") + '</span><span class="tag">Report date ' + esc(D.asof) + " (not verified)</span>";
     return T.head(title, purpose, chips);
   }
-  var POP = "MT external candidates (Source ≠ Campus), the Campus sheet and NATS trainees. Internal joiners are reported separately. NATS has no offer or requisition dates, so it appears in joiner figures only.";
+  var POP = "MT external candidates (lateral, fresher and FTC; Source ≠ Campus) plus the Campus sheet. NATS and internal joiners are reported separately and never added to these figures.";
 
   /* ---------- pages ---------- */
   function executive() {
     var R = scoped(D.recs), m = M(R), h = head("Executive Overview", "Hiring delivery across " + POP) + T.renderFilters();
     h += '<div class="kpis">' +
-      card("offers", nf(m.offers.length), "offers", "By offer date in period · excludes NATS (no offer dates)") +
-      card("joiners", nf(m.joiners.length), "people", "By joining date · " + ["MT", "Campus", "NATS"].map(function (x) { return x + " " + nf(m.joiners.filter(function (r) { return r.s === x; }).length); }).join(" · ")) +
+      card("offers", nf(m.offers.length), "offers", "By offer date in period") +
+      card("joiners", nf(m.joiners.length), "people", "By joining date · " + ["MT", "Campus"].map(function (x) { return x + " " + nf(m.joiners.filter(function (r) { return r.s === x; }).length); }).join(" · ")) +
       card("yettojoin", nf(m.ytj.length), "people", "Status Offered at report date; not period-filtered") +
       card("declines", nf(m.declines.length), "offers", "By offer date · decline rate " + pct(m.drate.num, m.drate.den) + " of " + nf(m.drate.den) + " offers with an outcome") +
       card("a2o", medTxt(m.a2o), "days median", "Calendar days · n " + m.a2o.n + (m.a2o.n >= MIN_N ? " · IQR " + m.a2o.q1 + "–" + m.a2o.q3 : "")) +
       card("o2j", medTxt(m.o2j), "days median", "Calendar days · n " + m.o2j.n + (m.o2j.n >= MIN_N ? " · IQR " + m.o2j.q1 + "–" + m.o2j.q3 : "")) + "</div>";
+    var NJ = bizOnly(D.nats).filter(function (r) { return r.o === "Joined" && inP(r.dj); }).length;
     var I = bizOnly(D.internal), ij = I.filter(function (r) { return r.o === "Joined"; }).length, io = I.filter(function (r) { return r.o === "Offered"; }).length;
-    h += '<section class="separate" aria-label="Reported separately"><div><h2>Reported separately</h2><p>Internal-posting fills, counted with or without a joining date and excluded from every other figure on this site. Business filter applies; other filters do not.</p></div><div class="kpis">' +
+    h += '<section class="separate" aria-label="Reported separately"><div><h2>Reported separately</h2><p>NATS apprentices and internal-posting fills. Never added to the joiner total or any chart above. Business filter applies to both; the period filter applies to NATS only.</p></div><div class="kpis">' +
+      card("nats", nf(NJ), "apprentices", "NATS Status Joined, by joining date · job level Apprentice") +
       card("internal", nf(ij), "people", "Cumulative at report date · joining date not recorded") +
       '<article class="kpi"><div class="kpi-top"><span class="kpi-name">Offered – internal</span></div><div class="kpi-value num live">' + nf(io) + '<span>positions</span></div><div class="kpi-basis">Internal-posting rows with status Offered. For information only; not counted in any total.</div><div>' + pill("unavailable", "Not counted") + "</div></article></div></section>";
     var p = period(), ms = monthsBetween(p[1] || "2025-10-01", p[2] && p[2] < D.asof ? p[2] : D.asof.slice(0, 7) + "-01");
@@ -154,7 +156,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
     h += '<div class="grid2">' +
       panel("Monthly hiring activity", "Offers by offer month and joiners by joining month. Joiners in a month are not conversions of that month's offers.", cols(cats, [{ name: "Offers", values: off }, { name: "Joiners", values: joi }], { label: "Offers and joiners by month" }), PROV, "Offer dates start in Oct 2025, so earlier months are not comparable.") +
       panel("Joiners by business area", "Share of " + nf(J.length) + " joiners in period · select a bar to filter", hbars(count(J, "b"), J.length, { drill: "f-business" })) +
-      panel("Joiners by hiring stream", "Each stream shown separately; share of " + nf(J.length) + " joiners · select a bar to filter", hbars(count(J, "st"), J.length, { drill: "f-stream" }) + '<h3 class="mini">By source sheet</h3>' + hbars(count(J, "s"), J.length)) +
+      panel("Joiners by hiring stream", "Share of " + nf(J.length) + " joiners · select a bar to filter · NATS shown separately above", hbars(count(J, "st"), J.length, { drill: "f-stream" })) +
       panel("Joiners by job level and employment type", "Share of " + nf(J.length) + " joiners", hbars(count(J, "jl"), J.length, { limit: 8 }) + '<h3 class="mini">Employment type</h3>' + hbars(count(J, "et"), J.length)) +
       panel("Joiners by recorded gender", "Share of " + nf(J.length) + " joiners; Not recorded shown when present", hbars(count(J, "g"), J.length)) +
       panel("Joiners by recorded source", "Source labels exactly as recorded (approved); share of " + nf(J.length) + " joiners", hbars(count(J, "src"), J.length)) +
@@ -182,8 +184,8 @@ window.TAMIS_VIEW_FACTORY = function (T) {
     var bs = uniq(R.map(function (r) { return r.b; })), rows = bs.map(function (b) { var m = M(R.filter(function (r) { return r.b === b; })); return { b: b, m: m }; }).sort(function (a, b) { return b.m.joiners.length - a.m.joiners.length; });
     var tot = M(R);
     h += '<div class="kpis">' + card("offers", nf(tot.offers.length), "offers", "By offer date") + card("joiners", nf(tot.joiners.length), "people", "By joining date") + card("declines", nf(tot.declines.length), "offers", "Decline rate " + pct(tot.drate.num, tot.drate.den)) + card("a2j", medTxt(tot.a2j), "days median", "Approval to joining · n " + tot.a2j.n) + "</div>";
-    h += panel("Outcomes by business area", "Each measure on its own date basis · select a row to filter", table(["Business area", "Offers", "Joiners", "of which MT", "Campus", "NATS", "Yet to join", "Declines", "Decline rate", "Median approval→joining (n)"],
-      rows.map(function (x) { var js = function (k) { return nf(x.m.joiners.filter(function (r) { return r.s === k; }).length); }; return { attrs: ' class="clickable" data-setfilter="f-business" data-value="' + esc(x.b) + '" tabindex="0"', cells: ["<b>" + esc(x.b) + "</b>", nf(x.m.offers.length), "<b>" + nf(x.m.joiners.length) + "</b>", js("MT"), js("Campus"), js("NATS"), nf(x.m.ytj.length), nf(x.m.declines.length), x.m.drate.den >= MIN_N ? pct(x.m.drate.num, x.m.drate.den) : "n<" + MIN_N, medTxt(x.m.a2j) + ' <span class="muted">(' + x.m.a2j.n + ")</span>"] }; }), { num: [1, 2, 3, 4, 5, 6, 7, 8, 9] }));
+    h += panel("Outcomes by business area", "Each measure on its own date basis · select a row to filter", table(["Business area", "Offers", "Joiners", "of which MT", "Campus", "NATS (separate)", "Yet to join", "Declines", "Decline rate", "Median approval→joining (n)"],
+      rows.map(function (x) { var js = function (k) { return nf(x.m.joiners.filter(function (r) { return r.s === k; }).length); }; return { attrs: ' class="clickable" data-setfilter="f-business" data-value="' + esc(x.b) + '" tabindex="0"', cells: ["<b>" + esc(x.b) + "</b>", nf(x.m.offers.length), "<b>" + nf(x.m.joiners.length) + "</b>", js("MT"), js("Campus"), '<span class="muted">' + nf(bizOnly(D.nats).filter(function (r) { return r.b === x.b && r.o === "Joined" && inP(r.dj); }).length) + "</span>", nf(x.m.ytj.length), nf(x.m.declines.length), x.m.drate.den >= MIN_N ? pct(x.m.drate.num, x.m.drate.den) : "n<" + MIN_N, medTxt(x.m.a2j) + ' <span class="muted">(' + x.m.a2j.n + ")</span>"] }; }), { num: [1, 2, 3, 4, 5, 6, 7, 8, 9] }));
     var J = tot.joiners;
     h += '<div class="grid2">' + panel("Joiners by department", fv("f-business") ? "Within " + esc(fv("f-business")) : "All business areas · filter a business to focus", hbars(count(J, "d"), J.length, { limit: 12, drill: "f-dept" })) +
       panel("Approval to joining by business area", "Median and interquartile range, calendar days", dots(rows.map(function (x) { return { label: x.b, s: x.m.a2j }; }))) +
@@ -233,7 +235,7 @@ window.TAMIS_VIEW_FACTORY = function (T) {
       panel("Hiring source of joiners", "Labels exactly as recorded (approved); share of " + nf(J.length) + " joiners", hbars(count(J, "src"), J.length)) +
       panel("Specific source", "Free-text source detail", '<div class="nodata">' + pill("denied") + "<p>Specific Source is free text and can name individuals, so it is excluded from this build.</p></div>", "denied") +
       panel("Employment type of joiners", "Share of " + nf(J.length) + " joiners", hbars(count(J, "et"), J.length)) + "</div>";
-    return h + T.notes(["Gender is used only as recorded; nothing is inferred.", "Group shares below n=" + MIN_N + " are suppressed (approved). Joiner figures include NATS trainees."]);
+    return h + T.notes(["Gender is used only as recorded; nothing is inferred.", "Group shares below n=" + MIN_N + " are suppressed (approved). NATS apprentices are not included in these shares."]);
   }
   var tabs = [["nats", "NATS Hiring"], ["natsstatus", "NATS Active / Inactive"], ["campus", "Campus Hiring"]];
   function programmes() {
@@ -244,12 +246,12 @@ window.TAMIS_VIEW_FACTORY = function (T) {
       var N = bizOnly(D.nats), J = N.filter(function (r) { return r.o === "Joined" && inP(r.dj); }), Dd = N.filter(function (r) { return r.o === "Declined"; });
       var ms = uniq(J.map(function (r) { return r.dj.slice(0, 7); }));
       var progs = count(N.filter(function (r) { return r.prog; }), "prog");
-      h += '<div class="kpis">' + card("nats", nf(J.length), "trainees", "Status Joined, by joining date in period") + '<article class="kpi"><div class="kpi-top"><span class="kpi-name">NATS declined</span></div><div class="kpi-value num live">' + nf(Dd.length) + '<span>candidates</span></div><div class="kpi-basis">Status Declined; no offer date recorded, so not included in executive declines</div><div>' + pill(PROV) + "</div></article></div>";
+      h += '<div class="kpis">' + card("nats", nf(J.length), "trainees", "Status Joined, by joining date in period") + '<article class="kpi"><div class="kpi-top"><span class="kpi-name">NATS declined</span></div><div class="kpi-value num live">' + nf(Dd.length) + '<span>candidates</span></div><div class="kpi-basis">Status Declined; shown on this tab only (approved)</div><div>' + pill(PROV) + "</div></article></div>";
       h += '<div class="grid2">' + panel("NATS joining by month", "Trainees joined, by joining month", cols(ms.map(function (k) { return { label: mlabel(k) }; }), [{ name: "Joined", values: ms.map(function (k) { return J.filter(function (r) { return r.dj.slice(0, 7) === k; }).length; }) }], { label: "NATS joiners by month" })) +
         panel("NATS joiners by business area", "Share of " + nf(J.length) + " joiners", hbars(count(J, "b"), J.length, { drill: "f-business" }), PROV, progs.length ? "Programme labels mapped (approved): PTI-Emob and SO&T under TTI; CSR as CSR Trust. Rows in scope: " + progs.map(function (p) { return esc(p.label) + " " + p.value; }).join(", ") + "." : "") +
         panel("NATS joiners by batch", "Share of " + nf(J.length), hbars(count(J, "batch"), J.length)) +
         panel("Gender of NATS joiners", "Share of " + nf(J.length), hbars(count(J, "g"), J.length)) + "</div>";
-      h += T.notes([D.notIncluded.natsOpen + " NATS rows are open positions with no candidate and are not counted.", "NATS joiners are included in the executive joiner total and also shown here separately."]);
+      h += T.notes([D.notIncluded.natsOpen + " NATS rows are open positions with no candidate and are not counted.", "NATS joiners are shown separately on the Executive Overview and never added to the joiner total.", "Job level for all NATS apprentices: Apprentice (approved).", "NATS declines appear only on this tab (approved)."]);
     } else if (t === "natsstatus") {
       var A = bizOnly(D.ai), act = A.filter(function (r) { return r.st === "Active"; }).length;
       var bs = count(A, "b").map(function (b) { var X = A.filter(function (r) { return r.b === b.label; }); return { label: b.label, a: X.filter(function (r) { return r.st === "Active"; }).length, i: X.filter(function (r) { return r.st === "Inactive"; }).length }; });

@@ -125,7 +125,7 @@ p { margin: 0; }
 
 /* ---------- KPI cards ---------- */
 .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s3); }
-.separate .kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 300px)); }
+.separate .kpis { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); }
 .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; min-height: 148px; box-shadow: var(--shadow); }
 .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); }
 .kpi-name { font-size: 12.5px; font-weight: 650; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -153,7 +153,7 @@ p { margin: 0; }
 .spec dd { margin: 0; }
 .panel-foot { display: flex; flex-wrap: wrap; gap: var(--s1); }
 
-.separate { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--s3); align-items: start; border: 1px dashed var(--border); border-radius: var(--r); padding: var(--s3); background: var(--surface-2); }
+.separate { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 3fr); gap: var(--s3); align-items: start; border: 1px dashed var(--border); border-radius: var(--r); padding: var(--s3); background: var(--surface-2); }
 .separate h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
 .separate p { font-size: 12.5px; color: var(--text-2); margin-top: 4px; max-width: 48ch; }
 @media (max-width: 900px) { .separate { grid-template-columns: minmax(0, 1fr); } }
