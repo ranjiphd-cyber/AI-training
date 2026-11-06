@@ -1,0 +1,14 @@
+{
+  "name": "VTC Control Centre (demo, synthetic data)",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "VTC Control Centre", "onAutoForward": "openPreview" }
+  },
+  "postCreateCommand": "cd vtc-control-centre && npm ci && npm run seed",
+  "postAttachCommand": { "app": "cd vtc-control-centre && npm start" },
+  "hostRequirements": { "cpus": 2 }
+}

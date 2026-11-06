@@ -9,7 +9,7 @@ import * as facilities from './services/facilities.ts';
 import * as trainers from './services/trainers.ts';
 import * as booking from './services/booking.ts';
 
-const TABLES = ['audit_events', 'trainer_commitments', 'reservations', 'facility_requests', 'approval_decisions', 'requests',
+const TABLES = ['import_rows', 'participants', 'import_jobs', 'audit_events', 'trainer_commitments', 'reservations', 'facility_requests', 'approval_decisions', 'requests',
   'session_trainers', 'session_resources', 'sessions', 'programme_institutions', 'programmes', 'trainers', 'resources',
   'policies', 'auth_sessions', 'role_assignments', 'users', 'institutions'];
 

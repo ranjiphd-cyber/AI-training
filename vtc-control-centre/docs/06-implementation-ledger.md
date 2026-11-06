@@ -19,7 +19,9 @@
 | Command Centre KPIs with definitions & drill-down | Implemented | `services/queries.ts` |
 | Audit (atomic, append-only, search) | Implemented & verified | T25 |
 | UI for 7 modules; 5 honest placeholders | Implemented; browser-verified | `public/` |
-| Participant registry & imports | Not started (S2) | |
+| Participant registry & Excel/CSV import | Implemented & verified (enrolment, waitlists, substitutions pending) | `services/participants.ts`, `spreadsheet.ts`; T01, T02, T26 |
+| Report downloads (.xlsx/.csv) | Implemented & verified (interim export rights, D-10) | `services/reports.ts` |
+| GitHub Codespaces hosting config | Written; **not executed here** (no Docker daemon in build environment) | `.devcontainer/` |
 | Attendance, evidence, assessments, feedback | Not started (S3) | |
 | Certificates (eligibility, Ranjith approval, issuance, verification) | Not started (S4) | |
 | Notification outbox & simulation adapter | Not started (S5) | |

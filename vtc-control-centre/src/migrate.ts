@@ -6,8 +6,17 @@ import pg from 'pg';
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'db', 'migrations');
 
 export async function migrate(databaseUrl: string, log = console.log) {
-  const client = new pg.Client({ connectionString: databaseUrl });
-  await client.connect();
+  // Wait for the database to accept connections (e.g. a container that is still starting).
+  let client: pg.Client;
+  for (let attempt = 1; ; attempt++) {
+    client = new pg.Client({ connectionString: databaseUrl });
+    try { await client.connect(); break; } catch (e) {
+      await client.end().catch(() => {});
+      if (attempt >= 30) throw e;
+      log(`waiting for database (attempt ${attempt})…`);
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
   try {
     await client.query('SELECT pg_advisory_lock(727001)');
     await client.query(`CREATE TABLE IF NOT EXISTS schema_migrations (name text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())`);

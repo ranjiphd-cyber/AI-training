@@ -94,3 +94,6 @@ legend { font-size: 13px; font-weight: 650; padding: 0 4px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 .narrow { width: 80px; }
 .flush { margin-top: 0; }
+a.btn { display: inline-block; text-decoration: none; }
+a.btn.secondary-link { background: var(--surface); color: var(--accent); }
+.card ol { margin: 0 0 12px; padding-left: 20px; }

@@ -18,6 +18,9 @@ import * as booking from './services/booking.ts';
 import * as trainers from './services/trainers.ts';
 import * as queries from './services/queries.ts';
 import * as policies from './services/policies.ts';
+import * as participants from './services/participants.ts';
+import * as reports from './services/reports.ts';
+import { participantTemplate, LIMITS } from './spreadsheet.ts';
 
 declare module 'fastify' {
   interface FastifyRequest { ctx?: Ctx; csrf?: string }
@@ -172,6 +175,33 @@ export async function buildServer(cfg: AppConfig, db: pg.Pool) {
   app.post('/api/v1/policies', async (req, reply) => reply.status(201).send(await policies.draftPolicy(db, ctx(req), body(req))));
   app.post('/api/v1/policies/:id/activate', async (req) => policies.activatePolicy(db, ctx(req), id(req), body(req).authorisationReference));
   app.get('/api/v1/audit', async (req) => queries.searchAudit(db, ctx(req), q(req)));
+
+  // ---------------------------------------------------------------- participants & spreadsheet import
+  app.get('/api/v1/participants', async (req) => participants.listParticipants(db, ctx(req), q(req)));
+  app.get('/api/v1/imports', async (req) => participants.listImports(db, ctx(req)));
+  app.get('/api/v1/imports/templates/participants.xlsx', async (req, reply) => {
+    if (!canAnywhere(ctx(req).principal, 'participant.upload')) throw new AppError(403, 'FORBIDDEN', 'You may not upload participants.');
+    reply.header('content-disposition', 'attachment; filename="vtc-participants-template.xlsx"');
+    return reply.type('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet').send(await participantTemplate());
+  });
+  app.post('/api/v1/imports/participants', { bodyLimit: Math.ceil(LIMITS.maxBytes * 1.4) + 4096 },
+    async (req, reply) => reply.status(201).send(await participants.previewImport(db, ctx(req), body(req))));
+  app.get('/api/v1/imports/:id', async (req) => participants.getImport(db, ctx(req), id(req)));
+  app.post('/api/v1/imports/:id/rows/:rowId/resolution', async (req) => {
+    const rowId = (req.params as any).rowId; if (!UUID.test(rowId)) throw new AppError(404, 'NOT_FOUND', 'Not found.');
+    return participants.resolveRow(db, ctx(req), id(req), rowId, body(req).resolution);
+  });
+  app.post('/api/v1/imports/:id/commit', async (req) => participants.commitImport(db, ctx(req), id(req)));
+  app.post('/api/v1/imports/:id/discard', async (req) => participants.discardImport(db, ctx(req), id(req)));
+
+  // ---------------------------------------------------------------- reports (downloads)
+  app.get('/api/v1/reports', async (req) => reports.availableReports(ctx(req)));
+  app.get('/api/v1/reports/:key', async (req, reply) => {
+    const key = String((req.params as any).key);
+    const out = await reports.exportReport(db, ctx(req), key, String(q(req).format ?? 'xlsx'));
+    reply.header('content-disposition', `attachment; filename="${out.filename}"`);
+    return reply.type(out.contentType).send(out.body);
+  });
 
   app.all('/api/*', async () => { throw new AppError(404, 'NOT_FOUND', 'Unknown API route.'); });
 

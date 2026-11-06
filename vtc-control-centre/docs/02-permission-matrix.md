@@ -18,10 +18,12 @@ Legend: ● granted · ◐ granted with object-level restriction · — not gran
 | Finalise reservations | — | — | ● | — | — | — | — | — | — | — |
 | Assign trainers | — | — | ● | — | — | — | — | — | — | — |
 | Respond to own trainer invitation | — | — | — | — | — | ◐ own only | — | — | — | — |
-| Upload participants / record attendance (S2–3) | — | — | — | ◐ institution | delegated (D-11) | — | — | — | — | — |
+| View participants | ● | — | ● | ◐ institution | — | — | — | — | — | ● |
+| Upload participants (Excel/CSV) | — | — | — | ◐ institution | delegated (D-11) | — | — | — | — | — |
+| Record attendance (S3) | — | — | — | ◐ institution | delegated (D-11) | — | — | — | — | — |
 | Approve certificate issuance (S4) | — | ● | — | — | — | — | — | — | — | — |
 | Send communications (S5) | — | — | D-08 | — | — | — | — | — | — | — |
-| Export (S6) | D-10 | — | D-10 | — | — | — | — | — | — | — |
+| Download reports (interim, pending D-10) | ● | — | ● | ◐ own-institution reports | — | — | — | — | — | ● |
 | View audit | ● | — | — | — | — | — | — | — | ● | ● |
 | View policies | ● | — | ● | — | — | — | — | — | ● | ● |
 | Draft policy | — | — | — | — | — | — | — | — | ● | — |

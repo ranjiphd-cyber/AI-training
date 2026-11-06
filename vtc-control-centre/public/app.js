@@ -102,13 +102,13 @@ const NAV = [
   { href: '#/programmes', label: 'Programmes', show: () => state.me?.canSeeProgrammes },
   { href: '#/calendar', label: 'Calendar & Resources', show: () => has('resource.view') },
   { href: '#/approvals', label: 'Approvals', show: () => has('request.view') || has('request.approve') || has('centre_access.create') },
-  { href: '#/participants', label: 'Participants', planned: 'Slice 2' },
+  { href: '#/participants', label: 'Participants', show: () => has('participant.view') || has('participant.upload') },
   { href: '#/trainers', label: 'Trainers', show: () => has('trainer.view') || !!state.me?.user.trainerId },
   { href: '#/srm', label: 'SRM Operations', show: () => has('facility.view') },
   { href: '#/attendance', label: 'Attendance & Evidence', planned: 'Slice 3' },
   { href: '#/certificates', label: 'Certificates', planned: 'Slice 4' },
   { href: '#/communications', label: 'Communications', planned: 'Slice 5' },
-  { href: '#/csr', label: 'CSR Reports', planned: 'Slice 6' },
+  { href: '#/reports', label: 'Reports & downloads', show: () => has('export.run') },
   { href: '#/admin', label: 'Administration & Audit', show: () => has('audit.view') || has('policy.view') },
 ];
 
@@ -502,16 +502,114 @@ async function viewAdmin() {
 }
 
 const PLANNED = {
-  participants: ['Participant Registry', 'Slice 2', 'Students and teachers, CSV/XLSX import with validation preview, reviewed duplicate resolution (never name-only merges), eligibility, waitlists and substitutions.', 'D-03 approved-institution list; D-05 enrolment approval rules.'],
   attendance: ['Attendance & Evidence', 'Slice 3', 'Session-level attendance by the SRM SPOC, bulk upload, evidence references, reasoned corrections, assessments and feedback. Attendance is never inferred from enrolment.', 'D-10 evidence requirements and retention.'],
   certificates: ['Certificate Centre', 'Slice 4', 'Independent Participation and Completion rules, evidence-based eligibility, mandatory recorded approval by Ranjith T. P., unique identifiers, specimen mode, verification, supersession and revocation.', 'D-07 eligibility criteria, template and signatory approval.'],
   communications: ['Communications', 'Slice 5', 'Approved templates, outbox with idempotency keys, retries and dead-letter handling; provider acceptance is never reported as delivery.', 'D-08 email provider, sender identity and send authorisation.'],
-  csr: ['CSR Reports', 'Slice 6', 'Unique participants, institutions served, delivered hours, participant-hours, attendance and completion — from verified records only, with documented denominators and deduplication.', 'Reporting definitions and targets are not set by this system.'],
 };
 function viewPlanned(key) {
   const [title, slice, what, blocked] = PLANNED[key];
   return h('div', {}, h('h1', {}, title), h('div', { class: 'alert info', role: 'note' }, h('strong', {}, `Not yet implemented — planned for ${slice}. `), 'No data in this module is simulated or estimated.'),
     h('div', { class: 'card' }, h('h2', { class: 'flush' }, 'Scope'), h('p', {}, what), h('h3', {}, 'Decisions that gate production behaviour'), h('p', {}, blocked)));
+}
+
+// ------------------------------------------------------------------ participants & import
+const readAsBase64 = (file) => new Promise((resolve, reject) => {
+  const r = new FileReader();
+  r.onload = () => resolve(String(r.result).split(',')[1] || '');
+  r.onerror = () => reject(new Error('The file could not be read.'));
+  r.readAsDataURL(file);
+});
+
+async function viewParticipants() {
+  const out = h('div');
+  const params = new URLSearchParams(location.hash.split('?')[1] || '');
+  const list = has('participant.view') ? await api('GET', `/api/v1/participants${params.get('q') ? '?q=' + encodeURIComponent(params.get('q')) : ''}`) : [];
+  const imports = await api('GET', '/api/v1/imports');
+  const institutions = (await api('GET', '/api/v1/institutions')).filter((i) => ['HOST', 'PARTNER_UNIVERSITY'].includes(i.kind));
+  const uploader = has('participant.upload') && h('section', { class: 'card', 'aria-labelledby': 'up-h' },
+    h('h2', { id: 'up-h', class: 'flush' }, 'Add participants from Excel'),
+    h('ol', {},
+      h('li', {}, h('a', { href: '/api/v1/imports/templates/participants.xlsx', download: 'vtc-participants-template.xlsx' }, 'Download the Excel template'), ' and fill one row per student or teacher.'),
+      h('li', {}, 'Choose your institution and the completed file (.xlsx or .csv, up to 2 MB and 2,000 rows).'),
+      h('li', {}, 'Check the preview. Nothing is saved until you press ', h('strong', {}, 'Import'), '.')),
+    h('form', { class: 'inline', onsubmit: runner(out, async (e) => {
+      const f = e.target; const file = f.querySelector('#roster-file').files[0];
+      if (!file) throw Object.assign(new Error('Choose a file to upload.'), { info: {} });
+      const r = await api('POST', '/api/v1/imports/participants', { institutionId: f.querySelector('#roster-inst').value, filename: file.name, contentBase64: await readAsBase64(file) });
+      location.hash = `#/participants/import/${r.jobId}`;
+    }) },
+      h('label', { for: 'roster-inst' }, 'Institution', h('select', { id: 'roster-inst' }, institutions.map((i) => h('option', { value: i.id }, `${i.name}${i.approval_status === 'APPROVED' ? '' : ' (not yet approved)'}`)))),
+      h('label', { for: 'roster-file' }, 'Spreadsheet', h('input', { id: 'roster-file', type: 'file', accept: '.xlsx,.csv', required: true })),
+      h('button', { type: 'submit' }, 'Upload and preview')));
+  return h('div', {},
+    h('h1', {}, 'Participants'), h('p', { class: 'sub' }, 'Students and teachers registered from eligible institutions. You see only the institutions you are authorised for.'),
+    out, uploader,
+    imports.length > 0 && [h('h2', {}, 'Recent uploads'), h('div', { class: 'table-wrap' }, h('table', {},
+      h('thead', {}, h('tr', {}, ['File', 'Institution', 'Rows', 'Imported', 'Status', 'Uploaded'].map((c) => h('th', { scope: 'col' }, c)))),
+      h('tbody', {}, imports.map((j) => h('tr', {}, h('td', {}, h('a', { href: `#/participants/import/${j.id}` }, j.filename)), h('td', {}, j.institution_name),
+        h('td', {}, j.row_count), h('td', {}, j.created_count ?? '—'), h('td', {}, chip(j.status === 'COMMITTED' ? 'SUCCESS' : j.status === 'DISCARDED' ? 'WITHDRAWN' : 'PENDING', j.status)),
+        h('td', {}, `${fmt(j.created_at)} by ${j.uploaded_by_name}`))))))],
+    has('participant.view') && [h('h2', {}, `Register (${list.length})`),
+      h('form', { class: 'inline', onsubmit: (e) => { e.preventDefault(); const v = e.target.querySelector('#p-q').value.trim(); location.hash = v ? `#/participants?q=${encodeURIComponent(v)}` : '#/participants'; } },
+        h('label', { for: 'p-q' }, 'Search name, email or roll number', h('input', { id: 'p-q', value: params.get('q') })), h('button', { type: 'submit', class: 'secondary' }, 'Search')),
+      list.length === 0 ? h('div', { class: 'empty' }, 'No participants yet. Upload a spreadsheet to add them.') :
+        h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['Name', 'Type', 'Institution', 'Roll / staff no.', 'Email', 'Department', 'Year'].map((c) => h('th', { scope: 'col' }, c)))),
+          h('tbody', {}, list.map((p) => h('tr', {}, h('td', {}, p.full_name), h('td', {}, p.participant_type), h('td', {}, p.institution_name),
+            h('td', { class: 'mono' }, p.external_ref || '—'), h('td', {}, p.email || '—'), h('td', {}, p.department || '—'), h('td', {}, p.year_of_study ?? '—'))))))]);
+}
+
+async function viewImport(id) {
+  const d = await api('GET', `/api/v1/imports/${id}`);
+  const out = h('div');
+  const j = d.job;
+  const tone = { VALID: 'APPROVED', ERROR: 'DENIED', DUPLICATE: 'WITHDRAWN', POSSIBLE_DUPLICATE: 'PENDING' };
+  const label = { VALID: 'Will be added', ERROR: 'Error: not imported', DUPLICATE: 'Already registered: skipped', POSSIBLE_DUPLICATE: 'Check: same name' };
+  const count = (s) => d.rows.filter((r) => r.status === s).length;
+  return h('div', {},
+    h('p', {}, h('a', { href: '#/participants' }, '← Participants')),
+    h('div', { class: 'row' }, h('h1', {}, `Upload preview: ${j.filename}`), chip(j.status === 'COMMITTED' ? 'SUCCESS' : j.status === 'DISCARDED' ? 'WITHDRAWN' : 'PENDING', j.status)),
+    h('p', { class: 'sub' }, `${j.institution_name} · uploaded ${fmt(j.created_at)} by ${j.uploaded_by_name}`),
+    out,
+    h('div', { class: 'grid' },
+      [['VALID', 'To add'], ['POSSIBLE_DUPLICATE', 'Need your decision'], ['DUPLICATE', 'Already registered'], ['ERROR', 'Errors']].map(([k, l]) =>
+        h('div', { class: 'kpi' }, h('div', { class: 'l' }, l), h('div', { class: 'v' }, count(k))))),
+    j.status === 'PREVIEWED' && h('div', { class: 'card' },
+      h('p', {}, h('strong', {}, `${d.willCreate} people will be added. `), 'Rows with errors are never imported; fix them in your file and upload it again. Already-registered people are skipped. ',
+        d.unresolved > 0 ? h('strong', {}, `${d.unresolved} same-name row(s) need your decision first.`) : ''),
+      h('div', { class: 'row' },
+        h('button', { disabled: !d.canCommit, onclick: runner(out, () => api('POST', `/api/v1/imports/${id}/commit`), (r) => `Imported ${r.created} people; ${r.skipped} rows skipped.`) }, `Import ${d.willCreate} people`),
+        h('button', { class: 'danger', onclick: runner(out, () => api('POST', `/api/v1/imports/${id}/discard`), 'Upload discarded. Nothing was saved.') }, 'Discard upload'))),
+    j.status === 'COMMITTED' && h('div', { class: 'alert success' }, `Imported ${j.created_count} people on ${fmt(j.closed_at)}.`),
+    j.status === 'DISCARDED' && h('div', { class: 'alert info' }, 'This upload was discarded. Nothing was saved.'),
+    h('h2', {}, 'Rows'),
+    h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['Row', 'Result', 'Name', 'Type', 'Roll / staff no.', 'Email', 'Notes', 'Decision'].map((c) => h('th', { scope: 'col' }, c)))),
+      h('tbody', {}, d.rows.map((r) => h('tr', {},
+        h('td', { class: 'mono' }, r.row_number), h('td', {}, chip(tone[r.status], label[r.status])),
+        h('td', {}, r.data.fullName || '—'), h('td', {}, r.data.participantType || '—'), h('td', { class: 'mono' }, r.data.externalRef || '—'), h('td', {}, r.data.email || '—'),
+        h('td', {}, r.messages.length ? h('ul', {}, r.messages.map((m) => h('li', {}, m))) : '—'),
+        h('td', {}, r.status === 'POSSIBLE_DUPLICATE' ? (j.status === 'PREVIEWED'
+          ? h('div', { class: 'row' },
+              h('button', { class: r.resolution === 'CREATE' ? '' : 'secondary', 'aria-pressed': String(r.resolution === 'CREATE'),
+                onclick: runner(out, () => api('POST', `/api/v1/imports/${id}/rows/${r.id}/resolution`, { resolution: 'CREATE' })) }, 'New person'),
+              h('button', { class: r.resolution === 'SKIP' ? '' : 'secondary', 'aria-pressed': String(r.resolution === 'SKIP'),
+                onclick: runner(out, () => api('POST', `/api/v1/imports/${id}/rows/${r.id}/resolution`, { resolution: 'SKIP' })) }, 'Skip'))
+          : (r.resolution || '—')) : ''))))))); 
+}
+
+async function viewReports() {
+  const list = await api('GET', '/api/v1/reports');
+  return h('div', {},
+    h('h1', {}, 'Reports & downloads'),
+    h('p', { class: 'sub' }, 'Download up-to-date reports as Excel (.xlsx) or CSV. Each file includes only records you are authorised to see, plus an "About this report" sheet. Every download is recorded in the audit log.'),
+    list.length === 0 ? h('div', { class: 'empty' }, 'Your role has no report downloads.') :
+      h('div', { class: 'table-wrap' }, h('table', {}, h('thead', {}, h('tr', {}, ['Report', 'What it contains', 'Download'].map((c) => h('th', { scope: 'col' }, c)))),
+        h('tbody', {}, list.map((r) => h('tr', {}, h('td', {}, h('strong', {}, r.title), r.personalData && h('div', {}, chip('PENDING', 'Contains personal data'))),
+          h('td', {}, r.description),
+          h('td', {}, h('div', { class: 'row' },
+            h('a', { class: 'btn', href: `/api/v1/reports/${r.key}?format=xlsx`, download: '' }, 'Excel'),
+            h('a', { class: 'btn secondary-link', href: `/api/v1/reports/${r.key}?format=csv`, download: '' }, 'CSV')))))))),
+    h('h2', {}, 'CSR impact indicators'),
+    h('div', { class: 'alert info' }, 'Unique participants trained, delivered hours and participant-hours will be added once attendance is recorded and verified (Stage 3). They are not estimated.'));
 }
 
 // ------------------------------------------------------------------ router
@@ -534,6 +632,9 @@ async function route() {
     else if (parts[0] === 'calendar') view = await viewCalendar();
     else if (parts[0] === 'trainers') view = await viewTrainers();
     else if (parts[0] === 'admin') view = await viewAdmin();
+    else if (parts[0] === 'participants' && parts[1] === 'import' && parts[2]) view = await viewImport(parts[2]);
+    else if (parts[0] === 'participants') view = await viewParticipants();
+    else if (parts[0] === 'reports') view = await viewReports();
     else if (PLANNED[parts[0]]) view = viewPlanned(parts[0]);
     else view = h('div', { class: 'empty' }, 'Page not found.');
   } catch (err) {

@@ -1,0 +1,1 @@
+CREATE DATABASE vtc_test OWNER vtc;

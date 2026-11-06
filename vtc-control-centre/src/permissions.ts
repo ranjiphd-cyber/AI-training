@@ -1,3 +1,4 @@
+// export.run is an INTERIM grant pending decision D-10 (export rights); every export is audited.
 // RECOMMENDED role→permission matrix (see docs/02-permission-matrix.md). Not yet company-approved.
 // Enforcement is server-side only; the client receives the resulting action list for display.
 
@@ -9,7 +10,7 @@ export const PERMISSIONS = [
   'booking.finalise',
   'resource.view', 'resource.administer',
   'trainer.view', 'trainer.assign', 'trainer.respond_own',
-  'participant.upload', 'attendance.record', 'evidence.correct',
+  'participant.view', 'participant.upload', 'attendance.record', 'evidence.correct',
   'certificate.approve_issuance',
   'communication.send', 'export.run',
   'audit.view', 'policy.view', 'policy.draft', 'policy.activate_authorised', 'policy.activate_simulation',
@@ -22,15 +23,15 @@ export type Role =
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   VOLVO_APPROVER: ['dashboard.view', 'programme.view', 'request.view', 'request.approve', 'facility.view',
-    'resource.view', 'trainer.view', 'audit.view', 'policy.view', 'policy.activate_authorised'],
+    'resource.view', 'trainer.view', 'audit.view', 'policy.view', 'policy.activate_authorised', 'participant.view', 'export.run'],
   // CONFIRMED: Ranjith T. P. is the mandatory certificate-issuance approver. Grants nothing else.
   CERTIFICATE_APPROVER: ['certificate.approve_issuance'],
   PROGRAMME_ADMIN: ['dashboard.view', 'programme.view', 'programme.create', 'programme.edit', 'programme.submit',
     'programme.cancel', 'request.view', 'centre_access.create', 'facility.view', 'facility.request',
-    'booking.finalise', 'resource.view', 'trainer.view', 'trainer.assign', 'policy.view'],
+    'booking.finalise', 'resource.view', 'trainer.view', 'trainer.assign', 'policy.view', 'participant.view', 'export.run'],
   // CONFIRMED: SRM SPOC may upload participant records and manage attendance; coordinates facilities.
   SRM_CENTRE_SPOC: ['dashboard.view', 'facility.view', 'facility.respond', 'resource.view',
-    'participant.upload', 'attendance.record'],
+    'participant.view', 'participant.upload', 'attendance.record', 'export.run'],
   // Delegated permissions only; defaults to view. Further delegation is decision D-11.
   SRM_SUPPORT_SPOC: ['facility.view', 'resource.view'],
   TRAINER: ['trainer.respond_own'],
@@ -41,7 +42,7 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   TECH_ADMIN: ['dashboard.view', 'audit.view', 'policy.view', 'policy.draft', 'policy.activate_simulation',
     'resource.view', 'resource.administer'],
   AUDITOR: ['dashboard.view', 'audit.view', 'programme.view', 'request.view', 'facility.view',
-    'resource.view', 'trainer.view', 'policy.view'],
+    'resource.view', 'trainer.view', 'policy.view', 'participant.view', 'export.run'],
 };
 
 export interface RoleAssignment { role: Role; scopeType: 'GLOBAL' | 'INSTITUTION' | 'PROGRAMME'; scopeId: string | null }

@@ -4,7 +4,9 @@ Operational system of record for training, facility coordination, approvals, tra
 and CSR reporting for **Volvo Group India** and **SRM Institute of Science and Technology, Kattankulathur**, supported by
 **Volvo Group CSR Trust**.
 
-> **Status: Slice 1 implemented and verified in a development environment. Not production-ready.**
+> **New to this? Start with the [Getting Started Guide](docs/08-getting-started-guide.md)**: run it privately in GitHub Codespaces, upload participants from Excel, download reports.
+>
+> **Status: Slice 1 plus participant import and report downloads, verified in a development environment. Not production-ready.**
 > Production behaviour is deliberately blocked (fail-closed) until the decisions in
 > [`docs/03-decision-register.md`](docs/03-decision-register.md) are recorded. All seed data is **synthetic**.
 
@@ -18,6 +20,8 @@ decisions → record SRM facility confirmation → transactionally confirm booki
 - SRM portal: confirm / decline (reason) / propose alternative; acceptance of an alternative triggers reapproval when material.
 - Final booking in a `SERIALIZABLE` transaction with row locks **and** PostgreSQL exclusion constraints (no overlapping confirmed exclusive resources or trainers, even under concurrency).
 - Server-side RBAC with institution / programme scopes; CSRF; strict CSP; append-only audit written atomically with each business change.
+- **Excel/CSV participant import** (SRM SPOC, own institution): template download, preview before saving, row-level errors, duplicate detection by roll number/email, mandatory human review of same-name matches, all-or-nothing commit. Formulas, macros, oversized and zip-bomb files are refused.
+- **Report downloads** (.xlsx / .csv): programmes, sessions, approvals, facility requests, participant register, audit log. Scoped to the user, formula-injection safe, with an "About this report" sheet. Every download is audited.
 - Responsive, keyboard-operable UI for Command Centre, Programmes, Approvals, SRM Operations, Calendar & Resources, Trainers, Administration & Audit. Later modules show honest “not yet implemented” states.
 
 See [`docs/06-implementation-ledger.md`](docs/06-implementation-ledger.md) for completed / partial / pending capabilities.
@@ -69,3 +73,4 @@ sudo -u postgres psql -d vtc_test -c "CREATE EXTENSION btree_gist;"
 | [05 Test plan & results](docs/05-test-plan-and-results.md) | 30 mandatory scenarios with actual status |
 | [06 Implementation ledger](docs/06-implementation-ledger.md) | Completed / partial / pending, roadmap |
 | [07 Deployment assessment](docs/07-deployment-assessment.md) | Options A/B/C compared; checks still required |
+| [08 Getting started guide](docs/08-getting-started-guide.md) | Step-by-step for newcomers: Codespaces, Excel upload, reports |

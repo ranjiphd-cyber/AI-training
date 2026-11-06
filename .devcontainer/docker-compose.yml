@@ -1,0 +1,27 @@
+# Development/demo only. Credentials below are throwaway values for a private, synthetic-data sandbox.
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm
+    command: sleep infinity
+    volumes:
+      - ../..:/workspaces:cached
+    network_mode: service:db
+    environment:
+      APP_ENV: development
+      AUTH_MODE: demo
+      HOST: 0.0.0.0
+      PORT: "3000"
+      DATABASE_URL: postgres://vtc:vtc_dev_only@localhost:5432/vtc_dev
+      TEST_DATABASE_URL: postgres://vtc:vtc_dev_only@localhost:5432/vtc_test
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vtc
+      POSTGRES_PASSWORD: vtc_dev_only
+      POSTGRES_DB: vtc_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+volumes:
+  pgdata:
