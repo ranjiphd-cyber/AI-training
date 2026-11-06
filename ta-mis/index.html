@@ -123,7 +123,8 @@ p { margin: 0; }
 .btn-primary { background: var(--accent); color: #2F3240; border-color: var(--accent); }
 
 /* ---------- KPI cards ---------- */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--s3); }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--s3); }
+.separate .kpis { grid-template-columns: minmax(0, 340px); }
 .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); display: grid; grid-template-rows: auto auto 1fr auto; gap: 6px; min-height: 148px; box-shadow: var(--shadow); }
 .kpi-top { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s2); }
 .kpi-name { font-size: 12.5px; font-weight: 650; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.04em; }
@@ -151,6 +152,10 @@ p { margin: 0; }
 .spec dd { margin: 0; }
 .panel-foot { display: flex; flex-wrap: wrap; gap: var(--s1); }
 
+.separate { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--s3); align-items: start; border: 1px dashed var(--border); border-radius: var(--r); padding: var(--s3); background: var(--surface-2); }
+.separate h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); }
+.separate p { font-size: 12.5px; color: var(--text-2); margin-top: 4px; max-width: 48ch; }
+@media (max-width: 900px) { .separate { grid-template-columns: minmax(0, 1fr); } }
 .notes { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: var(--s3); }
 .notes h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-2); margin-bottom: var(--s2); }
 .notes ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 13px; }
@@ -261,8 +266,10 @@ function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&
 /* ---------------- Proposed KPI catalogue (pending approval) ---------------- */
 var KPIS = [
   { id: "offers", name: "Offers released", unit: "offers", entity: "Offer event", basis: "Offer release date", num: "Distinct offer events in period", den: "—", sheet: "MT (expected, not observed)", open: "Is there an offer ID? An offer date alone may not identify one event; revised offers may repeat a candidate.", purpose: "Volume of hiring commitments made." },
-  { id: "joiners", name: "Joiners", unit: "people", entity: "Joining event (person)", basis: "Actual joining date", num: "Distinct confirmed joining events in period", den: "—", sheet: "MT, NATS, Campus (expected)", open: "Which field confirms a completed joining? A joining date alone does not. How are people present on several sheets reconciled?", purpose: "Hiring delivered into the organisation." },
-  { id: "declines", name: "Offer declines", unit: "offers", entity: "Offer outcome", basis: "Decline recorded date (if present) else offer date, to be approved", num: "Offers with approved decline status", den: "—", sheet: "MT (expected)", open: "Which status values mean declined? Is a decline date recorded?", purpose: "Lost offers and their reasons." },
+  { id: "joiners", name: "Joiners", unit: "people", entity: "Candidate (person)", basis: "Actual joining date", num: "Candidates with Status = Joined in period; status decides the outcome, not the date", den: "—", sheet: "MT, NATS, Campus (expected)", open: "Approved 6 Nov 2026: Status Joined counts as joined even if the date is later than the report date (flagged for data quality only). Internal-posting fills are excluded and reported separately. Campus hires are counted from the Campus sheet only.", purpose: "External hiring delivered into the organisation.", appr: true },
+  { id: "yettojoin", name: "Yet to join", unit: "people", entity: "Candidate (person)", basis: "Expected joining date", num: "Candidates with Status = Offered at the report date", den: "—", sheet: "MT (expected)", open: "Approved 6 Nov 2026: every Offered candidate is shown as yet to join. An Offered candidate whose joining date has passed is flagged for a status update but still shown here.", purpose: "Committed hires not yet started.", appr: true },
+  { id: "internal", name: "Internal joiners", unit: "people", entity: "Internal-posting fill", basis: "Report date (cumulative); joining date not required", num: "Requisition rows with Posting Type = Internal and Status = Joined", den: "—", sheet: "MT (expected)", open: "Approved 6 Nov 2026: counted whether or not a joining date is recorded, kept separate, and excluded from every other calculation (joiners, trends, cycle times, diversity, source).", purpose: "Positions filled by internal movement.", appr: true },
+  { id: "declines", name: "Offer declines", unit: "offers", entity: "Offer outcome", basis: "Offer date (no decline date is recorded)", num: "Candidates with Status = Declined, whatever their joining date", appr: true, den: "—", sheet: "MT (expected)", open: "Which status values mean declined? Is a decline date recorded?", purpose: "Lost offers and their reasons." },
   { id: "declinerate", name: "Offer decline rate", unit: "%", entity: "Offer cohort", basis: "Offer release date (cohort)", num: "Declined offers in cohort", den: "Offers in cohort with a known outcome", sheet: "MT (expected)", open: "Cohort basis needed. Open offers must be excluded from the denominator, not counted as accepted.", purpose: "Offer competitiveness." },
   { id: "a2o", name: "Approval to offer", unit: "calendar days", entity: "Offer event linked to requisition", basis: "Offer release date", num: "Median of (offer date − requisition approval date)", den: "Offers with both dates valid (n shown)", sheet: "MT (expected)", open: "Calendar or working days? How are negative and missing intervals treated?", purpose: "Speed of sourcing and selection." },
   { id: "o2j", name: "Offer to joining", unit: "calendar days", entity: "Joining event linked to offer", basis: "Actual joining date", num: "Median of (joining date − offer date)", den: "Joiners with both dates valid (n shown)", sheet: "MT (expected)", open: "Same rules as above. Notice-period buy-outs may need a separate view.", purpose: "Time lost between commitment and start." },
@@ -270,7 +277,7 @@ var KPIS = [
   { id: "ageing", name: "Open-offer ageing", unit: "calendar days", entity: "Offer not yet joined or declined", basis: "As-of date of the snapshot", num: "Days from offer date to as-of date, banded", den: "Open offers at as-of date", sheet: "MT (expected)", open: "Needs a defined open population and a verified source as-of date. Not the same as completed cycle time.", purpose: "Pipeline at risk of not joining." },
   { id: "gender", name: "Gender mix of joiners", unit: "% of joiners", entity: "Joining event (person)", basis: "Actual joining date", num: "Joiners per recorded gender value", den: "All joiners in scope, Unknown / Not recorded shown as its own group", sheet: "MT, NATS, Campus (expected)", open: "Gender must never be inferred from names. Small groups may need suppression to protect individuals.", purpose: "Diversity of hiring outcomes." },
   { id: "source", name: "Hiring source mix", unit: "% of joiners", entity: "Joining event (person)", basis: "Actual joining date", num: "Joiners per approved source class", den: "All joiners in scope, Unknown shown", sheet: "MT (expected)", open: "Raw source labels need an approved classification before reporting referral, vendor or direct share.", purpose: "Effectiveness of sourcing channels." },
-  { id: "nats", name: "NATS joiners", unit: "trainees", entity: "NATS joining event", basis: "Joining date", num: "Distinct NATS trainees joined in period", den: "—", sheet: "NATS (expected)", open: "How do NATS rows relate to the Active & Inactive sheet?", purpose: "Apprenticeship intake." },
+  { id: "nats", name: "NATS joiners", appr: false, unit: "trainees", entity: "NATS joining event", basis: "Joining date", num: "Distinct NATS trainees joined in period", den: "—", sheet: "NATS (expected)", open: "How do NATS rows relate to the Active & Inactive sheet?", purpose: "Apprenticeship intake." },
   { id: "natsactive", name: "NATS active trainees", unit: "trainees", entity: "Status snapshot", basis: "Snapshot as-of date", num: "Trainees with Active status at as-of date", den: "—", sheet: "NATS Active & Inactive (expected)", open: "Is the snapshot dated? Inactive is not attrition. No trend from a single snapshot.", purpose: "Current programme strength." },
   { id: "campus", name: "Campus intake", unit: "graduates", entity: "Campus joining event", basis: "Joining date, by batch", num: "Distinct campus joiners by GET / PGET and college", den: "—", sheet: "Campus (expected)", open: "Are batch and programme fields consistent? Are colleges named consistently?", purpose: "Early-career pipeline." },
   { id: "dq", name: "Record completeness", unit: "% of rows", entity: "Source row", basis: "Import version", num: "Rows passing all mandatory-field checks", den: "Rows received in the import", sheet: "All sheets", open: "Which fields are mandatory per sheet?", purpose: "Trust in every other metric." }
@@ -287,7 +294,7 @@ var PAGES = {
   executive: {
     nav: "Executive Overview", group: "dash",
     purpose: "Hiring delivery, business distribution and trends, with management observations only where evidence supports them.",
-    kpis: ["offers", "joiners", "declines", "a2o", "o2j"],
+    kpis: ["offers", "joiners", "yettojoin", "declines", "a2o", "o2j"], separate: ["internal"],
     panels: [
       { t: "Monthly hiring activity", type: "Clustered column, by month", measure: "Offers and joiners", basis: "Each counted on its own event month; joiners are not conversions of same-month offers", drill: "Month → Business → Department", state: "validation" },
       { t: "Hiring by business", type: "Horizontal bar, sorted", measure: "Joiners", basis: "Actual joining date", drill: "Business → Department", state: "validation", note: "Shows only businesses inside your authorised scope." },
@@ -296,7 +303,7 @@ var PAGES = {
       { t: "Evidence-backed observations", type: "Structured list", measure: "Observation · evidence · threshold · question", basis: "Approved KPIs only", state: "unavailable", note: "Generated only from validated metrics. No causes or forecasts." },
       { t: "Management attention", type: "Top items from the attention register", measure: "Open items by priority", basis: "Approved rules", state: "pending", link: "attention" }
     ],
-    rules: ["Prior-period comparison appears only where comparable history exists for the same definition.", "Targets appear only when approved target data with a matching definition exists.", "Offers and joiners are counted on different dates; the chart legend says so."]
+    rules: ["Prior-period comparison appears only where comparable history exists for the same definition.", "Targets appear only when approved target data with a matching definition exists.", "Offers and joiners are counted on different dates; the chart legend says so.", "Outcome follows the recorded status: Joined counts as joined, Offered as yet to join, Declined as declined, whatever the joining date.", "Internal joiners never enter joiner totals, trends, cycle times or percentages."]
   },
   business: {
     nav: "Business Performance", group: "dash",
@@ -318,7 +325,7 @@ var PAGES = {
       { t: "Recorded milestones", type: "Milestone table (not a funnel)", measure: "Records reaching each recorded date", basis: "Per milestone date", state: "validation", note: "A conversion funnel appears only after stage populations and cohort links are validated." },
       { t: "Offer outcomes", type: "Stacked bar by offer month", measure: "Joined, declined, open, unknown", basis: "Offer release date (cohort)", state: "validation" },
       { t: "Decline reasons", type: "Horizontal bar", measure: "Declined offers by recorded reason", basis: "Decline date", denom: "All declines, Not recorded shown", state: "validation" },
-      { t: "Lifecycle exceptions", type: "Exception table", measure: "Missing dates, out-of-order dates, status–date conflicts", basis: "Import version", state: "unavailable", link: "attention" }
+      { t: "Lifecycle exceptions", type: "Exception table", measure: "Missing dates, out-of-order dates, status–date conflicts (flagged only; the status still decides the count)", basis: "Import version", state: "unavailable", link: "attention" }
     ],
     rules: ["Open requisitions, vacancies and demand closure are not reported from candidate records alone."]
   },
@@ -399,7 +406,7 @@ function kpiCard(k, state) {
     '<div class="kpi-value num" aria-label="No value: ' + esc(STATES[state].label) + '">—<span>' + esc(k.unit) + "</span></div>" +
     '<div class="kpi-basis">Date basis: ' + esc(k.basis) + "<br>Counts: " + esc(k.entity) + "</div>" +
     "<div>" + pill(state) + "</div>" +
-    '<dl class="defn" id="' + did + '" hidden><dt>Purpose</dt><dd>' + esc(k.purpose) + "</dd><dt>Numerator</dt><dd>" + esc(k.num) + "</dd><dt>Denominator</dt><dd>" + esc(k.den) + "</dd><dt>Open question</dt><dd>" + esc(k.open) + "</dd><dt>Status</dt><dd>Proposed v0.1, pending approval</dd></dl>" +
+    '<dl class="defn" id="' + did + '" hidden><dt>Purpose</dt><dd>' + esc(k.purpose) + "</dd><dt>Numerator</dt><dd>" + esc(k.num) + "</dd><dt>Denominator</dt><dd>" + esc(k.den) + "</dd><dt>Open question</dt><dd>" + esc(k.open) + "</dd><dt>Status</dt><dd>" + (k.appr ? "Counting rule approved; numbers not yet validated" : "Proposed v0.1, pending approval") + "</dd></dl>" +
     "</article>";
 }
 function panel(p) {
@@ -412,6 +419,7 @@ function notes(rules) { return '<section class="notes"><h2>Rules applied on this
 function renderDash(key) {
   var p = PAGES[key], h = head(p.nav, p.purpose) + renderFilters();
   h += '<div class="kpis">' + p.kpis.map(function (id) { return kpiCard(kpi(id)); }).join("") + "</div>";
+  if (p.separate) h += '<section class="separate" aria-label="Reported separately"><div><h2>Reported separately</h2><p>Internal-posting fills. Counted with or without a joining date and excluded from every other figure, chart and percentage on this site.</p></div><div class="kpis">' + p.separate.map(function (id) { return kpiCard(kpi(id)); }).join("") + "</div></section>";
   h += '<div class="grid2">' + p.panels.map(panel).join("") + "</div>";
   if (p.rules) h += notes(p.rules);
   return h;
@@ -428,7 +436,7 @@ function renderProgrammes() {
     { t: "NATS by business", type: "Horizontal bar", measure: "Trainees joined", basis: "Joining date", state: "validation" },
     { t: "NATS by batch", type: "Table", measure: "Trainees per batch", basis: "Batch start", state: "validation" },
     { t: "Gender of NATS joiners", type: "Bar with Unknown shown", measure: "Share of trainees", basis: "Joining date", denom: "All NATS joiners in scope", state: "validation" }],
-    r: ["NATS rows are matched to the Active & Inactive sheet before any combined total is shown."] };
+    r: ["NATS rows are matched to the Active & Inactive sheet before any combined total is shown.", "Programme labels found in the business column (such as CSR) are treated as programmes, not business areas."] };
   else if (progTab === "natsstatus") body = { k: ["natsactive"], p: [
     { t: "Status snapshot", type: "Bar: Active, Inactive, Unknown", measure: "Trainees", basis: "Snapshot as-of date", state: "unavailable", note: "The snapshot date must be verified first." },
     { t: "Inactive by recorded reason", type: "Horizontal bar", measure: "Inactive trainees", basis: "Snapshot as-of date", denom: "All inactive, Not recorded shown", state: "validation" }],
@@ -438,7 +446,7 @@ function renderProgrammes() {
     { t: "College-wise intake", type: "Sortable table", measure: "Joiners per college", basis: "Joining date, by batch", state: "validation", note: "College names need a cleaned reference list." },
     { t: "Programme trend", type: "Column by batch year", measure: "Joiners", basis: "Batch year", state: "validation" },
     { t: "Campus by business", type: "Horizontal bar", measure: "Joiners", basis: "Joining date", state: "validation" }],
-    r: ["Campus joiners who also appear in the MT sheet are counted once after reconciliation."] };
+    r: ["Approved: campus hires are counted from the Campus sheet. MT rows with Source = Campus are excluded from MT totals, so no one is counted twice."] };
   h += '<div class="kpis">' + body.k.map(function (id) { return kpiCard(kpi(id)); }).join("") + "</div>";
   h += '<div class="grid2" role="tabpanel" aria-labelledby="tab-' + progTab + '">' + body.p.map(panel).join("") + "</div>" + notes(body.r);
   return h;
@@ -493,7 +501,7 @@ var dictSheet = null;
 function renderAuditObserved() {
   var A = AUDIT, sheets = Object.keys(A.dict); if (!dictSheet) dictSheet = sheets[0];
   var h = head("Workbook audit", "Milestone 1. Observed inventory of " + A.file + ". " + A.inspected, pill("done", "Observed") + " " + pill("denied", "Restricted"));
-  h += '<div class="callout warn"><b>Restricted content.</b><span>Schema and data-quality metadata only. No names, contact details, compensation or hiring outcome totals are reproduced. The repository is public, so this copy is never committed.</span></div>';
+  h += '<div class="callout warn"><b>Restricted content.</b><span>Schema and data-quality metadata only. No names, contact details or compensation are reproduced. Row-classification counts appear only as reconciliation evidence. The repository is public, so this copy is never committed.</span></div>';
   h += '<section class="panel"><h2>Sheet inventory</h2><div class="tbl-wrap"><table><thead><tr><th>Sheet</th><th>Visibility</th><th>Data rows</th><th>Columns</th><th>Formula cells</th><th>Saved state</th><th>Grain observed</th></tr></thead><tbody>' +
     A.sheets.map(function (r) { return "<tr>" + r.map(function (c, i) { return "<td" + (i >= 2 && i <= 4 ? ' class="num"' : "") + ">" + esc(c) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>" +
     '<dl class="spec">' + A.fileFacts.map(function (f) { return "<dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1]) + "</dd>"; }).join("") + "</dl></section>";
@@ -508,20 +516,22 @@ function renderAuditObserved() {
   h += '<div class="tbl-wrap"><table><thead><tr><th>Col</th><th>Header</th><th>Type</th><th>Populated</th><th>Formulas</th><th>Distinct</th><th>Class</th><th>Note</th></tr></thead><tbody>' +
     A.dict[dictSheet].map(function (c) { var pct = c[4] ? Math.round(100 * c[3] / c[4]) : 0; var note = (A.notes[dictSheet + "|" + c[1]] || "");
       return '<tr><td class="num">' + c[0] + "</td><td><b>" + esc(c[1]) + "</b></td><td>" + esc(c[2]) + '</td><td class="num">' + c[3] + " / " + c[4] + ' <span class="muted">(' + pct + '%)</span></td><td class="num">' + (c[5] ? c[5] + (c[6] ? ' <span class="muted">(' + c[6] + " external)</span>" : "") : '<span class="muted">—</span>') + '</td><td class="num">' + c[8] + "</td><td>" + pill(clsState[c[7]], c[7]) + "</td><td>" + esc(note) + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
-  h += '<section class="panel"><h2>Decisions requiring approval</h2><ol class="qlist">' + A.decisions.map(function (d) { return "<li><b>" + esc(d[0]) + "</b><span>" + esc(d[1]) + "</span></li>"; }).join("") + "</ol></section>";
+  if (A.approved) h += '<section class="panel"><div class="panel-head"><h2>Approved decisions</h2>' + pill("done", "Approved 6 Nov 2026") + '</div><div class="tbl-wrap"><table><thead><tr><th>Decision</th><th>Approved rule</th></tr></thead><tbody>' + A.approved.map(function (d) { return "<tr><td><b>" + esc(d[0]) + "</b></td><td>" + esc(d[1]) + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
+  if (A.recon) h += '<section class="panel"><div class="panel-head"><h2>Row classification under the approved rules</h2>' + pill("validation", "Reconciliation evidence") + '</div><div class="tbl-wrap"><table><thead><tr><th>Population</th><th>Rows</th><th>Classified as</th></tr></thead><tbody>' + A.recon.map(function (r) { return '<tr><td style="white-space:pre">' + esc(r[0]) + '</td><td class="num">' + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td></tr>"; }).join("") + '</tbody></table></div><p class="muted" style="font-size:12px">Row counts at the file save date, before duplicate review. They are not validated KPI values.</p></section>';
+  h += '<section class="panel"><h2>Open questions requiring approval</h2><ol class="qlist">' + A.decisions.map(function (d) { return "<li><b>" + esc(d[0]) + "</b><span>" + esc(d[1]) + "</span></li>"; }).join("") + "</ol></section>";
   return h;
 }
 
 var selKpi = "offers", sortKey = null, sortDir = 1;
 function renderCatalogue() {
-  var h = head("KPI catalogue", "Proposed definitions to investigate. None is certified; all are pending approval and reconciliation against the workbook.", pill("validation", "14 proposed · 0 approved"));
+  var h = head("KPI catalogue", "Proposed definitions to investigate. None is certified; all are pending approval and reconciliation against the workbook.", pill("validation", KPIS.length + " proposed · " + KPIS.filter(function (k) { return k.appr; }).length + " rules approved · 0 validated"));
   var list = KPIS.slice();
   if (sortKey) list.sort(function (a, b) { return a[sortKey].localeCompare(b[sortKey]) * sortDir; });
   function th(k, l) { return '<th scope="col" aria-sort="' + (sortKey === k ? (sortDir > 0 ? "ascending" : "descending") : "none") + '"><button data-sort="' + k + '">' + l + (sortKey === k ? (sortDir > 0 ? " ▲" : " ▼") : "") + "</button></th>"; }
   h += '<section class="panel"><div class="tbl-wrap"><table><thead><tr>' + th("name", "KPI") + th("entity", "Counting entity") + th("basis", "Date basis") + th("sheet", AUDIT ? "Observed source columns" : "Expected source") + th("feas", "Feasibility") + '<th scope="col">Status</th></tr></thead><tbody>' +
-    list.map(function (k) { return '<tr class="clickable' + (k.id === selKpi ? " sel" : "") + '" data-kpi="' + k.id + '" tabindex="0"><td><b>' + esc(k.name) + "</b></td><td>" + esc(k.entity) + "</td><td>" + esc(k.basis) + '</td><td class="muted">' + esc(k.sheet) + "</td><td>" + pill(feasState(k.feas), k.feas) + "</td><td>" + pill("validation", "Pending approval") + "</td></tr>"; }).join("") + "</tbody></table></div><p class=\"muted\" style=\"font-size:12px\">Select a row to see its definition record.</p></section>";
+    list.map(function (k) { return '<tr class="clickable' + (k.id === selKpi ? " sel" : "") + '" data-kpi="' + k.id + '" tabindex="0"><td><b>' + esc(k.name) + "</b></td><td>" + esc(k.entity) + "</td><td>" + esc(k.basis) + '</td><td class="muted">' + esc(k.sheet) + "</td><td>" + pill(feasState(k.feas), k.feas) + "</td><td>" + (k.appr ? pill("done", "Rule approved") + " " + pill("validation") : pill("validation", "Pending approval")) + "</td></tr>"; }).join("") + "</tbody></table></div><p class=\"muted\" style=\"font-size:12px\">Select a row to see its definition record.</p></section>";
   var k = kpi(selKpi);
-  var known = { "Name and business purpose": k.name + ": " + k.purpose, "Counting entity": k.entity, "Numerator and denominator": k.num + " / " + k.den, "Date basis": k.basis, "Source sheet and exact columns": k.sheet + (AUDIT ? "" : "; exact columns after audit"), "Definition version and approval status": "v0.1 proposed, pending approval" };
+  var known = { "Name and business purpose": k.name + ": " + k.purpose, "Counting entity": k.entity, "Numerator and denominator": k.num + " / " + k.den, "Date basis": k.basis, "Source sheet and exact columns": k.sheet + (AUDIT ? "" : "; exact columns after audit"), "Definition version and approval status": k.appr ? "v0.2 counting rule approved 6 Nov 2026; numbers not yet validated" : "v0.1 proposed, pending approval" };
   h += '<section class="panel"><div class="panel-head"><h2>Definition record: ' + esc(k.name) + "</h2>" + pill("validation") + '</div><div class="callout warn"><b>Open question</b><span>' + esc(k.open) + '</span></div><div class="tbl-wrap"><table><tbody>' +
     CATALOGUE_FIELDS.map(function (f) { return '<tr><th scope="row" style="width:34%;text-transform:none;letter-spacing:0;font-size:12.5px">' + f + "</th><td" + (known[f] ? "" : ' class="muted"') + ">" + esc(known[f] || "To be confirmed after workbook inspection") + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
   h += notes(["One row is not assumed to be one hire.", "One requisition is not assumed to be one candidate.", "An offer date is not assumed to identify a unique offer event.", "A joining date alone does not confirm a completed joining.", "Missing values are never treated as zero."]);
@@ -545,8 +555,9 @@ function renderAccess() {
     ["Queries and APIs (row-level filter applied server-side)", "Charts, totals and drill-downs", "Search and filter suggestions", "Detail records", "Exports and scheduled reports", "Cached results (cache key includes the user's scope)", "Generated summaries and observations"].map(function (x) { return "<li>" + x + "</li>"; }).join("") +
     '</ul></section><section class="panel"><h2>Security controls</h2><ul class="tight">' +
     ["Enterprise sign-in (OIDC or SAML) with verified identities", "No role-selection control that grants privileges", "Tampered business IDs, URLs and API parameters rejected", "Revocation takes effect on the next request; caches purged", "Permission changes and sensitive access written to an audit log", "Contact details, DOB, personal IDs, compensation and BGV data kept out of analytical views"].map(function (x) { return "<li>" + x + "</li>"; }).join("") + "</ul></section></div>";
-  h += '<section class="panel"><h2>Mapping questions to resolve</h2><div class="tbl-wrap"><table><thead><tr><th>Label seen in brief</th><th>Possible match</th><th>Treatment</th></tr></thead><tbody>' +
-    '<tr><td>DTO</td><td>D&amp;IT</td><td>Not inferred. Needs an approved effective-dated mapping.</td></tr><tr><td>TTI</td><td>GTT</td><td>Not inferred. Needs an approved effective-dated mapping.</td></tr><tr><td>Multi-business assignments</td><td>—</td><td>Each scope granted explicitly; union, never wildcard.</td></tr></tbody></table></div></section>';
+  h += '<section class="panel"><h2>Business mapping rules</h2><div class="tbl-wrap"><table><thead><tr><th>Case</th><th>Treatment</th></tr></thead><tbody>' +
+    '<tr><td>Legacy business names in access lists</td><td>Mapped to current business areas through an approved, effective-dated table (approved 6 Nov 2026). Never inferred.</td></tr><tr><td>Spelling variants of one business</td><td>Merged only where approved.</td></tr><tr><td>Programme labels in a business column</td><td>Treated as programmes, not business areas.</td></tr><tr><td>Multi-business assignments</td><td>Each scope granted explicitly; union, never wildcard.</td></tr></tbody></table></div></section>';
+  if (AUDIT && AUDIT.mapping) h += '<section class="panel"><div class="panel-head"><h2>Business mapping</h2>' + pill("validation", "Restricted") + '</div><div class="tbl-wrap"><table><thead><tr><th>Canonical business area</th><th>Access-sheet names</th><th>Data-sheet variants</th><th>Status</th></tr></thead><tbody>' + AUDIT.mapping.map(function (r) { return "<tr><td><b>" + esc(r[0]) + "</b></td><td>" + esc(r[1]) + "</td><td>" + esc(r[2]) + "</td><td>" + esc(r[3]) + "</td></tr>"; }).join("") + "</tbody></table></div></section>";
   if (AUDIT && AUDIT.access) h += '<section class="panel"><div class="panel-head"><h2>Observed in the User Access sheet</h2>' + pill("validation", "Restricted finding") + '</div><ul class="tight">' + AUDIT.access.map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul></section>";
   return h;
 }
@@ -584,7 +595,7 @@ function renderRegister() {
   var h = head("Delivery register", "Completed work, evidence, open decisions and the next approval. Concept, implemented, validated and production-ready are kept distinct.", "");
   var ms = [
     ["1", "Workbook audit and data dictionary", AUDIT ? "done" : "concept", AUDIT ? "Observed: inspection complete" : "Inspected; held in restricted copy", AUDIT ? "Workbook audit page (restricted)" : "Restricted copy, not in this preview"],
-    ["2", "KPI catalogue and reconciliation decisions", "concept", "Proposed (14 KPIs)", "This page, KPI catalogue"],
+    ["2", "KPI catalogue and reconciliation decisions", "concept", "Counting rules approved for 4 KPIs; rest proposed", "KPI catalogue; decisions of 6 Nov 2026"],
     ["3", "Wireframes and design system", "concept", "Design concept", "This interactive specification"],
     ["4", "Access matrix and security architecture", "concept", "Proposed", "Access & security page"],
     ["5", "Technology recommendation", "concept", "Provisional", "Technology options page"],
