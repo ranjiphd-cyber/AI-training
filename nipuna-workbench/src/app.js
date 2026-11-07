@@ -220,8 +220,10 @@
         setDirty(false);
         say("Saved.");
         refreshList();
+        return true;
       } catch (e) {
         say("Save failed: " + (e.message || e.code || e) + ". Export the case file to keep your work.", "crit");
+        return false;
       } finally { setBusy(""); }
     }
     async function open(id) {
@@ -284,8 +286,8 @@
         const errs = N.validateCase(obj);
         if (errs.length) throw new Error(errs.join(" "));
         N.audit(obj, N.ADVISOR, "Case imported", file.name);
-        setC(obj); setDirty(true); setStage("A");
-        say("Imported " + file.name + ". Press Save to keep it in this workbench.");
+        setC(obj); setDirty(true); setStage("F"); setViewer(null);
+        say("Imported “" + obj.meta.caseName + "”. Press Save case to keep it. Download the Word report from the top bar or stage G.");
       } catch (e) { say("Import failed: " + (e.message || e), "crit"); }
     }
     async function removeCase() {
@@ -299,6 +301,10 @@
       catch (e) { if (e && e.code === "declined") say("Download declined.", "warn"); else say("Download failed: " + ((e && (e.message || e.code)) || e), "crit"); return false; }
     }
 
+    const [pendingLeave, setPendingLeave] = useState(null);
+    const topImportRef = useRef(null);
+    const proceed = (p) => { setPendingLeave(null); setDirty(false); if (p.kind === "import") importFile(p.file); else { setC(null); setViewer(null); } };
+    const requestLeave = (p) => (dirty ? setPendingLeave(p) : proceed(p));
     const openViewer = useCallback((v) => setViewer(v), []);
     const ctx = { c, update, caps, say, setBusy, openViewer, saveFile, store, setStage };
 
@@ -315,10 +321,19 @@
             ${c ? html`<span className=${"save-state " + (dirty ? "dirty" : "")}>${dirty ? "Unsaved changes" : "Saved"}</span>` : null}
             ${c ? html`<button type="button" className="btn" onClick=${() => downloadReport("report")} disabled=${!!busy} title="Download the evaluation report as an editable Word document">Download Word report</button>` : null}
             ${c ? html`<button type="button" className="btn primary" onClick=${save} disabled=${!!busy || !dirty}>Save case</button>` : null}
-            ${c ? html`<button type="button" className="btn ghost" onClick=${() => { if (dirty) say("Unsaved changes were kept in memory only until you open another case.", "warn"); setC(null); }}>All cases</button>` : null}
+            ${c ? html`<button type="button" className="btn" onClick=${() => topImportRef.current && topImportRef.current.click()} title="Open a .case.json file, e.g. one sent to you in chat">Import case file</button>` : null}
+            <input ref=${topImportRef} id="top-import" type="file" accept=".json,application/json" hidden onChange=${(e) => { const f = e.target.files[0]; if (f) requestLeave({ kind: "import", file: f }); e.target.value = ""; }} />
+            ${c ? html`<button type="button" className="btn ghost" onClick=${() => requestLeave({ kind: "home" })}>All cases</button>` : null}
           </div>
         </header>
         ${busy ? html`<div className="busy" role="status">${busy}</div>` : null}
+        ${pendingLeave ? html`<div className="leavebar" role="alertdialog" aria-label="Unsaved changes">
+          <span><b>This case has unsaved changes.</b> ${pendingLeave.kind === "import" ? "Opening “" + pendingLeave.file.name + "” will close it." : "Going to All cases will close it."}</span>
+          <span className="row gap wrap">
+            <button type="button" className="btn primary" onClick=${async () => { if (await save()) proceed(pendingLeave); }}>Save, then continue</button>
+            <button type="button" className="btn danger-outline" onClick=${() => proceed(pendingLeave)}>Discard changes and continue</button>
+            <button type="button" className="btn ghost" onClick=${() => setPendingLeave(null)}>Cancel</button>
+          </span></div>` : null}
         ${!c
           ? html`<${Home} cases=${cases} store=${store} caps=${caps} onOpen=${open} onNew=${startNew} onNewFromFile=${startFromFile} onBundled=${loadBundled} onDemo=${loadDemo} onImport=${importFile} />`
           : html`
@@ -1076,7 +1091,7 @@
       setF(blank);
     };
     return html`<div className="sub"><h3>Verification register</h3>
-      <p className="hint">${c.meta.research === "Available" ? "Records must cite the exact source and access date." : N.NO_VERIFICATION + " This workbench cannot browse; records you add are labelled “Advisor-entered verification”."} Logos, employer names, review ratings and generic partnerships are not proof of programme-specific placement commitments.</p>
+      <p className="hint">${(c.verification || []).length ? c.verification.length + " verification record(s), each labelled with who checked it and the source type. This workbench cannot browse; records you add are labelled “Advisor-entered verification”." : N.NO_VERIFICATION + " This workbench cannot browse; records you add are labelled “Advisor-entered verification”."} Logos, employer names, review ratings and generic partnerships are not proof of programme-specific placement commitments.</p>
       <div className="tablewrap"><table className="list"><thead><tr><th>Area / claim</th><th>Result</th><th>Source</th><th>Limitations</th><th></th></tr></thead>
       <tbody>${(c.verification || []).map((v, i) => html`<tr key=${v.id}><td><div className="small muted">${v.area}</div>${v.claim}</td><td className="small">${v.result}</td><td className="small">${v.url ? html`<a href=${v.url} target="_blank" rel="noopener">${v.sourceName || v.url}</a>` : v.sourceName}<div className="muted">${v.sourceType} · ${v.date}</div><div>${html`<${Badge} tone=${v.enteredBy.startsWith("Advisor") ? "" : "warn"}>${v.enteredBy}</${Badge}>`}</div></td><td className="small">${v.limitations}</td><td><button type="button" className="btn tiny ghost" aria-label="Delete record" onClick=${() => update((x) => { x.verification.splice(i, 1); }, "Verification record deleted", v.claim)}>×</button></td></tr>`)}</tbody></table></div>
       ${(c.verificationChecklist || []).length ? html`<details className="sub"><summary>Verification checklist (${c.verificationChecklist.length})</summary><ul className="small">${c.verificationChecklist.map((v, i) => html`<li key=${i}>[${v.area}] ${v.claim}${v.howToCheck ? " — " + v.howToCheck : ""}</li>`)}</ul></details>` : null}

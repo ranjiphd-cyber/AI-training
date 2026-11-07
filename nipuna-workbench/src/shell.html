@@ -36,6 +36,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-vis
 .title{font-family:var(--font-display);font-size:1.15rem;font-weight:700}
 .top-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .save-state{font-size:.8rem;color:var(--ok)} .save-state.dirty{color:var(--warn)}
+.leavebar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;background:var(--warn-bg);color:var(--ink);border-bottom:1px solid var(--rule);padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .busy{background:var(--accent);color:var(--accent-ink);padding:4px 16px;font-size:.85rem}
 .workspace{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));flex:1}
 .stages{display:flex;flex-direction:column;gap:2px;position:sticky;top:76px;align-self:start}
