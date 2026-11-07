@@ -1414,7 +1414,7 @@ if (window.pdfjsLib) { try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://c
       ["Proposal stage / version", c.meta.stage + (N.factDisplay(c, "versionStage") !== "Not stated" ? " — " + N.factDisplay(c, "versionStage") : "")],
       ["Date submitted", N.factDisplay(c, "submissionDate")],
       ["Project cost and funding", "Total " + N.fmtINR(tc) + "; public funding requested " + N.fmtINR(pf) + (N.factDisplay(c, "otherFunding") !== "Not stated" ? "; other: " + N.factDisplay(c, "otherFunding") : "")],
-      ["Trainees and unit cost", (tr === null ? N.factDisplay(c, "trainees") : N.fmtNum(tr)) + " trainees; stated " + N.factDisplay(c, "statedCostPerTrainee") + " per trainee; recalculated " + N.fmtINR(pt.total) + " total and " + N.fmtINR(pt.public) + " public per trainee"],
+      ["Trainees and unit cost", (tr === null ? N.factDisplay(c, "trainees") : N.fmtNum(tr)) + " trainees; " + (N.factDisplay(c, "statedCostPerTrainee") === "Not stated" ? "cost per trainee not stated by applicant" : "stated " + N.factDisplay(c, "statedCostPerTrainee") + " per trainee") + "; recalculated " + N.fmtINR(pt.total) + " total and " + N.fmtINR(pt.public) + " public per trainee"],
       ["Evaluator", N.ADVISOR + ", Independent Advisor / Evaluator"],
       ["Evaluation date", N.fmtDate(c.meta.evalDate)],
       ["Policy basis", N.policyConfirmed(c) ? "Current approved policy supplied and confirmed" : N.PROVISIONAL_BANNER],
