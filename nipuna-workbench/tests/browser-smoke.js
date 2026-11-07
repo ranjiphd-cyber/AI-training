@@ -45,7 +45,7 @@ const MAP = {
   await page.screenshot({ path: path.join(SHOTS, "shot-home.png") });
 
   // New case → upload the real proposal PDF
-  await page.getByRole("button", { name: "New case" }).click();
+  await page.getByRole("button", { name: "Empty case" }).click();
   await page.locator(".stages").getByRole("button", { name: new RegExp("^B ") }).click();
   await page.setInputFiles("#doc-files", PROPOSAL);
   await page.locator(".doc").first().waitFor({ timeout: 60000 });
@@ -61,7 +61,7 @@ const MAP = {
   if (!/Claude not available in this view/.test(ai)) throw new Error("AI availability message missing");
   step("Facts stage: Claude unavailable outside claude.ai → manual copy/paste route offered");
   await page.locator(".stages").getByRole("button", { name: new RegExp("^G ") }).click();
-  await page.getByRole("button", { name: "Export evaluation report (.docx)" }).click();
+  await page.getByRole("button", { name: "Download report for KDEM (Word .docx)" }).click();
   await page.locator(".toast", { hasText: "File saving is not available" }).waitFor();
   step("Export outside claude.ai → 'File saving is not available in this view…' (no fake download)");
   await page.getByRole("button", { name: "Preview report" }).click();
