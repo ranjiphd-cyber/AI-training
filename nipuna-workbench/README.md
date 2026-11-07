@@ -25,14 +25,14 @@ A single-advisor tool for Dr. Ranjith T P to review skilling and employment prop
 
 ## First-use guide
 
-1. Open the artifact on claude.ai. Choose **New case**, or **Open the prepared case** to start from the prepared first case. It opens as a new copy; press **Save case**.
+1. Open the artifact on claude.ai. Press **Upload a proposal — PDF or Word (.docx)** to start a case from the proposal file, or **Open the prepared case**. Old `.doc` files are refused with an instruction to re-save them as `.docx` or PDF.
 2. **A. Case**: set stage, evaluation date (defaults to today), whether a current approved policy was supplied, and special concerns. Tick the confidentiality acknowledgement.
 3. **B. Documents**: pick a role, then add PDF/DOCX/TXT files: proposal, annexures, current policy, earlier evaluations, applicant responses, and the reference report (format only). Read the extraction warnings; add transcriptions for image-only pages that carry evidence.
 4. **C. Facts**: press **Extract facts** (or use the manual route). Check each value against its citation (click a citation chip to open the evidence viewer), add missing values, tick **Confirmed**. Conflicting values stay side by side.
 5. **D. Analyse**: enter or paste the budget lines and totals, funding sources and tranches, and any consistency checks. Then **Run analysis**.
 6. **E. Findings & scores**: filter and edit findings (evidence label, severity, stage, required action, closure evidence). Accept or override each score; a reason is required when you change an AI draft by 0.25 or more. Edit the compliance rows. Category A rows are only possible once a policy document and an officer confirmation are recorded.
 7. **F. Decision**: add verification records, review the condition lists, and choose exactly one outcome with merit, readiness, rationale and principal conditions.
-8. **G. Report & save**: preview, export the report and (optionally) the internal annex, copy the short summary, export the case file, and save.
+8. **G. Report & save**: preview, then **Download report for KDEM (Word .docx)**. The same download is always available from **Download Word report** in the top bar. The file is named `NIPUNA-Evaluation_<applicant>_<date>.docx` and opens as an editable Word document for final edits before sending. The internal annex is a separate download for your records. Copy the short summary, export the case file, and save.
 
 For a **revised proposal**, add it as “Proposal (revised)” to the same case, plus the earlier evaluation and the applicant's response. Earlier findings can be marked Closed / Partly closed / Unresolved / New finding. **Closed** stays disabled until closure evidence is entered.
 
@@ -43,6 +43,7 @@ Files are parsed in the browser. Extracted text is stored with the case. AI anal
 ## Test results (run 7 Nov 2026)
 
 `node tests/acceptance.test.js`: **16 of 16 passed**: the 14 required tests plus 2 regression checks, all on synthetic fixtures. The scanned-PDF test generates its own image-only PDF. See `tests/RESULTS.md`. Private checks on the first real case (budget recomputation, tranche discrepancy, all citations verified against the PDF, report length) also passed; they are not in the repository.
+`node tests/browser-upload-download.js`: passed. It covers a Word proposal and a PDF proposal uploaded from the home screen, `.doc` rejection, and both download buttons through a simulated claude.ai download capability; each downloaded file was reopened with python-docx and LibreOffice.
 `node tests/browser-smoke.js`: passed in headless Chromium. Covered: real PDF upload and extraction warnings, evidence viewer, the unavailable-Claude path, export refusal outside claude.ai, in-browser .docx generation and preview, the prepared case, the score override with reason enforcement, and 390 px phone width with no horizontal overflow.
 
 **Not tested**: live Claude calls through `sample`; the claude.ai download prompt; the claude.ai `db` store. These run only inside the claude.ai viewer. Model compliance with the embedded-instruction guard is also untested live; test 12 covers detection, prompt structure and output sanitising only. The CDN script URLs could not be fetched from the build container; the browser test used identical local copies of the same package versions.

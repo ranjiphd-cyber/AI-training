@@ -116,6 +116,25 @@
     extraction.warnings.push("DOCX locations are headings, paragraphs and table rows; page numbers are not available. Footnotes, text boxes and headers/footers may be omitted by the converter.");
     return { units, extraction, kind: "docx" };
   }
+  // One helper for every upload path: PDF or Word (.docx); plain text as a fallback.
+  const ACCEPT = ".pdf,.docx,.doc,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  async function fileToDoc(file, role, version) {
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith(".doc")) throw new Error("This is the old Word format (.doc), which cannot be read in the browser. Open it in Word, choose File → Save As → Word Document (.docx) or PDF, and upload that file.");
+    const buf = await file.arrayBuffer();
+    let r;
+    if (lower.endsWith(".pdf")) r = await extractPdf(buf);
+    else if (lower.endsWith(".docx")) r = await extractDocx(buf);
+    else if (lower.endsWith(".txt")) { const units = textToUnits(new TextDecoder().decode(buf)); r = { units, extraction: N.assessExtraction(units, "text"), kind: "text" }; }
+    else throw new Error("Unsupported file type. Upload a PDF or a Word document (.docx).");
+    return { id: N.uid("D"), name: file.name, shortName: N.trunc(file.name.replace(/\.[^.]+$/, ""), 22), role, version: version || "", kind: r.kind, addedAt: N.todayISO(), units: r.units, extraction: r.extraction, injection: N.detectInjection(r.units) };
+  }
+  function reportFileName(c, kind) {
+    const slug = (N.factDisplay(c, "legalEntity") !== "Not stated" ? N.factDisplay(c, "legalEntity").split(/[—(,]/)[0] : c.meta.caseName).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "Proposal";
+    const base = kind === "annex" ? "NIPUNA-Evidence-Annex" : N.hasUsableProposal(c) || c.synthetic ? "NIPUNA-Evaluation" : "NIPUNA-Evaluation-Blank-Template";
+    return base + "_" + slug + "_" + c.meta.evalDate + ".docx";
+  }
+
   function textToUnits(text) {
     return String(text)
       .split(/\n\s*\n/)
@@ -213,6 +232,32 @@
         setC(obj); setDirty(false); setStage("A"); setViewer(null);
       } catch (e) { say("Could not open case: " + (e.message || e), "crit"); } finally { setBusy(""); }
     }
+    async function startFromFile(file) {
+      if (!file) return;
+      setBusy("Reading " + file.name + "…");
+      try {
+        const doc = await fileToDoc(file, "Proposal (initial)", "");
+        const nc = N.newCase("Review — " + file.name.replace(/\.[^.]+$/, ""));
+        nc.documents.push(doc);
+        N.audit(nc, N.ADVISOR, "Document added", file.name + " as Proposal (initial) — extraction " + doc.extraction.status + ", " + doc.extraction.chars + " chars");
+        setC(nc); setDirty(true); setViewer(null);
+        setStage(doc.extraction.status === "failed" ? "B" : "C");
+        if (doc.extraction.status === "failed") say(file.name + ": the text could not be read reliably (scanned document?). See B. Documents for options.", "crit");
+        else say("New case created from " + file.name + " (" + (doc.kind === "pdf" ? "PDF" : "Word") + "). Next: confirm the facts, then press Save case.");
+      } catch (e) { say(file.name + ": " + (e.message || e), "crit"); } finally { setBusy(""); }
+    }
+    async function downloadReport(kind) {
+      if (!c) return;
+      try {
+        const doc = kind === "annex" ? R.buildAnnex(docx, N, c) : R.buildReport(docx, N, c);
+        const blob = await docx.Packer.toBlob(doc);
+        const name = reportFileName(c, kind);
+        if (await saveFile(name, blob)) {
+          update(() => {}, kind === "annex" ? "Annex downloaded" : "Report downloaded", name);
+          say("Downloaded " + name + ". Open it in Word to make final edits before sending to KDEM.");
+        }
+      } catch (e) { say("Could not build the Word file: " + (e.message || e), "crit"); }
+    }
     function startNew() {
       setC(N.newCase("New proposal review")); setDirty(true); setStage("A"); setViewer(null);
     }
@@ -266,13 +311,14 @@
             ${c ? html`<${Badge} tone="draft">${c.meta.status}</${Badge}>` : null}
             ${c && c.synthetic ? html`<${Badge} tone="crit">Synthetic demo</${Badge}>` : null}
             ${c ? html`<span className=${"save-state " + (dirty ? "dirty" : "")}>${dirty ? "Unsaved changes" : "Saved"}</span>` : null}
+            ${c ? html`<button type="button" className="btn" onClick=${() => downloadReport("report")} disabled=${!!busy} title="Download the evaluation report as an editable Word document">Download Word report</button>` : null}
             ${c ? html`<button type="button" className="btn primary" onClick=${save} disabled=${!!busy || !dirty}>Save case</button>` : null}
             ${c ? html`<button type="button" className="btn ghost" onClick=${() => { if (dirty) say("Unsaved changes were kept in memory only until you open another case.", "warn"); setC(null); }}>All cases</button>` : null}
           </div>
         </header>
         ${busy ? html`<div className="busy" role="status">${busy}</div>` : null}
         ${!c
-          ? html`<${Home} cases=${cases} store=${store} caps=${caps} onOpen=${open} onNew=${startNew} onBundled=${loadBundled} onDemo=${loadDemo} onImport=${importFile} />`
+          ? html`<${Home} cases=${cases} store=${store} caps=${caps} onOpen=${open} onNew=${startNew} onNewFromFile=${startFromFile} onBundled=${loadBundled} onDemo=${loadDemo} onImport=${importFile} />`
           : html`
           <div className="workspace">
             <nav className="stages" aria-label="Workflow">
@@ -286,7 +332,7 @@
               ${stage === "D" ? html`<${StageAnalyse} ...${ctx} />` : null}
               ${stage === "E" ? html`<${StageReview} ...${ctx} />` : null}
               ${stage === "F" ? html`<${StageDecision} ...${ctx} />` : null}
-              ${stage === "G" ? html`<${StageReport} ...${ctx} onDelete=${removeCase} />` : null}
+              ${stage === "G" ? html`<${StageReport} ...${ctx} onDelete=${removeCase} onDownload=${downloadReport} />` : null}
             </main>
             ${viewer ? html`<${Viewer} c=${c} v=${viewer} onClose=${() => setViewer(null)} />` : null}
           </div>`}
@@ -294,15 +340,21 @@
       </div>`;
   }
 
-  function Home({ cases, store, caps, onOpen, onNew, onBundled, onDemo, onImport }) {
+  function Home({ cases, store, caps, onOpen, onNew, onNewFromFile, onBundled, onDemo, onImport }) {
     const fileRef = useRef(null);
+    const propRef = useRef(null);
     return html`
       <main className="home">
         <section className="panel intro">
           <h1>Proposal Review Workbench</h1>
           <p>Prepare an independent advisory evaluation of a NIPUNA Karnataka skilling or employment proposal: source-cited facts, code-checked arithmetic, four-criterion scoring, a provisional compliance checklist, verification notes and an editable Word report. The workbench supports the advisor's judgement. It never issues a government approval.</p>
-          <div className="row gap">
-            <button type="button" className="btn primary" onClick=${onNew}>New case</button>
+          <div className="upload-cta">
+            <button type="button" className="btn primary big" onClick=${() => propRef.current && propRef.current.click()}>Upload a proposal — PDF or Word (.docx)</button>
+            <input ref=${propRef} id="proposal-file" type="file" accept=${ACCEPT} hidden onChange=${(e) => { const f = e.target.files[0]; if (f) onNewFromFile(f); e.target.value = ""; }} />
+            <span className="hint">Starts a new case with this file as the proposal. Add annexures, policy documents and earlier evaluations later in B. Documents.</span>
+          </div>
+          <div className="row gap wrap">
+            <button type="button" className="btn" onClick=${onNew}>Empty case</button>
             <button type="button" className="btn" onClick=${onBundled}>Open the prepared case</button>
             <button type="button" className="btn ghost" onClick=${onDemo}>Load synthetic demo</button>
             <button type="button" className="btn ghost" onClick=${() => fileRef.current && fileRef.current.click()}>Import case file (.json)</button>
@@ -398,14 +450,8 @@
       for (const file of Array.from(files)) {
         setBusy("Extracting " + file.name + "…");
         try {
-          const buf = await file.arrayBuffer();
-          const lower = file.name.toLowerCase();
-          let r;
-          if (lower.endsWith(".pdf")) r = await extractPdf(buf);
-          else if (lower.endsWith(".docx")) r = await extractDocx(buf);
-          else if (lower.endsWith(".txt")) { const units = textToUnits(new TextDecoder().decode(buf)); r = { units, extraction: N.assessExtraction(units, "text"), kind: "text" }; }
-          else throw new Error("Unsupported file type. Use PDF, DOCX or TXT, or paste the text.");
-          const doc = { id: N.uid("D"), name: file.name, shortName: N.trunc(file.name.replace(/\.[^.]+$/, ""), 22), role, version, kind: r.kind, addedAt: N.todayISO(), units: r.units, extraction: r.extraction, injection: N.detectInjection(r.units) };
+          const doc = await fileToDoc(file, role, version);
+          const r = doc;
           update((x) => { x.documents.push(doc); }, "Document added", file.name + " as " + role + " — extraction " + r.extraction.status + ", " + r.extraction.chars + " chars");
           if (r.extraction.status === "failed") say(file.name + ": extraction unreliable — see the warnings. Supply an OCR-enabled copy or paste the text.", "crit");
           else say(file.name + " added (" + r.units.length + " locations, " + r.extraction.status + ").");
@@ -427,7 +473,7 @@
       <div className="grid3">
         <${Field} id="doc-role" label="Role for the next document"><select id="doc-role" value=${role} onChange=${(e) => setRole(e.target.value)}>${N.DOC_ROLES.map((r) => html`<option key=${r}>${r}</option>`)}</select></${Field}>
         <${Field} id="doc-version" label="Version / date (optional)"><input id="doc-version" value=${version} onChange=${(e) => setVersion(e.target.value)} placeholder="e.g. v2, 9 Sep 2026" /></${Field}>
-        <div className="field"><label>Add files</label><button type="button" className="btn primary" onClick=${() => fileRef.current && fileRef.current.click()}>Choose PDF / DOCX / TXT…</button><input ref=${fileRef} id="doc-files" type="file" multiple accept=".pdf,.docx,.txt" hidden onChange=${(e) => { addFiles(e.target.files); e.target.value = ""; }} /></div>
+        <div className="field"><label>Add files</label><button type="button" className="btn primary" onClick=${() => fileRef.current && fileRef.current.click()}>Upload PDF or Word file…</button><input ref=${fileRef} id="doc-files" type="file" multiple accept=${ACCEPT} hidden onChange=${(e) => { addFiles(e.target.files); e.target.value = ""; }} /></div>
       </div>
       <details className="sub"><summary>Paste source text instead (for scanned documents or OCR output)</summary>
         <input id="paste-name" placeholder="Document name" value=${paste.name} onChange=${(e) => setPaste({ ...paste, name: e.target.value })} />
@@ -946,7 +992,7 @@
   }
 
   // ───────────────────────── G. Report & save ─────────────────────────
-  function StageReport({ c, update, caps, say, saveFile, store, onDelete }) {
+  function StageReport({ c, update, caps, say, saveFile, store, onDelete, onDownload }) {
     const [preview, setPreview] = useState("");
     const [pv, setPv] = useState(false);
     const summary = N.summaryText(c);
@@ -955,13 +1001,6 @@
     async function makeBlob(kind) {
       const doc = kind === "annex" ? R.buildAnnex(docx, N, c) : R.buildReport(docx, N, c);
       return await docx.Packer.toBlob(doc);
-    }
-    async function exportDoc(kind) {
-      try {
-        const blob = await makeBlob(kind);
-        const name = slug + (kind === "annex" ? "-evidence-annex" : N.hasUsableProposal(c) || c.synthetic ? "-evaluation" : "-blank-template") + "-" + c.meta.evalDate + ".docx";
-        if (await saveFile(name, blob)) { update((x) => {}, kind === "annex" ? "Annex exported" : "Report exported", name); say("Saved " + name + "."); }
-      } catch (e) { say("Could not build the Word file: " + (e.message || e), "crit"); }
     }
     async function doPreview() {
       setPv(true);
@@ -979,12 +1018,12 @@
     return html`<section className="panel">
       <h2>G. Report, summary and saving</h2>
       <div className="row gap wrap">
-        <button type="button" className="btn primary" onClick=${() => exportDoc("report")}>${N.hasUsableProposal(c) || c.synthetic ? "Export evaluation report (.docx)" : "Export blank template (.docx)"}</button>
-        <button type="button" className="btn" disabled=${!N.hasUsableProposal(c) && !c.synthetic} onClick=${() => exportDoc("annex")}>Export internal annex (.docx)</button>
+        <button type="button" className="btn primary" onClick=${() => onDownload("report")}>${N.hasUsableProposal(c) || c.synthetic ? "Download report for KDEM (Word .docx)" : "Download blank template (Word .docx)"}</button>
+        <button type="button" className="btn" disabled=${!N.hasUsableProposal(c) && !c.synthetic} onClick=${() => onDownload("annex")}>Download internal annex (Word .docx)</button>
         <button type="button" className="btn ghost" onClick=${doPreview} disabled=${pv}>${pv ? "Building preview…" : "Preview report"}</button>
-        ${!caps.downloads ? html`<span className="warnline">File saving is not available in this view.</span>` : null}
+        ${!caps.downloads ? html`<span className="warnline">Downloads work when this page is opened on claude.ai.</span>` : null}
       </div>
-      <p className="hint">The main report targets 3–5 A4 pages. Exact pagination depends on Word; long findings are not cut to fit. Status stays “${c.meta.status}”. Advisor review is not government approval, and no signature is added.</p>
+      <p className="hint">File name: ${reportFileName(c, "report")}. The internal annex is for your records, not for KDEM. The main report targets 3–5 A4 pages. Exact pagination depends on Word; long findings are not cut to fit. Status stays “${c.meta.status}”. Advisor review is not government approval, and no signature is added.</p>
       ${preview ? html`<div className="preview" aria-label="Report preview"><div className="hint">Preview converted from the generated .docx (layout simplified).</div><div className="doc-preview" dangerouslySetInnerHTML=${{ __html: preview }}></div></div>` : null}
       <div className="sub"><h3>Short summary</h3><pre className="summary">${summary}</pre><button type="button" className="btn tiny" onClick=${copySummary}>Copy summary</button></div>
       <div className="sub"><h3>Case file</h3>
