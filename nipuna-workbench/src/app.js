@@ -131,7 +131,9 @@
     return { id: N.uid("D"), name: clean, shortName: N.trunc(clean.replace(/\.[^.]+$/, ""), 22), role, version: version || "", kind: r.kind, addedAt: N.todayISO(), units: r.units, extraction: r.extraction, injection: N.detectInjection(r.units) };
   }
   function reportFileName(c, kind) {
-    const slug = (N.factDisplay(c, "legalEntity") !== "Not stated" ? N.factDisplay(c, "legalEntity").split(/[—(,]/)[0] : c.meta.caseName).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "Proposal";
+    const caseLabel = String(c.meta.caseName || "").split(" — ")[0].trim();
+    const base0 = caseLabel && !/^review$/i.test(caseLabel) && !/^new proposal review$/i.test(caseLabel) ? caseLabel : N.factDisplay(c, "legalEntity") !== "Not stated" ? N.factDisplay(c, "legalEntity").split(/[—(,]/)[0] : c.meta.caseName;
+    const slug = String(base0).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "Proposal";
     const base = kind === "annex" ? "NIPUNA-Evidence-Annex" : N.hasUsableProposal(c) || c.synthetic ? "NIPUNA-Evaluation" : "NIPUNA-Evaluation-Blank-Template";
     return base + "_" + slug + "_" + c.meta.evalDate + ".docx";
   }
@@ -279,7 +281,7 @@
         obj.id = N.uid("case");
         N.audit(obj, N.ADVISOR, "Prepared case opened", obj.meta.caseName + " (saved as a new case copy)");
         setC(obj); setDirty(true); setStage("F"); setViewer(null);
-        say("Opened “" + obj.meta.caseName + "” as a new, unsaved copy. Press Save case to keep it; Download Word report is in the top bar.");
+        say("Opened “" + obj.meta.caseName + "” as a new, unsaved copy. You can download the Word report now (top bar); saving is optional and only keeps the case in the workbench.");
       } catch (e) { say("Could not open the prepared case: " + (e.message || e), "crit"); } finally { setBusy(""); }
     }
     function loadDemo() { setC(N.makeSyntheticDemo()); setDirty(true); setStage("A"); say("Synthetic demonstration loaded. It describes a fictional applicant."); }
@@ -290,7 +292,7 @@
         if (errs.length) throw new Error(errs.join(" "));
         N.audit(obj, N.ADVISOR, "Case imported", file.name);
         setC(obj); setDirty(true); setStage("F"); setViewer(null);
-        say("Imported “" + obj.meta.caseName + "”. Press Save case to keep it. Download the Word report from the top bar or stage G.");
+        say("Imported “" + obj.meta.caseName + "”. You can download the Word report now (top bar); saving is optional and only keeps the case in the workbench.");
       } catch (e) { say("Import failed: " + (e.message || e), "crit"); }
     }
     async function removeCase() {
@@ -351,7 +353,7 @@
               ${stage === "C" ? html`<${StageFacts} ...${ctx} />` : null}
               ${stage === "D" ? html`<${StageAnalyse} ...${ctx} />` : null}
               ${stage === "E" ? html`<${StageReview} ...${ctx} />` : null}
-              ${stage === "F" ? html`<${StageDecision} ...${ctx} />` : null}
+              ${stage === "F" ? html`<${StageDecision} ...${ctx} onDownload=${downloadReport} />` : null}
               ${stage === "G" ? html`<${StageReport} ...${ctx} onDelete=${removeCase} onDownload=${downloadReport} />` : null}
             </main>
             ${viewer ? html`<${Viewer} c=${c} v=${viewer} onClose=${() => setViewer(null)} />` : null}
@@ -383,7 +385,7 @@
         </section>
         ${prepared.length ? html`<section className="panel">
           <h2>Prepared reviews</h2>
-          <p className="hint">Reviews prepared with you in Claude Code. Each opens as a new copy at the Decision stage; press Save case to keep it, then download the Word report.</p>
+          <p className="hint">Reviews prepared with you in Claude Code. Each opens as a new copy at the Decision stage. Download the Word report straight away, or edit first; saving is optional.</p>
           <ul className="caselist">${prepared.map((p) => html`<li key=${p.file}><button type="button" className="linkish" onClick=${() => onBundled(p)}>${p.name}</button>${p.outcome ? html`<span className="muted"> · draft outcome: ${p.outcome}</span>` : null}</li>`)}</ul>
         </section>` : null}
         <section className="panel">
@@ -1067,7 +1069,8 @@
           <${Field} id="dec-cond" label="Principal conditions (one per line)" wide=${true}><textarea id="dec-cond" rows="5" value=${d.principalConditions} onChange=${set("principalConditions")}></textarea></${Field}>
           <${Field} id="dec-concerns" label="Areas of concern and points the decision-maker should know (one per line)" wide=${true} hint="Printed in Section C of the report. Keep the most important first."><textarea id="dec-concerns" rows="8" value=${d.concerns || ""} onChange=${set("concerns")}></textarea></${Field}>
         </div>
-        <p className="hint">Do not predict a future score; a resubmission is re-scored on its evidence. This outcome is advisory and is not a government approval.</p>`}
+        <p className="hint">Do not predict a future score; a resubmission is re-scored on its evidence. This outcome is advisory and is not a government approval.</p>
+        <div className="row gap wrap"><button type="button" className="btn primary" onClick=${() => ctx.onDownload && ctx.onDownload("report")}>Download final report (Word)</button><span className="hint">Uses everything on screen now, saved or not.</span></div>`}
       </div>
     </section>`;
   }
@@ -1214,7 +1217,7 @@
         <button type="button" className="btn ghost" onClick=${doPreview} disabled=${pv}>${pv ? "Building preview…" : "Preview report"}</button>
         ${!caps.downloads ? html`<span className="warnline">Downloads work when this page is opened on claude.ai.</span>` : null}
       </div>
-      <p className="hint">File name: ${reportFileName(c, "report")}. The internal annex is for your records, not for KDEM. The main report targets 3–5 A4 pages. Exact pagination depends on Word; long findings are not cut to fit. Status stays “${c.meta.status}”. Advisor review is not government approval, and no signature is added.</p>
+      <p className="hint">You can download before saving: the file uses the case exactly as it is on screen. File name: ${reportFileName(c, "report")}. The internal annex is for your records, not for KDEM. The main report targets 3–5 A4 pages. Exact pagination depends on Word; long findings are not cut to fit. Status stays “${c.meta.status}”. Advisor review is not government approval, and no signature is added.</p>
       ${preview ? html`<div className="preview" aria-label="Report preview"><div className="hint">Preview converted from the generated .docx (layout simplified).</div><div className="doc-preview" dangerouslySetInnerHTML=${{ __html: preview }}></div></div>` : null}
       <div className="sub"><h3>Short summary</h3><pre className="summary">${summary}</pre><button type="button" className="btn tiny" onClick=${copySummary}>Copy summary</button></div>
       <div className="sub"><h3>Case file</h3>
