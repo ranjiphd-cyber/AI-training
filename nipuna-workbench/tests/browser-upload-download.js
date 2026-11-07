@@ -98,6 +98,7 @@ async function syntheticDocx(file) {
   // 4. PDF proposal as a second new case (if provided), then Download report for KDEM in stage G
   if (PDF) {
     await page.getByRole("button", { name: "All cases" }).click();
+    if (await page.locator(".leavebar").isVisible().catch(() => false)) await page.getByRole("button", { name: "Discard changes and continue" }).click();
     await page.setInputFiles("#proposal-file", PDF);
     await page.locator(".toast", { hasText: "(PDF)" }).waitFor({ timeout: 60000 });
     await page.locator(".details", { hasText: "Budget lines read" }).waitFor();

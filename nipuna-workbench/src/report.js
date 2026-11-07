@@ -203,7 +203,8 @@
 
     ch.push(K.P("NIPUNA KARNATAKA — PROPOSAL EVALUATION", { bold: true, size: 30, align: K.AlignmentType.CENTER, after: 20, color: "1F3864" }));
     ch.push(K.P("Karnataka Digital Economy Mission (KDEM)", { size: 22, align: K.AlignmentType.CENTER, after: 40 }));
-    ch.push(K.P("Independent advisory evaluation · Document status: " + c.meta.status, { italics: true, size: 18, align: K.AlignmentType.CENTER, after: 120, color: "444444" }));
+    const O = N.reportOptions ? N.reportOptions(c) : {};
+    ch.push(K.P("Independent advisory evaluation" + (O.statusLine ? " · Document status: " + c.meta.status : ""), { italics: true, size: 18, align: K.AlignmentType.CENTER, after: 120, color: "444444" }));
     if (c.synthetic) ch.push(K.P("SYNTHETIC DEMONSTRATION — NOT A REAL APPLICANT", { bold: true, color: "B00020", align: K.AlignmentType.CENTER }));
 
     const tc = N.factNumber(c, "totalCost"), pf = N.factNumber(c, "publicFunding"), tr = N.factNumber(c, "trainees");
@@ -216,7 +217,7 @@
       ["Date submitted", N.factDisplay(c, "submissionDate")],
       ["Project cost and funding", "Total " + N.fmtINR(tc) + "; public funding requested " + N.fmtINR(pf) + (N.factDisplay(c, "otherFunding") !== "Not stated" ? "; other: " + N.factDisplay(c, "otherFunding") : "")],
       ["Trainees and unit cost", (tr === null ? N.factDisplay(c, "trainees") : N.fmtNum(tr)) + " trainees; " + (N.factDisplay(c, "statedCostPerTrainee") === "Not stated" ? "cost per trainee not stated by applicant" : "stated " + N.factDisplay(c, "statedCostPerTrainee") + " per trainee") + "; recalculated " + N.fmtINR(pt.total) + " total and " + N.fmtINR(pt.public) + " public per trainee"],
-      ["Evaluator", N.ADVISOR + ", Independent Advisor / Evaluator"],
+      ["Evaluator", N.ADVISOR],
       ["Evaluation date", N.fmtDate(c.meta.evalDate)],
       ["Policy basis", N.policyConfirmed(c) ? "Current approved policy supplied and confirmed" : N.PROVISIONAL_BANNER],
     ];
@@ -239,9 +240,9 @@
     scoreRows.push([K.cell("Composite (sum of four scores ÷ 4)", { bold: true, fill: "F1F4F8", w: 3000 }), K.cell(comp.withheld ? "Withheld" : comp.value.toFixed(2) + " / 5", { bold: true, fill: "F1F4F8", w: 1000 }), K.cell(comp.withheld ? comp.display + ": " + comp.missing.join(", ") + ". A full composite is not shown while any criterion is unscored." : "Unweighted mean. Composite is one input to the recommendation, not an approval threshold.", { fill: "F1F4F8", w: K.FULL - 4000 })]);
     ch.push(K.table([3000, 1000, K.FULL - 4000], ["Criterion", "Score", "Rationale and evidence"], scoreRows));
 
-    const ar = arithmeticRows(N, c, false);
+    const ar = O.arithmetic ? arithmeticRows(N, c, false) : [];
     if (ar.length) {
-      ch.push(K.H2("Arithmetic and consistency checks"));
+      ch.push(K.H2(O.arithmetic ? "Arithmetic and consistency checks" : "Discrepancies and conflicting statements"));
       ch.push(K.P("Calculated by the workbench from figures stated in the proposal. No tax, calendar or utilisation assumptions were added. Amounts rounded to the nearest paisa.", { size: 17, italics: true }));
       ch.push(K.table([2300, 1700, 2500, 1500, K.FULL - 8000], ["Item", "Applicant figure", "Formula / basis", "Calculated", "Result"], ar));
     }
@@ -250,8 +251,8 @@
     ch.push(K.H1("Section B: Qualitative / Conditional Compliance Checklist"));
     ch.push(K.P("Policy basis: " + N.complianceBasisStatement(c), { bold: !N.policyConfirmed(c), size: 19 }));
     const rows = [];
-    for (const cat of ["A", "B", "C"]) {
-      rows.push({ group: cat + ". " + N.COMPLIANCE_CATS[cat] + (cat === "B" ? "s (from earlier review practice; not current rules until confirmed by KDEM)" : "s") });
+    for (const cat of O.safeguards ? ["A", "B", "C"] : ["A", "B"]) {
+      rows.push({ group: cat + ". " + N.COMPLIANCE_CATS[cat] + (cat === "B" ? (O.explanatoryNotes ? "s (from earlier review practice; not current rules until confirmed by KDEM)" : "s") : "s") });
       const items = (c.compliance || []).filter((r) => r.category === cat);
       if (!items.length) rows.push([cat === "A" ? "No current approved policy requirement can be listed: no confirmed policy pack is on file." : "None recorded.", "—", "—", "—", "—"]);
       items.forEach((r) => rows.push([r.requirement + (r.clause ? " (" + r.clause + ")" : ""), cat === "A" ? "Policy" : cat === "B" ? "Benchmark" : "Safeguard", r.status, r.evidence, r.action]));
@@ -293,6 +294,7 @@
       ch.push(K.P("Each note states the claim checked, the result, the source and its type, and the limitations. Search-result summaries and applicant-controlled sources are not treated as independent confirmation. Absence of public information is not treated as an adverse finding.", { size: 17, italics: true }));
       for (const area of N.VERIFY_AREAS) {
         const recs = ver.filter((v) => v.area === area);
+        if (!O.allVerificationAreas && !/Entity|Track/.test(area)) continue;
         ch.push(K.H2(area));
         if (!recs.length) {
           ch.push(K.P("Not checked. " + ((c.verificationChecklist || []).filter((v) => v.area === area).map((v) => v.claim).join("; ") || ""), { size: 19, italics: true }));
@@ -306,8 +308,8 @@
             .concat(K.runs("Source: ", { bold: true, size: 19 }));
           if (v.url && /^https?:\/\//.test(v.url)) kids.push(K.link(v.sourceName || v.url, v.url));
           else kids.push(...K.runs(v.sourceName || "Supplied document", { size: 19 }));
-          kids.push(...K.runs(" (" + v.sourceType + "; accessed " + N.fmtDate(v.date) + "; " + v.enteredBy + "). ", { size: 19 }));
-          if (v.limitations) kids.push(...K.runs("Limitations: " + v.limitations, { size: 19, italics: true }));
+          kids.push(...K.runs(" (" + v.sourceType + "; accessed " + N.fmtDate(v.date) + (O.verificationDetail ? "; " + v.enteredBy : "") + "). ", { size: 19 }));
+          if (v.limitations && O.verificationDetail) kids.push(...K.runs("Limitations: " + v.limitations, { size: 19, italics: true }));
           ch.push(K.P("", { children: kids, after: 70 }));
         });
       }
@@ -320,7 +322,7 @@
     if (d.merit) ch.push(K.P("", { children: K.runs("Programme merit: ", { bold: true }).concat(K.runs(d.merit)) }));
     if (d.readinessNote) ch.push(K.P("", { children: K.runs("Current readiness: ", { bold: true }).concat(K.runs(d.readinessNote)) }));
     const rd = N.readiness(c);
-    rd.warnings.forEach((w) => ch.push(K.P(w, { bold: true, color: "9C2A00", size: 19 })));
+    if (O.readinessWarning) rd.warnings.forEach((w) => ch.push(K.P(w, { bold: true, color: "9C2A00", size: 19 })));
     if (d.rationale) ch.push(K.P(d.rationale));
     const concernLines = String(d.concerns || "").split("\n").map((x) => x.trim()).filter(Boolean);
     if (concernLines.length) {
@@ -332,17 +334,17 @@
         const kids = m ? K.runs((i + 1) + ". " + m[1].replace(", blocking", " (blocking)") + ": ", { bold: true, size: 18 }).concat(K.runs(m[2].split(" — ")[0].replace(/\.?$/, "."), { size: 18 })) : K.runs((i + 1) + ". " + x, { size: 18 });
         ch.push(K.P("", { children: kids, after: 25 }));
       });
-      if (rest || main.length > 12) ch.push(K.P((rest + Math.max(0, main.length - 12)) + " further minor point(s) and observations are listed in the internal annex.", { italics: true, size: 17 }));
+      if (O.explanatoryNotes && (rest || main.length > 12)) ch.push(K.P((rest + Math.max(0, main.length - 12)) + " further minor point(s) and observations are listed in the internal annex.", { italics: true, size: 17 }));
     }
     if (d.principalConditions) {
       ch.push(K.P("Principal conditions:", { bold: true, after: 30 }));
       d.principalConditions.split("\n").filter((x) => x.trim()).forEach((x, i) => ch.push(K.P((i + 1) + ". " + x.replace(/^\s*\d+[.)]\s*/, ""), { after: 30, size: 19 })));
     }
-    ch.push(K.P("Decision authority: This is an independent advisory evaluation prepared for KDEM under the NIPUNA Karnataka initiative. It is not an approval, sanction or funding commitment by the Government of Karnataka or KDEM. The final decision rests with the competent authority, which may weigh considerations outside this review.", { italics: true, size: 18, before: 80 }));
+    if (O.authority) ch.push(K.P("Decision authority: This is an independent advisory evaluation prepared for KDEM under the NIPUNA Karnataka initiative. It is not an approval, sanction or funding commitment by the Government of Karnataka or KDEM. The final decision rests with the competent authority, which may weigh considerations outside this review.", { italics: true, size: 18, before: 80 }));
     ch.push(K.P("Sign-off", { bold: true, before: 160, after: 20 }));
     ch.push(K.P(N.ADVISOR + " — Advisor / Evaluator", { after: 20 }));
     ch.push(K.P("Evaluation date: " + N.fmtDate(c.meta.evalDate), { after: 20 }));
-    ch.push(K.P("Document status: " + c.meta.status, { italics: true, after: 20 }));
+    if (O.statusLine) ch.push(K.P("Document status: " + c.meta.status, { italics: true, after: 20 }));
 
     return new docx.Document({
       creator: N.ADVISOR,
@@ -388,7 +390,7 @@
     }
     ch.push(K.H1("4. Findings register"));
     ch.push(K.table([400, 2700, 1300, 900, 3000, K.FULL - 8300], ["#", "Finding", "Evidence label", "Severity · status", "Evidence (location and excerpt)", "Origin"],
-      (c.findings || []).map((f, i) => [String(i + 1), (f.kind === "strength" ? "[Strength] " : "") + f.title + ". " + f.detail, f.label, f.severity + " · " + f.status, (f.evidence || []).map((e) => docName(c, e.doc) + " " + e.loc + (e.verified === false ? " [excerpt not found]" : "") + ": “" + N.trunc(e.excerpt, 140) + "”").join("\n") || (f.verificationId ? "Verification record " + f.verificationId : "—"), f.origin === "ai" ? "AI draft" : f.origin === "session" ? "Claude session draft" : f.origin === "prior" ? "Earlier review" : "Advisor"])));
+      (c.findings || []).map((f, i) => [String(i + 1), (f.kind === "strength" ? "[Strength] " : "") + f.title + ". " + f.detail, f.label, f.severity + " · " + f.status, (f.evidence || []).map((e) => docName(c, e.doc) + " " + e.loc + (e.verified === false ? " [excerpt not found]" : "") + ": “" + N.trunc(e.excerpt, 140) + "”").join("\n") || (f.verificationId ? "Verification record " + f.verificationId : "—"), f.origin === "ai" ? "AI draft" : f.origin === "rule" ? "Rule-based draft" : f.origin === "session" ? "Claude session draft" : f.origin === "prior" ? "Earlier review" : "Advisor"])));
 
     ch.push(K.H1("5. Verification records"));
     if (!(c.verification || []).length) ch.push(K.P(N.NO_VERIFICATION));

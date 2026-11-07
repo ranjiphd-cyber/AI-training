@@ -244,6 +244,7 @@
         nc.documents.push(doc);
         N.audit(nc, N.ADVISOR, "Document added", file.name + " as Proposal (initial) — extraction " + doc.extraction.status + ", " + doc.extraction.chars + " chars");
         const ax = doc.extraction.status === "failed" ? null : N.applyAutoExtract(nc, doc.id);
+        if (ax) N.seedRuleAnalysis(nc);
         setC(nc); setDirty(true); setViewer(null);
         setStage(doc.extraction.status === "failed" ? "B" : "C");
         if (doc.extraction.status === "failed") say(file.name + ": the text could not be read reliably (scanned document?). See B. Documents for options.", "crit");
@@ -470,7 +471,7 @@
           const doc = await fileToDoc(file, role, version);
           const r = doc;
           let ax = null;
-          update((x) => { x.documents.push(doc); if (N.PROPOSAL_ROLES.includes(role) && doc.extraction.status !== "failed") ax = N.applyAutoExtract(x, doc.id); }, "Document added", file.name + " as " + role + " — extraction " + r.extraction.status + ", " + r.extraction.chars + " chars");
+          update((x) => { x.documents.push(doc); if (N.PROPOSAL_ROLES.includes(role) && doc.extraction.status !== "failed") { ax = N.applyAutoExtract(x, doc.id); N.seedRuleAnalysis(x); } }, "Document added", file.name + " as " + role + " — extraction " + r.extraction.status + ", " + r.extraction.chars + " chars");
           if (r.extraction.status === "failed") say(file.name + ": extraction unreliable — see the warnings. Supply an OCR-enabled copy or paste the text.", "crit");
           else say(file.name + " added (" + r.units.length + " locations, " + r.extraction.status + ")." + (N.PROPOSAL_ROLES.includes(role) ? " Project details were extracted automatically — see C. Project details." : ""));
         } catch (e) { say(file.name + ": " + (e.message || e), "crit"); }
@@ -625,12 +626,60 @@
   }
 
   // ───────────────────────── C. Facts ─────────────────────────
-  function StageFacts({ c, update, caps, say, openViewer }) {
+  // One click: rule-based findings and compliance (instant, local), then optionally Claude's full analysis and scores.
+  function CompleteAnalysis({ c, update, caps, say, setStage }) {
+    const [useClaude, setUseClaude] = useState(!!caps.sample);
+    const [phase, setPhase] = useState("");
+    const ctl = useRef(null);
+    const usable = N.hasUsableProposal(c) || c.synthetic;
+    if (!usable) return null;
+    const rc = N.reportCompleteness(c);
+    async function run() {
+      update((x) => { N.seedRuleAnalysis(x); });
+      if (useClaude && caps.sample && c.meta.confidentialityAck) {
+        ctl.current = new AbortController();
+        setPhase("Claude is reading the proposal and scoring it… this usually takes 1–3 minutes.");
+        const runId = "analysis-" + new Date().toISOString().slice(0, 16);
+        try {
+          const res = await caps.sample.json(N.buildAnalysisPrompt(c).prompt, { modelTier: "complex", signal: ctl.current.signal });
+          update((x) => {
+            const r = N.applyAnalysisResult(x, res, runId);
+            x.analysisRuns.push({ at: new Date().toISOString(), kind: "analysis (Complete the analysis)", ok: true, runId, verified: r.verified, unverified: r.unverified });
+            N.applyAdvisoryDraft(x, N.buildAdvisoryDraft(x), "fill", "Complete the analysis");
+          });
+          setPhase("");
+          say("Analysis complete: findings, scores, compliance and a recommendation draft are filled in. Review them in E and F, then download the report.");
+          setStage("E");
+        } catch (e) {
+          setPhase(e.code === "cancelled" ? "Stopped. The rule-based findings and compliance are kept." : "Claude's analysis did not finish (" + (e.code || "error") + "). The rule-based findings and compliance are kept; you can retry from D. Analyse or score in E yourself.");
+          update((x) => { x.analysisRuns.push({ at: new Date().toISOString(), kind: "analysis (Complete the analysis)", ok: false, error: e.code || String(e) }); });
+        }
+      } else {
+        update((x) => { N.applyAdvisoryDraft(x, N.buildAdvisoryDraft(x), "fill", "Complete the analysis"); });
+        say("Rule-based findings, compliance and a recommendation draft are filled in. Scores need Claude or your own scoring in E.");
+        setStage("E");
+      }
+    }
+    return html`<div className="complete">
+      <div className="row between"><b>Complete the analysis</b><span className="muted small">${rc.items.filter((i) => i.ok).length} of ${rc.items.length} report sections ready</span></div>
+      <p className="small">Builds the full review in one step: findings with required actions, compliance checklist, recommendation draft${caps.sample ? ", and with Claude, the four scores and a deeper reading of the proposal" : ""}. Everything stays editable.</p>
+      ${caps.sample ? html`<label className="check small"><input type="checkbox" checked=${useClaude} onChange=${(e) => setUseClaude(e.target.checked)} /> Include Claude's analysis and scoring (sends the proposal text to Claude under my account)</label>` : html`<p className="hint">Claude is not available in this view, so scores must be entered in E. Findings, compliance and the recommendation draft are still filled in.</p>`}
+      ${useClaude && caps.sample && !c.meta.confidentialityAck ? html`<div className="warnline">Tick the confidentiality acknowledgement in A. Case to include Claude.</div>` : null}
+      <div className="row gap wrap">
+        <button type="button" className="btn primary" disabled=${/Claude is reading/.test(phase)} onClick=${run}>Complete the analysis</button>
+        ${/Claude is reading/.test(phase) ? html`<button type="button" className="btn ghost" onClick=${() => ctl.current && ctl.current.abort()}>Stop</button>` : null}
+        <span className="muted small" role="status">${phase}</span>
+      </div>
+    </div>`;
+  }
+
+  function StageFacts({ c, update, caps, say, openViewer, setStage }) {
     const conflicts = N.factConflicts(c);
     const pt = N.perTrainee(N.factNumber(c, "totalCost"), N.factNumber(c, "publicFunding"), N.factNumber(c, "trainees"));
     return html`<section className="panel">
       <h2>C. Project details and facts</h2>
       <${ProjectDetails} c=${c} update=${update} say=${say} openViewer=${openViewer} />
+      <${CompleteAnalysis} c=${c} update=${update} caps=${caps} say=${say} setStage=${setStage} />
       <${AiPanel} c=${c} update=${update} caps=${caps} say=${say} kind="facts" />
       ${conflicts.length ? html`<${Banner} tone="warn">${conflicts.length} field(s) carry conflicting statements. Both values are kept with citations; the applicant's figures are never repaired.</${Banner}>` : null}
       <div className="calcstrip">
@@ -921,7 +970,7 @@
         </div>
       </div>
       ${errs.length ? html`<div className="warnline">${errs.join(" ")}</div>` : null}
-      <div className="row between"><span className="muted small">Origin: ${f.origin === "ai" ? "AI draft" : f.origin === "session" ? "Claude session draft" : f.origin === "prior" ? "Earlier review" : "Advisor"}</span>
+      <div className="row between"><span className="muted small">Origin: ${f.origin === "rule" ? "Rule-based draft (from the automatic checks)" : f.origin === "ai" ? "AI draft" : f.origin === "session" ? "Claude session draft" : f.origin === "prior" ? "Earlier review" : "Advisor"}</span>
       <${Confirm} label="Delete finding" confirmLabel="Delete this finding?" tone="tiny ghost" onConfirm=${() => update((x) => { x.findings.splice(idx, 1); }, "Finding deleted", f.title)} /></div>
     </div>`;
   }
@@ -1113,7 +1162,16 @@
   }
 
   // ───────────────────────── G. Report & save ─────────────────────────
-  function StageReport({ c, update, caps, say, saveFile, store, onDelete, onDownload }) {
+  function Completeness({ c, setStage }) {
+    const rc = N.reportCompleteness(c);
+    return html`<div className=${"completeness " + (rc.complete ? "ok" : "")}>
+      <b>${rc.complete ? "The report is complete." : "Before you download: what the report will contain"}</b>
+      <ul>${rc.items.map((i) => html`<li key=${i.key} className=${i.ok ? "ok" : "todo"}><span aria-hidden="true">${i.ok ? "✓" : "○"}</span> ${i.label}${i.ok ? null : html` <button type="button" className="btn tiny" onClick=${() => setStage(i.stage)}>Go to ${i.stage}</button>`}</li>`)}</ul>
+      ${!rc.complete ? html`<p className="hint">Missing sections print as blank or “withheld”. Use “Complete the analysis” in C to fill most of them in one step; verification records and the final outcome are yours to add in F.</p>` : null}
+    </div>`;
+  }
+
+  function StageReport({ c, update, caps, say, saveFile, store, onDelete, onDownload, setStage }) {
     const [preview, setPreview] = useState("");
     const [pv, setPv] = useState(false);
     const summary = N.summaryText(c);
@@ -1138,6 +1196,11 @@
     }
     return html`<section className="panel">
       <h2>G. Report, summary and saving</h2>
+      <${Completeness} c=${c} setStage=${setStage} />
+      <details className="sub"><summary>Report layout (default: compact KDEM format, as in your sample)</summary>
+        ${N.REPORT_OPTIONS.map(([k, label]) => html`<label key=${k} className="check small"><input type="checkbox" checked=${N.reportOptions(c)[k]} onChange=${(e) => update((x) => { x.meta.reportOptions = Object.assign({}, x.meta.reportOptions, { [k]: e.target.checked }); }, "Report layout changed", label + ": " + (e.target.checked ? "on" : "off"))} /> ${label}</label>`)}
+        <p className="hint">The internal annex always carries the full arithmetic, all verification records and the complete list of concerns.</p>
+      </details>
       <div className="row gap wrap">
         <button type="button" className="btn primary" onClick=${() => onDownload("report")}>${N.hasUsableProposal(c) || c.synthetic ? "Download report for KDEM (Word .docx)" : "Download blank template (Word .docx)"}</button>
         <button type="button" className="btn" disabled=${!N.hasUsableProposal(c) && !c.synthetic} onClick=${() => onDownload("annex")}>Download internal annex (Word .docx)</button>

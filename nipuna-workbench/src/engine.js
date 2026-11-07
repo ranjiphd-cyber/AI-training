@@ -947,7 +947,8 @@
       c.scores[cr.id] = c.scores[cr.id] || {};
       c.scores[cr.id].ai = { score, rationale: String(s.rationale || ""), insufficient: !!s.insufficient || score === null, cites, runId };
     }
-    const keepComp = (c.compliance || []).filter((r) => r.origin !== "ai");
+    const aiRows = (res && res.compliance) || [];
+    const keepComp = (c.compliance || []).filter((r) => r.origin !== "ai" && !(r.origin === "rule" && aiRows.length));
     c.compliance = keepComp.concat(
       ((res && res.compliance) || []).map((r) => {
         let cat = ["A", "B", "C"].includes(r.category) ? r.category : "C";
@@ -1270,12 +1271,13 @@
   function buildAdvisoryDraft(c) {
     const concerns = [];
     const seen = new Set();
-    const push = (severity, text, basis, action, blocking) => {
+    const push = (severity, text, basis, action, blocking, evidence) => {
       const k = norm(text).slice(0, 80);
       if (seen.has(k)) return;
       seen.add(k);
-      concerns.push({ severity, text, basis, action: action || "", blocking: !!blocking });
+      concerns.push({ severity, text, basis, action: action || "", blocking: !!blocking, evidence: (evidence || []).filter((e) => e && e.doc && e.loc) });
     };
+    const propText = (c.documents || []).filter((d) => PROPOSAL_ROLES.includes(d.role)).map((d) => textOf(d)).join("\n");
     const usable = hasUsableProposal(c) || c.synthetic;
     if (!usable) return { concerns: [{ severity: "Critical", text: "No proposal with usable text is on file.", basis: "Documents", action: "Upload the proposal (PDF or Word).", blocking: true }], outcome: "", outcomeWhy: ["No proposal to evaluate."], merit: "", readiness: "", rationale: "", conditions: [] };
 
@@ -1290,10 +1292,10 @@
     const coveredArea = (re) => open.some((f) => re.test(f.area + " " + f.title));
     // 2. Deterministic calculations
     const b = analyseBudget(c.budget), fu = analyseFunding(c.funding);
-    b.issues.filter((i) => !coveredNum(i.diff)).forEach((i) => push("Major", "Budget arithmetic: " + i.label + " is stated as " + fmtINR(i.stated) + " but its components add up to " + fmtINR(i.computed) + " (difference " + fmtINR(Math.abs(i.diff)) + ").", "Evaluator calculation", "Submit a corrected, reconciled budget.", true));
-    fu.issues.filter((i) => !coveredNum(...((i.detail.match(/₹[\d,]+(?:\.\d+)?/g) || []).map(parseINR)))).forEach((i) => push(/Release schedule/.test(i.type) ? "Critical" : "Major", i.type + ": " + i.detail + ".", "Evaluator calculation", "Submit a corrected funder-wise funding and release schedule.", true));
-    (c.checks || []).forEach((ch) => { const r = runCheck(ch); const kw = (ch.label.match(/tranche|hours|placement|batch|cost|budget|funding|trainee/i) || [])[0]; if ((r.verdict === "Arithmetic discrepancy" || r.verdict === "Contradictory statements") && !coveredNum(r.computed, r.discrepancy) && !(kw && findingText.includes(kw.toLowerCase()))) push("Major", ch.label + ": the applicant states " + fmtNum(r.applicant) + " but the calculation gives " + fmtNum(r.computed) + ".", "Evaluator calculation", "Reconcile and restate: " + ch.label.replace(/:.*$/, "") + ".", true); });
-    factConflicts(c).forEach((x) => { const vals = [...new Set(x.values.map((v) => String(v.value)))]; push("Minor", "Conflicting statements on " + x.label.toLowerCase() + ": " + vals.join(" vs ") + ".", "Proposal text", "Confirm one binding value for " + x.label.toLowerCase() + ".", false); });
+    b.issues.filter((i) => !coveredNum(i.diff)).forEach((i) => push("Major", "Budget arithmetic: " + i.label + " is stated as " + fmtINR(i.stated) + " but its components add up to " + fmtINR(i.computed) + " (difference " + fmtINR(Math.abs(i.diff)) + ").", "Evaluator calculation", "Submit a corrected, reconciled budget.", true, [i.cite]));
+    fu.issues.filter((i) => !coveredNum(...((i.detail.match(/₹[\d,]+(?:\.\d+)?/g) || []).map(parseINR)))).forEach((i) => push(/Release schedule/.test(i.type) ? "Critical" : "Major", i.type + ": " + i.detail + ".", "Evaluator calculation", "Submit a corrected funder-wise funding and release schedule.", true, (c.funding.tranches || []).filter((t) => t.funder === i.label).map((t) => t.cite).concat((c.funding.sources || []).filter((s2) => s2.name === i.label).map((s2) => s2.cite))));
+    (c.checks || []).forEach((ch) => { const r = runCheck(ch); const kw = (ch.label.match(/tranche|hours|placement|batch|cost|budget|funding|trainee/i) || [])[0]; if ((r.verdict === "Arithmetic discrepancy" || r.verdict === "Contradictory statements") && !coveredNum(r.computed, r.discrepancy) && !(kw && findingText.includes(kw.toLowerCase()))) push("Major", ch.label + ": the applicant states " + fmtNum(r.applicant) + " but the calculation gives " + fmtNum(r.computed) + ".", "Evaluator calculation", "Reconcile and restate: " + ch.label.replace(/:.*$/, "") + ".", true, [ch.cite]); });
+    factConflicts(c).forEach((x) => { const vals = [...new Set(x.values.map((v) => String(v.value)))]; push("Minor", "Conflicting statements on " + x.label.toLowerCase() + ": " + vals.join(" vs ") + ".", "Proposal text", "Confirm one binding value for " + x.label.toLowerCase() + ".", false, x.values.map((v) => v.cite).slice(0, 3)); });
 
     // 3. Funding and co-funder
     const pubN = fu.publicSum || factNumber(c, "publicFunding");
@@ -1302,7 +1304,7 @@
     const hasCommitDoc = (c.documents || []).some((d) => d.role === "Verification evidence" && /commit|letter|csr|board/i.test(d.name + " " + (d.version || "")));
     privateSources.forEach((s) => {
       if (!hasCommitDoc && !/letter|signed|board/i.test(s.commitment || "") && !coveredArea(/commitment|co-?fund/i))
-        push("Critical", s.name + " is to contribute " + fmtINR(parseINR(s.amount)) + (totalN ? " (" + pct(parseINR(s.amount), totalN) + "% of cost)" : "") + ", but no signed commitment or CSR-plan confirmation is on file.", "Funding", "Signed commitment letter from " + s.name + " (amount, period, release conditions) and confirmation that the project is in its board-approved CSR plan.", true);
+        push("Critical", s.name + " is to contribute " + fmtINR(parseINR(s.amount)) + (totalN ? " (" + pct(parseINR(s.amount), totalN) + "% of cost)" : "") + ", but no signed commitment or CSR-plan confirmation is on file.", "Funding", "Signed commitment letter from " + s.name + " (amount, period, release conditions) and confirmation that the project is in its board-approved CSR plan.", true, [s.cite]);
     });
     if (!(c.funding.tranches || []).length && (c.funding.sources || []).length && !coveredArea(/release schedule/i)) push("Major", "No fund-release schedule or milestones are stated for any funder.", "Funding", "Funder-wise release schedule tied to verifiable milestones (agreement, batch start, certification, verified placement).", true);
     if (totalN === null) push("Major", "Total project cost could not be confirmed from the proposal.", "Facts", "State the total project cost and attach an itemised budget.", true);
@@ -1315,7 +1317,7 @@
       if ((!f || !f.values || !f.values.length) && !(factArea[k] && coveredArea(factArea[k]))) push(sev, "The proposal does not state the " + label + ".", "Missing information", action, sev === "Major");
     });
     const placeTxt = ((c.facts.placement || {}).values || []).map((v) => v.value + " " + ((v.cite || {}).excerpt || "")).join(" ");
-    if (placeTxt && !/(within|month|salary|ctc|lpa|retention|retain)/i.test(placeTxt) && !coveredArea(/placement/i)) push("Major", "Placement commitment has no window, minimum salary or retention period.", "Proposal text", "Define placement: denominator, window, minimum monthly CTC, retention period and whether internships or self-employment count.", true);
+    if (placeTxt && !/(within|month|salary|ctc|lpa|retention|retain)/i.test(placeTxt) && !coveredArea(/placement/i)) push("Major", "Placement commitment has no window, minimum salary or retention period.", "Proposal text", "Define placement: denominator, window, minimum monthly CTC, retention period and whether internships or self-employment count.", true, ((c.facts.placement || {}).values || []).map((v) => v.cite).slice(0, 2));
     const women = (c.factsExtra || []).find((x) => /women/i.test(x.label));
     if ((!women || !women.values.length) && !coveredArea(/inclusion|women|eligibility/i)) push("Minor", "No target for women's participation is stated.", "Missing information", "State a women's participation target and other inclusion targets.", false);
     const places = ((c.facts.locations || {}).values || []).map((v) => v.value);
@@ -1323,6 +1325,7 @@
     const otherPlace = KA_PLACES.some(([name, re]) => name !== "Bengaluru" && re.test(placeJoined));
     if (places.length && /bengaluru|bangalore/i.test(placeJoined) && !otherPlace) push("Observation", "Delivery appears limited to Bengaluru; a beyond-Bengaluru focus was used in earlier reviews (benchmark pending confirmation).", "Benchmark", "KDEM to confirm whether geographic spread is required.", false);
 
+    if (!/grievance/i.test(propText) && !coveredArea(/protection|grievance|privacy/i)) push("Major", "No grievance mechanism or trainee-protection commitments (no fees, consent, data privacy) are stated.", "Missing information", "Written commitments: no trainee fees, a grievance mechanism with timelines, trainee consent and data-protection arrangements.", false);
     // 5. Evidence, policy and verification
     const gaps = (c.documents || []).map((d) => {
       const pages = [...new Set(((d.extraction && d.extraction.warnings) || []).filter((w) => /no (usable )?text|image|graphic|infographic/i.test(w)).flatMap((w) => w.match(/p\.\s?\d+/g) || []))];
@@ -1389,6 +1392,100 @@
       if (conditions.length >= 7) break;
     }
     return { concerns, outcome, outcomeWhy: why, merit, readiness, rationale, conditions, generatedAt: new Date().toISOString() };
+  }
+
+  // Turns the rule-based draft into findings, strengths, compliance rows and a verification checklist, so the
+  // report is substantive without a language model. Advisor- and Claude-written items are never replaced.
+  const AREA_RULES = [
+    [/fund|tranche|release|budget|cost|co-?fund|contribut|commitment/i, "Cost realism, financial capacity & co-funding"],
+    [/placement|employer|salary/i, "Employment outcomes & employer commitments"],
+    [/hours|curriculum|module|syllab/i, "Curriculum, practical training & certification"],
+    [/certif|assess/i, "Assessment integrity & attendance"],
+    [/women|inclusion|eligib|bengaluru|geograph/i, "Geographic & social inclusion"],
+    [/entity|registration|cin|signatory/i, "Programme compliance"],
+    [/batch|trainer|location|centre|calendar|duration/i, "Delivery experience, trainers & infrastructure"],
+    [/grievance|protection|privacy|fee/i, "Trainee protection, grievance & privacy"],
+    [/job role|labour/i, "Labour-market demand & target roles"],
+    [/conflicting|instruction/i, "Internal consistency"],
+  ];
+  function seedRuleAnalysis(c, now) {
+    const existing = (c.findings || []).filter((f) => f.origin !== "rule");
+    const draft = buildAdvisoryDraft(Object.assign({}, c, { findings: existing }));
+    const propText = (c.documents || []).filter((d) => PROPOSAL_ROLES.includes(d.role)).map((d) => textOf(d)).join("\n");
+    const titles = new Set(existing.map((f) => norm(f.title)));
+    const fresh = [];
+    let n = 0;
+    for (const x of draft.concerns) {
+      if (["Finding", "Policy", "Extraction"].includes(x.basis)) continue;
+      const title = x.text.split(" — ")[0].replace(/\.$/, "");
+      if (titles.has(norm(title))) continue;
+      const area = (AREA_RULES.find(([re]) => re.test(x.text)) || [null, "Internal consistency"])[1];
+      fresh.push({
+        id: "R" + ++n, kind: "weakness", area, title: trunc(title, 140), detail: x.text.length > 140 ? x.text : "",
+        label: x.basis === "Evaluator calculation" ? "Evaluator calculation" : x.basis === "Proposal text" ? "Evaluator judgment" : "Missing/unverifiable evidence",
+        severity: x.severity, evidence: (x.evidence || []).map((e) => ({ ...e, verified: e.excerpt ? verifyExcerpt(c, e).verified : undefined })),
+        impact: "", action: x.action, party: /KDEM/.test(x.action) ? "KDEM" : /commitment letter from/i.test(x.action) ? "Co-funder" : "Applicant",
+        actionStage: x.blocking ? "Before shortlisting/approval" : x.basis === "Missing information" && !/grievance|fees/i.test(x.text) ? "Missing information" : /grievance|fees/i.test(x.text) ? "Before disbursement" : "Implementation safeguard",
+        basis: x.basis === "Benchmark" ? "Historical benchmark" : "Advisory safeguard", closureEvidence: "", status: "Open", origin: "rule",
+      });
+    }
+    const b = analyseBudget(c.budget), fu = analyseFunding(c.funding);
+    const strengths = [];
+    const S = (title, detail, evidence, area) => { if (!titles.has(norm(title))) strengths.push({ id: "RS" + (strengths.length + 1), kind: "strength", area: area || "Cost realism, financial capacity & co-funding", title, detail, label: "Evaluator calculation", severity: "Observation", evidence: (evidence || []).filter((e) => e && e.doc), impact: "", action: "", party: "", actionStage: "Implementation safeguard", basis: "", closureEvidence: "", status: "Open", origin: "rule" }); };
+    if (b.lines.length >= 5 && !b.issues.length && b.subtotals.length) S("Itemised budget recomputes exactly", b.lines.length + " budget lines and " + b.subtotals.length + " totals recompute without discrepancy.", [b.subtotals[b.subtotals.length - 1].cite]);
+    const pt = perTrainee(factNumber(c, "totalCost"), fu.publicSum || factNumber(c, "publicFunding"), factNumber(c, "trainees"));
+    if (pt.total !== null && (c.funding.sources || []).some((s2) => !s2.isPublic)) S("Private co-funding reduces the public cost per trainee", "Total " + fmtINR(Math.round(pt.total)) + " per trainee, of which " + fmtINR(Math.round(pt.public || 0)) + " is public funding (subject to the co-funder's commitment).", []);
+    if (/\b(PF|EPF|ESI|offer letters?)\b/.test(propText)) S("Placement verification by documentary evidence", "The proposal refers to offer letters and/or PF/ESI records for placement verification.", [], "Employment outcomes & employer commitments");
+    const places = ((c.facts.locations || {}).values || []).map((v) => v.value).join(" ");
+    const beyond = KA_PLACES.some(([nm, re]) => nm !== "Bengaluru" && re.test(places));
+    if (beyond) S("Delivery reaches beyond Bengaluru", "Places named include " + trunc(places.replace(/\s*\(mentioned[^)]*\)/g, ""), 120) + ".", [], "Geographic & social inclusion");
+    c.findings = existing.concat(fresh, strengths);
+
+    c.compliance = (c.compliance || []).filter((r) => r.origin !== "rule");
+    const have = new Set(c.compliance.map((r) => norm(r.requirement)));
+    const R = (category, requirement, status, evidence, action) => { if (!have.has(norm(requirement))) c.compliance.push({ id: uid("cmp"), category, requirement, clause: "", status, evidence, action, origin: "rule" }); };
+    const pl = ((c.facts.placement || {}).values || []).map((v) => v.value).join("; ");
+    const plPct = Math.max(0, ...(pl.match(/\d{2,3}(?=\s?%)/g) || []).map(Number));
+    R("B", "70% placement commitment", !pl ? "Not addressed" : plPct >= 70 ? (/(within|month|salary|ctc|retention)/i.test(pl) ? "Met" : "Partially met") : "Not met", pl ? "Stated: " + trunc(pl, 120) : "No placement target found.", "Confirm denominator, window, salary floor and retention if KDEM confirms the norm.");
+    R("B", "Self-funded 2–3 month refresher if target missed", /refresher|additional\s+skill\s+training/i.test(propText) ? "Partially met" : "Not addressed", /refresher|additional\s+skill\s+training/i.test(propText) ? "Further training for unplaced candidates is mentioned; terms to be checked." : "No refresher commitment found.", "Confirm applicability with KDEM.");
+    R("B", "40% post-refresher placement floor", /post[- ]refresher/i.test(propText) ? "Partially met" : "Not addressed", "", "Confirm applicability with KDEM.");
+    R("B", "70/20/10 trainee mix (freshers / unemployed / employed)", /70\s*\/\s*20\s*\/\s*10/.test(propText) ? "Met" : "Not addressed", "", "Confirm applicability with KDEM.");
+    R("B", "Beyond-Bengaluru geographic focus", !places ? "Unable to verify" : beyond ? "Met" : "Not met", places ? trunc(places.replace(/\s*\(mentioned[^)]*\)/g, ""), 120) : "No places found.", beyond ? "Retain." : "Confirm geography requirement with KDEM.");
+    const incons = factConflicts(c).length + b.issues.length + fu.issues.length + (c.checks || []).filter((k) => /discrepancy|Contradictory/.test(runCheck(k).verdict)).length;
+    R("C", "Internal consistency of figures", incons ? "Inconsistent" : "Unable to verify", incons ? incons + " conflicting statement(s) or arithmetic discrepancy(ies) found." : "No conflicts found by the automatic checks; a full reading (or Claude analysis) is still needed.", incons ? "Single reconciled version of all figures." : "Advisor to confirm on full reading.");
+    const priv = (c.funding.sources || []).filter((s2) => !s2.isPublic);
+    if (priv.length) R("C", "Documented co-funder commitment", "Unable to verify", priv.map((s2) => s2.name + " " + fmtINR(parseINR(s2.amount))).join("; ") + " stated; no signed commitment on file.", "Signed commitment letter and CSR-plan confirmation.");
+    R("C", "Funder-wise release schedule", (c.funding.tranches || []).length ? (fu.issues.some((i) => /Release/.test(i.type)) ? "Inconsistent" : "Met") : "Not addressed", (c.funding.tranches || []).length ? c.funding.tranches.length + " tranche(s) stated." : "No tranches or milestones stated.", "Release schedule per funder tied to verifiable milestones.");
+    const cert = ((c.facts.certification || {}).values || []).map((v) => v.value).join("; ");
+    R("C", "Certifying body and assessment standard", cert ? (/(NSQF|SSC|NASSCOM|NCVET)/i.test(cert) ? "Met" : "Partially met") : "Not addressed", trunc(cert, 140) || "Not stated.", "Name the assessor and certifying body.");
+    R("C", "Trainee protection, grievance and data privacy", /grievance/i.test(propText) ? "Partially met" : "Not addressed", /grievance/i.test(propText) ? "Grievance mentioned; check scope." : "Not stated.", "Written commitments before disbursement.");
+    R("C", "Monitoring and reporting cadence", /monthly|quarterly|\bMIS\b/i.test(propText) ? "Met" : "Not addressed", /monthly|quarterly|\bMIS\b/i.test(propText) ? "Periodic reporting / MIS described." : "Not stated.", "Retain.");
+
+    if (!(c.verificationChecklist || []).length) c.verificationChecklist = [
+      { area: "Entity and Registration", claim: "Confirm the contracting entity, CIN and status on MCA21.", howToCheck: "mca.gov.in master data" },
+      { area: "Track Record and Reputation", claim: "Check MSDE/NSDC/state-mission blacklists and request completion/placement results of past projects.", howToCheck: "SIDH / NSDC notices; funder letters" },
+      { area: "Placement and Salary Claims", claim: "Obtain programme-specific employer letters of intent.", howToCheck: "Applicant submission" },
+      { area: "Financial Capacity", claim: "Obtain audited financial statements and the co-funder's signed commitment.", howToCheck: "Applicant and co-funder" },
+    ];
+    c.ruleAnalysisAt = (now || new Date()).toISOString();
+    audit(c, "Rule-based analysis", "Findings and compliance drafted", fresh.length + " findings, " + strengths.length + " strengths, compliance rows refreshed");
+    return { findings: fresh.length, strengths: strengths.length };
+  }
+
+  // What the report will contain, and what is still missing.
+  function reportCompleteness(c) {
+    const comp = composite(c.scores, c.policy && c.policy.compositeOverride);
+    const scored = CRITERIA.filter((cr) => effectiveScore(c.scores[cr.id]) !== null).length;
+    const weak = (c.findings || []).filter((f) => f.kind !== "strength");
+    const items = [
+      { key: "facts", stage: "C", ok: ["totalCost", "trainees"].every((k) => (c.facts[k] || {}).values && c.facts[k].values.length), label: "Key project details (cost, trainees)" },
+      { key: "findings", stage: "E", ok: weak.length > 0, label: "Findings with required actions (" + weak.length + ")" },
+      { key: "scores", stage: "E", ok: scored === 4, label: "Section A scores (" + scored + " of 4)" + (comp.withheld ? " — composite withheld" : " — composite " + comp.value.toFixed(2)) },
+      { key: "compliance", stage: "E", ok: (c.compliance || []).length > 0, label: "Section B compliance rows (" + (c.compliance || []).length + ")" },
+      { key: "verification", stage: "F", ok: (c.verification || []).length > 0, label: "Verification records (" + (c.verification || []).length + ")" + ((c.verification || []).length ? "" : " — the report will say “Independent verification not performed”") },
+      { key: "outcome", stage: "F", ok: !!(c.decision && c.decision.outcome), label: "Advisory outcome, merit, readiness and conditions" },
+    ];
+    return { items, complete: items.every((i) => i.ok) };
   }
 
   function concernsText(draft) {
@@ -1483,8 +1580,26 @@
     return c;
   }
 
+  // Report layout options. Defaults follow the advisor's KDEM sample (compact); each can be switched on per case.
+  const REPORT_OPTIONS = [
+    ["arithmetic", "Arithmetic and consistency table in Section A", false],
+    ["safeguards", "Due-diligence safeguard rows (C) in the compliance checklist", false],
+    ["allVerificationAreas", "All four verification headings, even when not checked", false],
+    ["readinessWarning", "Readiness warning line in Section C", false],
+    ["authority", "Decision-authority statement in Section C", false],
+    ["statusLine", "Document status line (title block and sign-off)", false],
+    ["verificationDetail", "Verification notes with researcher label and limitations", false],
+    ["explanatoryNotes", "Explanatory notes (benchmark caveat, pointer to the annex)", false],
+  ];
+  function reportOptions(c) {
+    const o = {};
+    REPORT_OPTIONS.forEach(([k, , d]) => (o[k] = c.meta && c.meta.reportOptions && k in c.meta.reportOptions ? !!c.meta.reportOptions[k] : d));
+    return o;
+  }
+
   const api = {
-    makeSyntheticDemo, buildAdvisoryDraft, applyAdvisoryDraft, buildAdvisoryPrompt, sanitiseAdvisoryDraft, concernsText, autoExtract, autoBudget, applyAutoExtract,
+    REPORT_OPTIONS, reportOptions,
+    makeSyntheticDemo, seedRuleAnalysis, reportCompleteness, buildAdvisoryDraft, applyAdvisoryDraft, buildAdvisoryPrompt, sanitiseAdvisoryDraft, concernsText, autoExtract, autoBudget, applyAutoExtract,
     SCHEMA, ADVISOR, DEFAULT_STATUS, PROVISIONAL_BANNER, NO_VERIFICATION, STAGES, RESEARCH, DOC_ROLES, PROPOSAL_ROLES,
     EVIDENCE_LABELS, SEVERITIES, ACTION_STAGES, FINDING_STATUS, ASSESS_AREAS, CRITERIA, ANCHORS, COMPLIANCE_STATUS,
     COMPLIANCE_CATS, OUTCOMES, VERIFY_AREAS, SOURCE_TYPES, VERIFIED_BY, HISTORICAL_BENCHMARKS, FACT_FIELDS,

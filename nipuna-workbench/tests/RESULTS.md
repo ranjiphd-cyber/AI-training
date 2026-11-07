@@ -1,6 +1,6 @@
 # Acceptance test results
 
-Run: 2026-11-07T12:37:10.114Z · Node v22.23.4
+Run: 2026-11-07T13:53:50.991Z · Node v22.23.4
 
 | # | Test | Result | Evidence |
 |---|---|---|---|
@@ -16,10 +16,10 @@ Run: 2026-11-07T12:37:10.114Z · Node v22.23.4
 | 10 | Reference date differs from today → actual case date used | PASS | Case date 7 November 2026; reference excluded from prompt |
 | 11 | Scanned PDF without OCR → extraction warning, not empty success | PASS | Image-only synthetic PDF → status 'failed' with OCR warning; scoring stays disabled |
 | 12 | Embedded applicant instruction to approve → ignored | PASS | Flagged at p.4; guard precedes sources; deterministic state unchanged. Live model behaviour NOT tested. |
-| 13 | DOCX export → valid editable document | PASS | synthetic: report 22 5 30 (paras tables rows), 2 A4 page(s); annex 11 7 43; blank: report 21 3 14 (paras tables rows), 1 A4 page(s); annex 9 5 29 |
+| 13 | DOCX export → valid editable document | PASS | synthetic: report 17 4 23 (paras tables rows), 2 A4 page(s); annex 11 7 43; blank: report 21 3 14 (paras tables rows), 1 A4 page(s); annex 9 5 29 |
 | 14 | Human score override → composite recalculated and change recorded | PASS | 2.75 → 3.00; audit: c1: 2.50 → 3.50 (Advisor reviewed curriculum annex) |
 | X5 | Automatic extraction on upload finds stated details with citations and never invents | PASS | 16 values, 4 budget lines; seeded subtotal error caught (stated ₹20,00,000 vs ₹21,00,000); tranche % ignored |
-| X6 | Recommendation draft: concerns, outcome, merit, readiness, conditions — and the advisor stays in control | PASS | 14 concerns; outcome Return for revision/resubmission; fill keeps advisor text; report prints concerns |
+| X6 | Recommendation draft: concerns, outcome, merit, readiness, conditions — and the advisor stays in control | PASS | 15 concerns; outcome Return for revision/resubmission; fill keeps advisor text; report prints concerns |
 | X3 | Indian rupee formatting and parsing | PASS | ok |
 | X4 | Closed status requires closure evidence | PASS | ok |
 

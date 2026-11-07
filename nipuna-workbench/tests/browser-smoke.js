@@ -72,6 +72,7 @@ const MAP = {
 
   // Prepared case (needs private/prepared.case.json at build time)
   await page.getByRole("button", { name: "All cases" }).click();
+  if (await page.locator(".leavebar").isVisible().catch(() => false)) await page.getByRole("button", { name: "Discard changes and continue" }).click();
   await page.getByRole("button", { name: "Open the prepared case" }).click();
   await page.getByText("Readiness warning").first().waitFor();
   step("Prepared case loaded; readiness warning visible");
