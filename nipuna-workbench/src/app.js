@@ -127,7 +127,8 @@
     else if (lower.endsWith(".docx")) r = await extractDocx(buf);
     else if (lower.endsWith(".txt")) { const units = textToUnits(new TextDecoder().decode(buf)); r = { units, extraction: N.assessExtraction(units, "text"), kind: "text" }; }
     else throw new Error("Unsupported file type. Upload a PDF or a Word document (.docx).");
-    return { id: N.uid("D"), name: file.name, shortName: N.trunc(file.name.replace(/\.[^.]+$/, ""), 22), role, version: version || "", kind: r.kind, addedAt: N.todayISO(), units: r.units, extraction: r.extraction, injection: N.detectInjection(r.units) };
+    const clean = file.name.replace(/^[0-9a-f]{8}-(?=.)/i, "");
+    return { id: N.uid("D"), name: clean, shortName: N.trunc(clean.replace(/\.[^.]+$/, ""), 22), role, version: version || "", kind: r.kind, addedAt: N.todayISO(), units: r.units, extraction: r.extraction, injection: N.detectInjection(r.units) };
   }
   function reportFileName(c, kind) {
     const slug = (N.factDisplay(c, "legalEntity") !== "Not stated" ? N.factDisplay(c, "legalEntity").split(/[—(,]/)[0] : c.meta.caseName).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "Proposal";
@@ -237,13 +238,14 @@
       setBusy("Reading " + file.name + "…");
       try {
         const doc = await fileToDoc(file, "Proposal (initial)", "");
-        const nc = N.newCase("Review — " + file.name.replace(/\.[^.]+$/, ""));
+        const nc = N.newCase("Review — " + doc.name.replace(/\.[^.]+$/, ""));
         nc.documents.push(doc);
         N.audit(nc, N.ADVISOR, "Document added", file.name + " as Proposal (initial) — extraction " + doc.extraction.status + ", " + doc.extraction.chars + " chars");
+        const ax = doc.extraction.status === "failed" ? null : N.applyAutoExtract(nc, doc.id);
         setC(nc); setDirty(true); setViewer(null);
         setStage(doc.extraction.status === "failed" ? "B" : "C");
         if (doc.extraction.status === "failed") say(file.name + ": the text could not be read reliably (scanned document?). See B. Documents for options.", "crit");
-        else say("New case created from " + file.name + " (" + (doc.kind === "pdf" ? "PDF" : "Word") + "). Next: confirm the facts, then press Save case.");
+        else say("New case created from " + file.name + " (" + (doc.kind === "pdf" ? "PDF" : "Word") + "). " + (ax ? ax.added + " project details" + (ax.budgetLines ? " and " + ax.budgetLines + " budget lines" : "") + " extracted automatically — review them below, then press Save case." : ""));
       } catch (e) { say(file.name + ": " + (e.message || e), "crit"); } finally { setBusy(""); }
     }
     async function downloadReport(kind) {
@@ -452,9 +454,10 @@
         try {
           const doc = await fileToDoc(file, role, version);
           const r = doc;
-          update((x) => { x.documents.push(doc); }, "Document added", file.name + " as " + role + " — extraction " + r.extraction.status + ", " + r.extraction.chars + " chars");
+          let ax = null;
+          update((x) => { x.documents.push(doc); if (N.PROPOSAL_ROLES.includes(role) && doc.extraction.status !== "failed") ax = N.applyAutoExtract(x, doc.id); }, "Document added", file.name + " as " + role + " — extraction " + r.extraction.status + ", " + r.extraction.chars + " chars");
           if (r.extraction.status === "failed") say(file.name + ": extraction unreliable — see the warnings. Supply an OCR-enabled copy or paste the text.", "crit");
-          else say(file.name + " added (" + r.units.length + " locations, " + r.extraction.status + ").");
+          else say(file.name + " added (" + r.units.length + " locations, " + r.extraction.status + ")." + (N.PROPOSAL_ROLES.includes(role) ? " Project details were extracted automatically — see C. Project details." : ""));
         } catch (e) { say(file.name + ": " + (e.message || e), "crit"); }
       }
       setBusy("");
@@ -611,7 +614,8 @@
     const conflicts = N.factConflicts(c);
     const pt = N.perTrainee(N.factNumber(c, "totalCost"), N.factNumber(c, "publicFunding"), N.factNumber(c, "trainees"));
     return html`<section className="panel">
-      <h2>C. Confirm extracted facts</h2>
+      <h2>C. Project details and facts</h2>
+      <${ProjectDetails} c=${c} update=${update} say=${say} openViewer=${openViewer} />
       <${AiPanel} c=${c} update=${update} caps=${caps} say=${say} kind="facts" />
       ${conflicts.length ? html`<${Banner} tone="warn">${conflicts.length} field(s) carry conflicting statements. Both values are kept with citations; the applicant's figures are never repaired.</${Banner}>` : null}
       <div className="calcstrip">
@@ -625,6 +629,40 @@
       </table></div>
       ${(c.factsExtra || []).length ? html`<h3>Other repeated statements</h3><div className="tablewrap"><table className="facts"><tbody>${c.factsExtra.map((fx) => html`<tr key=${fx.id}><th scope="row">${fx.label}</th><td>${fx.values.map((v, i) => html`<div key=${i} className="val">${v.value} <${Cite} c=${c} e=${v.cite} onOpen=${openViewer} /></div>`)}</td><td>${new Set(fx.values.map((v) => String(v.value).toLowerCase())).size > 1 ? html`<${Badge} tone="warn">Conflicting</${Badge}>` : ""}</td></tr>`)}</tbody></table></div>` : null}
     </section>`;
+  }
+
+  // Summary of the project as extracted on upload (pattern-based, in the browser), with sources and gaps.
+  function ProjectDetails({ c, update, say, openViewer }) {
+    const props = (c.documents || []).filter((d) => N.PROPOSAL_ROLES.includes(d.role) && d.extraction && d.extraction.status !== "failed");
+    if (!props.length) return html`<p className="muted">Upload the proposal (PDF or Word) in B. Documents; its project details are extracted automatically.</p>`;
+    const pt = N.perTrainee(N.factNumber(c, "totalCost"), N.factNumber(c, "publicFunding"), N.factNumber(c, "trainees"));
+    const b = N.analyseBudget(c.budget), f = N.analyseFunding(c.funding);
+    const conflicts = N.factConflicts(c).map((x) => x.key);
+    const show = [
+      ["title", "Title"], ["legalEntity", "Applicant"], ["jobRoles", "Job roles / domains"], ["trainees", "Trainees"], ["locations", "Places mentioned"],
+      ["totalCost", "Total cost"], ["publicFunding", "Public funding requested"], ["otherFunding", "Other funding"], ["statedCostPerTrainee", "Cost per trainee (stated)"],
+      ["trainingDuration", "Training duration"], ["projectDuration", "Project duration"], ["trainingHours", "Training hours"], ["batches", "Batches"],
+      ["trainers", "Trainers"], ["placement", "Placement target"], ["certification", "Assessment & certification"], ["submissionDate", "Submission date"],
+    ];
+    const vals = (k) => { const fv = c.facts[k]; return fv && fv.values.length ? fv : null; };
+    const missing = show.filter(([k]) => !vals(k)).map(([, l]) => l);
+    const notes = props.flatMap((d) => { const a = c.autoExtract && c.autoExtract[d.id]; return a ? (a.notes || []).concat(a.budgetNotes || []) : []; });
+    const rerun = () => { let total = 0; update((x) => { props.forEach((d) => { total += N.applyAutoExtract(x, d.id).added; }); }); say("Automatic extraction re-run on " + props.length + " document(s). New values are added; confirmed fields are not changed."); };
+    const women = (c.factsExtra || []).find((x) => /women/i.test(x.label));
+    return html`<div className="details">
+      <div className="row between"><b>Project details extracted from ${props.map((d) => d.shortName || d.name).join(", ")}</b>
+        <button type="button" className="btn tiny" onClick=${rerun}>Re-run automatic extraction</button></div>
+      <p className="hint">Found in your browser by pattern matching, with no data sent anywhere. Every value links to the line it came from. Check each one; use Claude below to fill gaps or interpret wording the patterns miss.</p>
+      <dl className="detail-grid">
+        ${show.map(([k, l]) => { const fv = vals(k); return html`<div key=${k} className=${"dd" + (conflicts.includes(k) ? " conflict" : "")}><dt>${l}${conflicts.includes(k) ? html` <${Badge} tone="warn">Conflicting</${Badge}>` : null}</dt><dd>${fv ? fv.values.slice(0, 4).map((v, i) => html`<div key=${i}>${v.value} <${Cite} c=${c} e=${v.cite} onOpen=${openViewer} /></div>`) : html`<span className="muted">Not found${k === "title" ? " — the cover may be an image; type the title below" : ""}</span>`}${fv && fv.values.length > 4 ? html`<div className="muted small">+${fv.values.length - 4} more in the table below</div>` : null}</dd></div>`; })}
+        ${women ? html`<div className=${"dd" + (new Set(women.values.map((v) => v.value)).size > 1 ? " conflict" : "")}><dt>Women participation${new Set(women.values.map((v) => v.value)).size > 1 ? html` <${Badge} tone="warn">Conflicting</${Badge}>` : null}</dt><dd>${[...new Map(women.values.map((v) => [v.value, v])).values()].map((v, i) => html`<div key=${i}>${v.value} <${Cite} c=${c} e=${v.cite} onOpen=${openViewer} /></div>`)}</dd></div>` : null}
+        ${((c.factsExtra || []).find((x) => /CIN/.test(x.label)) || null) ? html`<div className="dd"><dt>Registration number (CIN)</dt><dd>${c.factsExtra.find((x) => /CIN/.test(x.label)).values.map((v, i) => html`<div key=${i}>${v.value} <${Cite} c=${c} e=${v.cite} onOpen=${openViewer} /></div>`)}</dd></div>` : null}
+        <div className="dd"><dt>Recalculated per trainee</dt><dd>${N.fmtINR(pt.total)} total · ${N.fmtINR(pt.public)} public</dd></div>
+        <div className="dd"><dt>Budget lines read</dt><dd>${b.lines.length ? b.lines.length + " lines, " + b.subtotals.length + " totals — " + (b.issues.length ? b.issues.length + " arithmetic discrepancy(ies)" : "no arithmetic discrepancies") : "None read automatically"}${f.issues.length ? html`<div className="warnline crit">${f.issues.map((i) => i.detail).join("; ")}</div>` : null}</dd></div>
+      </dl>
+      ${missing.length ? html`<div className="warnline">Not found automatically: ${missing.join(", ")}. Add them in the table below if the proposal states them, or record “Not stated”.</div>` : null}
+      ${notes.length ? html`<details className="sub"><summary>Extraction notes (${notes.length})</summary><ul className="small">${notes.map((n, i) => html`<li key=${i}>${n}</li>`)}</ul></details>` : null}
+    </div>`;
   }
 
   function FactRow({ c, k, label, update, openViewer, conflict }) {
@@ -643,7 +681,7 @@
     return html`<tr className=${conflict ? "conflict" : ""}>
       <th scope="row">${label}${conflict ? html`<div><${Badge} tone="warn">Conflicting statements</${Badge}></div>` : null}</th>
       <td>
-        ${f.values.length ? f.values.map((v, i) => html`<div className="val" key=${i}>${v.value} ${v.cite ? html`<${Cite} c=${c} e=${v.cite} onOpen=${openViewer} />` : html`<${Badge} tone="warn">No citation</${Badge}>`} <span className="muted small">${v.origin === "ai" ? "AI draft" : v.origin === "session" ? "Session draft" : "Advisor"}</span> <button type="button" className="btn tiny ghost" aria-label="Remove value" onClick=${() => update((x) => { x.facts[k].values.splice(i, 1); }, "Fact value removed", label + ": " + v.value)}>×</button></div>`) : html`<span className="muted">Not stated</span>`}
+        ${f.values.length ? f.values.map((v, i) => html`<div className="val" key=${i}>${v.value} ${v.cite ? html`<${Cite} c=${c} e=${v.cite} onOpen=${openViewer} />` : html`<${Badge} tone="warn">No citation</${Badge}>`} <span className="muted small">${v.origin === "ai" ? "AI draft" : v.origin === "session" ? "Session draft" : v.origin === "auto" ? "Auto-extracted" : "Advisor"}</span> <button type="button" className="btn tiny ghost" aria-label="Remove value" onClick=${() => update((x) => { x.facts[k].values.splice(i, 1); }, "Fact value removed", label + ": " + v.value)}>×</button></div>`) : html`<span className="muted">Not stated</span>`}
         ${f.note ? html`<div className="hint">${f.note}</div>` : null}
         ${add ? html`<div className="addform">
           <input aria-label="Value" placeholder="Value as written" value=${add.value} onChange=${(e) => setAdd({ ...add, value: e.target.value })} />

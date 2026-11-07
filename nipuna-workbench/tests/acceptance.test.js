@@ -206,6 +206,38 @@ const REFERENCE = process.env.REFERENCE_DOCX || "";
   });
 
   // ───── additional regression checks ─────
+  await test("X5", "Automatic extraction on upload finds stated details with citations and never invents", async () => {
+    const units = [
+      { loc: "p.1", text: "Proposal for Synthetic Skills for Coastal Youth\nOrganization Name: Example Learning Foundation\nThe programme will train 300 youth in Udupi and Mangaluru, with a minimum of 40% women participation." },
+      { loc: "p.2", text: "Training will be delivered over a\n4-month period at partner colleges, followed by a 1-month OJT.\nAll trainees will undergo third-party assessment and certification aligned to NSQF.\nBatches will be formed with 30-40 candidates." },
+      { loc: "p.3", text: "Total project cost: ₹60,00,000\nFunding Requested from Government: ₹24,00,000\nSynthetic CSR Partner 60% ₹36,00,000\nKDEM – NIPUNA 40% ₹24,00,000\n1st Tranche (25%) ₹9,00,000 On placement of first 35% of trained batch\nWe commit to 70% placement of trained candidates.\nThe project targets 45% women participation." },
+      { loc: "p.4", text: "Detailed Budget\n1 Trainer 4 50,000 6 12,00,000\n2 Content and Kit 300 2,000 1 6,00,000\n3 Assessment 300 1,000 1 3,00,000\nTotal Expense - A 20,00,000\nAdmin Cost 1,00,000\nTotal Project Cost 22,00,000" },
+    ];
+    const c = N.newCase("x5");
+    c.documents.push({ id: "SX", name: "synthetic.pdf", role: "Proposal (initial)", kind: "pdf", units, extraction: N.assessExtraction(units, "pdf") });
+    const r = N.applyAutoExtract(c, "SX");
+    const val = (k) => (c.facts[k].values || []).map((v) => v.value);
+    assert(val("totalCost").includes("₹60,00,000"), "total cost " + val("totalCost"));
+    assert(val("publicFunding").some((v) => v.startsWith("₹24,00,000")), "public " + val("publicFunding"));
+    assert(val("trainees").includes("300"), "trainees " + val("trainees"));
+    assert(val("placement").length === 1 && val("placement")[0].startsWith("70%"), "placement must ignore the tranche milestone: " + val("placement"));
+    assert(val("trainingDuration").some((v) => v.startsWith("4 months")) && val("trainingDuration").some((v) => /1 month \(OJT/.test(v)), "durations " + val("trainingDuration"));
+    assert(val("batches")[0].startsWith("30–40"), "batches " + val("batches"));
+    assert(val("legalEntity")[0] === "Example Learning Foundation", "entity " + val("legalEntity"));
+    assert(val("locations").some((v) => v.startsWith("Udupi")) && val("locations").some((v) => v.startsWith("Mangaluru")), "places");
+    assert(val("submissionDate").length === 0 && val("statedCostPerTrainee").length === 0, "invented a value that is not stated");
+    const women = c.factsExtra.find((x) => x.label === "Women participation");
+    assert(women && new Set(women.values.map((v) => v.value)).size === 2, "40% vs 45% conflict not retained");
+    const all = Object.values(c.facts).flatMap((f) => f.values).concat(women.values);
+    assert(all.every((v) => v.cite && N.verifyExcerpt(c, v.cite).verified), "a citation does not match the source");
+    const b = N.analyseBudget(c.budget);
+    assert(b.lines.length === 4, "budget lines " + b.lines.length);
+    const tA = b.subtotals.find((x) => /Expense - A/.test(x.label));
+    assert(tA.computed === 2100000 && tA.status === "Arithmetic discrepancy", "seeded ₹1,00,000 subtotal error not caught: " + tA.computed);
+    assert(N.analyseFunding(c.funding).sources.length === 2, "funding sources");
+    return r.added + " values, " + b.lines.length + " budget lines; seeded subtotal error caught (stated ₹20,00,000 vs ₹21,00,000); tranche % ignored";
+  });
+
   await test("X3", "Indian rupee formatting and parsing", async () => {
     const cases = [["₹84,12,250", 8412250], ["21,03,062.5", 2103062.5], ["1.2 crore", 12000000], ["33.6 lakh", 3360000], ["Not stated", null]];
     cases.forEach(([s, v]) => assert(N.parseINR(s) === v, s + " → " + N.parseINR(s)));

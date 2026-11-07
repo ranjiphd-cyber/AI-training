@@ -75,6 +75,10 @@ async function syntheticDocx(file) {
   await page.setInputFiles("#proposal-file", docxFile);
   await page.locator(".stages").waitFor();
   await page.locator(".toast", { hasText: "(Word)" }).waitFor();
+  await page.locator(".details").waitFor();
+  const det = await page.locator(".details").innerText();
+  if (!/₹60,00,000/.test(det) || !/\b300\b/.test(det) || !/₹24,00,000/.test(det)) throw new Error("Word upload details card:\n" + det);
+  step("Word upload → details extracted automatically: total ₹60,00,000, public ₹24,00,000, 300 trainees (shown on stage C)");
   await page.locator(".stages").getByRole("button", { name: /^B / }).click();
   const docCard = await page.locator(".doc").first().innerText();
   if (!/DOCX/.test(docCard) || !/Text extracted/.test(docCard)) throw new Error("DOCX card:\n" + docCard);
@@ -96,7 +100,11 @@ async function syntheticDocx(file) {
     await page.getByRole("button", { name: "All cases" }).click();
     await page.setInputFiles("#proposal-file", PDF);
     await page.locator(".toast", { hasText: "(PDF)" }).waitFor({ timeout: 60000 });
-    step("PDF proposal uploaded from home; opened at stage C");
+    await page.locator(".details", { hasText: "Budget lines read" }).waitFor();
+    const d2 = await page.locator(".details").innerText();
+    const bl = /Budget lines read\s*(\d+) lines/i.exec(d2);
+    step("PDF upload → details extracted: " + (/₹84,12,250|₹1,63,75,600/.exec(d2) || ["(no total)"])[0] + " total; budget lines read: " + (bl ? bl[1] : "none"));
+    await page.screenshot({ path: path.join(process.env.SHOTS || TMP, "shot-details.png") });
   }
   await page.locator(".stages").getByRole("button", { name: /^G / }).click();
   await page.getByRole("button", { name: /Download report for KDEM \(Word \.docx\)/ }).click();

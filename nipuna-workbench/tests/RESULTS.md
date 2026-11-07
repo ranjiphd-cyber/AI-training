@@ -1,6 +1,6 @@
 # Acceptance test results
 
-Run: 2026-11-07T07:56:59.140Z · Node v22.23.4
+Run: 2026-11-07T12:09:55.619Z · Node v22.23.4
 
 | # | Test | Result | Evidence |
 |---|---|---|---|
@@ -18,9 +18,10 @@ Run: 2026-11-07T07:56:59.140Z · Node v22.23.4
 | 12 | Embedded applicant instruction to approve → ignored | PASS | Flagged at p.4; guard precedes sources; deterministic state unchanged. Live model behaviour NOT tested. |
 | 13 | DOCX export → valid editable document | PASS | synthetic: report 22 5 30 (paras tables rows), 2 A4 page(s); annex 11 7 43; blank: report 21 3 14 (paras tables rows), 1 A4 page(s); annex 9 5 29 |
 | 14 | Human score override → composite recalculated and change recorded | PASS | 2.75 → 3.00; audit: c1: 2.50 → 3.50 (Advisor reviewed curriculum annex) |
+| X5 | Automatic extraction on upload finds stated details with citations and never invents | PASS | 16 values, 4 budget lines; seeded subtotal error caught (stated ₹20,00,000 vs ₹21,00,000); tranche % ignored |
 | X3 | Indian rupee formatting and parsing | PASS | ok |
 | X4 | Closed status requires closure evidence | PASS | ok |
 
-16 of 16 passed.
+17 of 17 passed.
 
 Not covered here: live Claude calls from the artifact (needs the claude.ai viewer), the claude.ai download prompt and the claude.ai data store. See README → Test results.

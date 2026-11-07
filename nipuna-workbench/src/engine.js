@@ -976,6 +976,265 @@
     return { verified, unverified, findings: newFindings.length };
   }
 
+  // ───────────────────────── automatic (pattern-based) extraction on upload ─────────────────────────
+  // Runs in the browser with no network and no language model. Every value carries the exact line it came
+  // from, so the advisor can check it. It finds what is stated in recognisable wording; it never infers.
+  const KA_PLACES = [
+    ["Bengaluru", /\b(bengaluru|bangalore)\b/i], ["Mysuru", /\b(mysuru|mysore)\b/i], ["Mangaluru", /\b(mangaluru|mangalore)\b/i],
+    ["Dakshina Kannada", /\bdakshina\s+kannada\b/i], ["Udupi", /\budupi\b/i], ["Hubballi-Dharwad", /\b(hubballi|hubli|dharwad)\b/i],
+    ["Belagavi", /\b(belagavi|belgaum)\b/i], ["Kalaburagi", /\b(kalaburagi|gulbarga)\b/i], ["Ballari", /\b(ballari|bellary)\b/i],
+    ["Raichur", /\braichur\b/i], ["Yadgir", /\byadgir\b/i], ["Bidar", /\bbidar\b/i], ["Vijayapura", /\b(vijayapura|bijapur)\b/i],
+    ["Shivamogga", /\b(shivamogga|shimoga)\b/i], ["Tumakuru", /\b(tumakuru|tumkur)\b/i], ["Davanagere", /\b(davanagere|davangere)\b/i],
+    ["Hassan", /\bhassan\b/i], ["Mandya", /\bmandya\b/i], ["Chamarajanagar", /\bchamarajanagar\b/i], ["Kodagu", /\b(kodagu|coorg)\b/i],
+    ["Chikkamagaluru", /\b(chikkamagaluru|chikmagalur)\b/i], ["Chitradurga", /\bchitradurga\b/i], ["Kolar", /\bkolar\b/i],
+    ["Chikkaballapur", /\bchikkaballapur/i], ["Ramanagara", /\bramanagara\b/i], ["Koppal", /\bkoppal\b/i], ["Gadag", /\bgadag\b/i],
+    ["Haveri", /\bhaveri\b/i], ["Uttara Kannada", /\buttara\s+kannada\b/i], ["Bagalkot", /\bbagalkot/i], ["Vijayanagara", /\bvijayanagara\b/i],
+  ];
+  const AMT = "₹?\\s?\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d{1,2})?|₹\\s?\\d+(?:\\.\\d{1,2})?";
+  const ROLE_WORDS = /\b(data|cloud|ai|analytics|analyst|developer|engineer|marketing|cyber|java|python|power bi|full[- ]?stack|devops|testing|web|machine learning|iot|security|sql|tally|accounting|bfsi|retail|logistics|nursing|electric|technician)\b/i;
+
+  function linesOf(unit) {
+    // merge numbers wrapped onto the next line by narrow PDF table cells (e.g. "₹10,08,000.0" + "0")
+    const raw = String(unit.text || "").split("\n");
+    const out = [];
+    for (let i = 0; i < raw.length; i++) {
+      let l = raw[i];
+      const first = raw[i];
+      while (i + 1 < raw.length && /\d\.\d?$/.test(l.trim()) && /^\s*\d{1,2}\s*$/.test(raw[i + 1])) l = l.replace(/\s+$/, "") + raw[++i].trim();
+      out.push(l === first ? l : Object.assign(new String(l), { raw: first }));
+    }
+    return out;
+  }
+  function excerptAround(line, idx, len) {
+    const s = Math.max(0, idx - 60), e = Math.min(line.length, idx + len + 80);
+    return line.slice(s, e).trim();
+  }
+
+  function autoExtract(c, docId) {
+    const doc = (c.documents || []).find((d) => d.id === docId);
+    const res = { facts: {}, extras: [], places: [], budget: null, funding: null, notes: [] };
+    if (!doc) return res;
+    const add = (key, value, unit, line, m) => {
+      const v = String(value).replace(/\s+/g, " ").trim();
+      if (!v) return;
+      const arr = (res.facts[key] = res.facts[key] || []);
+      const src = line && line.raw ? line.raw : String(line);
+      const excerpt = (line && line.raw ? src.trim().slice(0, 200) : excerptAround(src, m ? m.index : 0, m ? m[0].length : src.length));
+      if (arr.some((x) => norm(x.value) === norm(v) && x.cite.loc === unit.loc)) return;
+      arr.push({ value: v, cite: { doc: doc.id, loc: unit.loc, excerpt } });
+    };
+    const money = (s) => { const n = parseINR(String(s).replace(/\.$/, "")); return n === null ? null : fmtINR(n); };
+    const placeHits = {};
+    const fundingRows = [];
+    let otherContribPending = null;
+
+    for (const u of doc.units || []) {
+      const lines = linesOf(u).map(String);
+      // Prose is matched on the page text with line breaks removed, so phrases split across lines are found.
+      const flat = String(u.text || "").replace(/\s*\n\s*/g, " ");
+      let pm;
+      const durRe = /(\d{1,2})[- ]?(month|week)s?\b/gi;
+      while ((pm = durRe.exec(flat))) {
+        const ctx = flat.slice(Math.max(0, pm.index - 120), pm.index + pm[0].length + 40).toLowerCase();
+        const what = /\b(ojt|on[- ]the[- ]job|internship|apprentice)/.test(ctx) ? "OJT/internship" : /refresher/.test(ctx) ? "refresher" : /(classroom|training|course)/.test(ctx) ? "training" : /\b(project|programme|program)\b/.test(ctx) ? "project" : null;
+        if (what) add(what === "project" ? "projectDuration" : "trainingDuration", pm[1] + " " + pm[2].toLowerCase() + (Number(pm[1]) > 1 ? "s" : "") + " (" + what + ")", u, flat, pm);
+      }
+      const certRe = /[^.]*\bcertif\w*[^.]*\b(assess\w*|issued|awarded|receive\w*|benchmark\w*|NSQF|SSC|NASSCOM|third[- ]party)\b[^.]*\./gi;
+      let certN = 0;
+      while ((pm = certRe.exec(flat)) && certN < 3) { add("certification", pm[0].trim().slice(0, 200), u, flat, pm); certN++; }
+      if ((pm = /(\d{1,3})\s*(?:-|–|to)\s*(\d{1,3})\s*(?:candidates|students|trainees)?\s*per\s+batch|batch(?:es)?[^.]{0,40}?(?:size\s+of\s+)?(\d{1,3})\s*(?:-|–|to)\s*(\d{1,3})/i.exec(flat)))
+        add("batches", (pm[1] ? pm[1] + "–" + pm[2] : pm[3] + "–" + pm[4]) + " per batch (as stated)", u, flat, pm);
+      lines.forEach((line, li) => {
+        let m;
+        if ((m = new RegExp("total\\s+project\\s+cost[^\\d₹\\n]{0,60}?(" + AMT + "|\\d{1,3}(?:,\\d{2,3})+)", "i").exec(line))) { const v = money(m[1]); if (v) add("totalCost", v, u, line, m); }
+        if ((m = new RegExp("(funding\\s+requested\\s+from\\s+(?:the\\s+)?(?:government|kdem)|public\\s+funding(?:\\s+requested)?|(?:government|kdem)\\s+(?:funding|contribution|share)(?:\\s+requested)?|amount\\s+requested)[^\\d₹\\n]{0,30}(" + AMT + ")", "i").exec(line))) { const v = money(m[2]); if (v) add("publicFunding", v, u, line, m); }
+        // funding table rows: "<name> 40% ₹33,64,900"
+        if ((m = new RegExp("^\\s*(.{3,60}?)\\s+(\\d{1,3}(?:\\.\\d+)?)\\s?%\\s+(" + AMT + ")\\s*$").exec(line)) && !/total/i.test(m[1]) && !/tranche/i.test(m[1])) {
+          fundingRows.push({ name: m[1].replace(/[–-]\s*$/, "").trim(), pct: Number(m[2]), amount: m[3], unit: u, line, m });
+        }
+        if ((m = /other\s+contributions?\s*\(([^)]{2,40})\)/i.exec(line))) otherContribPending = { name: m[1].trim(), unit: u, line, m, ttl: 3 };
+        if (otherContribPending) {
+          const am = new RegExp("(" + AMT + ")").exec(line.slice(line === otherContribPending.line ? otherContribPending.m.index + otherContribPending.m[0].length : 0));
+          if (am) { fundingRows.push({ name: otherContribPending.name, pct: null, amount: am[1], unit: otherContribPending.unit, line: otherContribPending.line, m: otherContribPending.m }); otherContribPending = null; }
+          else if (--otherContribPending.ttl <= 0) otherContribPending = null;
+        }
+        if ((m = /(per[- ](?:candidate|trainee|student|beneficiary)\s*cost|cost\s+per\s+(?:candidate|trainee|student|beneficiary))[^\d₹\n]{0,20}(₹?\s?\d{1,3}(?:,\d{2,3})*(?:\.\d{1,2})?)/i.exec(line))) { const v = money(m[2]); if (v) add("statedCostPerTrainee", v, u, line, m); }
+        if ((m = /total\s+beneficiaries\s*:?\s*(\d[\d,]*)/i.exec(line)) || (m = /\bfor\s+(\d{2,3}(?:,\d{3})*|\d{2,6})\s+(?:youth|students|candidates|trainees|beneficiaries|learners)\b/i.exec(line)) || (m = /\b(?:train|skill|enrol|target(?:ing)?)\w*\s+(?:of\s+)?(\d{2,3}(?:,\d{3})*|\d{2,6})\s+(?:youth|students|candidates|trainees|beneficiaries|learners|women|participants)\b/i.exec(line)))
+          add("trainees", String(parseINR(m[1])), u, line, m);
+        if (/\btarget\b/i.test(u.text) && (m = /^\s*total\s+(\d{2,6})\s*$/i.exec(line))) add("trainees", m[1], u, line, m);
+        if (!/tranche|milestone|first\s+\d{1,3}\s?%/i.test(line) && (m = /(\d{2,3})\s?%\s*(?:placement|of\s+(?:the\s+)?trained|placement\s+compliance)/i.exec(line)) || (!/tranche|milestone|first\s+\d{1,3}\s?%/i.test(line) && (m = /placement[^.\n%]{0,50}?(\d{2,3})\s?%/i.exec(line))))
+          add("placement", m[1] + "% placement (as stated)", u, line, m);
+        if ((m = /(\d{1,3})\s?%\s*(?:women|female|girls)/i.exec(line)) || (m = /(?:women|female|girls)[^.\n%]{0,30}?(\d{1,3})\s?%/i.exec(line))) {
+          const ex = res.extras.find((x) => x.label === "Women participation") || (res.extras.push({ id: "fx_auto_women", label: "Women participation", values: [] }), res.extras[res.extras.length - 1]);
+          const excerpt = excerptAround(line, m.index, m[0].length);
+          if (!ex.values.some((x) => x.value === m[1] + "%" && x.cite.loc === u.loc)) ex.values.push({ value: m[1] + "%", cite: { doc: doc.id, loc: u.loc, excerpt } });
+        }
+        if ((m = /total\s+training\s+hours\s*:?\s*(\d{2,4})\s*(?:hours|hrs)?/i.exec(line)) || (m = /(\d{2,4})\s*(?:hours|hrs)\b[^.\n]{0,30}(?:training|per\s+(?:trainee|candidate))/i.exec(line)))
+          add("trainingHours", m[1] + " hours (as stated)", u, line, m);
+        if ((m = /(organi[sz]ation\s+name|name\s+of\s+(?:the\s+)?(?:organi[sz]ation|applicant|institution)|submitted\s+by|implementing\s+(?:agency|partner))\s*:\s*(.{3,80})/i.exec(line))) add("legalEntity", m[2].replace(/[•·].*$/, ""), u, line, m);
+        if ((m = /\b([UL]\d{5}[A-Z]{2}\d{4}[A-Z]{2,3}\d{4,6})\b/.exec(line))) {
+          const valid = /^[UL]\d{5}[A-Z]{2}\d{4}[A-Z]{3}\d{6}$/.test(m[1]);
+          const reg = res.extras.find((x) => x.label === "Registration number (CIN)") || (res.extras.push({ id: "fx_auto_cin", label: "Registration number (CIN)", values: [] }), res.extras[res.extras.length - 1]);
+          const v = m[1] + (valid ? "" : " (not in the standard 21-character CIN format — check)");
+          if (!reg.values.some((x) => x.value === v)) reg.values.push({ value: v, cite: { doc: doc.id, loc: u.loc, excerpt: excerptAround(line, m.index, m[0].length) } });
+        }
+        if ((m = /(date\s+of\s+submission|submission\s+date|submitted\s+on|dated)\s*:?\s*(\d{1,2}[\/.\- ](?:\d{1,2}|[A-Za-z]{3,9})[\/.\- ]\d{2,4})/i.exec(line))) add("submissionDate", m[2], u, line, m);
+        if ((m = /^\s*(?:proposal\s+title|project\s+title|title\s+of\s+the\s+(?:project|proposal))\s*:\s*(.{5,140})/i.exec(line)) || (m = /^\s*(proposal\s+for\s+.{10,140})$/i.exec(line))) add("title", m[1], u, line, m);
+        if ((m = /^\s*(?:•|\d{1,2}\.)\s*([A-Z][^:\n]{3,55})$/.exec(line)) && ROLE_WORDS.test(m[1]) && !/\bSDG\b|\d{3,}/.test(m[1])) add("jobRoles", m[1].trim(), u, line, m);
+        for (const [name, re] of KA_PLACES) { const pm = re.exec(line); if (pm) (placeHits[name] = placeHits[name] || []).push({ unit: u, line, m: pm }); }
+      });
+    }
+    // places mentioned (not necessarily delivery sites)
+    res.places = Object.entries(placeHits).map(([name, hits]) => ({ name, count: hits.length, first: hits[0] })).sort((a, b) => b.count - a.count);
+    if (res.places.length) {
+      const top = res.places.slice(0, 6);
+      top.forEach((p) => add("locations", p.name + " (mentioned " + p.count + "×)", p.first.unit, p.first.line, p.first.m));
+      if (res.places.length > 6) res.notes.push("Also mentioned: " + res.places.slice(6).map((p) => p.name).join(", ") + ". Confirm which places are delivery sites.");
+    }
+    // funding
+    const tc = res.facts.totalCost ? parseINR(res.facts.totalCost[0].value) : null;
+    if (res.facts.publicFunding && !fundingRows.some((r) => /kdem|nipuna|government|gok|state/i.test(r.name))) {
+      const pf = res.facts.publicFunding[0];
+      fundingRows.unshift({ name: "Government of Karnataka (KDEM / NIPUNA)", pct: null, amount: String(parseINR(pf.value)), unit: { loc: pf.cite.loc }, line: pf.cite.excerpt, m: { index: 0, 0: pf.cite.excerpt } });
+    }
+    if (fundingRows.length) {
+      const seen = new Set();
+      const sources = [];
+      for (const r of fundingRows) {
+        const key = norm(r.name);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const isPublic = /kdem|nipuna|government|gok|state/i.test(r.name);
+        sources.push({ name: r.name, amount: fmtNum(parseINR(r.amount)), statedPct: r.pct === null ? "" : r.pct, isPublic, commitment: "As stated in proposal", cite: { doc: doc.id, loc: r.unit.loc, excerpt: excerptAround(String(r.line), r.m.index, r.m[0].length) }, origin: "auto" });
+        if (isPublic) add("publicFunding", fmtINR(parseINR(r.amount)) + (r.pct !== null ? " (" + r.pct + "%)" : ""), r.unit, r.line, r.m);
+        else add("otherFunding", r.name + ": " + fmtINR(parseINR(r.amount)) + (r.pct !== null ? " (" + r.pct + "%)" : "") + " — commitment evidence to be checked", r.unit, r.line, r.m);
+      }
+      res.funding = { total: tc === null ? "" : fmtNum(tc), sources };
+    }
+    res.budget = autoBudget(doc);
+    if (res.budget && res.budget.lines.length) {
+      const trainerLines = res.budget.lines.filter((l) => /trainer|faculty|instructor/i.test(l.label));
+      trainerLines.forEach((l) => add("trainers", l.label + ": " + l.qty + " budgeted × " + l.freq + (l.freq > 1 ? " periods (months, if the column is monthly)" : "") + " (from budget)", { loc: l.cite.loc }, l.cite.excerpt, null));
+    }
+    return res;
+  }
+
+  // Budget table rows: "<no> <label> <n1> <n2> [n3] <total>" where the product of n1..n3 equals the total.
+  function autoBudget(doc) {
+    const rowRe = new RegExp("^\\s*(\\d{1,2}(?:\\.\\d{1,2}){0,2}\\.?)\\s+(.+?)\\s+((?:(?:" + AMT + "|\\d+(?:\\.\\d+)?)\\.?\\s+){2,3})(" + AMT + "|\\d+)\\.?\\s*$");
+    const itemLike = new RegExp("^\\s*\\d{1,2}(?:\\.\\d{1,2}){0,2}\\.?\\s+[A-Za-z].*(" + AMT + ")");
+    const totalRe = new RegExp("^\\s*(.*?\\b(?:sub\\s*-?\\s*total|grand\\s+total|total\\s+expense[^|₹\\d]*|total\\s+project\\s+cost|total\\s+cost)\\b[^|₹\\d]*?)(?:\\s*\\|\\s*|\\s+)(?:₹\\s*)*(?:\\|\\s*)?(?:₹?\\s?\\d[\\d,]*(?:\\.\\d*)?\\s+(?:\\|\\s*)?)?(₹?\\s?\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d{0,2})?)\\s*$", "i");
+    const lumpRe = new RegExp("^\\s*(?:\\d{1,2}\\s+)?((?:admin\\w*|administrative|overhead|contingency|management\\s+fee)[^|₹\\d]*?)\\s*(?:\\|\\s*)?(₹?\\s?\\d{1,3}(?:,\\d{2,3})+(?:\\.\\d{0,2})?)\\s*$", "i");
+    const headerRe = /^\s*\d{1,2}\s+[A-Z][A-Za-z &/()\-,]{3,80}?(?:\s+₹?0(?:\.00)?)?\s*$/;
+    const lines = [], subtotals = [], notes = [];
+    let group = 1, groupRows = 0, groupBad = 0, last = "none", unconsumed = [], started = false, sid = 0, lastHeader = "";
+    const gname = () => "G" + group;
+    for (const u of doc.units || []) {
+      for (const lineObj of linesOf(u)) {
+        const line = String(lineObj);
+        const t = line.replace(/\s{2,}\|\s{2,}/g, " | ");
+        const citeText = (lineObj.raw || line).trim().slice(0, 200);
+        let m;
+        if ((m = rowRe.exec(t.replace(/\s\|\s/g, " ")))) {
+          const toks = m[3].trim().split(/\s+(?=₹|\d)/);
+          const nums = toks.map((x) => parseINR(x.replace(/\.$/, "")));
+          const total = parseINR(m[4].replace(/\.$/, ""));
+          const prod = nums.reduce((a, b) => (a === null || b === null ? null : a * b), 1);
+          if (prod !== null && total !== null && Math.abs(prod - total) <= 0.5 && nums.length >= 2 && !/^(19|20)\d\d/.test(m[1])) {
+            // the unit price is the token with ₹, else with a comma/decimal, else the largest; the others are quantity and frequency
+            let pi = toks.findIndex((x) => /₹/.test(x));
+            if (pi < 0) pi = toks.findIndex((x) => /[,.]\d/.test(x));
+            if (pi < 0) pi = nums.indexOf(Math.max(...nums));
+            const others = nums.filter((_, k) => k !== pi);
+            const unit = nums[pi];
+            const qty = others[0], freq = others.length > 1 ? others.slice(1).reduce((a, b) => a * b, 1) : 1;
+            lines.push({ id: "ab" + (lines.length + 1), label: m[2].replace(/\s*\|\s*/g, " ").trim(), qty, unit: fmtNum(unit), freq, stated: fmtNum(total), group: gname(), cite: { doc: doc.id, loc: u.loc, excerpt: citeText }, origin: "auto" });
+            groupRows++; last = "row"; started = true;
+            continue;
+          }
+          if (started) { groupBad++; notes.push(u.loc + ": budget line not parsed reliably — “" + trunc(t.trim(), 90) + "”"); continue; }
+        }
+        if (!started) continue;
+        if (headerRe.test(t) || /^\s*\d{1,2}\s+[A-Z][^₹]*?\s(?:\|\s*)?₹0(?:\.00)?\s*$/.test(t)) {
+          if (last !== "none") { lastHeader = t.replace(/\s*\|?\s*₹?0(?:\.00)?\s*$/, "").replace(/^\s*\d{1,2}\s+/, "").trim(); group++; groupRows = 0; groupBad = 0; last = "header"; }
+          continue;
+        }
+        if (itemLike.test(t) && !/total/i.test(t)) { groupBad++; notes.push(u.loc + ": budget line not parsed reliably — “" + trunc(t.trim(), 90) + "”"); last = "row"; continue; }
+        if ((m = totalRe.exec(t))) {
+          const stated = fmtNum(parseINR(m[2].replace(/\.$/, "")));
+          const label = m[1].replace(/\s*\|\s*/g, " ").trim() || "Total";
+          if (last === "header" && !groupRows) {
+            // a section with no item lines (e.g. "5 Administrative Expenses ... Sub Total ₹7,57,600"): treat its subtotal as one lump item
+            const amt = parseINR(m[2].replace(/\.$/, ""));
+            lines.push({ id: "ab" + (lines.length + 1), label: lastHeader || label, qty: 1, unit: fmtNum(amt), freq: 1, stated: fmtNum(amt), group: "L" + group, cite: { doc: doc.id, loc: u.loc, excerpt: t.trim().slice(0, 200) }, origin: "auto" });
+            unconsumed.push("L" + group); group++; last = "lump";
+            continue;
+          }
+          if (last === "row") {
+            if (groupBad) notes.push("“" + label + "” not checked automatically: " + groupBad + " line(s) in its section could not be parsed. Enter them in D. Analyse.");
+            else { const id = "as" + ++sid; subtotals.push({ id, label, stated, sumOf: [gname()], cite: { doc: doc.id, loc: u.loc, excerpt: t.trim().slice(0, 200) }, origin: "auto" }); unconsumed.push(id); }
+            group++; groupRows = 0; groupBad = 0;
+          } else if (unconsumed.length && !groupBad) {
+            const id = "as" + ++sid;
+            subtotals.push({ id, label, stated, sumOf: unconsumed.slice(), cite: { doc: doc.id, loc: u.loc, excerpt: t.trim().slice(0, 200) }, origin: "auto" });
+            unconsumed = [id];
+          }
+          last = "total";
+          continue;
+        }
+        if ((m = lumpRe.exec(t))) {
+          const amt = parseINR(m[2].replace(/\.$/, ""));
+          if (amt) {
+            lines.push({ id: "ab" + (lines.length + 1), label: m[1].replace(/\s*\|\s*/g, " ").trim(), qty: 1, unit: fmtNum(amt), freq: 1, stated: fmtNum(amt), group: "L" + group, cite: { doc: doc.id, loc: u.loc, excerpt: t.trim().slice(0, 200) }, origin: "auto" });
+            unconsumed.push("L" + group); group++; last = "lump";
+          }
+          continue;
+        }
+        if (headerRe.test(t) && last !== "none") { lastHeader = t.replace(/\s+₹?0(?:\.00)?\s*$/, "").replace(/^\s*\d{1,2}\s+/, "").trim(); group++; groupRows = 0; groupBad = 0; last = "header"; }
+      }
+    }
+    return { lines, subtotals, notes, top: unconsumed.slice() };
+  }
+
+  // Merge automatic extraction into the case without overwriting advisor-confirmed facts.
+  function applyAutoExtract(c, docId) {
+    const r = autoExtract(c, docId);
+    let added = 0;
+    for (const [k, vals] of Object.entries(r.facts)) {
+      const f = (c.facts[k] = c.facts[k] || { values: [], confirmed: false, note: "" });
+      if (f.confirmed) continue;
+      for (const v of vals) {
+        if (f.values.some((x) => norm(x.value) === norm(v.value) && x.cite && x.cite.loc === v.cite.loc)) continue;
+        const chk = verifyExcerpt(c, v.cite);
+        f.values.push({ value: v.value, cite: { ...v.cite, verified: chk.verified }, origin: "auto" });
+        added++;
+      }
+      if (k === "trainingDuration" || k === "locations" || k === "trainers" || k === "jobRoles" || k === "certification" || k === "otherFunding") f.complementary = true;
+    }
+    for (const ex of r.extras) {
+      const existing = (c.factsExtra = c.factsExtra || []).find((x) => x.label === ex.label);
+      if (existing) ex.values.forEach((v) => { if (!existing.values.some((x) => x.value === v.value && x.cite.loc === v.cite.loc)) existing.values.push(v); });
+      else c.factsExtra.push(ex);
+    }
+    let budgetImported = 0;
+    if (r.budget && r.budget.lines.length && !(c.budget.lines || []).length) {
+      c.budget.lines = r.budget.lines; c.budget.subtotals = r.budget.subtotals; budgetImported = r.budget.lines.length;
+      // If the table's own grand total was not read, check the budget against the total cost stated in the text.
+      const tcv = r.facts.totalCost && r.facts.totalCost[0];
+      const lastSt = c.budget.subtotals[c.budget.subtotals.length - 1];
+      const brokenSection = (r.budget.notes || []).some((n) => /not checked automatically/.test(n));
+      if (tcv && !brokenSection && r.budget.top.length && !(lastSt && parseINR(lastSt.stated) === parseINR(tcv.value) && r.budget.top.length === 1 && r.budget.top[0] === lastSt.id))
+        c.budget.subtotals.push({ id: "as_total", label: "Total project cost (as stated in the text)", stated: fmtNum(parseINR(tcv.value)), sumOf: r.budget.top.slice(), cite: tcv.cite, origin: "auto" });
+    }
+    let fundingImported = false;
+    if (r.funding && r.funding.sources.length && !(c.funding.sources || []).length) { c.funding.total = r.funding.total || c.funding.total; c.funding.sources = r.funding.sources; fundingImported = true; }
+    if (!c.funding.total && r.facts.totalCost) c.funding.total = fmtNum(parseINR(r.facts.totalCost[0].value));
+    c.autoExtract = c.autoExtract || {};
+    c.autoExtract[docId] = { at: new Date().toISOString(), added, budgetLines: budgetImported, budgetNotes: r.budget ? r.budget.notes : [], fundingImported, places: r.places.map((p) => p.name + " (" + p.count + ")"), notes: r.notes };
+    audit(c, "Automatic extraction", "Project details extracted", added + " value(s), " + budgetImported + " budget line(s), funding " + (fundingImported ? "imported" : "not imported") + " from " + docId);
+    return { added, budgetLines: budgetImported, fundingImported, notes: r.notes.concat(r.budget ? r.budget.notes : []) };
+  }
+
   // Clearly synthetic demonstration case (fictional applicant). Used by the "Load synthetic demo" button and tests.
   function makeSyntheticDemo(now) {
     const c = newCase("SYNTHETIC DEMO — Example Skills Trust", now);
@@ -1019,7 +1278,7 @@
   }
 
   const api = {
-    makeSyntheticDemo,
+    makeSyntheticDemo, autoExtract, autoBudget, applyAutoExtract,
     SCHEMA, ADVISOR, DEFAULT_STATUS, PROVISIONAL_BANNER, NO_VERIFICATION, STAGES, RESEARCH, DOC_ROLES, PROPOSAL_ROLES,
     EVIDENCE_LABELS, SEVERITIES, ACTION_STAGES, FINDING_STATUS, ASSESS_AREAS, CRITERIA, ANCHORS, COMPLIANCE_STATUS,
     COMPLIANCE_CATS, OUTCOMES, VERIFY_AREAS, SOURCE_TYPES, VERIFIED_BY, HISTORICAL_BENCHMARKS, FACT_FIELDS,
