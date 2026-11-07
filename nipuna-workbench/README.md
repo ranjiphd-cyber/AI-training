@@ -8,7 +8,7 @@ A single-advisor tool for Dr. Ranjith T P to review skilling and employment prop
 | `src/engine.js` | Deterministic logic: money parsing/formatting, budget and funding reconciliation, safe formula checks, scoring, gating, excerpt verification, prompt building |
 | `src/report.js` | Word report and internal annex builder (`docx` library), shared by browser and tests |
 | `src/app.js`, `src/shell.html` | User interface and page styles; `node build.js` assembles `dist/` |
-| `private/` (git-ignored) | Applicant material: the prepared first case, its builder, its reports and private regression checks. **This repository is public; applicant documents, case files and evaluations must never be committed.** `node build.js` publishes `private/prepared.case.json` (if present) with the private artifact only. |
+| `private/` (git-ignored) | Applicant material: the prepared first case, its builder, its reports and private regression checks. **This repository is public; applicant documents, case files and evaluations must never be committed.** `node build.js` lists every `private/prepared*.case.json` under "Prepared reviews" in the private artifact only. |
 | `tests/` | Acceptance tests, browser smoke test, results (`tests/RESULTS.md`) |
 
 ## What the environment supports, and how each piece works
@@ -28,7 +28,7 @@ A single-advisor tool for Dr. Ranjith T P to review skilling and employment prop
 
 ## First-use guide
 
-1. Open the artifact on claude.ai. Press **Upload a proposal — PDF or Word (.docx)** to start a case from the proposal file, or **Open the prepared case**. Old `.doc` files are refused with an instruction to re-save them as `.docx` or PDF.
+1. Open the artifact on claude.ai. Press **Upload a proposal — PDF or Word (.docx)** to start a case from the proposal file, or open one of the **Prepared reviews**. Old `.doc` files are refused with an instruction to re-save them as `.docx` or PDF.
 2. **A. Case**: set stage, evaluation date (defaults to today), whether a current approved policy was supplied, and special concerns. Tick the confidentiality acknowledgement.
 3. Project details appear automatically in **C. Project details and facts** after upload; check each value against its citation.
 4. **B. Documents**: pick a role, then add PDF/DOCX/TXT files: proposal, annexures, current policy, earlier evaluations, applicant responses, and the reference report (format only). Read the extraction warnings; add transcriptions for image-only pages that carry evidence.

@@ -70,10 +70,11 @@ const MAP = {
   const size = await page.evaluate(async () => (await docx.Packer.toBlob(NWBReport.buildReport(docx, NWB, NWB.makeSyntheticDemo()))).size);
   step("docx.Packer.toBlob in browser produced " + size + " bytes");
 
-  // Prepared case (needs private/prepared.case.json at build time)
+  // Prepared case (needs private/prepared*.case.json at build time)
   await page.getByRole("button", { name: "All cases" }).click();
   if (await page.locator(".leavebar").isVisible().catch(() => false)) await page.getByRole("button", { name: "Discard changes and continue" }).click();
-  await page.getByRole("button", { name: "Open the prepared case" }).click();
+  await page.locator("h2", { hasText: "Prepared reviews" }).waitFor();
+  await page.locator("section", { hasText: "Prepared reviews" }).locator("button.linkish").first().click();
   await page.getByText("Readiness warning").first().waitFor();
   step("Prepared case loaded; readiness warning visible");
   await page.locator(".stages").getByRole("button", { name: new RegExp("^E ") }).click();

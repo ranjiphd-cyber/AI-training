@@ -2496,19 +2496,21 @@ if (window.pdfjsLib) { try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://c
     function startNew() {
       setC(N.newCase("New proposal review")); setDirty(true); setStage("A"); setViewer(null);
     }
-    async function loadBundled() {
+    const [prepared, setPrepared] = useState([]);
+    useEffect(() => { fetch("cases/index.json").then((r) => (r.ok ? r.json() : [])).then((x) => setPrepared(Array.isArray(x) ? x : [])).catch(() => setPrepared([])); }, []);
+    async function loadBundled(entry) {
       setBusy("Loading…");
       try {
-        const r = await fetch("cases/bundled.case.json");
-        if (!r.ok) throw new Error(r.status === 404 ? "no prepared case is published with this copy of the workbench" : "HTTP " + r.status);
+        const r = await fetch("cases/" + entry.file);
+        if (!r.ok) throw new Error("HTTP " + r.status);
         const obj = await r.json();
         const errs = N.validateCase(obj);
         if (errs.length) throw new Error(errs.join(" "));
         obj.id = N.uid("case");
-        N.audit(obj, N.ADVISOR, "Bundled case opened", "Prepared in Claude Code session; saved as a new case copy");
-        setC(obj); setDirty(true); setStage("A");
-        say("Prepared case loaded as a new, unsaved copy. Review it, then press Save.");
-      } catch (e) { say("Could not load the bundled case: " + (e.message || e), "crit"); } finally { setBusy(""); }
+        N.audit(obj, N.ADVISOR, "Prepared case opened", obj.meta.caseName + " (saved as a new case copy)");
+        setC(obj); setDirty(true); setStage("F"); setViewer(null);
+        say("Opened “" + obj.meta.caseName + "” as a new, unsaved copy. Press Save case to keep it; Download Word report is in the top bar.");
+      } catch (e) { say("Could not open the prepared case: " + (e.message || e), "crit"); } finally { setBusy(""); }
     }
     function loadDemo() { setC(N.makeSyntheticDemo()); setDirty(true); setStage("A"); say("Synthetic demonstration loaded. It describes a fictional applicant."); }
     async function importFile(file) {
@@ -2566,7 +2568,7 @@ if (window.pdfjsLib) { try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://c
             <button type="button" className="btn ghost" onClick=${() => setPendingLeave(null)}>Cancel</button>
           </span></div>` : null}
         ${!c
-          ? html`<${Home} cases=${cases} store=${store} caps=${caps} onOpen=${open} onNew=${startNew} onNewFromFile=${startFromFile} onBundled=${loadBundled} onDemo=${loadDemo} onImport=${importFile} />`
+          ? html`<${Home} cases=${cases} store=${store} caps=${caps} onOpen=${open} onNew=${startNew} onNewFromFile=${startFromFile} onBundled=${loadBundled} prepared=${prepared} onDemo=${loadDemo} onImport=${importFile} />`
           : html`
           <div className="workspace">
             <nav className="stages" aria-label="Workflow">
@@ -2588,7 +2590,7 @@ if (window.pdfjsLib) { try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://c
       </div>`;
   }
 
-  function Home({ cases, store, caps, onOpen, onNew, onNewFromFile, onBundled, onDemo, onImport }) {
+  function Home({ cases, store, caps, onOpen, onNew, onNewFromFile, onBundled, prepared, onDemo, onImport }) {
     const fileRef = useRef(null);
     const propRef = useRef(null);
     return html`
@@ -2603,18 +2605,23 @@ if (window.pdfjsLib) { try { pdfjsLib.GlobalWorkerOptions.workerSrc = "https://c
           </div>
           <div className="row gap wrap">
             <button type="button" className="btn" onClick=${onNew}>Empty case</button>
-            <button type="button" className="btn" onClick=${onBundled}>Open the prepared case</button>
+
             <button type="button" className="btn ghost" onClick=${onDemo}>Load synthetic demo</button>
             <button type="button" className="btn ghost" onClick=${() => fileRef.current && fileRef.current.click()}>Import case file (.json)</button>
             <input ref=${fileRef} id="import-file" type="file" accept=".json,application/json" hidden onChange=${(e) => { const f = e.target.files[0]; if (f) onImport(f); e.target.value = ""; }} />
           </div>
         </section>
+        ${prepared.length ? html`<section className="panel">
+          <h2>Prepared reviews</h2>
+          <p className="hint">Reviews prepared with you in Claude Code. Each opens as a new copy at the Decision stage; press Save case to keep it, then download the Word report.</p>
+          <ul className="caselist">${prepared.map((p) => html`<li key=${p.file}><button type="button" className="linkish" onClick=${() => onBundled(p)}>${p.name}</button>${p.outcome ? html`<span className="muted"> · draft outcome: ${p.outcome}</span>` : null}</li>`)}</ul>
+        </section>` : null}
         <section className="panel">
           <h2>Saved cases</h2>
           <p className="hint">${store.label}</p>
           ${cases.length
             ? html`<ul className="caselist">${cases.map((k) => html`<li key=${k.id}><button type="button" className="linkish" onClick=${() => onOpen(k.id)}>${k.name}</button>${k.synthetic ? html` <${Badge} tone="crit">Synthetic</${Badge}>` : null}<span className="muted"> · updated ${String(k.updatedAt || "").slice(0, 10)}</span></li>`)}</ul>`
-            : html`<p className="muted">No saved cases yet. Start a new case, or open the prepared case if one is published with this workbench.</p>`}
+            : html`<p className="muted">No saved cases yet. Upload a proposal to start, or open one of the prepared reviews above.</p>`}
         </section>
         <${Privacy} store=${store} caps=${caps} />
       </main>`;
