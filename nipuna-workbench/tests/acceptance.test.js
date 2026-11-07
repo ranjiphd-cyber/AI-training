@@ -238,6 +238,35 @@ const REFERENCE = process.env.REFERENCE_DOCX || "";
     return r.added + " values, " + b.lines.length + " budget lines; seeded subtotal error caught (stated ₹20,00,000 vs ₹21,00,000); tranche % ignored";
   });
 
+  await test("X6", "Recommendation draft: concerns, outcome, merit, readiness, conditions — and the advisor stays in control", async () => {
+    const units = [
+      { loc: "p.1", text: "Organization Name: Example Learning Foundation\nThe programme will train 300 youth in Udupi and Mangaluru, with a minimum of 40% women participation." },
+      { loc: "p.2", text: "Total project cost: ₹60,00,000\nSynthetic CSR Partner 60% ₹36,00,000\nKDEM – NIPUNA 40% ₹24,00,000\nRelease Schedule - Synthetic CSR Partner Contribution\n1st Tranche (50%) ₹30,00,000 On signing\n2nd Tranche (50%) ₹30,00,000 On placement\nWe commit to 70% placement of trained candidates.\nThe project targets 45% women participation." },
+    ];
+    const c = N.newCase("x6");
+    c.documents.push({ id: "SX", name: "synthetic.pdf", shortName: "Synthetic", role: "Proposal (initial)", kind: "pdf", units, extraction: N.assessExtraction(units, "pdf") });
+    N.applyAutoExtract(c, "SX");
+    const d = N.buildAdvisoryDraft(c);
+    const txt = N.concernsText(d);
+    assert(d.outcome === "Return for revision/resubmission", "outcome " + d.outcome);
+    assert(/\[Critical, blocking\] Release schedule: Tranches total ₹60,00,000 but Synthetic CSR Partner's stated contribution is ₹36,00,000/.test(txt), "tranche error not raised:\n" + txt);
+    assert(/\[Critical, blocking\] Synthetic CSR Partner is to contribute ₹36,00,000/.test(txt), "co-funder commitment not raised");
+    assert(/women participation: 40% vs 45%/i.test(txt), "conflict not raised");
+    assert(/does not state the training hours/.test(txt) && /Independent verification has not been performed/.test(txt), "missing-information or verification concern absent");
+    assert(d.conditions.length >= 3 && /merit provisional/i.test(d.merit) && /^Not ready for shortlisting/.test(d.readiness), "merit/readiness/conditions");
+    assert(d.outcomeWhy.some((w) => /critical/.test(w)), "outcome reasons missing");
+    c.decision.merit = "Advisor's own merit text";
+    N.applyAdvisoryDraft(c, d, "fill");
+    assert(c.decision.merit === "Advisor's own merit text" && c.decision.outcome === d.outcome && c.decision.concerns.length > 0, "fill mode overwrote advisor text or did not fill");
+    N.applyAdvisoryDraft(c, d, "replace");
+    assert(c.decision.merit === d.merit, "replace mode did not replace");
+    const { text } = await docText(R.buildReport(docx, N, c));
+    assert(/Areas of concern and points for the decision-maker/.test(text) && /Critical \(blocking\): Release schedule/.test(text), "concerns not in report");
+    const bad = N.sanitiseAdvisoryDraft({ outcome: "APPROVED", concerns: [{ severity: "Fatal", text: "x" }], conditions: [] });
+    assert(bad.outcome === "" && bad.concerns[0].severity === "Minor", "Claude draft not sanitised");
+    return d.concerns.length + " concerns; outcome " + d.outcome + "; fill keeps advisor text; report prints concerns";
+  });
+
   await test("X3", "Indian rupee formatting and parsing", async () => {
     const cases = [["₹84,12,250", 8412250], ["21,03,062.5", 2103062.5], ["1.2 crore", 12000000], ["33.6 lakh", 3360000], ["Not stated", null]];
     cases.forEach(([s, v]) => assert(N.parseINR(s) === v, s + " → " + N.parseINR(s)));

@@ -692,7 +692,7 @@
       compliance: [],
       policy: { confirmations: [], compositeOverride: null },
       verification: [],
-      decision: { outcome: "", rationale: "", merit: "", readinessNote: "", principalConditions: "" },
+      decision: { outcome: "", rationale: "", merit: "", readinessNote: "", principalConditions: "", concerns: "" },
       analysisRuns: [],
       audit: [],
     };
@@ -1026,6 +1026,8 @@
     const money = (s) => { const n = parseINR(String(s).replace(/\.$/, "")); return n === null ? null : fmtINR(n); };
     const placeHits = {};
     const fundingRows = [];
+    const trancheRows = [];
+    let releaseHeading = "";
     let otherContribPending = null;
 
     for (const u of doc.units || []) {
@@ -1046,6 +1048,9 @@
         add("batches", (pm[1] ? pm[1] + "–" + pm[2] : pm[3] + "–" + pm[4]) + " per batch (as stated)", u, flat, pm);
       lines.forEach((line, li) => {
         let m;
+        if (/release\s+schedule|disbursement\s+schedule|tranches?\b.*(?:contribution|funding)/i.test(line) && !/₹/.test(line)) releaseHeading = line;
+        if ((m = new RegExp("^\\s*((?:\\d(?:st|nd|rd|th)|first|second|third|fourth|final)\\s+tranche)\\s*(?:\\((\\d{1,3}(?:\\.\\d+)?)\\s?%\\))?\\s*(" + AMT + ")\\.?\\s*(.*)$", "i").exec(line)))
+          trancheRows.push({ label: m[1], pct: m[2] ? Number(m[2]) : "", amount: m[3], milestone: m[4].trim(), heading: releaseHeading, unit: u, line, m });
         if ((m = new RegExp("total\\s+project\\s+cost[^\\d₹\\n]{0,60}?(" + AMT + "|\\d{1,3}(?:,\\d{2,3})+)", "i").exec(line))) { const v = money(m[1]); if (v) add("totalCost", v, u, line, m); }
         if ((m = new RegExp("(funding\\s+requested\\s+from\\s+(?:the\\s+)?(?:government|kdem)|public\\s+funding(?:\\s+requested)?|(?:government|kdem)\\s+(?:funding|contribution|share)(?:\\s+requested)?|amount\\s+requested)[^\\d₹\\n]{0,30}(" + AMT + ")", "i").exec(line))) { const v = money(m[2]); if (v) add("publicFunding", v, u, line, m); }
         // funding table rows: "<name> 40% ₹33,64,900"
@@ -1109,7 +1114,13 @@
         if (isPublic) add("publicFunding", fmtINR(parseINR(r.amount)) + (r.pct !== null ? " (" + r.pct + "%)" : ""), r.unit, r.line, r.m);
         else add("otherFunding", r.name + ": " + fmtINR(parseINR(r.amount)) + (r.pct !== null ? " (" + r.pct + "%)" : "") + " — commitment evidence to be checked", r.unit, r.line, r.m);
       }
-      res.funding = { total: tc === null ? "" : fmtNum(tc), sources };
+      const tranches = [];
+      for (const t of trancheRows) {
+        const src = sources.find((s) => t.heading && norm(t.heading).includes(norm(s.name).split(/[\s–-]+/)[0])) || null;
+        if (!src) { res.notes.push(t.unit.loc + ": tranche “" + t.label + "” found but its funder could not be identified; enter it in D. Analyse."); continue; }
+        tranches.push({ funder: src.name, label: t.label + (t.pct !== "" ? " (" + t.pct + "%)" : ""), amount: fmtNum(parseINR(t.amount)), statedPct: t.pct, milestone: t.milestone, cite: { doc: doc.id, loc: t.unit.loc, excerpt: excerptAround(String(t.line), t.m.index, t.m[0].length) }, origin: "auto" });
+      }
+      res.funding = { total: tc === null ? "" : fmtNum(tc), sources, tranches };
     }
     res.budget = autoBudget(doc);
     if (res.budget && res.budget.lines.length) {
@@ -1227,12 +1238,207 @@
         c.budget.subtotals.push({ id: "as_total", label: "Total project cost (as stated in the text)", stated: fmtNum(parseINR(tcv.value)), sumOf: r.budget.top.slice(), cite: tcv.cite, origin: "auto" });
     }
     let fundingImported = false;
-    if (r.funding && r.funding.sources.length && !(c.funding.sources || []).length) { c.funding.total = r.funding.total || c.funding.total; c.funding.sources = r.funding.sources; fundingImported = true; }
+    if (r.funding && r.funding.sources.length && !(c.funding.sources || []).length) { c.funding.total = r.funding.total || c.funding.total; c.funding.sources = r.funding.sources; c.funding.tranches = r.funding.tranches || []; fundingImported = true; }
     if (!c.funding.total && r.facts.totalCost) c.funding.total = fmtNum(parseINR(r.facts.totalCost[0].value));
     c.autoExtract = c.autoExtract || {};
     c.autoExtract[docId] = { at: new Date().toISOString(), added, budgetLines: budgetImported, budgetNotes: r.budget ? r.budget.notes : [], fundingImported, places: r.places.map((p) => p.name + " (" + p.count + ")"), notes: r.notes };
     audit(c, "Automatic extraction", "Project details extracted", added + " value(s), " + budgetImported + " budget line(s), funding " + (fundingImported ? "imported" : "not imported") + " from " + docId);
     return { added, budgetLines: budgetImported, fundingImported, notes: r.notes.concat(r.budget ? r.budget.notes : []) };
+  }
+
+  // ───────────────────────── advisory recommendation draft (rule-based, explainable) ─────────────────────────
+  // Builds concerns, a suggested outcome with its reasons, merit, readiness, rationale and principal conditions
+  // from what is already in the case. It is a draft for the advisor; nothing is applied until the advisor chooses to.
+  const KEY_FACTS = [
+    ["legalEntity", "registered legal entity", "Major", "Registration certificate, PAN and authorised signatory of the contracting entity."],
+    ["trainingHours", "training hours per trainee", "Major", "Curriculum with hours per module (theory, lab, OJT)."],
+    ["certification", "assessment and certification arrangements", "Major", "Named assessor/certifying body, pass criteria and qualification alignment."],
+    ["placement", "placement commitment", "Major", "Placement target with denominator, window, minimum salary and retention period."],
+    ["locations", "delivery locations", "Major", "Training centre addresses, districts and capacity."],
+    ["batches", "batch size and number", "Minor", "Batch plan with sizes, numbers and calendar."],
+    ["trainers", "trainer numbers and profiles", "Minor", "Trainer numbers, qualifications and deployment plan."],
+    ["projectDuration", "overall project duration and dates", "Minor", "Month-wise project calendar with the year."],
+    ["jobRoles", "target job roles", "Minor", "Entry-level job roles per domain with expected salary range."],
+    ["submissionDate", "submission date and version", "Observation", "Dated, versioned submission."],
+  ];
+
+  function firstSentence(t) {
+    const m = /^(.{40,320}?[a-z0-9)%"”'’]\.)(\s|$)/i.exec(String(t || "").trim());
+    return m ? m[1] : trunc(t, 320);
+  }
+
+  function buildAdvisoryDraft(c) {
+    const concerns = [];
+    const seen = new Set();
+    const push = (severity, text, basis, action, blocking) => {
+      const k = norm(text).slice(0, 80);
+      if (seen.has(k)) return;
+      seen.add(k);
+      concerns.push({ severity, text, basis, action: action || "", blocking: !!blocking });
+    };
+    const usable = hasUsableProposal(c) || c.synthetic;
+    if (!usable) return { concerns: [{ severity: "Critical", text: "No proposal with usable text is on file.", basis: "Documents", action: "Upload the proposal (PDF or Word).", blocking: true }], outcome: "", outcomeWhy: ["No proposal to evaluate."], merit: "", readiness: "", rationale: "", conditions: [] };
+
+    // 1. Open findings (advisor- or AI-drafted)
+    const open = (c.findings || []).filter((f) => f.kind !== "strength" && f.status !== "Closed");
+    open.filter((f) => f.severity === "Critical" || f.severity === "Major").forEach((f) =>
+      push(f.severity, f.title + (f.detail ? " — " + firstSentence(f.detail) : ""), "Finding" + (f.evidence && f.evidence[0] ? " (" + f.evidence[0].loc + ")" : ""), f.action, f.actionStage === "Before shortlisting/approval" || f.severity === "Critical"));
+
+    // Concerns already captured by an open finding are not repeated.
+    const findingText = open.map((f) => (f.title + " " + f.detail).toLowerCase()).join(" \n ");
+    const coveredNum = (...nums) => nums.some((n) => n !== null && n !== undefined && Math.abs(n) >= 10 && findingText.includes(fmtNum(Math.abs(n)).toLowerCase()));
+    const coveredArea = (re) => open.some((f) => re.test(f.area + " " + f.title));
+    // 2. Deterministic calculations
+    const b = analyseBudget(c.budget), fu = analyseFunding(c.funding);
+    b.issues.filter((i) => !coveredNum(i.diff)).forEach((i) => push("Major", "Budget arithmetic: " + i.label + " is stated as " + fmtINR(i.stated) + " but its components add up to " + fmtINR(i.computed) + " (difference " + fmtINR(Math.abs(i.diff)) + ").", "Evaluator calculation", "Submit a corrected, reconciled budget.", true));
+    fu.issues.filter((i) => !coveredNum(...((i.detail.match(/₹[\d,]+(?:\.\d+)?/g) || []).map(parseINR)))).forEach((i) => push(/Release schedule/.test(i.type) ? "Critical" : "Major", i.type + ": " + i.detail + ".", "Evaluator calculation", "Submit a corrected funder-wise funding and release schedule.", true));
+    (c.checks || []).forEach((ch) => { const r = runCheck(ch); const kw = (ch.label.match(/tranche|hours|placement|batch|cost|budget|funding|trainee/i) || [])[0]; if ((r.verdict === "Arithmetic discrepancy" || r.verdict === "Contradictory statements") && !coveredNum(r.computed, r.discrepancy) && !(kw && findingText.includes(kw.toLowerCase()))) push("Major", ch.label + ": the applicant states " + fmtNum(r.applicant) + " but the calculation gives " + fmtNum(r.computed) + ".", "Evaluator calculation", "Reconcile and restate: " + ch.label.replace(/:.*$/, "") + ".", true); });
+    factConflicts(c).forEach((x) => { const vals = [...new Set(x.values.map((v) => String(v.value)))]; push("Minor", "Conflicting statements on " + x.label.toLowerCase() + ": " + vals.join(" vs ") + ".", "Proposal text", "Confirm one binding value for " + x.label.toLowerCase() + ".", false); });
+
+    // 3. Funding and co-funder
+    const pubN = fu.publicSum || factNumber(c, "publicFunding");
+    const totalN = fu.total !== null && fu.total !== undefined ? fu.total : factNumber(c, "totalCost");
+    const privateSources = (c.funding.sources || []).filter((s) => !s.isPublic && parseINR(s.amount));
+    const hasCommitDoc = (c.documents || []).some((d) => d.role === "Verification evidence" && /commit|letter|csr|board/i.test(d.name + " " + (d.version || "")));
+    privateSources.forEach((s) => {
+      if (!hasCommitDoc && !/letter|signed|board/i.test(s.commitment || "") && !coveredArea(/commitment|co-?fund/i))
+        push("Critical", s.name + " is to contribute " + fmtINR(parseINR(s.amount)) + (totalN ? " (" + pct(parseINR(s.amount), totalN) + "% of cost)" : "") + ", but no signed commitment or CSR-plan confirmation is on file.", "Funding", "Signed commitment letter from " + s.name + " (amount, period, release conditions) and confirmation that the project is in its board-approved CSR plan.", true);
+    });
+    if (!(c.funding.tranches || []).length && (c.funding.sources || []).length && !coveredArea(/release schedule/i)) push("Major", "No fund-release schedule or milestones are stated for any funder.", "Funding", "Funder-wise release schedule tied to verifiable milestones (agreement, batch start, certification, verified placement).", true);
+    if (totalN === null) push("Major", "Total project cost could not be confirmed from the proposal.", "Facts", "State the total project cost and attach an itemised budget.", true);
+    if (!(c.budget.lines || []).length) push("Major", "No itemised budget has been read or entered, so cost realism cannot be tested.", "Budget", "Itemised budget with quantities, unit rates and periods.", true);
+
+    // 4. Missing key facts
+    const factArea = { legalEntity: /entity|registration/i, trainingHours: /curriculum|hours/i, certification: /certif|assess/i, placement: /placement|employment/i, locations: /location|centre|delivery/i, batches: /batch|delivery/i, trainers: /trainer/i, projectDuration: /calendar|timeline|duration|year/i, jobRoles: /job role|labour/i, submissionDate: /date|year/i };
+    KEY_FACTS.forEach(([k, label, sev, action]) => {
+      const f = c.facts[k];
+      if ((!f || !f.values || !f.values.length) && !(factArea[k] && coveredArea(factArea[k]))) push(sev, "The proposal does not state the " + label + ".", "Missing information", action, sev === "Major");
+    });
+    const placeTxt = ((c.facts.placement || {}).values || []).map((v) => v.value + " " + ((v.cite || {}).excerpt || "")).join(" ");
+    if (placeTxt && !/(within|month|salary|ctc|lpa|retention|retain)/i.test(placeTxt) && !coveredArea(/placement/i)) push("Major", "Placement commitment has no window, minimum salary or retention period.", "Proposal text", "Define placement: denominator, window, minimum monthly CTC, retention period and whether internships or self-employment count.", true);
+    const women = (c.factsExtra || []).find((x) => /women/i.test(x.label));
+    if ((!women || !women.values.length) && !coveredArea(/inclusion|women|eligibility/i)) push("Minor", "No target for women's participation is stated.", "Missing information", "State a women's participation target and other inclusion targets.", false);
+    const places = ((c.facts.locations || {}).values || []).map((v) => v.value);
+    const placeJoined = places.join(" ");
+    const otherPlace = KA_PLACES.some(([name, re]) => name !== "Bengaluru" && re.test(placeJoined));
+    if (places.length && /bengaluru|bangalore/i.test(placeJoined) && !otherPlace) push("Observation", "Delivery appears limited to Bengaluru; a beyond-Bengaluru focus was used in earlier reviews (benchmark pending confirmation).", "Benchmark", "KDEM to confirm whether geographic spread is required.", false);
+
+    // 5. Evidence, policy and verification
+    const gaps = (c.documents || []).map((d) => {
+      const pages = [...new Set(((d.extraction && d.extraction.warnings) || []).filter((w) => /no (usable )?text|image|graphic|infographic/i.test(w)).flatMap((w) => w.match(/p\.\s?\d+/g) || []))];
+      return pages.length ? (d.shortName || d.name) + " " + pages.join(", ") : "";
+    }).filter(Boolean);
+    if (gaps.length) push("Observation", "Some pages were read visually or not at all because they are images (" + gaps.join("; ") + "). Check them before relying on the extracted details.", "Extraction", "", false);
+    (c.documents || []).forEach((d) => (d.injection || []).forEach((h) => push("Major", "The applicant document contains an instruction addressed to evaluators at " + h.loc + "; it was ignored and should be noted.", "Proposal text", "Ask the applicant to withdraw the instruction.", false)));
+    if (!policyConfirmed(c)) push("Observation", "No current approved NIPUNA policy has been confirmed; compliance findings are provisional and benchmark-based.", "Policy", "Obtain the current policy and an officer's confirmation of its scope.", false);
+    if (!(c.verification || []).length) push("Major", "Independent verification has not been performed (registration, track record, co-funder, financial capacity).", "Verification", "Complete MCA21, track-record and co-funder checks before a funding decision.", false);
+    else if (!(c.verification || []).some((v) => v.sourceType === "Official registry")) push("Minor", "Verification so far relies on third-party or search sources; no official registry record has been checked.", "Verification", "Confirm the entity on MCA21.", false);
+    unsupportedClaims(c).forEach((f) => push("Minor", "Unsupported applicant claim: " + f.title + ".", "Finding", "Supporting evidence.", false));
+
+    // order
+    const rank = { Critical: 0, Major: 1, Minor: 2, Observation: 3 };
+    concerns.sort((a, b2) => rank[a.severity] - rank[b2.severity] || (b2.blocking ? 1 : 0) - (a.blocking ? 1 : 0));
+
+    // merit
+    const comp = composite(c.scores, c.policy && c.policy.compositeOverride);
+    const strengths = (c.findings || []).filter((f) => f.kind === "strength").map((f) => f.title.replace(/\.$/, ""));
+    const tr = factNumber(c, "trainees");
+    const pt = perTrainee(totalN, pubN, tr);
+    const roles = ((c.facts.jobRoles || {}).values || []).map((v) => v.value).slice(0, 4);
+    const placeNames = places.map((p) => p.replace(/\s*\(mentioned.*$/, "")).slice(0, 4);
+    let meritLevel;
+    if (!comp.withheld) meritLevel = comp.value >= 3.75 ? "Strong" : comp.value >= 3.0 ? "Sound" : comp.value >= 2.5 ? "Adequate" : comp.value >= 2.0 ? "Limited" : "Weak";
+    else meritLevel = null;
+    const scope = (tr ? fmtNum(tr) + " trainees" : "an unstated number of trainees") + (roles.length ? " in " + trunc(roles.join(", "), 110) : "") + (placeNames.length ? " (" + trunc(placeNames.join(", "), 90) + ")" : "");
+    const merit = (meritLevel ? meritLevel + " programme merit. " : "Programme merit provisional (criteria not yet scored). ") + "The proposal would train " + scope + (pt.total !== null ? " at " + fmtINR(Math.round(pt.total)) + " per trainee" + (pt.public !== null ? " (" + fmtINR(Math.round(pt.public)) + " public)" : "") : "") + "." + (strengths.length ? " Strengths: " + strengths.slice(0, 3).join("; ") + "." : "") + (!comp.withheld ? " Composite " + comp.value.toFixed(2) + "/5." : "");
+
+    // outcome rules (transparent)
+    const crit = concerns.filter((x) => x.severity === "Critical");
+    const blockMajor = concerns.filter((x) => x.severity === "Major" && x.blocking);
+    const verifyOnly = concerns.filter((x) => x.blocking).length === 0 && concerns.some((x) => x.basis === "Verification" && x.severity === "Major");
+    const why = [];
+    let outcome;
+    if (!comp.withheld && comp.value < 2.0) { outcome = "Do not recommend/reject"; why.push("Composite " + comp.value.toFixed(2) + " is below 2.00 (fundamental design gaps)."); }
+    else if (crit.length || blockMajor.length >= 3) { outcome = "Return for revision/resubmission"; why.push(crit.length + " critical and " + blockMajor.length + " major blocking concern(s) must be resolved before shortlisting; these are fixable by resubmission."); }
+    else if (blockMajor.length) { outcome = "Conditionally recommend subject to specified evidence"; why.push(blockMajor.length + " blocking concern(s) can be closed with specific evidence before shortlisting."); }
+    else if (verifyOnly) { outcome = "Defer pending essential verification"; why.push("No design blockers remain, but independent verification is outstanding."); }
+    else { outcome = "Recommend for approval"; why.push("No critical or blocking concerns remain open."); }
+    if (comp.withheld) why.push("Scores are not complete, so merit is provisional.");
+    if (!policyConfirmed(c)) why.push("Policy basis is provisional.");
+
+    const blockers = concerns.filter((x) => x.blocking);
+    const readiness = blockers.length
+      ? "Not ready for shortlisting: " + blockers.length + " blocking item(s), led by: " + blockers.slice(0, 3).map((x) => trunc(x.text.split(" — ")[0].replace(/\.$/, ""), 150)).join("; ") + "."
+      : "Ready to proceed" + (concerns.some((x) => x.basis === "Verification") ? " once independent verification is completed." : " subject to the standard agreement conditions.");
+    const rationale =
+      (outcome === "Return for revision/resubmission"
+        ? "The programme concept has merit, but it is not ready. The gaps are mainly evidence and drafting issues rather than adverse findings, so revision and resubmission is proportionate. "
+        : outcome === "Conditionally recommend subject to specified evidence"
+        ? "The programme is sound and the remaining gaps can be closed with specific evidence before shortlisting. "
+        : outcome === "Defer pending essential verification"
+        ? "The design is acceptable, but a funding decision should wait for independent verification. "
+        : outcome === "Do not recommend/reject"
+        ? "The design has fundamental gaps that a resubmission is unlikely to close without a new proposal. "
+        : "The proposal is complete and consistent on the evidence reviewed. ") +
+      (crit.length ? "Critical: " + crit.slice(0, 2).map((x) => trunc(x.text.split(" — ")[0].replace(/\.$/, ""), 150)).join("; ") + ". " : "") +
+      "A resubmission should be re-scored on the evidence supplied, without assuming a higher score.";
+    const conditions = [];
+    for (const x of concerns) {
+      if (!x.action || !(x.blocking || x.severity === "Critical" || x.severity === "Major")) continue;
+      if (!conditions.some((y) => norm(y) === norm(x.action))) conditions.push(x.action);
+      if (conditions.length >= 7) break;
+    }
+    return { concerns, outcome, outcomeWhy: why, merit, readiness, rationale, conditions, generatedAt: new Date().toISOString() };
+  }
+
+  function concernsText(draft) {
+    return draft.concerns.map((x) => "[" + x.severity + (x.blocking ? ", blocking" : "") + "] " + x.text).join("\n");
+  }
+
+  // Apply a draft to the decision fields. mode "fill" only fills empty fields; "replace" overwrites.
+  function applyAdvisoryDraft(c, draft, mode, actor) {
+    const d = c.decision;
+    const put = (k, v) => { if (v && (mode === "replace" || !String(d[k] || "").trim())) d[k] = v; };
+    put("outcome", draft.outcome);
+    put("merit", draft.merit);
+    put("readinessNote", draft.readiness);
+    put("rationale", draft.rationale);
+    put("principalConditions", draft.conditions.join("\n"));
+    put("concerns", concernsText(draft));
+    d.draftSource = draft.source || "Rule-based draft";
+    audit(c, actor || ADVISOR, "Advisory draft applied (" + mode + ")", (draft.source || "Rule-based") + ": outcome " + draft.outcome + ", " + draft.concerns.length + " concerns");
+  }
+
+  function buildAdvisoryPrompt(c) {
+    const draft = buildAdvisoryDraft(c);
+    const comp = composite(c.scores, c.policy && c.policy.compositeOverride);
+    const facts = FACT_FIELDS.map(([k, l]) => l + ": " + factDisplay(c, k)).join("\n");
+    const findings = (c.findings || []).map((f) => "- [" + (f.kind === "strength" ? "Strength" : f.severity + ", " + f.status + ", " + f.actionStage) + "] " + f.title + ": " + trunc(f.detail, 300)).join("\n");
+    const comp2 = (c.compliance || []).map((r) => "- (" + r.category + ") " + r.requirement + ": " + r.status).join("\n");
+    const ver = (c.verification || []).map((v) => "- [" + v.area + "] " + v.claim + " → " + v.result + " (" + v.sourceType + ")").join("\n");
+    return (
+      "You are assisting Dr. Ranjith T P, independent advisor to NIPUNA Karnataka (KDEM). Draft the advisory recommendation for one skilling proposal. The advisor decides; you draft. " +
+      "Use ONLY the case information below. Do not invent facts, partners, registrations or web results. Do not infer misconduct from drafting errors or missing public information. Distinguish programme merit from current readiness. Do not predict a future score. This is advisory, never a government approval.\n\n" +
+      "FACTS:\n" + facts + "\n\nCALCULATIONS (by code):\n" + calcDigest(c) + "\n\nSCORES: " + comp.display + "\n\nFINDINGS:\n" + (findings || "none") + "\n\nCOMPLIANCE (" + complianceBasisStatement(c) + "):\n" + (comp2 || "none") +
+      "\n\nVERIFICATION:\n" + (ver || NO_VERIFICATION) + "\n\nRULE-BASED DRAFT (improve it; keep every concern that is supported):\n" + concernsText(draft) + "\nSuggested outcome: " + draft.outcome + "\n\n" +
+      "Outcomes (choose exactly one): " + OUTCOMES.join(" | ") + ".\n" +
+      'Reply with only JSON: {"concerns":[{"severity":"Critical|Major|Minor|Observation","text":"one or two sentences an approving officer must know","action":"exact evidence or correction required","blocking":true}],"outcome":"<one outcome>","outcomeWhy":["short reason"],"merit":"<=60 words","readiness":"<=50 words","rationale":"<=90 words","conditions":["<=7 principal conditions, each one sentence"]}'
+    );
+  }
+
+  function sanitiseAdvisoryDraft(res) {
+    const sev = ["Critical", "Major", "Minor", "Observation"];
+    return {
+      concerns: ((res && res.concerns) || []).filter((x) => x && x.text).slice(0, 25).map((x) => ({ severity: sev.includes(x.severity) ? x.severity : "Minor", text: String(x.text), basis: "Claude draft", action: String(x.action || ""), blocking: !!x.blocking })),
+      outcome: OUTCOMES.includes(res && res.outcome) ? res.outcome : "",
+      outcomeWhy: ((res && res.outcomeWhy) || []).map(String).slice(0, 5),
+      merit: String((res && res.merit) || ""),
+      readiness: String((res && res.readiness) || ""),
+      rationale: String((res && res.rationale) || ""),
+      conditions: ((res && res.conditions) || []).map(String).filter(Boolean).slice(0, 7),
+      source: "Claude draft",
+      generatedAt: new Date().toISOString(),
+    };
   }
 
   // Clearly synthetic demonstration case (fictional applicant). Used by the "Load synthetic demo" button and tests.
@@ -1278,7 +1484,7 @@
   }
 
   const api = {
-    makeSyntheticDemo, autoExtract, autoBudget, applyAutoExtract,
+    makeSyntheticDemo, buildAdvisoryDraft, applyAdvisoryDraft, buildAdvisoryPrompt, sanitiseAdvisoryDraft, concernsText, autoExtract, autoBudget, applyAutoExtract,
     SCHEMA, ADVISOR, DEFAULT_STATUS, PROVISIONAL_BANNER, NO_VERIFICATION, STAGES, RESEARCH, DOC_ROLES, PROPOSAL_ROLES,
     EVIDENCE_LABELS, SEVERITIES, ACTION_STAGES, FINDING_STATUS, ASSESS_AREAS, CRITERIA, ANCHORS, COMPLIANCE_STATUS,
     COMPLIANCE_CATS, OUTCOMES, VERIFY_AREAS, SOURCE_TYPES, VERIFIED_BY, HISTORICAL_BENCHMARKS, FACT_FIELDS,

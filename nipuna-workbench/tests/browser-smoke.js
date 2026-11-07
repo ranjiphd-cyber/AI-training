@@ -96,6 +96,13 @@ const MAP = {
   await page.locator(".stages").getByRole("button", { name: new RegExp("^F ") }).click();
   await page.locator("fieldset.outcomes").waitFor();
   step("Decision stage: outcome '" + (await page.locator("fieldset.outcomes input:checked").evaluate((e) => e.value)) + "'");
+  await page.locator(".recdraft").waitFor();
+  await page.locator(".recdraft").screenshot({ path: path.join(SHOTS, "shot-draft.png") });
+  const nConcerns = await page.locator(".recdraft ol.concerns > li").count();
+  const sug = await page.locator(".recdraft .suggest b").innerText();
+  await page.getByRole("button", { name: "Use draft for empty fields" }).click();
+  await page.waitForFunction(() => document.querySelector("#dec-concerns").value.length > 50);
+  step("Recommendation draft: " + nConcerns + " concerns, suggested '" + sug + "'; 'Use draft for empty fields' filled the concerns box");
   await page.locator(".stages").getByRole("button", { name: new RegExp("^G ") }).click();
   await page.getByRole("button", { name: "Preview report" }).click();
   await page.locator(".doc-preview").waitFor({ timeout: 30000 });

@@ -322,6 +322,18 @@
     const rd = N.readiness(c);
     rd.warnings.forEach((w) => ch.push(K.P(w, { bold: true, color: "9C2A00", size: 19 })));
     if (d.rationale) ch.push(K.P(d.rationale));
+    const concernLines = String(d.concerns || "").split("\n").map((x) => x.trim()).filter(Boolean);
+    if (concernLines.length) {
+      ch.push(K.P("Areas of concern and points for the decision-maker:", { bold: true, after: 30 }));
+      const main = concernLines.filter((x) => !/^\[(Minor|Observation)/.test(x));
+      const rest = concernLines.length - main.length;
+      main.slice(0, 12).forEach((x, i) => {
+        const m = /^\[([^\]]+)\]\s*(.*)$/.exec(x);
+        const kids = m ? K.runs((i + 1) + ". " + m[1].replace(", blocking", " (blocking)") + ": ", { bold: true, size: 18 }).concat(K.runs(m[2].split(" — ")[0].replace(/\.?$/, "."), { size: 18 })) : K.runs((i + 1) + ". " + x, { size: 18 });
+        ch.push(K.P("", { children: kids, after: 25 }));
+      });
+      if (rest || main.length > 12) ch.push(K.P((rest + Math.max(0, main.length - 12)) + " further minor point(s) and observations are listed in the internal annex.", { italics: true, size: 17 }));
+    }
     if (d.principalConditions) {
       ch.push(K.P("Principal conditions:", { bold: true, after: 30 }));
       d.principalConditions.split("\n").filter((x) => x.trim()).forEach((x, i) => ch.push(K.P((i + 1) + ". " + x.replace(/^\s*\d+[.)]\s*/, ""), { after: 30, size: 19 })));
@@ -388,6 +400,11 @@
       ch.push(K.P("", { children: kids, after: 60 }));
     });
 
+    const allConcerns = String((c.decision || {}).concerns || "").split("\n").map((x) => x.trim()).filter(Boolean);
+    if (allConcerns.length) {
+      ch.push(K.H1("5a. Areas of concern (full list)"));
+      allConcerns.forEach((x, i) => ch.push(K.P((i + 1) + ". " + x, { size: 18, after: 30 })));
+    }
     ch.push(K.H1("6. Score history"));
     ch.push(K.table([3000, 1200, 1200, K.FULL - 5400], ["Criterion", "AI draft", "Advisor", "Reason for change"],
       N.CRITERIA.map((cr) => {

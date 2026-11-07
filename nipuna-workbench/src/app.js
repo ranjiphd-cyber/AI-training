@@ -983,6 +983,7 @@
       </div>
       <div className="sub"><h3>Advisory outcome</h3>
         ${!usable ? html`<p className="muted">Disabled: no proposal on file.</p>` : html`
+        <${AdvisoryDraft} ...${ctx} />
         ${c.aiDraftDecision && c.aiDraftDecision.outcome ? html`<div className="ai-draft small">AI draft suggests: <b>${c.aiDraftDecision.outcome}</b>. ${c.aiDraftDecision.rationale} <button type="button" className="btn tiny" onClick=${() => update((x) => { x.decision.outcome = x.aiDraftDecision.outcome; x.decision.merit = x.decision.merit || x.aiDraftDecision.merit; x.decision.readinessNote = x.decision.readinessNote || x.aiDraftDecision.readiness; x.decision.rationale = x.decision.rationale || x.aiDraftDecision.rationale; }, "AI draft outcome adopted", c.aiDraftDecision.outcome)}>Use as starting point</button></div>` : null}
         <fieldset className="outcomes"><legend>Choose exactly one</legend>
           ${N.OUTCOMES.map((o) => html`<label key=${o} className="radio"><input type="radio" name="outcome" value=${o} checked=${d.outcome === o} onChange=${set("outcome")} /> ${o}</label>`)}
@@ -993,10 +994,77 @@
           <${Field} id="dec-ready" label="Current readiness (one sentence)" wide=${true}><input id="dec-ready" value=${d.readinessNote} onChange=${set("readinessNote")} /></${Field}>
           <${Field} id="dec-rat" label="Short rationale" wide=${true}><textarea id="dec-rat" rows="3" value=${d.rationale} onChange=${set("rationale")}></textarea></${Field}>
           <${Field} id="dec-cond" label="Principal conditions (one per line)" wide=${true}><textarea id="dec-cond" rows="5" value=${d.principalConditions} onChange=${set("principalConditions")}></textarea></${Field}>
+          <${Field} id="dec-concerns" label="Areas of concern and points the decision-maker should know (one per line)" wide=${true} hint="Printed in Section C of the report. Keep the most important first."><textarea id="dec-concerns" rows="8" value=${d.concerns || ""} onChange=${set("concerns")}></textarea></${Field}>
         </div>
         <p className="hint">Do not predict a future score; a resubmission is re-scored on its evidence. This outcome is advisory and is not a government approval.</p>`}
       </div>
     </section>`;
+  }
+
+  // Recommendation draft: rule-based (instant, explainable) or Claude (on request). Never applied without the advisor.
+  function AdvisoryDraft({ c, update, caps, say }) {
+    const rule = useMemo(() => N.buildAdvisoryDraft(c), [c]);
+    const [aiDraft, setAiDraft] = useState(c.aiAdvisoryDraft || null);
+    const [which, setWhich] = useState(c.aiAdvisoryDraft ? "ai" : "rule");
+    const [phase, setPhase] = useState("");
+    const [ack, setAck] = useState(false);
+    const [pasted, setPasted] = useState("");
+    const ctl = useRef(null);
+    const draft = which === "ai" && aiDraft ? aiDraft : rule;
+    const tone = { Critical: "crit", Major: "warn", Minor: "", Observation: "" };
+    const apply = (mode) => {
+      update((x) => N.applyAdvisoryDraft(x, draft, mode, N.ADVISOR));
+      say(mode === "fill" ? "Draft copied into the empty fields below. Edit as needed." : "Draft replaced the outcome, merit, readiness, rationale, conditions and concerns. Edit as needed.");
+    };
+    const take = (res, how) => {
+      const d = N.sanitiseAdvisoryDraft(res);
+      d.source = "Claude draft (" + how + ")";
+      setAiDraft(d); setWhich("ai");
+      update((x) => { x.aiAdvisoryDraft = d; N.audit(x, "AI draft", "Advisory draft generated", how + ": " + d.outcome + ", " + d.concerns.length + " concerns"); });
+    };
+    async function runClaude() {
+      ctl.current = new AbortController();
+      setPhase("Thinking… this can take a minute.");
+      try { take(await caps.sample.json(N.buildAdvisoryPrompt(c), { modelTier: "complex", signal: ctl.current.signal }), "via artifact"); setPhase(""); }
+      catch (e) { setPhase(e.code === "cancelled" ? "Stopped." : e.code === "not_granted" ? "Claude was not allowed for this page; use the manual route." : "Claude draft failed (" + (e.code || "error") + "). Use the rule-based draft or try again."); }
+    }
+    async function copyPrompt() {
+      try { await navigator.clipboard.writeText(N.buildAdvisoryPrompt(c)); say("Prompt copied. Paste Claude's JSON answer below."); } catch (e) { say("Copy was blocked.", "warn"); }
+    }
+    return html`<div className="recdraft">
+      <div className="row between"><b>Recommendation draft</b>
+        <div className="row gap wrap">
+          <button type="button" className=${"btn tiny " + (which === "rule" ? "primary" : "")} onClick=${() => setWhich("rule")}>Rule-based draft</button>
+          <button type="button" className=${"btn tiny " + (which === "ai" ? "primary" : "")} disabled=${!aiDraft} onClick=${() => setWhich("ai")}>Claude draft</button>
+        </div></div>
+      <p className="hint">${which === "rule" ? "Built instantly from this case: findings, calculations, conflicting statements, missing details, funding, verification and scores. Nothing is sent anywhere. Each concern says where it comes from." : draft.source + ", " + String(draft.generatedAt || "").slice(0, 16).replace("T", " ") + ". Check every point against the case."}</p>
+      <div className="suggest"><span className="lbl">Suggested outcome</span> <b>${draft.outcome || "—"}</b>
+        <ul className="small">${(draft.outcomeWhy || []).map((w, i) => html`<li key=${i}>${w}</li>`)}</ul></div>
+      <h4>Areas of concern (${draft.concerns.length})</h4>
+      <ol className="concerns">${draft.concerns.map((x, i) => html`<li key=${i}><${Badge} tone=${tone[x.severity]}>${x.severity}${x.blocking ? " · blocking" : ""}</${Badge}> ${x.text}${x.action ? html`<div className="muted small">Needed: ${x.action}</div>` : null}${x.basis ? html`<div className="muted small">Basis: ${x.basis}</div>` : null}</li>`)}</ol>
+      <div className="grid2 small">
+        <div><h4>Programme merit</h4><p>${draft.merit}</p></div>
+        <div><h4>Current readiness</h4><p>${draft.readiness}</p></div>
+        <div><h4>Rationale</h4><p>${draft.rationale}</p></div>
+        <div><h4>Principal conditions</h4><ol>${draft.conditions.map((x, i) => html`<li key=${i}>${x}</li>`)}</ol></div>
+      </div>
+      <div className="row gap wrap">
+        <button type="button" className="btn primary" onClick=${() => apply("fill")}>Use draft for empty fields</button>
+        <${Confirm} label="Replace my text with this draft" confirmLabel="Overwrite the outcome, merit, readiness, rationale, conditions and concerns?" onConfirm=${() => apply("replace")} />
+      </div>
+      <details className="sub"><summary>Ask Claude for a fuller draft</summary>
+        <label className="check"><input type="checkbox" checked=${ack} onChange=${(e) => setAck(e.target.checked)} /> Send this case's facts, findings, calculations and verification notes (not the full documents) to Claude under my account.</label>
+        <div className="row gap wrap">
+          ${caps.sample ? html`<button type="button" className="btn" disabled=${!ack || !c.meta.confidentialityAck || /Thinking/.test(phase)} onClick=${runClaude}>Draft with Claude</button>` : html`<span className="muted small">Claude is not available in this view; use the manual route.</span>`}
+          ${/Thinking/.test(phase) ? html`<button type="button" className="btn ghost" onClick=${() => ctl.current && ctl.current.abort()}>Stop</button>` : null}
+          <button type="button" className="btn tiny" disabled=${!ack || !c.meta.confidentialityAck} onClick=${copyPrompt}>Copy prompt</button>
+          <span className="muted small" role="status">${phase}</span>
+        </div>
+        ${!c.meta.confidentialityAck ? html`<div className="warnline">Tick the confidentiality acknowledgement in A. Case first.</div>` : null}
+        <textarea rows="4" aria-label="Paste Claude's JSON answer" placeholder="Paste Claude's JSON answer here (manual route)" value=${pasted} onChange=${(e) => setPasted(e.target.value)}></textarea>
+        <button type="button" className="btn tiny" disabled=${!pasted.trim()} onClick=${() => { try { take(JSON.parse(pasted.trim().replace(/^```(?:json)?/, "").replace(/```$/, "")), "pasted by advisor"); setPasted(""); } catch (e) { say("That is not valid JSON: " + e.message, "crit"); } }}>Use pasted answer</button>
+      </details>
+    </div>`;
   }
 
   function Verification({ c, update }) {
