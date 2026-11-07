@@ -5,16 +5,16 @@
 (function (root) {
   "use strict";
 
-  const FONT = "Times New Roman";
+  const FONT = "Book Antiqua"; // advisor preference: Book Antiqua, black text, black-and-white report
   const BODY = 20; // 10 pt
   const SMALL = 18; // 9 pt (tables)
-  const BLUE = "1F3864";
-  const HEAD_FILL = "DCE3EE";
-  const GROUP_FILL = "F1F4F8";
+  const BLUE = "000000";
+  const HEAD_FILL = "FFFFFF";
+  const GROUP_FILL = "FFFFFF";
 
   function make(docx, N) {
     const { Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, ShadingType, BorderStyle, ExternalHyperlink, Footer, PageNumber, HeadingLevel } = docx;
-    const border = { style: BorderStyle.SINGLE, size: 4, color: "8A94A6" };
+    const border = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
     const borders = { top: border, bottom: border, left: border, right: border, insideHorizontal: border, insideVertical: border };
 
     function runs(text, o) {
@@ -72,7 +72,7 @@
       return new Table({ width: { size: widths.reduce((a, b) => a + b, 0), type: WidthType.DXA }, columnWidths: widths, borders, rows: trs });
     }
     function link(text, url) {
-      return new ExternalHyperlink({ link: url, children: [new TextRun({ text, style: "Hyperlink", size: SMALL, font: FONT, color: "1F4E9A", underline: {} })] });
+      return new ExternalHyperlink({ link: url, children: [new TextRun({ text, style: "Hyperlink", size: SMALL, font: FONT, color: "000000", underline: {} })] });
     }
     function cite(e) {
       if (!e) return "";
@@ -88,10 +88,10 @@
           new Paragraph({
             alignment: AlignmentType.CENTER,
             children: [
-              new TextRun({ text: label + "  ·  Page ", size: 16, font: FONT, color: "555555" }),
-              new TextRun({ children: [PageNumber.CURRENT], size: 16, font: FONT, color: "555555" }),
-              new TextRun({ text: " of ", size: 16, font: FONT, color: "555555" }),
-              new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, font: FONT, color: "555555" }),
+              new TextRun({ text: label + "  ·  Page ", size: 16, font: FONT, color: "000000" }),
+              new TextRun({ children: [PageNumber.CURRENT], size: 16, font: FONT, color: "000000" }),
+              new TextRun({ text: " of ", size: 16, font: FONT, color: "000000" }),
+              new TextRun({ children: [PageNumber.TOTAL_PAGES], size: 16, font: FONT, color: "000000" }),
             ],
           }),
         ],
@@ -100,8 +100,8 @@
     const page = { size: { width: 11906, height: 16838 }, margin: { top: 1000, right: 1000, bottom: 1000, left: 1000 } }; // A4
     const FULL = 9906;
     const styles = {
-      default: { document: { run: { font: FONT, size: BODY } } },
-      characterStyles: [{ id: "Hyperlink", name: "Hyperlink", run: { color: "1F4E9A", underline: {} } }],
+      default: { document: { run: { font: FONT, size: BODY, color: "000000" } }, heading1: { run: { font: FONT, color: "000000" } }, heading2: { run: { font: FONT, color: "000000" } }, heading3: { run: { font: FONT, color: "000000" } }, heading4: { run: { font: FONT, color: "000000" } }, heading5: { run: { font: FONT, color: "000000" } }, heading6: { run: { font: FONT, color: "000000" } }, title: { run: { font: FONT, color: "000000" } }, hyperlink: { run: { color: "000000", underline: {} } } },
+      characterStyles: [{ id: "Hyperlink", name: "Hyperlink", run: { color: "000000", underline: {} } }],
     };
     return { P, H1, H2, cell, table, link, cite, spacer, footer, page, FULL, styles, runs, TextRun, Paragraph, AlignmentType };
   }
@@ -174,11 +174,11 @@
   function buildTemplate(docx, N, c) {
     const K = make(docx, N);
     const ch = [];
-    ch.push(K.P("NIPUNA KARNATAKA — PROPOSAL EVALUATION", { bold: true, size: 30, align: K.AlignmentType.CENTER, after: 20, color: "1F3864" }));
+    ch.push(K.P("NIPUNA KARNATAKA — PROPOSAL EVALUATION", { bold: true, size: 30, align: K.AlignmentType.CENTER, after: 20, color: "000000" }));
     ch.push(K.P("Karnataka Digital Economy Mission (KDEM)", { size: 22, align: K.AlignmentType.CENTER, after: 40 }));
-    ch.push(K.P("BLANK TEMPLATE — no proposal has been evaluated. This document contains no scores, findings or recommendation.", { bold: true, color: "9C2A00", align: K.AlignmentType.CENTER, after: 120 }));
+    ch.push(K.P("BLANK TEMPLATE — no proposal has been evaluated. This document contains no scores, findings or recommendation.", { bold: true, color: "000000", align: K.AlignmentType.CENTER, after: 120 }));
     const blank = "[to be completed]";
-    ch.push(K.table([2600, K.FULL - 2600], null, ["Proposal title", "Submitting organisation", "Date submitted", "Evaluator", "Evaluation date", "Policy basis"].map((l) => [K.cell(l, { bold: true, fill: "F1F4F8", w: 2600 }), l === "Evaluator" ? N.ADVISOR + ", Independent Advisor / Evaluator" : l === "Evaluation date" ? N.fmtDate(c.meta.evalDate) : l === "Policy basis" ? N.complianceBasisStatement(c) : blank])));
+    ch.push(K.table([2600, K.FULL - 2600], null, ["Proposal title", "Submitting organisation", "Date submitted", "Evaluator", "Evaluation date", "Policy basis"].map((l) => [K.cell(l, { bold: true, fill: "FFFFFF", w: 2600 }), l === "Evaluator" ? N.ADVISOR + ", Independent Advisor / Evaluator" : l === "Evaluation date" ? N.fmtDate(c.meta.evalDate) : l === "Policy basis" ? N.complianceBasisStatement(c) : blank])));
     ch.push(K.H1("Section A: Quantitative Scoring"));
     ch.push(K.table([3000, 1000, K.FULL - 4000], ["Criterion", "Score", "Rationale and evidence"], N.CRITERIA.map((cr, i) => [(i + 1) + ". " + cr.name, "—", blank]).concat([["Composite (sum of four scores ÷ 4)", "—", "Not computed"]])));
     ch.push(K.H1("Section B: Qualitative / Conditional Compliance Checklist"));
@@ -201,11 +201,11 @@
     const comp = N.composite(c.scores, c.policy.compositeOverride);
     const ch = [];
 
-    ch.push(K.P("NIPUNA KARNATAKA — PROPOSAL EVALUATION", { bold: true, size: 30, align: K.AlignmentType.CENTER, after: 20, color: "1F3864" }));
+    ch.push(K.P("NIPUNA KARNATAKA — PROPOSAL EVALUATION", { bold: true, size: 30, align: K.AlignmentType.CENTER, after: 20, color: "000000" }));
     ch.push(K.P("Karnataka Digital Economy Mission (KDEM)", { size: 22, align: K.AlignmentType.CENTER, after: 40 }));
     const O = N.reportOptions ? N.reportOptions(c) : {};
-    ch.push(K.P("Independent advisory evaluation" + (O.statusLine ? " · Document status: " + c.meta.status : ""), { italics: true, size: 18, align: K.AlignmentType.CENTER, after: 120, color: "444444" }));
-    if (c.synthetic) ch.push(K.P("SYNTHETIC DEMONSTRATION — NOT A REAL APPLICANT", { bold: true, color: "B00020", align: K.AlignmentType.CENTER }));
+    ch.push(K.P("Independent advisory evaluation" + (O.statusLine ? " · Document status: " + c.meta.status : ""), { italics: true, size: 18, align: K.AlignmentType.CENTER, after: 120, color: "000000" }));
+    if (c.synthetic) ch.push(K.P("SYNTHETIC DEMONSTRATION — NOT A REAL APPLICANT", { bold: true, color: "000000", align: K.AlignmentType.CENTER }));
 
     const tc = N.factNumber(c, "totalCost"), pf = N.factNumber(c, "publicFunding"), tr = N.factNumber(c, "trainees");
     const pt = N.perTrainee(tc, pf, tr);
@@ -221,7 +221,7 @@
       ["Evaluation date", N.fmtDate(c.meta.evalDate)],
       ["Policy basis", N.policyConfirmed(c) ? "Current approved policy supplied and confirmed" : N.PROVISIONAL_BANNER],
     ];
-    ch.push(K.table([2600, K.FULL - 2600], null, meta.map(([a, b]) => [K.cell(a, { bold: true, fill: "F1F4F8", w: 2600 }), b])));
+    ch.push(K.table([2600, K.FULL - 2600], null, meta.map(([a, b]) => [K.cell(a, { bold: true, fill: "FFFFFF", w: 2600 }), b])));
 
     // Section A
     ch.push(K.H1("Section A: Quantitative Scoring"));
@@ -237,7 +237,7 @@
       const src = cites(c, e.ai && e.ai.cites, 3);
       return [(i + 1) + ". " + cr.name, s === null ? "Not scored" : s.toFixed(2), [rationale, flags.join(" "), src ? "Sources: " + src : ""].filter(Boolean).join("\n")];
     });
-    scoreRows.push([K.cell("Composite (sum of four scores ÷ 4)", { bold: true, fill: "F1F4F8", w: 3000 }), K.cell(comp.withheld ? "Withheld" : comp.value.toFixed(2) + " / 5", { bold: true, fill: "F1F4F8", w: 1000 }), K.cell(comp.withheld ? comp.display + ": " + comp.missing.join(", ") + ". A full composite is not shown while any criterion is unscored." : "Unweighted mean. Composite is one input to the recommendation, not an approval threshold.", { fill: "F1F4F8", w: K.FULL - 4000 })]);
+    scoreRows.push([K.cell("Composite (sum of four scores ÷ 4)", { bold: true, fill: "FFFFFF", w: 3000 }), K.cell(comp.withheld ? "Withheld" : comp.value.toFixed(2) + " / 5", { bold: true, fill: "FFFFFF", w: 1000 }), K.cell(comp.withheld ? comp.display + ": " + comp.missing.join(", ") + ". A full composite is not shown while any criterion is unscored." : "Unweighted mean. Composite is one input to the recommendation, not an approval threshold.", { fill: "FFFFFF", w: K.FULL - 4000 })]);
     ch.push(K.table([3000, 1000, K.FULL - 4000], ["Criterion", "Score", "Rationale and evidence"], scoreRows));
 
     const ar = O.arithmetic ? arithmeticRows(N, c, false) : [];
@@ -318,11 +318,11 @@
     // Section C
     ch.push(K.H1("Section C: Shortlisting Recommendation and Sign-off"));
     const d = c.decision || {};
-    ch.push(K.P("", { children: K.runs("Advisory outcome: ", { bold: true }).concat(K.runs(d.outcome ? d.outcome.toUpperCase() : "NOT YET SELECTED", { bold: true, color: "1F3864" })) }));
+    ch.push(K.P("", { children: K.runs("Advisory outcome: ", { bold: true }).concat(K.runs(d.outcome ? d.outcome.toUpperCase() : "NOT YET SELECTED", { bold: true, color: "000000" })) }));
     if (d.merit) ch.push(K.P("", { children: K.runs("Programme merit: ", { bold: true }).concat(K.runs(d.merit)) }));
     if (d.readinessNote) ch.push(K.P("", { children: K.runs("Current readiness: ", { bold: true }).concat(K.runs(d.readinessNote)) }));
     const rd = N.readiness(c);
-    if (O.readinessWarning) rd.warnings.forEach((w) => ch.push(K.P(w, { bold: true, color: "9C2A00", size: 19 })));
+    if (O.readinessWarning) rd.warnings.forEach((w) => ch.push(K.P(w, { bold: true, color: "000000", size: 19 })));
     if (d.rationale) ch.push(K.P(d.rationale));
     const concernLines = String(d.concerns || "").split("\n").map((x) => x.trim()).filter(Boolean);
     if (concernLines.length) {
@@ -358,7 +358,7 @@
   function buildAnnex(docx, N, c) {
     const K = make(docx, N);
     const ch = [];
-    ch.push(K.P("Evidence & verification notes", { bold: true, size: 28, color: "1F3864", after: 20 }));
+    ch.push(K.P("Evidence & verification notes", { bold: true, size: 28, color: "000000", after: 20 }));
     ch.push(K.P("Internal annex to the NIPUNA Karnataka proposal evaluation — " + N.factDisplay(c, "title") + ". Not for circulation to the applicant. Evaluation date " + N.fmtDate(c.meta.evalDate) + ".", { italics: true, size: 18 }));
 
     ch.push(K.H1("1. Source documents"));
@@ -379,7 +379,7 @@
     if (b.lines.length) {
       ch.push(K.H1("3. Budget recomputation"));
       const br = b.lines.map((l) => [l.label, String(l.qty), N.fmtNum(N.parseINR(l.unit)), String(l.freq || 1), N.fmtNum(l.statedN), N.fmtNum(l.computed), l.status]);
-      b.subtotals.forEach((s) => br.push([K.cell(s.label, { bold: true, fill: "F1F4F8", w: 3000 }), "", "", "", N.fmtNum(s.statedN), N.fmtNum(s.computed), s.status]));
+      b.subtotals.forEach((s) => br.push([K.cell(s.label, { bold: true, fill: "FFFFFF", w: 3000 }), "", "", "", N.fmtNum(s.statedN), N.fmtNum(s.computed), s.status]));
       ch.push(K.table([3000, 700, 1100, 700, 1350, 1350, K.FULL - 8200], ["Line", "Qty", "Unit (₹)", "Freq.", "Stated (₹)", "Computed (₹)", "Result"], br));
     }
 
