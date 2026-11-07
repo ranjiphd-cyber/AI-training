@@ -1,0 +1,4 @@
+node_modules/
+# Confidential applicant material — never commit to this public repository
+private/
+dist/cases/

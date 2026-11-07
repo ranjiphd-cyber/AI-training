@@ -1,0 +1,16 @@
+{
+  "name": "nipuna-workbench",
+  "private": true,
+  "version": "1.0.0",
+  "description": "NIPUNA Karnataka — Independent Proposal Review Workbench (single-file artifact + tests)",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node tests/acceptance.test.js"
+  },
+  "devDependencies": {
+    "docx": "8.5.0",
+    "mammoth": "1.6.0",
+    "pdfjs-dist": "3.11.174",
+    "htm": "3.1.1"
+  }
+}
