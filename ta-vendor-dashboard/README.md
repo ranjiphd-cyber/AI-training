@@ -18,7 +18,7 @@ The workbook holds names, phone numbers and e-mail addresses of 300+ vendor cont
 ## Build locally
 
 ```bash
-python3 tools/build_dataset.py Short_listed_vendor-26.xlsx vendors.json
+python3 tools/build_dataset.py Short_listed_vendor-26.xlsx vendors.json [current_vendors.json]
 python3 tools/inject.py app.html vendors.json register-with-data.html --standalone
 ```
 
@@ -34,6 +34,7 @@ Opened as a local file, the page saves edits and evaluations in that browser onl
 - Fee bands per category come from TA guidance (Executive 22–33%, Leadership 16–22%, Junior–mid 8.33–10%) and are editable. They show as estimates until a vendor-specific fee is entered. The workbook itself contains no fee data.
 - Vendors are grouped into 17 TA service categories (recruitment agencies, contract staffing, RPO, TA technology, assessment and interview services, job boards, campus, background verification, medical check-ups, relocation, employer branding, diversity networks, skilling, onboarding and gifting, interim/gig, outplacement, other HR services). Performance ratings use a criteria set suited to each category, editable under Criteria & scale.
 - Vendor assessments: a scorecard per service category with scores typed in under each criterion. The latest assessment replaces the workbook score in the register and ranking, and can set the vendor's Stage 1 status. "Fill missing details" adds values only to empty fields.
+- Current vendors: agreement type, billing % by job level (used as the confirmed fee), contract end with an expiry warning, and contacts from Volvo's current vendor list. Conflicts with the workbook's HOLD/FAIL decisions are flagged.
 - Vendor fact sheet: year of establishment (derived from "Years in operation" answers, marked Needs verification when counted back), recruiters on direct payroll, annual revenue, headquarters, office locations and consulting fee %, each editable in place.
 - Excel export (.xlsx): Vendors, Assessments, Performance and Contacts sheets, reflecting every assessment and evaluation.
 - A contact register lists every name, phone and e-mail in the workbook, splitting combined cells into one row per person.

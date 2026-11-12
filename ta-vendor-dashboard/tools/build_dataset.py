@@ -2,7 +2,12 @@
 """Build the vendor dataset (vendors.json) for the TA Vendor Dashboard from the
 shortlisting workbook.
 
-Usage:  python3 build_dataset.py <workbook.xlsx> <out.json>
+Usage:  python3 build_dataset.py <workbook.xlsx> <out.json> [current_vendors.json]
+
+The optional third file lists Volvo's current vendors (agreement type,
+billing %, contract end, contacts), transcribed from "Current Vendor
+List.xlsx".  Like the workbook it holds personal contact data and is kept
+out of this repository.
 
 The workbook is treated as reference material: values are kept as written,
 conflicts between tabs are recorded rather than resolved, and every field
@@ -14,6 +19,7 @@ from collections import OrderedDict
 import openpyxl
 
 WB_PATH, OUT_PATH = sys.argv[1], sys.argv[2]
+CURRENT_PATH = sys.argv[3] if len(sys.argv) > 3 else None
 wb = openpyxl.load_workbook(WB_PATH, data_only=True)
 WB_MODIFIED = wb.properties.modified.isoformat() if wb.properties.modified else None
 
@@ -710,12 +716,65 @@ for v in vendors.values():
     v["wbLists"] = workbook_lists(v)
     v["slCat"] = propose_category(v)
 
+# ------------------------------------------------- current vendor list
+def parse_end(raw):
+    raw = (raw or "").strip()
+    if not raw or raw.upper() == "NA":
+        return "", raw
+    m = re.match(r"(\d{2})-(\d{2})-(\d{4})$", raw)
+    if m:
+        return f"{m.group(3)}-{m.group(2)}-{m.group(1)}", raw
+    m = re.match(r"([A-Za-z]{3})-(\d{2})$", raw)
+    if m:
+        mon = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].index(m.group(1).lower()) + 1
+        return f"20{m.group(2)}-{mon:02d}", raw
+    return "", raw
+
+if CURRENT_PATH:
+    cur = json.load(open(CURRENT_PATH, encoding="utf-8"))
+    src0 = cur.get("source", "Current Vendor List")
+    for row in cur["vendors"]:
+        v = vendors.get(row["id"])
+        if not v:
+            print("WARN current vendor not found:", row["id"], file=sys.stderr)
+            continue
+        src = f"Current Vendor List · row {row['n']} ({row['name']})"
+        if src not in v["sources"]:
+            v["sources"].append(src)
+        if norm_cmp(row["name"]) != norm_cmp(v["name"]) and row["name"] not in v["aliases"]:
+            v["aliases"].append(row["name"])
+        end_iso, end_raw = parse_end(row["end"])
+        v["current"] = {"agreement": "" if row["agreement"].upper() == "NA" else row["agreement"],
+                        "billing": "" if row["billing"].upper() in ("NA", "") else row["billing"],
+                        "billingRaw": row["billing"], "endRaw": end_raw, "end": end_iso, "src": src, "red": bool(row.get("red")),
+                        "note": "Transcribed from a photo of the sheet; check figures against the original."}
+        if v["current"]["billing"]:
+            v["fee"] = {"v": v["current"]["billing"], "q": "confirmed", "note": f"Billing % in {src} (current agreement terms). Transcribed from a photo; verify."}
+        else:
+            v["fee"] = {"v": "", "q": "missing", "note": f"Billing % is {'blank' if not row['billing'] else '“' + row['billing'] + '”'} in {src}."}
+        for name, phone, emails in row["contacts"]:
+            v["contactRegister"].append({"kind": "Current vendor list", "name": name, "designation": "", "phone": phone, "email": emails,
+                                         "src": src, "note": "Transcribed from a photo of the current vendor list; check before use."})
+        if not v["fields"].get("spocName", {}).get("v"):
+            name, phone, emails = row["contacts"][0]
+            v["fields"]["spocName"] = {"v": name, "q": "provided", "src": [src]}
+            if phone: v["fields"]["spocPhone"] = {"v": phone, "q": "provided", "src": [src]}
+            v["fields"]["spocEmail"] = {"v": emails, "q": "provided", "src": [src]}
+        st = v["status"]["stage1"]
+        if st in ("FAIL", "HOLD"):
+            flag(v, "conflict", f"Listed as a current vendor in the current vendor list, but recorded as {st} in the shortlisting workbook ({v['status']['src']}). Both are kept; confirm whether the engagement continues.", "status")
+        if row.get("red"):
+            flag(v, "verify", "This row is shown in red in the current vendor list. The sheet does not say what red means (for example inactive or under review).")
+    if "masadir-hr-services" in vendors:
+        flag(vendors["masadir-hr-services"], "verify", "The current vendor list gives jessy.c@masadirservices.com (masadirservices.com) beside sridevi.m@masadirhr.com; the workbook uses masadirhr.com. Confirm the correct domain.", "email")
+
 out = {
     "meta": {
         "builtAt": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
         "workbookModified": WB_MODIFIED,
         "workbookTabs": [ws.title.strip() for ws in wb.worksheets],
         "powerpointReceived": False,
+        "currentVendorList": bool(CURRENT_PATH),
         "notes": issues,
     },
     "vendors": list(vendors.values()),

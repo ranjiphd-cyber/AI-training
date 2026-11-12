@@ -126,6 +126,7 @@ main { padding-block: 22px 60px; padding-inline: 24px; min-width: 0; }
 .b-NA { background: var(--na-soft); color: var(--na); }
 .b-web { background: var(--web-soft); color: var(--web); }
 .b-fit { background: var(--accent-soft); color: var(--accent-ink); }
+.b-cur { background: var(--navy); color: #F7FAFC; }
 .chip { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 4px; background: var(--sunk); color: var(--muted); white-space: nowrap; }
 .chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .q { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
@@ -559,7 +560,7 @@ const UI = { fq2: "", fscope: "", fcat2: "", fgaps: false, view: "overview", slT
 try { Object.assign(UI, JSON.parse(localStorage.getItem("taVR.ui.v1") || "{}"), { compare: [] }); } catch (e) {}
 function saveUI() { try { localStorage.setItem("taVR.ui.v1", JSON.stringify({ ctx: UI.ctx, type: UI.type, sort: UI.sort, dir: UI.dir })); } catch (e) {} }
 const hash = location.hash.replace("#", "");
-const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "deleted", "research", "facts"];
+const VIEWS = ["overview", "shortlist", "directory", "contacts", "status", "performance", "compare", "quality", "deleted", "research", "facts", "current"];
 if (VIEWS.includes(hash)) UI.view = hash;
 else if (["executive", "leadership", "juniorMid", "volume"].includes(hash)) { UI.view = "shortlist"; UI.slTab = hash; }
 else if (CATS[hash]) { UI.view = "directory"; UI.cat = hash; }
@@ -578,6 +579,7 @@ function renderRail() {
     <div class="grp">Review</div>
     <button data-go="overview" ${cur("overview")}>Overview</button>
     <button data-go="directory" data-cat="" ${cur("directory", "")}>Vendor directory <span class="ct">${VENDORS.length}</span></button>
+    <button data-go="current" ${cur("current")}>Current vendors <span class="ct">${VENDORS.filter(isCurrent).length}</span></button>
     <button data-go="facts" ${cur("facts")}>Vendor fact sheet</button>
     <button data-go="contacts" ${cur("contacts")}>Contact register <span class="ct">${allContacts().length}</span></button>
     <div class="grp">Shortlist · one category each</div>
@@ -627,6 +629,7 @@ function viewOverview() {
     <button class="tile hold" data-act="goStatus" data-arg="HOLD"><div class="k">On HOLD</div><div class="v">${st("HOLD")}</div><div class="s">Not approved</div></button>
     <button class="tile fail" data-act="goStatus" data-arg="FAIL"><div class="k">FAIL (rejected)</div><div class="v">${st("FAIL")}</div><div class="s">Reasons recorded</div></button>
     <button class="tile" data-act="go" data-arg="shortlist"><div class="k">Shortlisted (one category each)</div><div class="v">${VENDORS.filter(slCat).length}</div><div class="s">${Object.keys(SLCATS).map(k => VENDORS.filter(v => slCat(v) === k).length).join(" / ")} exec / lead / mid / vol</div></button>
+    <button class="tile" data-act="go" data-arg="current"><div class="k">Current vendors</div><div class="v">${VENDORS.filter(isCurrent).length}</div><div class="s">${VENDORS.filter(v => isCurrent(v) && (endInfo(v.current).days ?? 999) <= 90).length} contract(s) ending within 90 days</div></button>
     <button class="tile" data-act="go" data-arg="contacts"><div class="k">Contacts on file</div><div class="v">${allContacts().length}</div><div class="s">names, phones, e-mails</div></button>
     <button class="tile web" data-act="go" data-arg="research"><div class="k">Web-suggested firms</div><div class="v">${web}</div><div class="s">Shown in violet; pending approval</div></button>
     <button class="tile" data-act="go" data-arg="performance"><div class="k">Performance evaluations</div><div class="v">${Object.keys(Store.data.evaluations).length}</div><div class="s">${new Set(Object.values(Store.data.evaluations).map(e => e.vendorId)).size} vendors evaluated · others Not evaluated</div></button>
@@ -675,6 +678,7 @@ const inList = (v, k) => !!(v.wbLists && v.wbLists[k] && v.wbLists[k].length);
 const canGo = (v, k) => k !== "juniorMid" || inList(v, "juniorMid") || v.origin === "added";
 const blocked = v => v.status.stage1 === "HOLD" || v.status.stage1 === "FAIL";
 function feeInfo(v) {
+  if (v.fee && v.fee.v && v.current && !isRecruiter(v)) return { text: v.fee.v, q: v.fee.q === "confirmed" ? "provided" : "verify", label: "Billing % (current agreement)", note: v.fee.note };
   if (!isRecruiter(v)) return has(v, "pricing") ? { text: fv(v, "pricing"), q: v.fields.pricing.q, label: "Commercial model", note: "" } : { text: "", q: "missing", label: "Commercials not recorded", note: "Add the pricing model (per check, per licence, per test…) on the vendor’s profile." };
   if (v.fee && v.fee.v) return { text: v.fee.v, q: v.fee.q === "confirmed" ? "provided" : "verify", label: v.fee.q === "confirmed" ? "Confirmed by vendor" : "Estimate (vendor-specific)", note: v.fee.note };
   const c = slCat(v);
@@ -883,6 +887,7 @@ function filtered() {
     if (UI.origin === "web" && v.origin !== "web") return false;
     if (UI.origin === "source" && v.origin !== "source") return false;
     if (UI.origin === "edited" && !v._edited) return false;
+    if (UI.origin === "current" && !isCurrent(v)) return false;
     if (UI.minScore && !(parseFloat(fv(v, "score")) >= +UI.minScore)) return false;
     if (UI.perf || UI.evYear) {
       const w = perfWindow(v.id);
@@ -930,7 +935,7 @@ function viewDirectory() {
     <select class="inp" id="floc" aria-label="Location">${opt("", "Any location", UI.loc)}${[...new Set(VENDORS.map(locBucket))].sort().map(l => opt(l, l, UI.loc)).join("")}</select>
     <select class="inp" id="fspec" aria-label="Specialization">${opt("", "Any specialization", UI.spec)}${SPEC.map(s => opt(s[0], s[0], UI.spec)).join("")}</select>
     <select class="inp" id="fscore" aria-label="Minimum score">${opt("", "Any score", UI.minScore)}${[5, 4, 3].map(n => opt(String(n), `Score ≥ ${n}`, UI.minScore)).join("")}</select>
-    <select class="inp" id="forig" aria-label="Origin">${opt("", "Any origin", UI.origin)}${opt("source", "From workbook", UI.origin)}${opt("web", "Web-suggested", UI.origin)}${opt("edited", "Edited or added", UI.origin)}</select>
+    <select class="inp" id="forig" aria-label="Origin">${opt("", "Any origin", UI.origin)}${opt("source", "From workbook", UI.origin)}${opt("web", "Web-suggested", UI.origin)}${opt("edited", "Edited or added", UI.origin)}${opt("current", "Current vendors", UI.origin)}</select>
     <select class="inp" id="fdq" aria-label="Data quality">${opt("", "Any data quality", UI.dq)}${opt("conflict", "Has conflicts", UI.dq)}${opt("nocontact", "No phone or email", UI.dq)}${opt("flagged", "Any flag", UI.dq)}</select>
     <select class="inp" id="fperf" aria-label="Performance rating">${opt("", "Any performance", UI.perf)}${opt("evaluated", "Evaluated", UI.perf)}${opt("notEvaluated", "Not evaluated", UI.perf)}${opt("partial", "Partly evaluated", UI.perf)}${opt("ge4", "Summary rating ≥ 4", UI.perf)}${opt("lt3", "Summary rating < 3", UI.perf)}</select>
     <select class="inp" id="fevy" aria-label="Evaluation year">${opt("", "Any evaluation year", UI.evYear)}${Array.from({ length: +perfCfg().window || 5 }, (_, i) => currentPerfYear() - i).map(y => opt(String(y), "Evaluated in " + yearLabel(y), UI.evYear)).join("")}</select>
@@ -948,7 +953,7 @@ function row(v) {
   const email = fv(v, "spocEmail") || fv(v, "companyEmail"), phone = fv(v, "spocPhone") || fv(v, "companyPhone");
   return `<tr data-open="${esc(v.id)}" class="${v.origin === "web" ? "webrow" : ""}">
     <td><input type="checkbox" data-cmp="${esc(v.id)}" ${UI.compare.includes(v.id) ? "checked" : ""} aria-label="Compare ${esc(v.name)}"></td>
-    <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${originChip(v)}${slCat(v) ? `<span class="badge b-fit">${esc(SLCATS[slCat(v)].label)}</span>` : ""}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
+    <td class="wrap"><div class="nm">${esc(v.name)}</div>${v.aliases && v.aliases.length ? `<div class="al">aka ${esc(v.aliases.slice(0, 2).join("; "))}${v.aliases.length > 2 ? "…" : ""}</div>` : ""}<div class="chips" style="margin-top:3px">${currentChip(v)}${originChip(v)}${slCat(v) ? `<span class="badge b-fit">${esc(SLCATS[slCat(v)].label)}</span>` : ""}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} fit</span>` : ""}${v._edited ? '<span class="q q-edited">Edited</span>' : ""}</div></td>
     <td>${badge(v.status.stage1)}</td>
     <td class="wrap">${isRecruiter(v) ? catChips(v) : `<span class="chip">${esc(SERVICES[svcKey(v)].replace(/ \(.*\)$/, ""))}</span>`}</td>
     <td class="wrap">${has(v, "spocName") ? esc(fv(v, "spocName")) : '<span class="q q-missing">SPOC missing</span>'}<div class="al">${esc(email) || "no email"} · ${esc(phone) || "no phone"}</div></td>
@@ -1054,7 +1059,7 @@ function drawerHTML(v) {
   <div class="dh"><div class="row"><div style="min-width:0"><div class="eyebrow">${esc(v.vendorType.v)}${v.vendorType.q !== "provided" ? " · classification needs verification" : ""}</div><h2 id="dTitle">${esc(v.name)}</h2>
     ${v.aliases && v.aliases.length ? `<div class="count">Also recorded as: ${esc(v.aliases.join("; "))}</div>` : ""}</div>
     <button class="btn sm ghost" type="button" data-close aria-label="Close profile">✕</button></div>
-    <div class="chips">${badge(v.status.stage1)}${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}${v._edited ? `<span class="q q-edited">Edited ${fmtDate(v._edited)} by ${esc(who(v._editedBy))}</span>` : ""}</div>
+    <div class="chips">${badge(v.status.stage1)}${currentChip(v)}${originChip(v)}${v.shortlist ? `<span class="badge b-fit">${esc(v.shortlist.fit)} CXO fit</span>` : ""}${v._edited ? `<span class="q q-edited">Edited ${fmtDate(v._edited)} by ${esc(who(v._editedBy))}</span>` : ""}</div>
     <div class="chips"><button class="btn sm" type="button" data-edit="${esc(v.id)}" ${conf ? "" : "disabled"}>Edit</button>
       <button class="btn sm" type="button" data-fill="${esc(v.id)}" ${conf ? "" : "disabled"}>Fill missing details (${missingFields(v).length})</button>
       <button class="btn sm primary" type="button" data-assess="${esc(v.id)}" ${conf ? "" : "disabled"}>Assess</button>
@@ -1075,6 +1080,7 @@ function drawerHTML(v) {
       <div class="line"><span class="score">${r.total}</span><span class="count">/ 100 ${r.excluded ? "· excluded from ranking (FAIL)" : ""}</span></div>${meter(r)}
       <div class="parts" style="margin-top:8px">${r.parts.map(p => `<div class="p"><span><b>${esc(p.k)}</b> — ${esc(p.ev)}</span><span>${Math.round(p.pts * 10) / 10}/${p.max}</span></div>`).join("")}</div>
       ${r.gaps.length ? `<div class="gaps">${r.gaps.map(g => `<span class="gap">${esc(g)}</span>`).join("")}</div>` : ""}</section>
+    ${currentSection(v)}
     ${assessSection(v)}
     ${perfSection(v)}
     <section class="sec"><h4>Hiring categories</h4><dl class="kv">${Object.keys(CATS).map(k => `<dt>${esc(CATS[k])}</dt><dd>${v.categories[k] ? v.categories[k].map(b => `<div>${qBadge(b.basis === "workbook" ? "provided" : b.basis === "web" ? "web" : b.basis === "edited" ? "edited" : "verify")} ${esc(b.ref)}</div>`).join("") : '<span class="note">—</span>'}</dd>`).join("")}</dl></section>
@@ -1747,6 +1753,7 @@ async function exportXlsx() {
     "Latest assessment score": la ? +la.s.score.toFixed(2) : "", "Assessment scale max": la ? la.s.scale.max : "", "Assessment date": la ? la.a.date : "", "Assessor": la ? la.a.assessor : "", "Assessment recommendation": la ? la.a.recommendation : "",
     "Workbook score": fv(v, "score"), "Performance summary": w.summary === null ? "Not evaluated" : +w.summary.toFixed(2), "Years evaluated": w.years.length ? `${w.done.length}/${w.years.length}` : "" };
     FIELD_GROUPS.forEach(([, fs]) => fs.forEach(([k, l]) => { o[l] = fv(v, k); }));
+    const c = v.current || {}; o["Current vendor"] = isCurrent(v) ? "Yes" : c.ended ? "Ended" : ""; o["Agreement type"] = c.agreement || ""; o["Billing % by job level"] = c.billing || c.billingRaw || ""; o["Contract end"] = c.endRaw || c.end || "";
     o["Origin"] = v.origin; o["Last updated"] = v._edited || v.lastUpdated || ""; return o; });
   const assess = []; VENDORS.forEach(v => assessOf(v.id).forEach(a => { const s = asScore(a); s.rows.forEach(r => assess.push({ Vendor: v.name, "Assessment date": a.date, Stage: a.stage, Assessor: a.assessor, Criterion: r.c.name, Weight: +r.c.weight, Score: r.na ? "N/A" : r.r === null ? "" : r.r, "Overall score": s.score === null ? "" : +s.score.toFixed(2), Recommendation: a.recommendation || "" })); }));
   const perf = []; VENDORS.forEach(v => evalsOf(v.id).forEach(e => { const s = evalScore(e); s.rows.forEach(r => perf.push({ Vendor: v.name, Year: yearLabel(+e.year), Period: e.period, "Business unit": e.businessUnit || "", Evaluator: e.evaluator, Criterion: r.c.name, Weight: +r.c.weight, Score: r.na ? "N/A" : r.r === null ? "Not rated" : r.r, "Annual score": s.score === null ? "" : +s.score.toFixed(2) })); }));
@@ -1812,11 +1819,86 @@ async function submitCell(form) {
   if (await Store.putEdit(id, { record: rec })) { render(); toast("Saved"); }
 }
 
+/* ---------------------------------------------------------- current vendors */
+/* Vendors Volvo already works with, from the current vendor list: agreement
+   type, billing % by job level, and contract end. Terms are editable. */
+const TODAY = new Date();
+function endInfo(c) {
+  if (!c || !c.end) return { label: c && c.endRaw && c.endRaw.toUpperCase() !== "NA" ? c.endRaw : "No end date", k: "na", days: null };
+  const [y, m, d] = c.end.split("-").map(Number);
+  const dt = new Date(y, m - 1, d || new Date(y, m, 0).getDate());
+  const days = Math.round((dt - TODAY) / 86400000);
+  const label = (c.endRaw || c.end) + (days < 0 ? ` · expired ${-days} days ago` : ` · ${days} days left`);
+  return { label, k: days < 0 ? "FAIL" : days <= 90 ? "HOLD" : "PASS", days };
+}
+const isCurrent = v => !!(v.current && !v.current.ended);
+function currentChip(v) { return isCurrent(v) ? `<span class="badge b-cur" title="${esc(v.current.src || "")}">Current vendor</span>` : ""; }
+function viewCurrent() {
+  const list = VENDORS.filter(isCurrent).sort((a, b) => a.name.localeCompare(b.name));
+  const soon = list.filter(v => { const e = endInfo(v.current); return e.days !== null && e.days <= 90; });
+  const contacts = v => contactsOf(v).filter(c => c.kind === "Current vendor list" || c.kind === "Added contact");
+  return `<div class="vhead"><div><div class="eyebrow">Current vendors</div><h2>Vendors Volvo works with today</h2>
+  <p>From the current vendor list (transcribed from your photo, so check figures against the original). Billing % is the agreed fee by job level and is treated as the vendor’s confirmed fee across the dashboard. Contract end dates within 90 days are marked amber; past dates red.</p></div>
+  ${Store.canWrite ? `<button class="btn" type="button" data-act="addCurrent">Mark another vendor as current</button>` : ""}</div>
+  <div class="tiles"><div class="tile"><div class="k">Current vendors</div><div class="v">${list.length}</div><div class="s">${list.filter(v => v.current.agreement).length} with an agreement type recorded</div></div>
+    <div class="tile"><div class="k">Billing terms recorded</div><div class="v">${list.filter(v => v.current.billing).length}</div><div class="s">${list.length - list.filter(v => v.current.billing).length} show NA or blank</div></div>
+    <div class="tile hold"><div class="k">Contracts ending ≤ 90 days</div><div class="v">${soon.length}</div><div class="s">${esc(soon.map(v => v.name).join(", ") || "None")}</div></div>
+    <div class="tile fail"><div class="k">Conflicts with assessment</div><div class="v">${list.filter(v => ["HOLD", "FAIL"].includes(v.status.stage1)).length}</div><div class="s">Current but HOLD or FAIL in the workbook</div></div></div>
+  <div class="tw"><table><thead><tr><th>Vendor</th><th>Stage 1 status</th><th>Agreement</th><th>Billing % (fee)</th><th>Contract end</th><th>SPOC</th><th>Phone</th><th>Email</th><th>Performance</th><th></th></tr></thead>
+  <tbody>${list.map(v => { const e = endInfo(v.current), cs = contacts(v), w = perfWindow(v.id); return `<tr data-open="${esc(v.id)}">
+    <td class="wrap"><div class="nm" ${v.current.red ? 'style="color:var(--fail)"' : ""}>${esc(v.name)}</div>${v.current.red ? '<div class="al">Shown in red in the source list</div>' : ""}${slCat(v) ? `<span class="chip">${esc(SLCATS[slCat(v)].label)}</span>` : ""}</td>
+    <td>${badge(v.status.stage1)}${["HOLD", "FAIL"].includes(v.status.stage1) ? '<div class="al">Conflicts with current status</div>' : ""}</td>
+    <td>${v.current.agreement ? esc(v.current.agreement) : '<span class="q q-missing">NA</span>'}</td>
+    <td class="wrap">${v.current.billing ? `<b>${esc(v.current.billing)}</b>` : '<span class="q q-missing">' + esc(v.current.billingRaw || "Blank") + "</span>"}</td>
+    <td style="min-width:150px"><span class="badge b-${e.k}" style="white-space:normal">${esc(e.label)}</span></td>
+    <td class="wrap">${cs.map(c => `<div>${esc(c.name)}</div>`).join("")}</td>
+    <td style="white-space:nowrap">${cs.map(c => `<div><span class="sel">${esc(c.phone || "—")}</span></div>`).join("")}</td>
+    <td style="min-width:240px">${cs.map(c => (c.email || "—").split(/\s*,\s*/).map(m => `<div><span class="sel">${esc(m)}</span></div>`).join("")).join("")}</td>
+    <td>${ratingBadge(w.summary)}</td>
+    <td data-stop style="white-space:nowrap">${Store.canWrite ? `<button class="btn sm" type="button" data-curedit="${esc(v.id)}">Edit terms</button> <button class="btn sm" type="button" data-addeval="${esc(v.id)}">Rate</button>` : ""}</td></tr>`; }).join("") || '<tr><td colspan="10" class="empty">No current vendors recorded.</td></tr>'}</tbody></table></div>`;
+}
+function currentForm(vid) {
+  const v = vid ? BY_ID[vid] : null, c = (v && v.current) || {};
+  const names = VENDORS.filter(x => !isCurrent(x)).sort((a, b) => a.name.localeCompare(b.name));
+  return `<div class="modal" role="dialog" aria-modal="true" aria-labelledby="cuTitle"><form class="mbox" id="currentForm" data-id="${esc(vid || "")}" style="width:min(620px,100%)" novalidate>
+  <header><h2 id="cuTitle" style="font-size:17px">${v ? "Current agreement · " + esc(v.name) : "Mark a vendor as current"}</h2></header>
+  <div class="mbody"><div class="form">
+    ${v ? "" : `<label class="full">Vendor *<select class="inp" id="cu_vendor"><option value="">Choose…</option>${names.map(x => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}</select></label>`}
+    <label>Agreement type<select class="inp" id="cu_agr">${["", "Agreement", "PO Based", "Other"].map(o => `<option value="${o}" ${c.agreement === o ? "selected" : ""}>${o || "Not recorded"}</option>`).join("")}</select></label>
+    <label>Contract end date<input class="inp" type="date" id="cu_end" value="${esc(c.end && c.end.length === 10 ? c.end : "")}"></label>
+    <label class="full">Billing % by job level<input class="inp" id="cu_bill" value="${esc(c.billing || "")}" placeholder="e.g. JL1–JL5: 8.33%; JL6 and above: 8.5%"></label>
+    <label class="full">Source / note<input class="inp" id="cu_note" placeholder="e.g. Signed agreement dated …"></label>
+    ${v ? `<label class="full"><span><input type="checkbox" id="cu_ended"> No longer a current vendor (keeps the record and history)</span></label>` : ""}
+  </div><p class="count">Billing % becomes the vendor’s confirmed fee everywhere in the dashboard.</p><p class="count" id="cuErr" role="alert"></p></div>
+  <footer><button class="btn" type="button" data-cancel>Cancel</button><button class="btn primary" type="submit">Save</button></footer></form></div>`;
+}
+async function submitCurrent(form) {
+  const vid = form.dataset.id || ($("#cu_vendor", form) || {}).value;
+  if (!vid) { $("#cuErr").textContent = "Choose a vendor."; return; }
+  const v = BY_ID[vid], rec = clone(v); delete rec._edited; delete rec._editedBy; delete rec._approved;
+  const note = $("#cu_note", form).value.trim(), stamp = "Dashboard edit " + new Date().toLocaleDateString() + (note ? " · " + note : "");
+  const end = $("#cu_end", form).value, bill = $("#cu_bill", form).value.trim();
+  rec.current = Object.assign({}, rec.current || {}, { agreement: $("#cu_agr", form).value, billing: bill, billingRaw: bill, end, endRaw: end ? end.split("-").reverse().join("-") : (rec.current && rec.current.endRaw) || "", src: (rec.current && rec.current.src) ? rec.current.src + " · edited" : stamp, ended: !!($("#cu_ended", form) || {}).checked });
+  if (bill) rec.fee = { v: bill, q: "confirmed", note: "Billing % from current agreement · " + stamp };
+  if (!(rec.sources || []).includes("Dashboard edits")) (rec.sources = rec.sources || []).push("Dashboard edits");
+  if (await Store.putEdit(vid, { record: rec })) { form.closest(".modal").remove(); render(); toast("Agreement terms saved"); }
+}
+function currentSection(v) {
+  if (!v.current) return Store.canWrite ? `<section class="sec"><h4>Current Volvo agreement</h4><span class="note">Not on the current vendor list.</span> <button class="btn sm" type="button" data-curedit="${esc(v.id)}">Mark as current vendor</button></section>` : "";
+  const e = endInfo(v.current);
+  return `<section class="sec"><h4>Current Volvo agreement ${v.current.ended ? "(ended)" : ""}</h4><dl class="kv">
+    <dt>Agreement type</dt><dd>${v.current.agreement ? esc(v.current.agreement) : qBadge("missing")}</dd>
+    <dt>Billing % by job level</dt><dd>${v.current.billing ? `<b>${esc(v.current.billing)}</b>` : qBadge("missing") + ` <span class="note">Source shows “${esc(v.current.billingRaw || "blank")}”</span>`}</dd>
+    <dt>Contract end</dt><dd><span class="badge b-${e.k}">${esc(e.label)}</span></dd>
+    <dt>Source</dt><dd><span class="src">${esc(v.current.src)}</span>${v.current.note ? `<div class="note">${esc(v.current.note)}</div>` : ""}${v.current.red ? '<div class="note">Row shown in red in the source list; meaning not stated.</div>' : ""}</dd></dl>
+    ${Store.canWrite ? `<div style="margin-top:6px"><button class="btn sm" type="button" data-curedit="${esc(v.id)}">Edit terms</button></div>` : ""}</section>`;
+}
+
 /* -------------------------------------------------------------- render */
 function render() {
   assemble();
   renderRail();
-  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, facts: viewFacts, deleted: viewDeleted, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
+  const fn = { overview: viewOverview, shortlist: viewShortlist, directory: viewDirectory, status: viewStatus, contacts: viewContacts, facts: viewFacts, current: viewCurrent, deleted: viewDeleted, performance: viewPerformance, compare: viewCompare, quality: viewQuality, research: viewResearch }[UI.view] || viewOverview;
   const focusId = document.activeElement && document.activeElement.id;
   const pos = (focusId === "fq" || focusId === "pq" || focusId === "cq" || focusId === "fq2") ? document.activeElement.selectionStart : null;
   $("#main").innerHTML = fn();
@@ -1846,6 +1928,7 @@ document.addEventListener("click", async e => {
     if (d.act === "goLoc") return go("directory", { loc: a });
     if (d.act === "goSpec") return go("directory", { spec: a, type: "all" });
     if (d.act === "clearCmp") { UI.compare = []; return render(); }
+    if (d.act === "addCurrent") { $("#layer").insertAdjacentHTML("beforeend", currentForm(null)); return; }
     if (d.act === "readyAll") { UI.readyAll = !UI.readyAll; return render(); }
     if (d.act === "feeCfg") { $("#layer").insertAdjacentHTML("beforeend", feeForm()); return; }
     if (d.act === "resetFees") { if (await Store.del("perf", "fees")) { t.closest(".modal").remove(); render(); toast("Default fee bands restored"); } return; }
@@ -1861,6 +1944,7 @@ document.addEventListener("click", async e => {
   if (d.readycat) { UI.readyCat = d.readycat; UI.readyAll = false; return render(); }
   if (d.st) { UI.stTab = d.st; return render(); }
   if (d.close !== undefined) return closeDrawer();
+  if (d.curedit) { $("#layer").insertAdjacentHTML("beforeend", currentForm(d.curedit)); return; }
   if (d.celledit) { const [id, k] = d.celledit.split("|"); const td = t.closest("td"); td.innerHTML = cellForm(id, k); const i = $("#cf_val", td); i.focus(); i.select(); return; }
   if (d.cellcancel !== undefined) return render();
   if (d.assess) { $("#layer").insertAdjacentHTML("beforeend", assessForm(null, d.assess)); return; }
@@ -1903,9 +1987,9 @@ document.addEventListener("keydown", e => {
 });
 document.addEventListener("submit", e => {
   if (e.target.classList && e.target.classList.contains("cellform")) { e.preventDefault(); submitCell(e.target); return; }
-  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm", "assessForm", "missingForm"].includes(f.id)) return;
+  const f = e.target; if (!["editForm", "evalForm", "engForm", "cfgForm", "feeForm", "assessForm", "missingForm", "currentForm"].includes(f.id)) return;
   e.preventDefault();
-  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees, assessForm: submitAssess, missingForm: submitMissing })[f.id](f);
+  ({ editForm: submitEdit, evalForm: submitEval, engForm: submitEng, cfgForm: submitCfg, feeForm: submitFees, assessForm: submitAssess, missingForm: submitMissing, currentForm: submitCurrent })[f.id](f);
 });
 let qTimer;
 document.addEventListener("input", e => {
