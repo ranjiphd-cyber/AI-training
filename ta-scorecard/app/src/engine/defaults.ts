@@ -33,8 +33,8 @@ export function defaultRuleVersion(year: number, id: string): RuleVersion {
     version: 1,
     status: 'draft',
     approvedAt: null,
-    note: 'Pre-filled from agreed rules (TA Head, 18–26 Oct 2026). Blank fields still need a decision.',
-    maxima: { offers: 80, cycle: 15, vendor: 5 },
+    note: 'Pre-filled from agreed rules (TA Head, 18 Oct – 13 Nov 2026). Blank fields still need a decision.',
+    maxima: { offers: 80, cycle: 5, vendor: 15 }, // TA Head 13 Nov 2026: delivery = 100% of rating
     categories: agreedCategories(),
     ftcNoGradePoints: 2,
     womenBonus: 0.5,
@@ -44,7 +44,7 @@ export function defaultRuleVersion(year: number, id: string): RuleVersion {
     holidays: [],
     leadTeamAverage: true,
     offersFormula: null, // proposed: 80 × min(attainment, 1) — needs TA Head confirmation
-    // Thresholds agreed 18 Oct (strong < 45 days, acceptable ≤ 55); points on the 15-point scale not yet agreed.
+    // Thresholds agreed 18 Oct (strong < 45 days, acceptable ≤ 55); points on the 5-point scale not yet agreed.
     cycleTime: {
       bands: [
         { upTo: 44.99, points: null },
@@ -52,12 +52,12 @@ export function defaultRuleVersion(year: number, id: string): RuleVersion {
         { upTo: null, points: null },
       ],
     },
-    // Agreed 18 Oct (5-point component): < 10% → 5, 10–20% → 3, > 20% → 1.
+    // Thresholds agreed 18 Oct (< 10%, 10–20%, > 20%); points on the 15-point scale not yet agreed (13 Nov weights).
     vendor: {
       bands: [
-        { upTo: 9.99, points: 5 },
-        { upTo: 20, points: 3 },
-        { upTo: null, points: 1 },
+        { upTo: 9.99, points: null },
+        { upTo: 20, points: null },
+        { upTo: null, points: null },
       ],
     },
     ratingBands: [
@@ -93,4 +93,20 @@ export function emptyData(year: number): AppData {
     audit: [],
     retentionYears: 3,
   };
+}
+
+/** One-time update of DRAFT rule versions to the 13 Nov 2026 weights (80 / 5 / 15). Approved versions are never changed. */
+export function migrate(d: AppData, user: string): boolean {
+  let changed = false;
+  for (const r of d.ruleVersions) {
+    if (r.status !== 'draft' || (r.maxima.offers === 80 && r.maxima.cycle === 5 && r.maxima.vendor === 15)) continue;
+    if (!(r.maxima.offers === 80 && r.maxima.cycle === 15 && r.maxima.vendor === 5)) continue; // only the old default
+    r.maxima = { offers: 80, cycle: 5, vendor: 15 };
+    r.cycleTime.bands = r.cycleTime.bands.map((b) => ({ ...b, points: null }));
+    r.vendor.bands = r.vendor.bands.map((b) => ({ ...b, points: null }));
+    r.note += ' Weights changed to 80 / 5 / 15 (TA Head, 13 Nov 2026); cycle and vendor points cleared for re-entry on the new scale.';
+    d.audit.unshift({ at: new Date().toISOString(), user, action: 'Rule version updated', detail: `${r.year} v${r.version} (draft): delivery weights 80/15/5 → 80/5/15; cycle-time and vendor points cleared` });
+    changed = true;
+  }
+  return changed;
 }

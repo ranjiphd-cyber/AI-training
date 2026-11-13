@@ -4,7 +4,8 @@ Pre-filled in rule version v1 (draft) for each new workspace. Everything is edit
 
 Sources, newest first:
 
-- **S1 — TA Head, 3 Nov 2026 (this request):** delivery maxima 80 / 15 / 5; growth is rated on a 1–10 scale; standalone app; data stored locally for 3 years; recruiters only receive PPT packs.
+- **S0 — TA Head, 13 Nov 2026:** rating = delivery 100%; weights 80 offers & complexity / 5 cycle time / 15 vendor usage; self-development kept separate.
+- **S1 — TA Head, 3 Nov 2026:** delivery maxima 80 / 15 / 5 (superseded by S0); growth is rated on a 1–10 scale; standalone app; data stored locally for 3 years; recruiters only receive PPT packs.
 - **S2 — TA Head, 25–26 Oct 2026:** the monthly-review points model (Points_Rules sheet and `consolidate.py`, with the IJP, internship and target decisions). This is the latest scoring chat.
 - **S3 — TA Head, 18 Oct 2026:** the dashboard rules (cycle-time and vendor thresholds, points formula pattern).
 
@@ -42,13 +43,13 @@ Other rules:
 - **Leads:** rated on the average of own attainment and team attainment (Σ team points ÷ Σ team targets, active members).
 - **Bands on attainment:** Exceptional ≥ 130%, High ≥ 110%, Good ≥ 95%, Adequate ≥ 85%, Low below that.
 
-## 100-point delivery score (S1 maxima)
+## 100-point delivery score (S0 weights: 80 / 5 / 15)
 
 | Component | Max | Rule | Status |
 |---|---|---|---|
 | Offers & complexity | 80 | 80 × min(attainment, 100%). The pattern comes from S3 (40 × min(points ÷ points target, 1)) scaled to 80. | **Proposed — tick to confirm** (D-27) |
-| Cycle time | 15 | Average calendar days from requisition approval to offer. In-scope offers only, declined excluded. Thresholds from S3: < 45 strong, ≤ 55 acceptable, > 55. | **Points per band to decide** (D-28) |
-| Vendor usage | 5 | Vendor share of in-scope joiners: < 10% → 5, 10–20% → 3, > 20% → 1 (S3) | Pre-filled |
+| Cycle time | 5 | Average calendar days from requisition approval to offer. In-scope offers only, declined excluded. Thresholds from S3: < 45 strong, ≤ 55 acceptable, > 55. | **Points per band to decide** (D-28) |
+| Vendor usage | 15 | Vendor share of in-scope joiners: thresholds < 10% / 10–20% / > 20% (S3) | **Points per band to decide** (D-36) |
 
 - **In scope** for cycle time, vendor, diversity and declines: Lateral (including campus intern conversions), FTC, and conversions to employment.
 - **Out of scope:** programme hiring scores points but is excluded from these quality measures.

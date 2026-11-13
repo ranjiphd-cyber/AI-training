@@ -6,7 +6,7 @@ Every business-rule test below is *Pending business confirmation* until the SPEC
 | Test ID | Covers | Can run now? | Status |
 |---|---|---|---|
 | T-BLOCK-01 | Engine returns BLOCKED when any rule is missing | Yes | Planned |
-| T-DEL-CAP | Component caps 80/15/5 and total ≤100 | Yes (caps only) | Planned |
+| T-DEL-CAP | Component caps 80/5/15 and total ≤100 | Yes (caps only) | Planned |
 | T-DEL-CAT | Category points, women bonus, extra points | No | Pending business confirmation |
 | T-DEL-REC / T-DEL-LEAD | Recruiter and lead scoring examples from SPEC | No | Pending business confirmation |
 | T-DEL-LOW | Low-points performance case | No | Pending business confirmation |

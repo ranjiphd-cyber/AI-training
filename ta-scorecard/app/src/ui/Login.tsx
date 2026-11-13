@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AppData } from '../types';
-import { emptyData } from '../engine/defaults';
+import { emptyData, migrate } from '../engine/defaults';
 import { deriveKey, eraseVault, newSalt, open, readVault, seal, VaultRecord, writeVault } from '../store/vault';
 
 export interface Unlocked {
@@ -36,6 +36,7 @@ export function Login({ onUnlock }: { onUnlock: (u: Unlocked) => void }) {
     try {
       if (vault!.email.toLowerCase() !== email.trim().toLowerCase()) throw new Error('Incorrect email or passphrase');
       const r = await open(vault!, pass);
+      if (migrate(r.data, vault!.email)) await writeVault(await seal(r.data, vault!.email, r.key, r.salt));
       onUnlock({ data: r.data, email: vault!.email, key: r.key, salt: r.salt });
     } catch (e) {
       setErr((e as Error).message);
@@ -66,8 +67,9 @@ export function Login({ onUnlock }: { onUnlock: (u: Unlocked) => void }) {
       const p = prompt(`Passphrase for backup of ${rec.email}:`);
       if (!p) return;
       const r = await open(rec, p);
+      migrate(r.data, rec.email);
       if (vault && !confirm('Replace the workspace on this computer with this backup?')) return;
-      await writeVault(rec);
+      await writeVault(await seal(r.data, rec.email, r.key, r.salt));
       onUnlock({ data: r.data, email: rec.email, key: r.key, salt: r.salt });
     } catch (e) {
       setErr((e as Error).message);

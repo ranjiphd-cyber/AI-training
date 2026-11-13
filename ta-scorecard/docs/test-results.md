@@ -9,7 +9,7 @@ All runs use **synthetic** data only.
 - **Working days and target:** working days with holidays; joiner pro-rating; target formula.
 - **Bands:** attainment band boundaries.
 - **Leads:** rated on the average of own and team attainment.
-- **Blocking:** results are blocked when a rule or a target is missing; the band is produced but the 100-point score is withheld while rules are undecided; the 80/15/5 caps total exactly 100.
+- **Blocking:** results are blocked when a rule or a target is missing; the band is produced but the 100-point score is withheld while rules are undecided; the 80/5/15 caps total exactly 100.
 - **Missing data:** no data is never treated as zero vendor %; future-dated offers are excluded.
 - **Growth and matrix:** growth is blocked without weights; the weighted mean is correct; out-of-range ratings are rejected; growth never alters delivery; matrix boundaries are correct.
 - **Import parsing:** dates in Excel serial and day-first formats; stream and status recognition; header auto-mapping; row validation without guessed values.

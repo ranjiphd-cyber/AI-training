@@ -53,7 +53,7 @@ export function HowScoring() {
         <p>The calculated band is evidence for your decision. The final rating is set by you during calibration (Reviews), and the two are always kept separately.</p>
       </div>
       <div className="card">
-        <h2 style={{ marginTop: 0 }}>3. Delivery score out of 100</h2>
+        <h2 style={{ marginTop: 0 }}>3. Delivery score out of 100 (delivery is 100% of the rating)</h2>
         <ul>
           <li>
             <b>Offers &amp; complexity ({r.maxima.offers})</b> = {r.maxima.offers} × min(attainment, 100%) {r.offersFormula ? '' : <i className="muted">(formula awaiting your confirmation)</i>}
@@ -83,7 +83,7 @@ export function HowScoring() {
       <div className="card">
         <h2 style={{ marginTop: 0 }}>4. Growth (1–10) and the matrix</h2>
         <p>
-          Growth score = weighted average of {GROWTH_KEYS.map((k) => `${GROWTH_LABELS[k]} (${r.growthWeights[k] ?? '?'})`).join(', ')}. All five ratings are needed. Growth never changes the delivery score.
+          Growth score = weighted average of {GROWTH_KEYS.map((k) => `${GROWTH_LABELS[k]} (${r.growthWeights[k] ?? '?'})`).join(', ')}. All five ratings are needed. Growth, including self-development, is kept separate: it never changes the delivery score or the rating.
         </p>
         <p>
           Matrix: delivery axis = attainment % (Medium from {v(r.matrix.deliveryLow)}, High from {v(r.matrix.deliveryHigh)}); growth axis = growth score (Medium from {v(r.matrix.growthLow)}, High from{' '}

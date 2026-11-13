@@ -241,7 +241,19 @@ function Rules() {
           />
         </div>
         <div className="card">
-          <h2 style={{ marginTop: 0 }}>100-point delivery score (80 / 15 / 5)</h2>
+          <h2 style={{ marginTop: 0 }}>
+            Delivery score ({r.maxima.offers} / {r.maxima.cycle} / {r.maxima.vendor} = {r.maxima.offers + r.maxima.cycle + r.maxima.vendor})
+          </h2>
+          <p className="small muted">Delivery is 100% of the rating. Self-development and other growth areas are rated separately and never enter it.</p>
+          <div className="form">
+            {(['offers', 'cycle', 'vendor'] as const).map((k) => (
+              <label key={k}>
+                {k === 'offers' ? 'Offers & complexity (max)' : k === 'cycle' ? 'Cycle time (max)' : 'Vendor usage (max)'}
+                <input type="number" min={0} value={r.maxima[k]} disabled={!editable} onChange={(e) => set((x) => (x.maxima[k] = Number(e.target.value) || 0))} />
+              </label>
+            ))}
+          </div>
+          {r.maxima.offers + r.maxima.cycle + r.maxima.vendor !== 100 && <div className="note small">The weights add up to {r.maxima.offers + r.maxima.cycle + r.maxima.vendor}, not 100.</div>}
           <label className="f">
             <input type="checkbox" checked={r.offersFormula === 'capped-attainment'} disabled={!editable} onChange={(e) => set((x) => (x.offersFormula = e.target.checked ? 'capped-attainment' : null))} />
             Confirm: Offers &amp; complexity = {r.maxima.offers} × min(attainment, 100%)

@@ -124,15 +124,17 @@ describe('blocking and missing data', () => {
     expect(d.status).toBe('incomplete');
     expect(d.total).toBeNull();
     expect(d.components.offers).toBe(80);
-    expect(d.components.vendor).toBe(5);
+    expect(d.components.vendor).toBeNull(); // vendor points on the 15-point scale not yet decided
   });
-  it('caps components and totals 100 when all rules present', () => {
+  it('uses the 80 / 5 / 15 split and totals 100 when all rules present', () => {
     const r = rule();
+    expect(r.maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
     r.offersFormula = 'capped-attainment';
-    r.cycleTime.bands = [{ upTo: 44.99, points: 15 }, { upTo: 55, points: 10 }, { upTo: null, points: 5 }];
+    r.cycleTime.bands = [{ upTo: 44.99, points: 5 }, { upTo: 55, points: 3 }, { upTo: null, points: 1 }];
+    r.vendor.bands = [{ upTo: 9.99, points: 15 }, { upTo: 20, points: 9 }, { upTo: null, points: 3 }];
     const offers = [1, 2, 3].map(() => off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01', sg: 10 }));
     const d = scoreDelivery(inputs({ rule: r, offers }));
-    expect(d.components).toEqual({ offers: 80, cycle: 15, vendor: 5 });
+    expect(d.components).toEqual({ offers: 80, cycle: 5, vendor: 15 });
     expect(d.total).toBe(100);
     expect(d.status).toBe('scored');
   });
@@ -174,5 +176,18 @@ describe('growth (1–10) and matrix', () => {
     expect(classifyMatrix(84.9, 4.9, r)!.label).toBe('Low delivery / Low growth');
     expect(classifyMatrix(85, 5, r)!.label).toBe('Medium delivery / Medium growth');
     expect(classifyMatrix(85, 5, rule())).toBeNull();
+  });
+});
+
+import { migrate } from './defaults';
+describe('migration to 80 / 5 / 15', () => {
+  it('updates old-default drafts, never approved versions', () => {
+    const d = { ruleVersions: [rule(), { ...rule(), id: 'A', status: 'approved' as const }], audit: [] as { at: string; user: string; action: string; detail: string }[] } as unknown as import('../types').AppData;
+    d.ruleVersions[0].maxima = { offers: 80, cycle: 15, vendor: 5 };
+    d.ruleVersions[1].maxima = { offers: 80, cycle: 15, vendor: 5 };
+    expect(migrate(d, 'u')).toBe(true);
+    expect(d.ruleVersions[0].maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(d.ruleVersions[1].maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
+    expect(d.audit.length).toBe(1);
   });
 });

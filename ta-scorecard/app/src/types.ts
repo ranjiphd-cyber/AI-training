@@ -198,7 +198,7 @@ export interface RuleVersion {
   status: 'draft' | 'approved';
   approvedAt: string | null;
   note: string;
-  maxima: { offers: number; cycle: number; vendor: number }; // confirmed 80 / 15 / 5
+  maxima: { offers: number; cycle: number; vendor: number }; // TA Head 13 Nov 2026: 80 / 5 / 15
   categories: CategoryRule[];
   ftcNoGradePoints: number | null; // FTC offer without a grade
   womenBonus: number | null; // points added per offer to a woman, for categories flagged womenBonus
