@@ -41,7 +41,7 @@ Other rules:
 - **Mid-year joiners and leavers:** working days are counted only while the person was employed. This applies the S2 pro-rating to each person's own dates (D-30, to confirm).
 - **Attainment** = points ÷ target to date.
 - **Leads:** rated on the average of own attainment and team attainment (Σ team points ÷ Σ team targets, active members).
-- **Bands on attainment:** Exceptional ≥ 130%, High ≥ 110%, Good ≥ 95%, Adequate ≥ 85%, Low below that.
+- **Bands on attainment (names from 13 Nov 2026):** Exceptional ≥ 130%, Exceeds Expectations ≥ 110%, Meets Expectations ≥ 95%, Developing ≥ 85%, Not Meeting Expectations below that.
 
 ## 100-point delivery score (S0 weights: 80 / 5 / 15)
 

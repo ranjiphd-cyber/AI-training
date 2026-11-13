@@ -62,10 +62,10 @@ export function defaultRuleVersion(year: number, id: string): RuleVersion {
     },
     ratingBands: [
       { minPct: 130, label: 'Exceptional' },
-      { minPct: 110, label: 'High' },
-      { minPct: 95, label: 'Good' },
-      { minPct: 85, label: 'Adequate' },
-      { minPct: 0, label: 'Low' },
+      { minPct: 110, label: 'Exceeds Expectations' },
+      { minPct: 95, label: 'Meets Expectations' },
+      { minPct: 85, label: 'Developing' },
+      { minPct: 0, label: 'Not Meeting Expectations' },
     ],
     roundingDecimals: 2,
     growthWeights: { projects: null, selfDev: null, training: null, behaviours: null, feedback: null },
@@ -126,6 +126,14 @@ export function migrate(d: AppData, user: string): boolean {
       d.audit.unshift({ at: new Date().toISOString(), user, action: 'Rule version updated', detail: `${r.year} v${r.version} (draft): ${parts.join('; ')} (TA Head, 13 Nov 2026)` });
       changed = true;
     }
+  }
+  // Third step (TA Head, 13 Nov 2026): rename rating bands on draft versions; thresholds unchanged.
+  const RENAME: Record<string, string> = { High: 'Exceeds Expectations', Good: 'Meets Expectations', Adequate: 'Developing', Low: 'Not Meeting Expectations' };
+  for (const r of d.ruleVersions) {
+    if (r.status !== 'draft' || !r.ratingBands.some((b) => RENAME[b.label])) continue;
+    r.ratingBands = r.ratingBands.map((b) => ({ ...b, label: RENAME[b.label] ?? b.label }));
+    d.audit.unshift({ at: new Date().toISOString(), user, action: 'Rule version updated', detail: `${r.year} v${r.version} (draft): rating bands renamed to Exceptional / Exceeds / Meets Expectations / Developing / Not Meeting Expectations (TA Head, 13 Nov 2026)` });
+    changed = true;
   }
   return changed;
 }

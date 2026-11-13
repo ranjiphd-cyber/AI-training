@@ -74,7 +74,7 @@ await nav('Delivery Scorecard');
 await page.locator('.topbar select').nth(1).selectOption('YTD');
 const sc = await page.locator('table tbody tr').allInnerTexts();
 log('scorecard rows:', sc.length);
-if (!sc.some((t) => /Exceptional|High|Good|Adequate|Low/.test(t))) fail('no band computed');
+if (!sc.some((t) => /Exceptional|Exceeds Expectations|Meets Expectations|Developing|Not Meeting Expectations/.test(t))) fail('no band computed');
 await page.screenshot({ path: path.join(out, 'scorecard.png'), fullPage: true });
 
 // 5. overview + names hidden

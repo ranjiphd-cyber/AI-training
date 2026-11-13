@@ -8,9 +8,9 @@ export const pct = (frac: number | null | undefined) => (frac === null || frac =
 
 export function bandClass(b: string | null) {
   if (!b) return '';
-  if (b === 'Exceptional' || b === 'High') return 'g';
-  if (b === 'Good') return '';
-  if (b === 'Adequate') return 'o';
+  if (b === 'Exceptional' || b === 'Exceeds Expectations' || b === 'High') return 'g';
+  if (b === 'Meets Expectations' || b === 'Good') return '';
+  if (b === 'Developing' || b === 'Adequate') return 'o';
   return 'r';
 }
 export function Band({ d }: { d: DeliveryResult }) {

@@ -16,6 +16,7 @@ People's names are never written here.
 | D-35 | Rating = delivery 100%. Delivery score = Offers & complexity 80 + Vendor usage 15 + Cycle time 5. Self-development (and all growth areas) stays separate and never enters the rating | 13 Nov 2026 | v0.2 |
 | D-27 | Offers & complexity = 80 × min(points ÷ pro-rated target, 1) | 13 Nov 2026 | rule v1 |
 | D-28 | Cycle-time points (max 5): < 45 days = 5, 45–55 = 3, > 55 = 1 | 13 Nov 2026 | rule v1 |
+| D-37 | Rating band names: Exceptional / Exceeds Expectations / Meets Expectations / Developing / Not Meeting Expectations (thresholds unchanged 130 / 110 / 95 / 85%) | 13 Nov 2026 | rule v1 |
 | D-36 | Vendor-usage points (max 15): < 10% of joiners = 15, 10–20% = 9, > 20% = 3 | 13 Nov 2026 | rule v1 |
 | D-10 | Points table, women bonus +0.5, decline −0.25, cadence-based target with 254 working days, leads on average of own and team, bands 130 / 110 / 95 / 85, SG = JL + 2, IJP included, internships 1 point | 18–26 Oct 2026 | rule v1 |
 | D-11 | Scope for quality measures: lateral (including campus intern conversions), FTC and conversions to employment; programmes excluded | 26 Oct 2026 | rule v1 |

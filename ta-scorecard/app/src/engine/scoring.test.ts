@@ -78,14 +78,14 @@ describe('rating bands on attainment', () => {
   };
   it('maps boundaries inclusively', () => {
     expect(at(4).band).toBe('Exceptional'); // 133.3%
-    expect(at(3).band).toBe('Good'); // 100%
-    expect(at(2).band).toBe('Low'); // 66.7%
+    expect(at(3).band).toBe('Meets Expectations'); // 100%
+    expect(at(2).band).toBe('Not Meeting Expectations'); // 66.7%
   });
-  it('130% exactly is Exceptional, 129.9% is High', () => {
+  it('100% exactly is Meets Expectations', () => {
     const r = rule();
     const d = scoreDelivery(inputs({ rule: r, recruiter: rec({ cadence: 1, targetSG: 2 }), periodEnd: '2026-01-14', offers: [off({ stream: 'Intern', sg: null, offerDate: '2026-01-02' })] }));
     // target = 1 × 1 × 10 / 10 = 1 → 100%
-    expect(d.band).toBe('Good');
+    expect(d.band).toBe('Meets Expectations');
   });
 });
 
@@ -199,13 +199,15 @@ describe('migration to 80 / 5 / 15', () => {
     d.ruleVersions[0].maxima = { offers: 80, cycle: 15, vendor: 5 };
     d.ruleVersions[1].maxima = { offers: 80, cycle: 15, vendor: 5 };
     d.ruleVersions[0].offersFormula = null;
+    d.ruleVersions[0].ratingBands = d.ruleVersions[0].ratingBands.map((b, i) => ({ ...b, label: ['Exceptional', 'High', 'Good', 'Adequate', 'Low'][i] }));
     expect(migrate(d, 'u')).toBe(true);
     expect(d.ruleVersions[0].maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
     expect(d.ruleVersions[0].cycleTime.bands.map((b) => b.points)).toEqual([5, 3, 1]);
     expect(d.ruleVersions[0].vendor.bands.map((b) => b.points)).toEqual([15, 9, 3]);
     expect(d.ruleVersions[0].offersFormula).toBe('capped-attainment');
     expect(d.ruleVersions[1].maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
-    expect(d.audit.length).toBe(2);
+    expect(d.audit.length).toBe(3);
+    expect(d.ruleVersions[0].ratingBands.map((b) => b.label)).toEqual(['Exceptional', 'Exceeds Expectations', 'Meets Expectations', 'Developing', 'Not Meeting Expectations']);
     expect(migrate(d, 'u')).toBe(false); // idempotent
   });
 });
