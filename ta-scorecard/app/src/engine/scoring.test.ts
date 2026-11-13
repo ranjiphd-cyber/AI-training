@@ -126,28 +126,27 @@ describe('blocking and missing data', () => {
     expect(d.status).toBe('incomplete');
     expect(d.total).toBeNull();
   });
-  it('scores with the agreed defaults: 80 × min(att,1) + cycle 5/3/1 + vendor 15/9/3', () => {
-    // 1 lateral SG5 offer = 3 pts = 100% of target; 35 days req→offer → 5; 0% vendor → 15
+  it('scores with the agreed defaults: 80 × min(att,1) + cycle 15/9/3 + vendor 5/3/1', () => {
+    // 1 lateral SG5 offer = 3 pts = 100% of target; 35 days req→offer → 15; 0% vendor → 5
     const d = scoreDelivery(inputs({ offers: [off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01' })] }));
-    expect(d.components).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(d.components).toEqual({ offers: 80, cycle: 15, vendor: 5 });
     expect(d.total).toBe(100);
-    // 50 days → 3; all via vendor (100%) → 3; 2 SG5 offers vs target 3 → capped 80
+    // 50 days → 9; all via vendor (100%) → 1; 2 SG5 offers vs target 3 → capped 80
     const d2 = scoreDelivery(inputs({ offers: [1, 2].map(() => off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-11-16', viaVendor: true })) }));
-    expect(d2.components).toEqual({ offers: 80, cycle: 3, vendor: 3 });
+    expect(d2.components).toEqual({ offers: 80, cycle: 9, vendor: 1 });
     // 70 days → 1; 1 of 4 joiners via vendor (25%) → 3; one Intern offer = 1 pt of 3 → 26.67
     const os = [off({ stream: 'Intern', sg: null, offerDate: '2026-01-05' }), ...[0, 1, 2, 3].map((i) => off({ offerDate: '2026-03-01', status: 'Joined', reqDate: '2025-12-21', viaVendor: i === 0 }))];
     const d3 = scoreDelivery(inputs({ offers: os, periodEnd: '2026-01-14', periodStart: '2026-01-01' }));
     expect(d3.components.offers).toBe(26.67);
   });
-  it('uses the 80 / 5 / 15 split and totals 100 when all rules present', () => {
+  it('uses the 80 / 15 / 5 split and totals 100 when all rules present', () => {
     const r = rule();
-    expect(r.maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(r.maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
     r.offersFormula = 'capped-attainment';
-    r.cycleTime.bands = [{ upTo: 44.99, points: 5 }, { upTo: 55, points: 3 }, { upTo: null, points: 1 }];
-    r.vendor.bands = [{ upTo: 9.99, points: 15 }, { upTo: 20, points: 9 }, { upTo: null, points: 3 }];
+    
     const offers = [1, 2, 3].map(() => off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01', sg: 10 }));
     const d = scoreDelivery(inputs({ rule: r, offers }));
-    expect(d.components).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(d.components).toEqual({ offers: 80, cycle: 15, vendor: 5 });
     expect(d.total).toBe(100);
     expect(d.status).toBe('scored');
   });
@@ -193,21 +192,25 @@ describe('growth (1–10) and matrix', () => {
 });
 
 import { migrate } from './defaults';
-describe('migration to 80 / 5 / 15', () => {
+describe('migration to 80 / 15 / 5', () => {
   it('updates old-default drafts, never approved versions', () => {
     const d = { ruleVersions: [rule(), { ...rule(), id: 'A', status: 'approved' as const }], audit: [] as { at: string; user: string; action: string; detail: string }[] } as unknown as import('../types').AppData;
     d.ruleVersions[0].maxima = { offers: 80, cycle: 15, vendor: 5 };
     d.ruleVersions[1].maxima = { offers: 80, cycle: 15, vendor: 5 };
     d.ruleVersions[0].offersFormula = null;
+    d.ruleVersions[0].cycleTime.bands.forEach((b) => (b.points = null));
+    d.ruleVersions[0].vendor.bands.forEach((b, i) => (b.points = [5, 3, 1][i]));
     d.ruleVersions[0].ratingBands = d.ruleVersions[0].ratingBands.map((b, i) => ({ ...b, label: ['Exceptional', 'High', 'Good', 'Adequate', 'Low'][i] }));
     expect(migrate(d, 'u')).toBe(true);
-    expect(d.ruleVersions[0].maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
-    expect(d.ruleVersions[0].cycleTime.bands.map((b) => b.points)).toEqual([5, 3, 1]);
-    expect(d.ruleVersions[0].vendor.bands.map((b) => b.points)).toEqual([15, 9, 3]);
+    expect(d.ruleVersions[0].maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
+    expect(d.ruleVersions[0].cycleTime.bands.map((b) => b.points)).toEqual([15, 9, 3]);
+    expect(d.ruleVersions[0].vendor.bands.map((b) => b.points)).toEqual([5, 3, 1]);
     expect(d.ruleVersions[0].offersFormula).toBe('capped-attainment');
     expect(d.ruleVersions[1].maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
-    expect(d.audit.length).toBe(3);
+    expect(d.audit.length).toBe(4);
     expect(d.ruleVersions[0].ratingBands.map((b) => b.label)).toEqual(['Exceptional', 'Exceeds Expectations', 'Meets Expectations', 'Developing', 'Not Meeting Expectations']);
     expect(migrate(d, 'u')).toBe(false); // idempotent
+    const fresh = { ruleVersions: [rule()], audit: [] } as unknown as import('../types').AppData;
+    expect(migrate(fresh, 'u')).toBe(false); // new defaults untouched
   });
 });

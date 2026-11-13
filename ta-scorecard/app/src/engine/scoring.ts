@@ -156,8 +156,8 @@ export function missingDeliveryRules(rule: RuleVersion): string[] {
 export function missingScoreRules(rule: RuleVersion): string[] {
   const m: string[] = [];
   if (rule.offersFormula === null) m.push('Offers & complexity formula (confirm: 80 × min(attainment, 1))');
-  if (!bandsComplete(rule.cycleTime.bands)) m.push('Cycle-time points (5-point scale) for each band');
-  if (!bandsComplete(rule.vendor.bands)) m.push('Vendor-usage points (15-point scale) for each band');
+  if (!bandsComplete(rule.cycleTime.bands)) m.push('Cycle-time points for each band');
+  if (!bandsComplete(rule.vendor.bands)) m.push('Vendor-usage points for each band');
   return m;
 }
 
@@ -330,7 +330,7 @@ export function scoreDelivery(inp: ScoreInputs): DeliveryResult {
   const joined = scope.filter((o) => o.status === 'Joined');
   if (joined.length) result.vendorPct = round((joined.filter((o) => o.viaVendor).length / joined.length) * 100, 1);
 
-  // 4. 100-point delivery score (weights from the rule version; default 80 / 5 / 15)
+  // 4. 100-point delivery score (weights from the rule version; default 80 / 15 / 5)
   const sm = missingScoreRules(rule);
   result.components.offers = round(rule.maxima.offers * Math.min(basis, 1), dp);
   trace.push({ step: 'Offers & complexity', detail: `${rule.maxima.offers} × min(${pct}%, 100%)`, value: result.components.offers });
