@@ -118,13 +118,26 @@ describe('blocking and missing data', () => {
     expect(d.status).toBe('blocked');
     expect(d.missing.join()).toMatch(/cadence/);
   });
-  it('produces a band but no 100-point score while cycle-time points are undecided', () => {
-    const d = scoreDelivery(inputs({ offers: [off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01' })] }));
+  it('produces no 100-point score while band points are undecided', () => {
+    const r = rule();
+    r.cycleTime.bands = r.cycleTime.bands.map((b) => ({ ...b, points: null }));
+    const d = scoreDelivery(inputs({ rule: r, offers: [off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01' })] }));
     expect(d.band).not.toBeNull();
     expect(d.status).toBe('incomplete');
     expect(d.total).toBeNull();
-    expect(d.components.offers).toBe(80);
-    expect(d.components.vendor).toBeNull(); // vendor points on the 15-point scale not yet decided
+  });
+  it('scores with the agreed defaults: 80 × min(att,1) + cycle 5/3/1 + vendor 15/9/3', () => {
+    // 1 lateral SG5 offer = 3 pts = 100% of target; 35 days req→offer → 5; 0% vendor → 15
+    const d = scoreDelivery(inputs({ offers: [off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-12-01' })] }));
+    expect(d.components).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(d.total).toBe(100);
+    // 50 days → 3; all via vendor (100%) → 3; 2 SG5 offers vs target 3 → capped 80
+    const d2 = scoreDelivery(inputs({ offers: [1, 2].map(() => off({ offerDate: '2026-01-05', status: 'Joined', reqDate: '2025-11-16', viaVendor: true })) }));
+    expect(d2.components).toEqual({ offers: 80, cycle: 3, vendor: 3 });
+    // 70 days → 1; 1 of 4 joiners via vendor (25%) → 3; one Intern offer = 1 pt of 3 → 26.67
+    const os = [off({ stream: 'Intern', sg: null, offerDate: '2026-01-05' }), ...[0, 1, 2, 3].map((i) => off({ offerDate: '2026-03-01', status: 'Joined', reqDate: '2025-12-21', viaVendor: i === 0 }))];
+    const d3 = scoreDelivery(inputs({ offers: os, periodEnd: '2026-01-14', periodStart: '2026-01-01' }));
+    expect(d3.components.offers).toBe(26.67);
   });
   it('uses the 80 / 5 / 15 split and totals 100 when all rules present', () => {
     const r = rule();
@@ -185,9 +198,14 @@ describe('migration to 80 / 5 / 15', () => {
     const d = { ruleVersions: [rule(), { ...rule(), id: 'A', status: 'approved' as const }], audit: [] as { at: string; user: string; action: string; detail: string }[] } as unknown as import('../types').AppData;
     d.ruleVersions[0].maxima = { offers: 80, cycle: 15, vendor: 5 };
     d.ruleVersions[1].maxima = { offers: 80, cycle: 15, vendor: 5 };
+    d.ruleVersions[0].offersFormula = null;
     expect(migrate(d, 'u')).toBe(true);
     expect(d.ruleVersions[0].maxima).toEqual({ offers: 80, cycle: 5, vendor: 15 });
+    expect(d.ruleVersions[0].cycleTime.bands.map((b) => b.points)).toEqual([5, 3, 1]);
+    expect(d.ruleVersions[0].vendor.bands.map((b) => b.points)).toEqual([15, 9, 3]);
+    expect(d.ruleVersions[0].offersFormula).toBe('capped-attainment');
     expect(d.ruleVersions[1].maxima).toEqual({ offers: 80, cycle: 15, vendor: 5 });
-    expect(d.audit.length).toBe(1);
+    expect(d.audit.length).toBe(2);
+    expect(migrate(d, 'u')).toBe(false); // idempotent
   });
 });

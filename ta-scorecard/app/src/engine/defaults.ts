@@ -43,21 +43,21 @@ export function defaultRuleVersion(year: number, id: string): RuleVersion {
     workingDaysInYear: 254,
     holidays: [],
     leadTeamAverage: true,
-    offersFormula: null, // proposed: 80 × min(attainment, 1) — needs TA Head confirmation
-    // Thresholds agreed 18 Oct (strong < 45 days, acceptable ≤ 55); points on the 5-point scale not yet agreed.
+    offersFormula: 'capped-attainment', // 80 × min(attainment, 1) — confirmed by TA Head 13 Nov 2026
+    // Thresholds agreed 18 Oct (strong < 45 days, acceptable ≤ 55); points 5 / 3 / 1 agreed 13 Nov 2026.
     cycleTime: {
       bands: [
-        { upTo: 44.99, points: null },
-        { upTo: 55, points: null },
-        { upTo: null, points: null },
+        { upTo: 44.99, points: 5 },
+        { upTo: 55, points: 3 },
+        { upTo: null, points: 1 },
       ],
     },
-    // Thresholds agreed 18 Oct (< 10%, 10–20%, > 20%); points on the 15-point scale not yet agreed (13 Nov weights).
+    // Thresholds agreed 18 Oct (< 10%, 10–20%, > 20%); points 15 / 9 / 3 agreed 13 Nov 2026.
     vendor: {
       bands: [
-        { upTo: 9.99, points: null },
-        { upTo: 20, points: null },
-        { upTo: null, points: null },
+        { upTo: 9.99, points: 15 },
+        { upTo: 20, points: 9 },
+        { upTo: null, points: 3 },
       ],
     },
     ratingBands: [
@@ -107,6 +107,25 @@ export function migrate(d: AppData, user: string): boolean {
     r.note += ' Weights changed to 80 / 5 / 15 (TA Head, 13 Nov 2026); cycle and vendor points cleared for re-entry on the new scale.';
     d.audit.unshift({ at: new Date().toISOString(), user, action: 'Rule version updated', detail: `${r.year} v${r.version} (draft): delivery weights 80/15/5 → 80/5/15; cycle-time and vendor points cleared` });
     changed = true;
+  }
+  // Second step (TA Head, 13 Nov 2026): fill still-blank cycle/vendor points and confirm the offers formula on 80/5/15 drafts.
+  for (const r of d.ruleVersions) {
+    if (r.status !== 'draft' || r.maxima.offers !== 80 || r.maxima.cycle !== 5 || r.maxima.vendor !== 15) continue;
+    const cyc = [5, 3, 1];
+    const ven = [15, 9, 3];
+    const fill = (bands: { upTo: number | null; points: number | null }[], pts: number[]) =>
+      bands.length === 3 && bands.every((b) => b.points === null) ? (bands.forEach((b, i) => (b.points = pts[i])), true) : false;
+    const parts: string[] = [];
+    if (fill(r.cycleTime.bands, cyc)) parts.push('cycle-time points 5/3/1');
+    if (fill(r.vendor.bands, ven)) parts.push('vendor points 15/9/3');
+    if (r.offersFormula === null) {
+      r.offersFormula = 'capped-attainment';
+      parts.push('offers formula 80 × min(attainment, 1) confirmed');
+    }
+    if (parts.length) {
+      d.audit.unshift({ at: new Date().toISOString(), user, action: 'Rule version updated', detail: `${r.year} v${r.version} (draft): ${parts.join('; ')} (TA Head, 13 Nov 2026)` });
+      changed = true;
+    }
   }
   return changed;
 }

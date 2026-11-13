@@ -1,6 +1,6 @@
 # Known Limitations (v0.1, 2026-11-03)
 
-- **Undecided rules:** the 100-point score, growth score and matrix stay blocked until D-27, D-28 and D-29 are decided in Settings. Attainment bands work now.
+- **Undecided rules:** the growth score and matrix stay blocked until D-29 (growth weights, matrix thresholds) is decided. The delivery score and rating are fully configured.
 - **Single-browser storage:** data lives in one browser on one computer. Use encrypted backups to move it or protect it. Moving or renaming the HTML file starts a new, empty workspace, so restore from backup after a move.
 - **No passphrase recovery:** if the passphrase is lost, data can only be recovered from a backup together with that backup's passphrase. Changing the passphrase is not yet available.
 - **Closed-year protection:** a closed year is read-only in its screens. Reopening is not supported.

@@ -47,9 +47,9 @@ Other rules:
 
 | Component | Max | Rule | Status |
 |---|---|---|---|
-| Offers & complexity | 80 | 80 × min(attainment, 100%). The pattern comes from S3 (40 × min(points ÷ points target, 1)) scaled to 80. | **Proposed — tick to confirm** (D-27) |
-| Cycle time | 5 | Average calendar days from requisition approval to offer. In-scope offers only, declined excluded. Thresholds from S3: < 45 strong, ≤ 55 acceptable, > 55. | **Points per band to decide** (D-28) |
-| Vendor usage | 15 | Vendor share of in-scope joiners: thresholds < 10% / 10–20% / > 20% (S3) | **Points per band to decide** (D-36) |
+| Offers & complexity | 80 | 80 × min(attainment, 100%). The pattern comes from S3 (40 × min(points ÷ points target, 1)) scaled to 80. | Confirmed 13 Nov (D-27) |
+| Cycle time | 5 | Average calendar days from requisition approval to offer. In-scope offers only, declined excluded. < 45 days = 5, 45–55 = 3, > 55 = 1. | Confirmed 13 Nov (D-28) |
+| Vendor usage | 15 | Vendor share of in-scope joiners: < 10% = 15, 10–20% = 9, > 20% = 3 | Confirmed 13 Nov (D-36) |
 
 - **In scope** for cycle time, vendor, diversity and declines: Lateral (including campus intern conversions), FTC, and conversions to employment.
 - **Out of scope:** programme hiring scores points but is excluded from these quality measures.
